@@ -1,0 +1,26 @@
+/* Стилі для нашого банера-підтвердження */
+.copy-success-banner {
+  position: fixed; /* Залишається на місці при скролі */
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%); /* Центрування по горизонталі */
+  background-color: #28a745; /* Приємний зелений колір успіху */
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-family: sans-serif;
+  font-size: 16px;
+  z-index: 9999; /* Щоб був поверх усіх елементів */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+  /* Анімація */
+  opacity: 0; /* Початковий стан - прозорий */
+  transform: translateX(-50%) translateY(-20px); /* Початкова позиція - трохи вище */
+  transition: opacity 0.5s ease, transform 0.5s ease; /* Плавний перехід */
+}
+
+/* Клас, який ми додаємо через JS для появи банера */
+.copy-success-banner.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0); /* Кінцева позиція */
+}

@@ -1,0 +1,74 @@
+:root {
+    --titleSS: orange;
+    --titlePreach: blue;
+    --userSaturdaySS: violet;
+}
+
+
+
+.changedFromWeekToWeek_Preacher{
+    color: red;
+}
+.changedFromWeekToWeek_Preacher::placeholder{
+    color: red;
+    opacity: .5;
+}
+
+.numberSS{
+        color: brown;
+    font-weight: bold; 
+}
+
+
+.changedFromWeekToWeek_UsersSaturdaySS_Word{
+    color: var(--userSaturdaySS);
+    /* font-weight: bold; */
+}
+
+
+.changedFromWeekToWeek_UsersSaturdaySS{
+    color: var(--userSaturdaySS);
+}
+.changedFromWeekToWeek_UsersSaturdaySS::placeholder{
+    color: var(--userSaturdaySS);
+    opacity: .4;
+}
+
+
+
+.changedFromWeekToWeek_TitleSS{
+    color: var(--titleSS);
+}
+
+.changedFromWeekToWeek_NamePreach{
+    color: var(--titlePreach);
+}
+
+.changedFromWeekToWeek_SpeakersMonday{
+    color: green;
+}
+
+body {
+    min-width:750px;
+}
+
+.center{
+    text-align:center;
+}
+
+.date{
+    color: rgb(42, 199, 183);
+}
+
+
+
+.changedFromWeekToWeek_NamePreach::placeholder {
+    color: var(--titlePreach);
+    opacity: .4;
+}
+
+
+.changedFromWeekToWeek_TitleSS::placeholder {
+    color: var(--titleSS);
+    opacity: .4;
+}

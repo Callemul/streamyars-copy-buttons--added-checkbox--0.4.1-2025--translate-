@@ -1,0 +1,54 @@
+<!DOCTYPE html style="min-width:1000px;">
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Notification Extension</title>
+    <script type="text/javascript" src="../lib/jquery-3.5.0.js"></script>
+    <link rel="stylesheet" href="popup.css">
+
+
+</head>
+<body>
+<h1>Transliteraion</h1>
+<p>TODO </p>
+<p>—- якщо можна, то щоб якщо всі символи латинські, то кнопки працювали в режимі транслітерації. Тобто можна при копіюванні, робити цю перевірку. Можна налаштування вибрати щоб щоб транслітерації.</p>
+<p>——————Або в цьому ж алерті була кнопка, і там був вибір добавити траслітеріцію чи ні</p>
+<p>Example:</p>
+<table>
+
+    <tr>
+        <td>POMOLITES POJALUISTA O VOPROSE PRODAJI MOEI KVARTIRI I DALNEISHIX PRIOBRETENIAX...</td>
+    </tr>
+
+    <tr>
+        <td>Na:</td>
+    </tr>
+
+    <tr>
+        <td>"Помогите пожалуйста о вопросе продажи моей квартиры и дальнейших приобретениях..."</td>
+    </tr>
+
+
+
+    <tr>
+        <td><textarea id="textArea1_oldText" name="story" rows="5" cols="33">Input text example "POMOLITES POJALUISTA O VOPROSE"</textarea></td>
+    </tr>
+    <tr>
+        <td><textarea id="textArea2_generatedRuText" name="story" rows="5" cols="33"> </textarea></td>
+    </tr>
+
+
+</table>
+
+<button id="Translate">Translate</button>
+
+<script src = "popup.js"></script>
+<script>
+    // var newheight = window.height * (5/10);
+    // var newwidth = window.width * (7/10);
+    var newheight = 800;
+    var newwidth = 800;
+    window.resizeTo(newheight, newwidth);
+</script>
+</body>
+</html>
