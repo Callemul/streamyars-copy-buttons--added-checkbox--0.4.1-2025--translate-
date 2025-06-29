@@ -13,7 +13,7 @@
 }
 .copy-success-banner.visible { opacity: 1; }
 
-/* --- РОБОЧА ЛОГІКА ДЛЯ КОМЕНТАРІВ --- */
+/* --- РОБОЧА ЛОГІКА ДЛЯ КОМЕНТАРІВ (Flexbox, правильний порядок) --- */
 [class*="PlatformComment__TopRightButtonGroup"] {
   display: flex !important;
   align-items: center !important;
@@ -21,30 +21,28 @@
 .syh-custom-buttons-comment {
   display: flex !important;
   align-items: center !important;
-  order: -1 !important;
-  margin-right: 8px !important;
+  /* Ставимо наші кнопки після оригінальних */
+  order: 1 !important; 
+  margin-left: 8px !important;
 }
 
-/* --- ПРАВИЛЬНА ЛОГІКА ДЛЯ БАНЕРІВ --- */
+/* --- РОБОЧА ЛОГІКА ДЛЯ БАНЕРІВ (Absolute Positioning) --- */
 /* 1. Робимо головний блок банера контекстом */
 [class*="Banner__Wrap"] {
   position: relative !important;
 }
-/* 2. Наш контейнер для кнопок банерів робимо абсолютним */
+/* 2. Наш контейнер для кнопок банерів */
 .syh-custom-buttons-banner {
   position: absolute !important;
-  top: 5px; /* Трохи вище, щоб краще виглядало на банері */
-  right: 75px; /* <<--- ЗМІНЮЙТЕ ЦЕ ЗНАЧЕННЯ, ЩОБ ПОСУНУТИ ВЛІВО */
-  z-index: 10 !important; /* Важливо, щоб бути поверх прозорого шару */
+  top: 5px;
+  right: 60px; /* <--- ЗМІНЮЙТЕ ЦЕ ЗНАЧЕННЯ, ЩОБ ПОСУНУТИ ВЛІВО */
+  z-index: 10 !important;
   display: flex !important;
   align-items: center !important;
-  background-color: rgba(255, 255, 255, 0.7); /* Напівпрозорий фон */
-  padding: 3px;
-  border-radius: 5px;
 }
 
 
-/* --- ЗАГАЛЬНІ СТИЛІ --- */
+/* --- ЗАГАЛЬНІ СТИЛІ ДЛЯ НАШИХ ЕЛЕМЕНТІВ --- */
 .syh-button {
   width: 24px !important; height: 24px !important; padding: 0 !important; margin: 0 2px !important;
   border: 1px solid #aaa !important; border-radius: 4px !important;
