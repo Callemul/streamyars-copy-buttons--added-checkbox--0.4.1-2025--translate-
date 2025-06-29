@@ -1,26 +1,55 @@
-/* Стилі для нашого банера-підтвердження */
+/* styles.css */
+
+/* Банер підтвердження копіювання */
 .copy-success-banner {
-  position: fixed; /* Залишається на місці при скролі */
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%); /* Центрування по горизонталі */
-  background-color: #28a745; /* Приємний зелений колір успіху */
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-family: sans-serif;
-  font-size: 16px;
-  z-index: 9999; /* Щоб був поверх усіх елементів */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  position: fixed !important; top: 20px !important; left: 50% !important;
+  transform: translateX(-50%) !important; background-color: #28a745 !important;
+  color: white !important; padding: 12px 24px !important; border-radius: 8px !important;
+  z-index: 2147483647 !important; font-size: 16px !important; font-family: sans-serif !important;
+  text-align: center !important; white-space: pre-wrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.copy-success-banner.visible { opacity: 1; }
 
-  /* Анімація */
-  opacity: 0; /* Початковий стан - прозорий */
-  transform: translateX(-50%) translateY(-20px); /* Початкова позиція - трохи вище */
-  transition: opacity 0.5s ease, transform 0.5s ease; /* Плавний перехід */
+/* --- РОБОЧА ЛОГІКА ДЛЯ КОМЕНТАРІВ --- */
+[class*="PlatformComment__TopRightButtonGroup"] {
+  display: flex !important;
+  align-items: center !important;
+}
+.syh-custom-buttons-comment {
+  display: flex !important;
+  align-items: center !important;
+  order: -1 !important;
+  margin-right: 8px !important;
 }
 
-/* Клас, який ми додаємо через JS для появи банера */
-.copy-success-banner.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0); /* Кінцева позиція */
+/* --- ПРАВИЛЬНА ЛОГІКА ДЛЯ БАНЕРІВ --- */
+/* 1. Робимо головний блок банера контекстом */
+[class*="Banner__Wrap"] {
+  position: relative !important;
 }
+/* 2. Наш контейнер для кнопок банерів робимо абсолютним */
+.syh-custom-buttons-banner {
+  position: absolute !important;
+  top: 5px; /* Трохи вище, щоб краще виглядало на банері */
+  right: 95px; /* <<--- ЗМІНЮЙТЕ ЦЕ ЗНАЧЕННЯ, ЩОБ ПОСУНУТИ ВЛІВО */
+  z-index: 10 !important; /* Важливо, щоб бути поверх прозорого шару */
+  display: flex !important;
+  align-items: center !important;
+  background-color: rgba(255, 255, 255, 0.7); /* Напівпрозорий фон */
+  padding: 3px;
+  border-radius: 5px;
+}
+
+
+/* --- ЗАГАЛЬНІ СТИЛІ --- */
+.syh-button {
+  width: 24px !important; height: 24px !important; padding: 0 !important; margin: 0 2px !important;
+  border: 1px solid #aaa !important; border-radius: 4px !important;
+  background-color: #f0f0f0 !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; font-size: 14px !important;
+}
+.syh-button:hover { background-color: #e0e0e0 !important; border-color: #888 !important; }
+.syh-checkbox { width: 18px !important; height: 18px !important; margin: 0 3px !important; cursor: pointer !important; }

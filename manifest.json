@@ -23,7 +23,7 @@
     {
       "matches": ["https://streamyard.com/*"],
       "css": ["style_for_script_js.css"], 
-      "js": ["script.js", "lib/jquery-3.5.0.js"]
+      "js": ["lib/jquery-3.5.0.js", "script.js"]
     },
 
     {
