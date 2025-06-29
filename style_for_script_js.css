@@ -34,7 +34,7 @@
 .syh-custom-buttons-banner {
   position: absolute !important;
   top: 5px; /* Трохи вище, щоб краще виглядало на банері */
-  right: 95px; /* <<--- ЗМІНЮЙТЕ ЦЕ ЗНАЧЕННЯ, ЩОБ ПОСУНУТИ ВЛІВО */
+  right: 75px; /* <<--- ЗМІНЮЙТЕ ЦЕ ЗНАЧЕННЯ, ЩОБ ПОСУНУТИ ВЛІВО */
   z-index: 10 !important; /* Важливо, щоб бути поверх прозорого шару */
   display: flex !important;
   align-items: center !important;
