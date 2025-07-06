@@ -89,7 +89,7 @@ $(document).on('click', '.syh-button', function(e) {
         let textToCopy, header;
         if (action === 'copy-comment') { header = "📄 Комент (без автора)"; textToCopy = comment; }
         else if (action === 'copy-author-comment') { header = "📑 Автор і його 📄 комент"; textToCopy = `${author}\n\n${comment}`; }
-        else if (action === 'copy-prayer') { header = "📑 Автор і його 🙏 прохання"; textToCopy = `🙏🙏🙏 ${author}\n\n${comment}`; }
+        else if (action === 'copy-prayer') { header = "📑 Автор і його 🙏 прохання"; textToCopy = `\n\n\n🙏🙏🙏 ${author}\n\n${comment}`; }
         
         if (textToCopy) {
             copyAndShowBanner(textToCopy, header);
