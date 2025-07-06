@@ -50,4 +50,4 @@
   display: flex !important; align-items: center !important; justify-content: center !important; font-size: 14px !important;
 }
 .syh-button:hover { background-color: #e0e0e0 !important; border-color: #888 !important; }
-.syh-checkbox { width: 18px !important; height: 18px !important; margin: 0 3px !important; cursor: pointer !important; }
+.syh-checkbox { width: 24px !important; height: 24px !important; margin: 0 3px !important; cursor: pointer !important; }
