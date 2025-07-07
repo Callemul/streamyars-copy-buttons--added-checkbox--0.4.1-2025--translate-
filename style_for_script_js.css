@@ -43,7 +43,7 @@
 .syh-custom-buttons-banner {
   position: absolute !important;
   top: 5px;
-  right: 50px; /* Відступ від правого краю, щоб не накладалось на стандартні кнопки */
+  right: 80px; /* Відступ від правого краю, щоб не накладалось на стандартні кнопки */
   z-index: 10 !important;
   display: flex !important;
   align-items: center !important;
