@@ -2,7 +2,7 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.8.6 [Event Propagation Fix] Loaded!");
+    console.log("StreamYard Helper v0.9.2 [Robust Banner Creation] Loaded!");
 
     // Ініціалізація модулів
     const { SELECTORS } = window.SYH_CONFIG;
@@ -12,81 +12,73 @@
     UI.init(window.SYH_CONFIG, STATE);
     UTILS.init(window.SYH_CONFIG);
 
-    // --- ЛОГІКА СТВОРЕННЯ БАНЕРІВ (без змін) ---
+    // --- ЛОГІКА СТВОРЕННЯ БАНЕРІВ ---
     async function processAndCreateBanners(rawText) {
-        console.log("[SYH DEBUG] Starting banner creation process...");
         const questions = rawText.split('\n').map(line => line.trim()).filter(line => /^\d/.test(line))
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0 && line.length < 200);
 
         if (questions.length === 0) {
             alert("Не знайдено пронумерованих питань у тексті.");
-            console.log("[SYH DEBUG] No valid questions found in text.");
             return;
         }
-        console.log(`[SYH DEBUG] Found ${questions.length} questions to process.`);
 
         let createdCount = 0;
         for (const question of questions) {
-            console.log(`[SYH DEBUG] [${createdCount + 1}/${questions.length}] Processing: "${question}"`);
             try {
                 await createSingleBanner(question);
                 createdCount++;
             } catch (error) {
-                console.error("[SYH DEBUG] CRITICAL ERROR in banner creation loop:", error);
-                alert(`Не вдалося створити банер: "${question}".\nПричина: ${error.message}.\nПроцес перервано. Дивіться консоль (F12) для деталей.`);
+                alert(`Не вдалося створити банер: "${question}".\nПричина: ${error.message}.\nПроцес перервано.`);
                 break;
             }
         }
-        console.log(`[SYH DEBUG] Process finished. Created ${createdCount} of ${questions.length} banners.`);
         alert(`Створення завершено! Створено ${createdCount} з ${questions.length} банер(ів).`);
     }
 
     function createSingleBanner(text) {
         return new Promise(async (resolve, reject) => {
             try {
-                console.log(`[SYH DEBUG] Starting creation for: "${text}"`);
-                const createButton = await UTILS.waitForElement(SELECTORS.createBannerButton, 3000);
-                console.log("[SYH DEBUG] Clicking 'Create a banner' to ensure form is open and fresh.");
-                createButton.click();
+                if (!document.querySelector(SELECTORS.createBannerForm)) {
+                    const createButton = await UTILS.waitForElement(SELECTORS.createBannerButton, 3000);
+                    createButton.click();
+                }
+                
                 const form = await UTILS.waitForElement(SELECTORS.createBannerForm, 3000);
-                console.log("[SYH DEBUG] Form is ready.");
                 const textarea = form.querySelector('textarea');
                 const addButton = form.querySelector('button[type="submit"]');
                 if (!textarea || !addButton) return reject(new Error("Структура форми невірна."));
-                console.log("[SYH DEBUG] Filling textarea.");
+                
                 textarea.focus();
                 textarea.value = text;
                 textarea.dispatchEvent(new Event('input', { bubbles: true }));
                 await new Promise(r => setTimeout(r, 150));
+                
                 if (addButton.disabled) return reject(new Error("Кнопка 'Add banner' неактивна."));
-                console.log("[SYH DEBUG] Clicking 'Add banner'.");
                 addButton.click();
-                console.log("[SYH DEBUG] Waiting for form to close...");
-                await UTILS.waitForElementToDisappear(SELECTORS.createBannerForm, 5000);
-                console.log("[SYH DEBUG] Form closed. Banner created successfully.");
+                
+                // ЗМІНЕНО: Чекаємо на появу нового банера, а не на зникнення форми
+                await UTILS.waitForNewBanner(text, 5000);
+                
+                // Опціонально: закриваємо форму після успішного створення
+                const cancelButton = form.querySelector('button:not([type="submit"])');
+                if (cancelButton) cancelButton.click();
+
                 resolve();
             } catch (error) {
-                console.error("[SYH DEBUG] FAILED during createSingleBanner:", error);
                 reject(error);
             }
         });
     }
 
-    // --- ОБРОБНИКИ ПОДІЙ ---
-
-    // ЗМІНЕНО: Ми розділимо обробники для більшої чіткості і надійності
-    
-    // 1. Обробник для наших кнопок (копіювання, видалення і т.д.)
+    // --- ВАШІ СТАБІЛЬНІ ОБРОБНИКИ ПОДІЙ ---
     $(document).on('click', '.syh-button', function(e) {
         e.preventDefault();
-        e.stopPropagation(); // <-- КЛЮЧОВИЙ МОМЕНТ! Зупиняємо спливання події.
+        e.stopPropagation();
 
         const $button = $(this);
         const action = $button.data('action');
         const type = $button.data('type');
-
-        console.log(`[SYH ACTION] Button clicked. Action: ${action}, Type: ${type || 'header'}`);
 
         if (action === 'create-from-text') {
             const text = prompt("Вставте список питань для створення банерів:", "");
@@ -138,9 +130,8 @@
         }
     });
 
-    // 2. Окремий обробник для чекбоксів, також із зупинкою спливання
     $(document).on('click', '.syh-checkbox', function(e) {
-        e.stopPropagation(); // <-- Дуже важливо для чекбоксів!
+        e.stopPropagation();
     });
 
     $(document).on('change', '.syh-checkbox', function(e) {
@@ -160,7 +151,7 @@
         $(SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
     });
 
-    // --- OBSERVER (без змін) ---
+    // --- OBSERVER ---
     const observer = new MutationObserver((mutationsList) => {
         let bannerStateChanged = false;
         for (const mutation of mutationsList) {
@@ -176,7 +167,7 @@
         if (bannerStateChanged) UI.updateMasterCheckboxState();
     });
 
-    // --- ІНІЦІАЛІЗАЦІЯ (без змін) ---
+    // --- ІНІЦІАЛІЗАЦІЯ ---
     function init() {
         console.log("Initializing SYH modules...");
         $(SELECTORS.commentBlock).each((i, el) => UI.addButtonsToComment(el));

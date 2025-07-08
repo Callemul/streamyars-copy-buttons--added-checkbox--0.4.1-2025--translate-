@@ -1,4 +1,4 @@
-/* styles.css (Версія "Завжди видима панель" зі зміщенням) */
+/* styles.css (Фінальна версія з незалежною панеллю) */
 
 /* Банер підтвердження копіювання */
 .copy-success-banner {
@@ -26,7 +26,7 @@
 }
 
 /* ========================================================================= */
-/* ПАНЕЛЬ БАНЕРІВ - ЗАВЖДИ ВИДИМА */
+/* ПАНЕЛЬ БАНЕРІВ - НАДІЙНЕ ПОЗИЦІОНУВАННЯ */
 /* ========================================================================= */
 
 /* 1. Робимо головний блок банера контекстом для позиціонування */
@@ -38,9 +38,8 @@
 .syh-banner-controls {
   position: absolute !important;
   top: 4px;
-  /* ЗМІНЕНО: посуваємо панель вліво */
-  right: 80px !important; 
-  z-index: 100 !important;
+  right: 80px; /* Ваше зміщення */
+  z-index: 2147483646 !important; /* Максимальний z-index */
   display: flex !important;
   align-items: center !important;
   background-color: rgba(240, 240, 240, 0.95);
@@ -48,8 +47,6 @@
   border: 1px solid #ccc;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  opacity: 1 !important;
-  pointer-events: auto !important;
 }
 
 

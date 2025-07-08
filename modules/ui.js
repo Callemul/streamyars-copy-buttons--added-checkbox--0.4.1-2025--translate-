@@ -28,9 +28,9 @@ window.SYH_UI = {
         }
     },
 
-    // ПОВЕРТАЄМОСЬ ДО НЕЗАЛЕЖНОЇ ПАНЕЛІ
+    // ЗМІНЕНО: Вставляємо кнопки в надійний батьківський елемент
     addButtonsToBanner: function(bannerNode) {
-        // Знаходимо головний контейнер банера
+        // Знаходимо головний контейнер банера, який ніколи не зникає
         const $bannerWrap = $(bannerNode).find(this.SELECTORS.bannerWrap);
         // Перевіряємо, чи не додали ми вже наш блок
         if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {

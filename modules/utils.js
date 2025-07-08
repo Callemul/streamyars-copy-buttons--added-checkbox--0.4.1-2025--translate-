@@ -1,6 +1,5 @@
 // modules/utils.js
 window.SYH_UTILS = {
-    // Залежність, яка буде передана з main.js
     SELECTORS: null,
     init: function(config) {
         this.SELECTORS = config.SELECTORS;
@@ -38,9 +37,6 @@ window.SYH_UTILS = {
         });
     },
 
-    // =========================================================================
-    // ПОВЕРТАЄМО ВИДАЛЕНУ ФУНКЦІЮ НАЗАД!
-    // =========================================================================
     waitForElementToDisappear: function(selector, timeout = 3000) {
         return new Promise((resolve, reject) => {
             const interval = 100;
@@ -59,6 +55,7 @@ window.SYH_UTILS = {
         });
     },
 
+    // НОВА ФУНКЦІЯ
     waitForNewBanner: function(bannerText, timeout = 5000) {
         return new Promise((resolve, reject) => {
             const interval = 100;
@@ -67,7 +64,6 @@ window.SYH_UTILS = {
                 const banners = document.querySelectorAll(this.SELECTORS.bannerText);
                 for (const banner of banners) {
                     if (banner.textContent.trim() === bannerText.trim()) {
-                        console.log(`[SYH DEBUG] SUCCESS: Found new banner with text: "${bannerText}"`);
                         clearInterval(timer);
                         resolve(banner);
                         return;
