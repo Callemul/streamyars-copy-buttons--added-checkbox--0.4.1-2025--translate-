@@ -13,10 +13,12 @@ window.SYH_CONFIG = {
         bannerWrap: '[class*="Banner__Wrap"]',
         bannerText: '[class*="Banner__BannerText"]',
         bannerHeader: '[class*="BannersHeader__Header"]',
-        bannerDeleteButton: 'button svg path[d^="M6 19c0 1.1"]',
+        // Контейнер для рідних кнопок (олівець, корзина)
+        bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]', 
+        // Більш надійний селектор для кнопки видалення (зазвичай остання в контейнері)
+        bannerDeleteButton: '[class*="Banner__DesktopTopIconRow"] button:last-child',
 
         // Форма створення банера
-        // ЗМІНЕНО: Використовуємо більш надійний селектор, який не залежить від тексту
         createBannerButton: '[class*="BannerList__BottomRow"] button',
         createBannerForm: 'form[class*="CreateBannerForm__Form"]',
         bannerFormTextarea: 'form[class*="CreateBannerForm__Form"] textarea',

@@ -13,18 +13,7 @@
 }
 .copy-success-banner.visible { opacity: 1; }
 
-/* --- ЗАГАЛЬНІ СТИЛІ ДЛЯ НАШИХ ЕЛЕМЕНТІВ --- */
-.syh-button {
-  width: 24px !important; height: 24px !important; padding: 0 !important; margin: 0 2px !important;
-  border: 1px solid #aaa !important; border-radius: 4px !important;
-  background-color: #f0f0f0 !important; cursor: pointer !important;
-  display: flex !important; align-items: center !important; justify-content: center !important; font-size: 14px !important;
-}
-.syh-button:hover { background-color: #e0e0e0 !important; border-color: #888 !important; }
-.syh-checkbox { width: 18px !important; height: 18px !important; margin: 0 3px !important; cursor: pointer !important; }
-.syh-checkbox-container { display: flex; align-items: center; }
-
-/* --- КОМЕНТАРІ (Flexbox, правильний порядок) --- */
+/* --- СТИЛІ ДЛЯ КОМЕНТАРІВ --- */
 [class*="PlatformComment__TopRightButtonGroup"] {
   display: flex !important;
   align-items: center !important;
@@ -36,47 +25,50 @@
   margin-left: 8px !important;
 }
 
-/* --- БАНЕРИ (Absolute Positioning) --- */
-[class*="Banner__Wrap"] {
-  position: relative !important;
-}
-.syh-custom-buttons-banner {
-  position: absolute !important;
-  top: 5px;
-  right: 80px; /* Відступ від правого краю, щоб не накладалось на стандартні кнопки */
-  z-index: 10 !important;
-  display: flex !important;
-  align-items: center !important;
-  background: rgba(255, 255, 255, 0.8); /* Ледь помітний фон для кращої видимості */
-  border-radius: 5px;
-  padding: 2px;
+/* ========================================================================= */
+/* НОВІ, БЕЗПЕЧНІ СТИЛІ ДЛЯ БАНЕРІВ (виправляємо помилку) */
+/* ========================================================================= */
+
+/* Знаходимо контейнер з рідними кнопками (олівець, корзина) */
+[class*="Banner__DesktopTopIconRow"] {
+    display: flex !important;
+    align-items: center !important;
 }
 
-/* --- ШАПКА БАНЕРІВ --- */
+/* Наш контейнер для кнопок тепер буде просто flex-елементом всередині */
+.syh-custom-buttons-banner {
+    display: flex !important;
+    align-items: center !important;
+    /* Додаємо невеликий відступ від рідних кнопок */
+    margin-left: 8px !important;
+}
+
+
+/* --- ЗАГАЛЬНІ СТИЛІ ДЛЯ НАШИХ ЕЛЕМЕНТІВ --- */
+.syh-button {
+  width: 24px !important; height: 24px !important; padding: 0 !important; margin: 0 2px !important;
+  border: 1px solid #aaa !important; border-radius: 4px !important;
+  background-color: #f0f0f0 !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; font-size: 14px !important;
+}
+.syh-button:hover { background-color: #e0e0e0 !important; border-color: #888 !important; }
+.syh-checkbox { width: 24px !important; height: 24px !important; margin: 0 3px !important; cursor: pointer !important; }
+.syh-checkbox-container { display: flex; align-items: center; }
+
+
+/* --- СТИЛІ ДЛЯ КНОПОК В ШАПЦІ БАНЕРІВ --- */
 [class*="BannersHeader__Header"] {
   display: flex !important;
   align-items: center !important;
 }
 .syh-banner-header-controls {
   display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-left: auto !important; /* Притискає до правого краю */
+  gap: 4px !important;
+  margin-left: auto !important;
   padding-right: 4px !important;
 }
 .syh-master-checkbox-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-}
-.syh-master-checkbox {
-  width: 18px !important;
-  height: 18px !important;
-  cursor: pointer;
-}
-.syh-delete-selected-banners {
-  font-size: 16px !important;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
 }

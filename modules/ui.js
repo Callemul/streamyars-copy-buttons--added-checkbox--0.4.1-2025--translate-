@@ -30,8 +30,9 @@ window.SYH_UI = {
     },
 
     addButtonsToBanner: function(bannerNode) {
-        const $bannerWrap = $(bannerNode).find(this.SELECTORS.bannerWrap);
-        if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-custom-buttons-banner').length) {
+        // Знаходимо контейнер з рідними кнопками (олівець, корзина)
+        const $targetContainer = $(bannerNode).find(this.SELECTORS.bannerButtonContainer);
+        if ($targetContainer.length > 0 && !$targetContainer.find('.syh-custom-buttons-banner').length) {
             const buttonsHTML = `
                 <div class="syh-custom-buttons-banner">
                     <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати текст банера">📋</button>
@@ -39,10 +40,12 @@ window.SYH_UI = {
                         <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване">
                     </div>
                 </div>`;
-            $bannerWrap.append(buttonsHTML);
+            // Додаємо наші кнопки в кінець контейнера з рідними кнопками
+            $targetContainer.append(buttonsHTML);
+
             const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
             if (this.STATE.getCheckedState(bannerText)) {
-                $bannerWrap.find('.syh-checkbox').prop('checked', true);
+                $targetContainer.find('.syh-checkbox').prop('checked', true);
             }
         }
     },
