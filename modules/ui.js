@@ -28,11 +28,8 @@ window.SYH_UI = {
         }
     },
 
-    // ЗМІНЕНО: Вставляємо кнопки в надійний батьківський елемент
     addButtonsToBanner: function(bannerNode) {
-        // Знаходимо головний контейнер банера, який ніколи не зникає
         const $bannerWrap = $(bannerNode).find(this.SELECTORS.bannerWrap);
-        // Перевіряємо, чи не додали ми вже наш блок
         if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {
             const buttonsHTML = `
                 <div class="syh-banner-controls">
@@ -41,7 +38,6 @@ window.SYH_UI = {
                         <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване">
                     </div>
                 </div>`;
-            // Додаємо наш блок всередину головного контейнера банера
             $bannerWrap.append(buttonsHTML);
 
             const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
@@ -85,5 +81,34 @@ window.SYH_UI = {
         } else {
             $masterCheckbox.prop({ 'checked': false, 'indeterminate': true });
         }
+    },
+
+    createTelegramReminder: function() {
+        if ($('.syh-telegram-reminder').length > 0) {
+            return;
+        }
+
+        const $target = $(this.SELECTORS.reminderTargetContainer);
+        if ($target.length === 0) {
+            console.error("SYH: Не вдалося знайти місце для вставки нагадування.");
+            return;
+        }
+
+        const reminderHTML = `
+            <div class="syh-telegram-reminder">
+                <span>Зробити публікацію в телеграм</span>
+                <label class="syh-reminder-dismiss-label">
+                    <input type="checkbox" class="syh-telegram-reminder-checkbox" title="Закрити нагадування">
+                </label>
+            </div>
+        `;
+
+        $target.find('p').after(reminderHTML);
+
+        $('.syh-telegram-reminder-checkbox').on('change', function() {
+            if ($(this).is(':checked')) {
+                $(this).closest('.syh-telegram-reminder').fadeOut(300, function() { $(this).remove(); });
+            }
+        });
     }
 };

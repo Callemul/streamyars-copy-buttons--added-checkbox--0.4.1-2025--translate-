@@ -22,5 +22,9 @@ window.SYH_CONFIG = {
         createBannerForm: 'form[class*="CreateBannerForm__Form"]',
         bannerFormTextarea: 'form[class*="CreateBannerForm__Form"] textarea',
         bannerFormAddButton: 'form[class*="CreateBannerForm__Form"] button[type="submit"]',
+
+        // НОВІ СЕЛЕКТОРИ ДЛЯ НАГАДУВАННЯ
+        streamStatusContainer: '[class*="Tags__Wrap"]', // Контейнер, де з'являється "Ended"
+        reminderTargetContainer: '[data-testid="header-title-wrap"]' // Куди вставляти нагадування
     }
 };

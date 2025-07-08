@@ -1,5 +1,3 @@
-/* styles.css (Фінальна версія з незалежною панеллю) */
-
 /* Банер підтвердження копіювання */
 .copy-success-banner {
   position: fixed !important; top: 20px !important; left: 50% !important;
@@ -13,7 +11,7 @@
 }
 .copy-success-banner.visible { opacity: 1; }
 
-/* --- СТИЛІ ДЛЯ КОМЕНТАРІВ (без змін) --- */
+/* --- СТИЛІ ДЛЯ КОМЕНТАРІВ --- */
 [class*="PlatformComment__TopRightButtonGroup"] {
   display: flex !important;
   align-items: center !important;
@@ -29,17 +27,15 @@
 /* ПАНЕЛЬ БАНЕРІВ - НАДІЙНЕ ПОЗИЦІОНУВАННЯ */
 /* ========================================================================= */
 
-/* 1. Робимо головний блок банера контекстом для позиціонування */
 [class*="Banner__Wrap"] {
   position: relative !important;
 }
 
-/* 2. Наш власний контейнер кнопок */
 .syh-banner-controls {
   position: absolute !important;
   top: 4px;
-  right: 80px; /* Ваше зміщення */
-  z-index: 2147483646 !important; /* Максимальний z-index */
+  right: 80px;
+  z-index: 2147483646 !important;
   display: flex !important;
   align-items: center !important;
   background-color: rgba(240, 240, 240, 0.95);
@@ -62,7 +58,7 @@
 .syh-checkbox-container { display: flex; align-items: center; }
 
 
-/* --- СТИЛІ ДЛЯ КНОПОК В ШАПЦІ БАНЕРІВ (без змін) --- */
+/* --- СТИЛІ ДЛЯ КНОПОК В ШАПЦІ БАНЕРІВ --- */
 [class*="BannersHeader__Header"] {
   display: flex !important;
   align-items: center !important;
@@ -77,4 +73,33 @@
     display: flex;
     align-items: center;
     padding: 0 4px;
+}
+
+/* --- СТИЛІ ДЛЯ НАГАДУВАННЯ ПРО ПУБЛІКАЦІЮ --- */
+.syh-telegram-reminder {
+  background-color: #d9534f; /* Червоний фон */
+  color: white; /* Білий текст */
+  padding: 10px 15px;
+  margin-top: 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.syh-reminder-dismiss-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.syh-telegram-reminder-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin-left: 10px;
 }

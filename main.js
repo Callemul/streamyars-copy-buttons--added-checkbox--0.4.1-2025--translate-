@@ -2,11 +2,37 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.9.6 [Refactored] Loaded!");
+    console.log("StreamYard Helper v0.9.7 [Reminder Feature] Loaded!");
 
     // Отримуємо доступ до всіх наших модулів
     const { SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_PARSERS, SYH_BANNER_CREATOR, SYH_EVENT_HANDLERS } = window;
     const { SELECTORS } = SYH_CONFIG;
+
+    // Стан для відстеження, чи було заплановано нагадування
+    let reminderScheduled = false;
+
+    /**
+     * Перевіряє, чи завершився стрім, і планує нагадування.
+     */
+    function checkForStreamEnd() {
+        if (reminderScheduled) {
+            return;
+        }
+
+        const $statusContainer = $(SELECTORS.streamStatusContainer);
+
+        if ($statusContainer.length > 0 && $statusContainer.text().includes('Ended')) {
+            reminderScheduled = true;
+            
+            console.log("SYH: Стрім завершено. Нагадування буде показано через 2 хвилини.");
+
+            // Встановлюємо таймер на 2 хвилини (120,000 мілісекунд)
+            setTimeout(() => {
+                console.log("SYH: Показ нагадування про публікацію.");
+                SYH_UI.createTelegramReminder();
+            }, 2 * 60 * 1000);
+        }
+    }
 
     // --- OBSERVER ---
     const observer = new MutationObserver((mutationsList) => {
@@ -22,26 +48,32 @@
             if (mutation.removedNodes.length > 0) bannerStateChanged = true;
         }
         if (bannerStateChanged) SYH_UI.updateMasterCheckboxState();
+
+        // При кожній зміні в DOM перевіряємо статус стріму
+        checkForStreamEnd();
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
     function init() {
         console.log("Initializing SYH modules...");
 
-        // Ініціалізуємо кожен модуль, передаючи необхідні залежності
+        // Ініціалізуємо кожен модуль
         SYH_UTILS.init(SYH_CONFIG);
         SYH_UI.init(SYH_CONFIG, SYH_STATE);
         SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
         SYH_EVENT_HANDLERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
 
-        // Прив'язуємо всі обробники подій
+        // Прив'язуємо обробники подій
         SYH_EVENT_HANDLERS.bindEvents();
 
-        // Початкове сканування сторінки для додавання кнопок
+        // Початкове сканування сторінки
         $(SELECTORS.commentBlock).each((i, el) => SYH_UI.addButtonsToComment(el));
         $(SELECTORS.bannerBlock).each((i, el) => SYH_UI.addButtonsToBanner(el));
         $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
         
+        // Перша перевірка статусу стріму на випадок, якщо сторінка завантажилась вже після завершення
+        checkForStreamEnd();
+
         // Запускаємо спостерігач
         observer.observe(document.body, { childList: true, subtree: true });
         
