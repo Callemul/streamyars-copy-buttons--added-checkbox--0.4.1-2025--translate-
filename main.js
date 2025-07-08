@@ -2,7 +2,7 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.9.2 [Robust Banner Creation] Loaded!");
+    console.log("StreamYard Helper v0.9.3 [Smart Banner Creation] Loaded!");
 
     // Ініціалізація модулів
     const { SELECTORS } = window.SYH_CONFIG;
@@ -12,14 +12,83 @@
     UI.init(window.SYH_CONFIG, STATE);
     UTILS.init(window.SYH_CONFIG);
 
-    // --- ЛОГІКА СТВОРЕННЯ БАНЕРІВ ---
-    async function processAndCreateBanners(rawText) {
-        const questions = rawText.split('\n').map(line => line.trim()).filter(line => /^\d/.test(line))
+    // --- НОВА ЛОГІКА ПАРСИНГУ ---
+
+    /**
+     * Парсер для нового формату: emoji-цифри, автор, текст.
+     * Обрізає текст до 195 символів і додає "..."
+     * @param {string} rawText - Вхідний текст з коментарями.
+     * @returns {string[]} - Масив готових для банерів рядків.
+     */
+    function parseEmojiNumberedQuestions(rawText) {
+        console.log("Parsing as Emoji-numbered questions.");
+        const MAX_LENGTH = 195;
+        const ELLIPSIS = "...";
+
+        const lines = rawText.split('\n').map(l => l.trim());
+        const questions = [];
+        let currentQuestion = null;
+
+        for (const line of lines) {
+            // Перевіряємо, чи рядок є цифрою-смайликом (може бути кілька для двозначних чисел)
+            if (/^[1-9🔟]️⃣+$/.test(line)) {
+                if (currentQuestion) {
+                    questions.push(currentQuestion);
+                }
+                currentQuestion = { number: line, author: '', text: [] };
+            } else if (currentQuestion && !currentQuestion.author && line) {
+                // Наступний непустий рядок після цифри - це автор
+                currentQuestion.author = line;
+            } else if (currentQuestion && line) {
+                // Решта рядків - це текст питання
+                currentQuestion.text.push(line);
+            }
+        }
+        if (currentQuestion) {
+            questions.push(currentQuestion); // Не забуваємо додати останнє питання
+        }
+
+        return questions.map(q => {
+            const questionText = q.text.join('\n');
+            // Формуємо фінальний текст згідно з вимогами
+            let fullText = `${q.number}\n${q.author}: \n${questionText}`;
+
+            if (fullText.length > MAX_LENGTH) {
+                const availableLength = MAX_LENGTH - ELLIPSIS.length;
+                fullText = fullText.substring(0, availableLength) + ELLIPSIS;
+            }
+            return fullText;
+        });
+    }
+
+    /**
+     * Парсер для старого формату: "1. Текст питання (Автор)"
+     * @param {string} rawText - Вхідний текст з питаннями.
+     * @returns {string[]} - Масив готових для банерів рядків.
+     */
+    function parseStandardNumberedQuestions(rawText) {
+        console.log("Parsing as Standard-numbered questions.");
+        return rawText.split('\n')
+            .map(line => line.trim())
+            .filter(line => /^\d/.test(line)) // Починається з цифри
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0 && line.length < 200);
+    }
+
+
+    // --- ОСНОВНА ФУНКЦІЯ СТВОРЕННЯ БАНЕРІВ (ОНОВЛЕНА) ---
+    async function processAndCreateBanners(rawText) {
+        let questions = [];
+
+        // "Розумний" аналізатор: перевіряємо, чи є в тексті emoji-цифри
+        if (/[1-9🔟]️⃣/.test(rawText)) {
+            questions = parseEmojiNumberedQuestions(rawText);
+        } else {
+            questions = parseStandardNumberedQuestions(rawText);
+        }
 
         if (questions.length === 0) {
-            alert("Не знайдено пронумерованих питань у тексті.");
+            alert("Не знайдено пронумерованих питань у тексті. Перевірте формат.");
             return;
         }
 
@@ -29,7 +98,7 @@
                 await createSingleBanner(question);
                 createdCount++;
             } catch (error) {
-                alert(`Не вдалося створити банер: "${question}".\nПричина: ${error.message}.\nПроцес перервано.`);
+                alert(`Не вдалося створити банер: "${question.substring(0, 50)}...".\nПричина: ${error.message}.\nПроцес перервано.`);
                 break;
             }
         }
@@ -57,10 +126,8 @@
                 if (addButton.disabled) return reject(new Error("Кнопка 'Add banner' неактивна."));
                 addButton.click();
                 
-                // ЗМІНЕНО: Чекаємо на появу нового банера, а не на зникнення форми
                 await UTILS.waitForNewBanner(text, 5000);
                 
-                // Опціонально: закриваємо форму після успішного створення
                 const cancelButton = form.querySelector('button:not([type="submit"])');
                 if (cancelButton) cancelButton.click();
 
@@ -71,7 +138,7 @@
         });
     }
 
-    // --- ВАШІ СТАБІЛЬНІ ОБРОБНИКИ ПОДІЙ ---
+    // --- ОБРОБНИКИ ПОДІЙ (без змін) ---
     $(document).on('click', '.syh-button', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -151,7 +218,7 @@
         $(SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
     });
 
-    // --- OBSERVER ---
+    // --- OBSERVER (без змін) ---
     const observer = new MutationObserver((mutationsList) => {
         let bannerStateChanged = false;
         for (const mutation of mutationsList) {
@@ -167,7 +234,7 @@
         if (bannerStateChanged) UI.updateMasterCheckboxState();
     });
 
-    // --- ІНІЦІАЛІЗАЦІЯ ---
+    // --- ІНІЦІАЛІЗАЦІЯ (без змін) ---
     function init() {
         console.log("Initializing SYH modules...");
         $(SELECTORS.commentBlock).each((i, el) => UI.addButtonsToComment(el));
