@@ -1,5 +1,11 @@
 // modules/utils.js
 window.SYH_UTILS = {
+    // Залежність, яка буде передана з main.js
+    SELECTORS: null,
+    init: function(config) {
+        this.SELECTORS = config.SELECTORS;
+    },
+
     copyAndShowBanner: function(textToCopy, bannerMessage) {
         if (!textToCopy) { console.error("No text provided to copy."); return; }
         navigator.clipboard.writeText(textToCopy).then(() => {
@@ -26,12 +32,15 @@ window.SYH_UTILS = {
                 elapsedTime += interval;
                 if (elapsedTime >= timeout) {
                     clearInterval(timer);
-                    reject(new Error(`Element ${selector} not found within ${timeout}ms`));
+                    reject(new Error(`Element [${selector}] not found or not visible within ${timeout}ms`));
                 }
             }, interval);
         });
     },
 
+    // =========================================================================
+    // ПОВЕРТАЄМО ВИДАЛЕНУ ФУНКЦІЮ НАЗАД!
+    // =========================================================================
     waitForElementToDisappear: function(selector, timeout = 3000) {
         return new Promise((resolve, reject) => {
             const interval = 100;
@@ -45,6 +54,30 @@ window.SYH_UTILS = {
                 if (elapsedTime >= timeout) {
                     clearInterval(timer);
                     reject(new Error(`Element ${selector} did not disappear within ${timeout}ms`));
+                }
+            }, interval);
+        });
+    },
+
+    waitForNewBanner: function(bannerText, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+            const interval = 100;
+            let elapsedTime = 0;
+            const timer = setInterval(() => {
+                const banners = document.querySelectorAll(this.SELECTORS.bannerText);
+                for (const banner of banners) {
+                    if (banner.textContent.trim() === bannerText.trim()) {
+                        console.log(`[SYH DEBUG] SUCCESS: Found new banner with text: "${bannerText}"`);
+                        clearInterval(timer);
+                        resolve(banner);
+                        return;
+                    }
+                }
+                
+                elapsedTime += interval;
+                if (elapsedTime >= timeout) {
+                    clearInterval(timer);
+                    reject(new Error(`New banner with text "${bannerText}" did not appear within ${timeout}ms`));
                 }
             }, interval);
         });

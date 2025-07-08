@@ -16,7 +16,8 @@ window.SYH_CONFIG = {
         bannerDeleteButton: 'button svg path[d^="M6 19c0 1.1"]',
 
         // Форма створення банера
-        createBannerButton: 'button:contains("Create a banner")',
+        // ЗМІНЕНО: Використовуємо більш надійний селектор, який не залежить від тексту
+        createBannerButton: '[class*="BannerList__BottomRow"] button',
         createBannerForm: 'form[class*="CreateBannerForm__Form"]',
         bannerFormTextarea: 'form[class*="CreateBannerForm__Form"] textarea',
         bannerFormAddButton: 'form[class*="CreateBannerForm__Form"] button[type="submit"]',
