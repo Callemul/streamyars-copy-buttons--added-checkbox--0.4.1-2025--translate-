@@ -2,7 +2,7 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.9.3 [Smart Banner Creation] Loaded!");
+    console.log("StreamYard Helper v0.9.4 [Robust Emoji Parsing] Loaded!");
 
     // Ініціалізація модулів
     const { SELECTORS } = window.SYH_CONFIG;
@@ -12,10 +12,10 @@
     UI.init(window.SYH_CONFIG, STATE);
     UTILS.init(window.SYH_CONFIG);
 
-    // --- НОВА ЛОГІКА ПАРСИНГУ ---
+    // --- ЛОГІКА ПАРСИНГУ ---
 
     /**
-     * Парсер для нового формату: emoji-цифри, автор, текст.
+     * Парсер для нового формату: emoji-цифри (включно з двоцифровими), автор, текст.
      * Обрізає текст до 195 символів і додає "..."
      * @param {string} rawText - Вхідний текст з коментарями.
      * @returns {string[]} - Масив готових для банерів рядків.
@@ -30,8 +30,8 @@
         let currentQuestion = null;
 
         for (const line of lines) {
-            // Перевіряємо, чи рядок є цифрою-смайликом (може бути кілька для двозначних чисел)
-            if (/^[1-9🔟]️⃣+$/.test(line)) {
+            // **ВИПРАВЛЕНО:** Цей регулярний вираз тепер розпізнає комбінації emoji-цифр.
+            if (/^([1-9]️⃣|🔟)+$/.test(line)) {
                 if (currentQuestion) {
                     questions.push(currentQuestion);
                 }
