@@ -14,8 +14,7 @@
     "tabs"
   ],
   "background": {
-    "service_worker": "background.js",
-    "background_page": "background.html"
+    "service_worker": "background.js"
   },
 
 
