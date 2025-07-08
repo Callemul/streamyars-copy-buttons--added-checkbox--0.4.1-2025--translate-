@@ -1,7 +1,7 @@
 {
-  "name": "StreamYard copy buttons v0.5.1",
+  "name": "StreamYard copy buttons v0.5.2",
   "manifest_version": 3,
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Streamyard.com Extension. Add new buttons to commets and banners",
   "permissions": [
 
@@ -19,13 +19,20 @@
   },
 
 
-  "content_scripts": [
+"content_scripts": [
     {
       "matches": ["https://streamyard.com/*"],
-      "css": ["style_for_script_js.css"], 
-      "js": ["lib/jquery-3.5.0.js", "script.js"]
+      "css": ["styles.css"],
+      "js": [
+        "lib/jquery-3.5.0.js",
+        "modules/config.js",
+        "modules/state.js",
+        "modules/utils.js",
+        "modules/ui.js",
+        "main.js"
+      ]
     },
-
+    
     {
       "run_at": "document_end",
       "js": [
@@ -38,7 +45,7 @@
   ],
 
   "action": {
-    "default_title": "Streamyard Helper 0.5.1",
+    "default_title": "Streamyard Helper 0.5.2",
     "default_popup": "popup/popup.html"
   },
   "icons": {
