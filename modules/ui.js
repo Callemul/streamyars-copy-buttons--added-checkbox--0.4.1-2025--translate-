@@ -1,6 +1,5 @@
 // modules/ui.js
 window.SYH_UI = {
-    // Залежності, які будуть передані з main.js
     SELECTORS: null,
     STATE: null,
 
@@ -29,23 +28,25 @@ window.SYH_UI = {
         }
     },
 
+    // ПОВЕРТАЄМОСЬ ДО НЕЗАЛЕЖНОЇ ПАНЕЛІ
     addButtonsToBanner: function(bannerNode) {
-        // Знаходимо контейнер з рідними кнопками (олівець, корзина)
-        const $targetContainer = $(bannerNode).find(this.SELECTORS.bannerButtonContainer);
-        if ($targetContainer.length > 0 && !$targetContainer.find('.syh-custom-buttons-banner').length) {
+        // Знаходимо головний контейнер банера
+        const $bannerWrap = $(bannerNode).find(this.SELECTORS.bannerWrap);
+        // Перевіряємо, чи не додали ми вже наш блок
+        if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {
             const buttonsHTML = `
-                <div class="syh-custom-buttons-banner">
+                <div class="syh-banner-controls">
                     <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати текст банера">📋</button>
                     <div class="syh-checkbox-container">
                         <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване">
                     </div>
                 </div>`;
-            // Додаємо наші кнопки в кінець контейнера з рідними кнопками
-            $targetContainer.append(buttonsHTML);
+            // Додаємо наш блок всередину головного контейнера банера
+            $bannerWrap.append(buttonsHTML);
 
             const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
             if (this.STATE.getCheckedState(bannerText)) {
-                $targetContainer.find('.syh-checkbox').prop('checked', true);
+                $bannerWrap.find('.syh-checkbox').prop('checked', true);
             }
         }
     },

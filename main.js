@@ -2,7 +2,7 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.8.5 [Restoration Fix] Loaded!");
+    console.log("StreamYard Helper v0.8.6 [Event Propagation Fix] Loaded!");
 
     // Ініціалізація модулів
     const { SELECTORS } = window.SYH_CONFIG;
@@ -12,8 +12,7 @@
     UI.init(window.SYH_CONFIG, STATE);
     UTILS.init(window.SYH_CONFIG);
 
-    // --- ЛОГІКА СТВОРЕННЯ БАНЕРІВ ---
-
+    // --- ЛОГІКА СТВОРЕННЯ БАНЕРІВ (без змін) ---
     async function processAndCreateBanners(rawText) {
         console.log("[SYH DEBUG] Starting banner creation process...");
         const questions = rawText.split('\n').map(line => line.trim()).filter(line => /^\d/.test(line))
@@ -47,32 +46,25 @@
         return new Promise(async (resolve, reject) => {
             try {
                 console.log(`[SYH DEBUG] Starting creation for: "${text}"`);
-
                 const createButton = await UTILS.waitForElement(SELECTORS.createBannerButton, 3000);
                 console.log("[SYH DEBUG] Clicking 'Create a banner' to ensure form is open and fresh.");
                 createButton.click();
-                
                 const form = await UTILS.waitForElement(SELECTORS.createBannerForm, 3000);
                 console.log("[SYH DEBUG] Form is ready.");
-
                 const textarea = form.querySelector('textarea');
                 const addButton = form.querySelector('button[type="submit"]');
                 if (!textarea || !addButton) return reject(new Error("Структура форми невірна."));
-
                 console.log("[SYH DEBUG] Filling textarea.");
                 textarea.focus();
                 textarea.value = text;
                 textarea.dispatchEvent(new Event('input', { bubbles: true }));
                 await new Promise(r => setTimeout(r, 150));
-
                 if (addButton.disabled) return reject(new Error("Кнопка 'Add banner' неактивна."));
                 console.log("[SYH DEBUG] Clicking 'Add banner'.");
                 addButton.click();
-
                 console.log("[SYH DEBUG] Waiting for form to close...");
                 await UTILS.waitForElementToDisappear(SELECTORS.createBannerForm, 5000);
                 console.log("[SYH DEBUG] Form closed. Banner created successfully.");
-                
                 resolve();
             } catch (error) {
                 console.error("[SYH DEBUG] FAILED during createSingleBanner:", error);
@@ -82,11 +74,19 @@
     }
 
     // --- ОБРОБНИКИ ПОДІЙ ---
+
+    // ЗМІНЕНО: Ми розділимо обробники для більшої чіткості і надійності
+    
+    // 1. Обробник для наших кнопок (копіювання, видалення і т.д.)
     $(document).on('click', '.syh-button', function(e) {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation(); // <-- КЛЮЧОВИЙ МОМЕНТ! Зупиняємо спливання події.
+
         const $button = $(this);
         const action = $button.data('action');
         const type = $button.data('type');
+
+        console.log(`[SYH ACTION] Button clicked. Action: ${action}, Type: ${type || 'header'}`);
 
         if (action === 'create-from-text') {
             const text = prompt("Вставте список питань для створення банерів:", "");
@@ -138,8 +138,12 @@
         }
     });
 
+    // 2. Окремий обробник для чекбоксів, також із зупинкою спливання
+    $(document).on('click', '.syh-checkbox', function(e) {
+        e.stopPropagation(); // <-- Дуже важливо для чекбоксів!
+    });
+
     $(document).on('change', '.syh-checkbox', function(e) {
-        e.stopPropagation();
         const $checkbox = $(this);
         const type = $checkbox.data('type');
         let textKey = '';
@@ -156,7 +160,7 @@
         $(SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
     });
 
-    // --- OBSERVER ---
+    // --- OBSERVER (без змін) ---
     const observer = new MutationObserver((mutationsList) => {
         let bannerStateChanged = false;
         for (const mutation of mutationsList) {
@@ -172,7 +176,7 @@
         if (bannerStateChanged) UI.updateMasterCheckboxState();
     });
 
-    // --- ІНІЦІАЛІЗАЦІЯ ---
+    // --- ІНІЦІАЛІЗАЦІЯ (без змін) ---
     function init() {
         console.log("Initializing SYH modules...");
         $(SELECTORS.commentBlock).each((i, el) => UI.addButtonsToComment(el));

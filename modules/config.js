@@ -13,10 +13,9 @@ window.SYH_CONFIG = {
         bannerWrap: '[class*="Banner__Wrap"]',
         bannerText: '[class*="Banner__BannerText"]',
         bannerHeader: '[class*="BannersHeader__Header"]',
-        // Контейнер для рідних кнопок (олівець, корзина)
-        bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]', 
-        // Більш надійний селектор для кнопки видалення (зазвичай остання в контейнері)
-        bannerDeleteButton: '[class*="Banner__DesktopTopIconRow"] button:last-child',
+        bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]',
+        // ТОЧНИЙ СЕЛЕКТОР для кнопки видалення (корзини)
+        bannerDeleteButton: 'button:has(svg path[d^="M6 19c0 1.1"])',
 
         // Форма створення банера
         createBannerButton: '[class*="BannerList__BottomRow"] button',
