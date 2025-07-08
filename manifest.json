@@ -4,11 +4,9 @@
   "version": "0.5.5",
   "description": "Streamyard.com Extension. Add new buttons to commets and banners",
   "permissions": [
-
     "alarms",
     "notifications",
     "storage",
-
     "activeTab",
     "scripting",
     "tabs"
@@ -16,9 +14,7 @@
   "background": {
     "service_worker": "background.js"
   },
-
-
-"content_scripts": [
+  "content_scripts": [
     {
       "matches": ["https://streamyard.com/*"],
       "css": ["styles.css"],
@@ -28,21 +24,20 @@
         "modules/state.js",
         "modules/utils.js",
         "modules/ui.js",
+        "modules/parsers.js",
+        "modules/banner_creator.js",
+        "modules/event_handlers.js",
         "main.js"
       ]
     },
-    
     {
       "run_at": "document_end",
-      "js": [
-        "google_forms.js"
-      ],
+      "js": ["google_forms.js"],
       "matches": [
         "https://docs.google.com/forms/d/1Uv2PfvWwVCbS_FKEOFA0-YwISzLicsISMqVscMeBlTU/edit?ts=62502c5a"
       ]
     }
   ],
-
   "action": {
     "default_title": "Streamyard Helper 0.5.5",
     "default_popup": "popup/popup.html"
