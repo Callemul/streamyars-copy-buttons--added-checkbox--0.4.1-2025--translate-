@@ -2,7 +2,7 @@
 (function(window, $) {
     'use strict';
 
-    console.log("StreamYard Helper v0.9.4 [Robust Emoji Parsing] Loaded!");
+    console.log("StreamYard Helper v0.9.5 [Sub-item Parsing] Loaded!");
 
     // Ініціалізація модулів
     const { SELECTORS } = window.SYH_CONFIG;
@@ -12,53 +12,79 @@
     UI.init(window.SYH_CONFIG, STATE);
     UTILS.init(window.SYH_CONFIG);
 
-    // --- ЛОГІКА ПАРСИНГУ ---
+    // --- ЛОГІКА ПАРСИНГУ (ОНОВЛЕНА) ---
 
     /**
-     * Парсер для нового формату: emoji-цифри (включно з двоцифровими), автор, текст.
-     * Обрізає текст до 195 символів і додає "..."
+     * Парсер для формату з emoji-цифрами, що тепер підтримує підпункти '🔹'.
      * @param {string} rawText - Вхідний текст з коментарями.
      * @returns {string[]} - Масив готових для банерів рядків.
      */
     function parseEmojiNumberedQuestions(rawText) {
-        console.log("Parsing as Emoji-numbered questions.");
+        console.log("Parsing as Emoji-numbered questions with sub-item support.");
         const MAX_LENGTH = 195;
         const ELLIPSIS = "...";
 
-        const lines = rawText.split('\n').map(l => l.trim());
-        const questions = [];
+        // Допоміжна функція для обрізки тексту
+        const truncate = (text) => {
+            if (text.length > MAX_LENGTH) {
+                return text.substring(0, MAX_LENGTH - ELLIPSIS.length) + ELLIPSIS;
+            }
+            return text;
+        };
+
+        // 1. Групуємо коментарі за основним номером
+        const groupedQuestions = [];
         let currentQuestion = null;
+        const lines = rawText.split('\n').map(l => l.trim());
 
         for (const line of lines) {
-            // **ВИПРАВЛЕНО:** Цей регулярний вираз тепер розпізнає комбінації emoji-цифр.
             if (/^([1-9]️⃣|🔟)+$/.test(line)) {
-                if (currentQuestion) {
-                    questions.push(currentQuestion);
-                }
-                currentQuestion = { number: line, author: '', text: [] };
+                if (currentQuestion) groupedQuestions.push(currentQuestion);
+                currentQuestion = { number: line, author: '', textLines: [] };
             } else if (currentQuestion && !currentQuestion.author && line) {
-                // Наступний непустий рядок після цифри - це автор
                 currentQuestion.author = line;
             } else if (currentQuestion && line) {
-                // Решта рядків - це текст питання
-                currentQuestion.text.push(line);
+                currentQuestion.textLines.push(line);
             }
         }
-        if (currentQuestion) {
-            questions.push(currentQuestion); // Не забуваємо додати останнє питання
-        }
+        if (currentQuestion) groupedQuestions.push(currentQuestion);
 
-        return questions.map(q => {
-            const questionText = q.text.join('\n');
-            // Формуємо фінальний текст згідно з вимогами
-            let fullText = `${q.number}\n${q.author}: \n${questionText}`;
+        // 2. Оброробляємо кожну групу, розбиваючи на підпункти, якщо потрібно
+        const finalBanners = [];
+        for (const group of groupedQuestions) {
+            const fullText = group.textLines.join('\n');
 
-            if (fullText.length > MAX_LENGTH) {
-                const availableLength = MAX_LENGTH - ELLIPSIS.length;
-                fullText = fullText.substring(0, availableLength) + ELLIPSIS;
+            // Розділяємо текст на підпункти за символом '🔹'.
+            // Використовуємо lookahead `(?=🔹)`, щоб символ залишався в наступному рядку.
+            const subQuestions = fullText.split(/\n?(?=🔹)/);
+
+            if (subQuestions.length <= 1) {
+                // Немає підпунктів, обробляємо як один банер
+                const bannerText = `${group.number}\n${group.author}: \n${fullText}`;
+                finalBanners.push(truncate(bannerText));
+            } else {
+                // Є підпункти, обробляємо кожен окремо
+                // Перший підпункт (до першого '🔹')
+                if (subQuestions[0].trim()) {
+                    const firstBannerText = `${group.number}\n${group.author}: \n${subQuestions[0]}`;
+                    finalBanners.push(truncate(firstBannerText));
+                }
+
+                // Наступні підпункти (кожен починається з '🔹')
+                for (let i = 1; i < subQuestions.length; i++) {
+                    const subText = subQuestions[i].trim();
+                    if (!subText) continue;
+
+                    const subLines = subText.split('\n');
+                    const newHeader = subLines.shift(); // Рядок з '🔹' стає заголовком
+                    const newBody = subLines.join('\n');
+                    
+                    const subsequentBannerText = `${newHeader}: \n${newBody}`;
+                    finalBanners.push(truncate(subsequentBannerText));
+                }
             }
-            return fullText;
-        });
+        }
+        return finalBanners;
     }
 
     /**
@@ -70,17 +96,16 @@
         console.log("Parsing as Standard-numbered questions.");
         return rawText.split('\n')
             .map(line => line.trim())
-            .filter(line => /^\d/.test(line)) // Починається з цифри
+            .filter(line => /^\d/.test(line))
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0 && line.length < 200);
     }
 
 
-    // --- ОСНОВНА ФУНКЦІЯ СТВОРЕННЯ БАНЕРІВ (ОНОВЛЕНА) ---
+    // --- ОСНОВНА ФУНКЦІЯ СТВОРЕННЯ БАНЕРІВ (без змін) ---
     async function processAndCreateBanners(rawText) {
         let questions = [];
 
-        // "Розумний" аналізатор: перевіряємо, чи є в тексті emoji-цифри
         if (/[1-9🔟]️⃣/.test(rawText)) {
             questions = parseEmojiNumberedQuestions(rawText);
         } else {
