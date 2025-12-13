@@ -34,7 +34,8 @@ window.SYH_BANNER_CREATOR = {
                 break;
             }
         }
-        alert(`Створення завершено! Створено ${createdCount} з ${questions.length} банер(ів).`);
+        await this.createSingleBanner("----Питання глядачів----");
+        alert(`Створення завершено v0.6! Створено ${createdCount} з ${questions.length} банер(ів).`);
     },
 
     createSingleBanner: function(text) {

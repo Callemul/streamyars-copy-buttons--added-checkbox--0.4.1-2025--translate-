@@ -50,7 +50,7 @@
         if (bannerStateChanged) SYH_UI.updateMasterCheckboxState();
 
         // При кожній зміні в DOM перевіряємо статус стріму
-        checkForStreamEnd();
+        //checkForStreamEnd();
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
@@ -72,7 +72,7 @@
         $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
         
         // Перша перевірка статусу стріму на випадок, якщо сторінка завантажилась вже після завершення
-        checkForStreamEnd();
+        //checkForStreamEnd();
 
         // Запускаємо спостерігач
         observer.observe(document.body, { childList: true, subtree: true });
