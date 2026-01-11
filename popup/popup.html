@@ -1,54 +1,80 @@
-<!DOCTYPE html style="min-width:1000px;">
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Notification Extension</title>
+    <title>StreamYard Tools</title>
     <script type="text/javascript" src="../lib/jquery-3.5.0.js"></script>
     <link rel="stylesheet" href="popup.css">
-
-
 </head>
 <body>
-<h1>Transliteraion</h1>
-<p>TODO </p>
-<p>—- якщо можна, то щоб якщо всі символи латинські, то кнопки працювали в режимі транслітерації. Тобто можна при копіюванні, робити цю перевірку. Можна налаштування вибрати щоб щоб транслітерації.</p>
-<p>——————Або в цьому ж алерті була кнопка, і там був вибір добавити траслітеріцію чи ні</p>
-<p>Example:</p>
-<table>
 
-    <tr>
-        <td>POMOLITES POJALUISTA O VOPROSE PRODAJI MOEI KVARTIRI I DALNEISHIX PRIOBRETENIAX...</td>
-    </tr>
+    <div class="tabs">
+        <button class="tab-link active" data-tab="tab-telegram">Telegram Питання 🚀</button>
+        <button class="tab-link" data-tab="tab-old">Трансліт / Налаштування</button>
+    </div>
 
-    <tr>
-        <td>Na:</td>
-    </tr>
+    <div id="tab-telegram" class="tab-content active">
+        <div class="input-group">
+            <label class="section-title">1. Старий список <span id="oldTotalCount" style="color: #666; font-weight: normal;"></span>:</label>
+            <textarea id="oldList" placeholder="Вставте сюди весь текст з минулого разу..."></textarea>
+        </div>
 
-    <tr>
-        <td>"Помогите пожалуйста о вопросе продажи моей квартиры и дальнейших приобретениях..."</td>
-    </tr>
+        <div class="input-group">
+            <label class="section-title">2. Номери ВІДПОВІДЕЙ (видалити):</label>
+            <input type="text" id="answeredIds" placeholder="Напр: 1, 3, 8.1">
+        </div>
 
+        <div class="input-group">
+            <label class="section-title">3. Нові питання з Telegram: <span id="tgTotalCount" style="color: #666; font-weight: normal;"></span></label>
+            <textarea id="newTelegram" placeholder="Вставте експорт з Телеграму..."></textarea>
+        </div>
 
+        <div class="btn-row">
+            <button id="processTelegramBtn" class="action-btn primary">ОБРОБИТИ СПИСОК 🚀</button>
+            <button id="clearStateBtn" class="action-btn danger" style="width: auto; margin-left: 5px;" title="Очистити">🗑</button>
+        </div>
 
-    <tr>
-        <td><textarea id="textArea1_oldText" name="story" rows="5" cols="33">Input text example "POMOLITES POJALUISTA O VOPROSE"</textarea></td>
-    </tr>
-    <tr>
-        <td><textarea id="textArea2_generatedRuText" name="story" rows="5" cols="33"> </textarea></td>
-    </tr>
+        <div id="statsBar" class="stats-bar" style="display:none;">
+            <span class="stat-item old">Залишилось старих: <b id="countOld">0</b></span>
+            <span class="stat-item del">Видалено: <b id="countDel">0</b></span>
+            <span class="stat-item new">Нових: <b id="countNew">0</b></span>
+            <span class="stat-item total">Разом: <b id="countTotal">0</b></span>
+        </div>
 
+        <div class="input-group">
+            <label class="section-title">Результат:</label>
+            <div class="result-wrapper">
+                <button id="copyResultBtn" class="copy-btn-top">📋 Копіювати текст</button>
+                <div id="finalResultDiv" class="rich-editor" contenteditable="true"></div>
+            </div>
+        </div>
 
-</table>
+        <details id="deletedLogDetails" style="display:none; margin-top: 10px;">
+            <summary>🗑 Лог видаленого</summary>
+            <div id="deletedLog" class="deleted-log"></div>
+        </details>
+    </div>
 
-<button id="Translate">Translate</button>
+    <div id="tab-old" class="tab-content">
+        <h1>Transliteration</h1>
+        <table>
+            <tr><td><textarea id="textArea1_oldText" rows="5" placeholder="Input text..."></textarea></td></tr>
+            <tr><td><textarea id="textArea2_generatedRuText" rows="5"></textarea></td></tr>
+        </table>
+        <button id="Translate" class="action-btn">Translate</button>
 
-<script src = "popup.js"></script>
-<script>
-    // var newheight = window.height * (5/10);
-    // var newwidth = window.width * (7/10);
-    var newheight = 800;
-    var newwidth = 800;
-    window.resizeTo(newheight, newwidth);
-</script>
+        <hr>
+        <h3>Налаштування</h3>
+        <div class="settings-box">
+            <input type="text" id="sschoolName" placeholder="Назва СШ">
+            <button id="sschoolNameBtn" class="small-btn">Змінити СШ</button>
+        </div>
+        <div class="settings-box">
+            <input type="text" id="preachNameInput" placeholder="Назва Проповіді">
+            <button id="preachNameBtn" class="small-btn">Змінити Проповідь</button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>
