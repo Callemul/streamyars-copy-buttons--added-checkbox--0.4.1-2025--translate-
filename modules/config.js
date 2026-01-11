@@ -23,6 +23,12 @@ window.SYH_CONFIG = {
         bannerFormTextarea: 'form[class*="CreateBannerForm__Form"] textarea',
         bannerFormAddButton: 'form[class*="CreateBannerForm__Form"] button[type="submit"]',
 
+       // --- СЕЛЕКТОРИ ТАЙМЕРА (V4 - Smart Check) ---
+        timerDropdownButton: '#banner-timer-dropdown-button', 
+        timerOptionOffId: '#banner-timer-dropdown-option-null', 
+        // Цей текст має співпадати з тим, що написано на кнопці, коли таймер вимкнено
+        timerOffTextResult: 'Timer off',
+        
         // НОВІ СЕЛЕКТОРИ ДЛЯ НАГАДУВАННЯ
         streamStatusContainer: '[class*="Tags__Wrap"]', // Контейнер, де з'являється "Ended"
         reminderTargetContainer: '[data-testid="header-title-wrap"]' // Куди вставляти нагадування

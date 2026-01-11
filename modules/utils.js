@@ -78,4 +78,36 @@ window.SYH_UTILS = {
             }, interval);
         });
     }
+    ,
+
+    // --- НОВА ФУНКЦІЯ ---
+    // Шукає елемент за текстом (через XPath) і клікає по ньому
+    clickElementByText: function(text, timeout = 2000) {
+        return new Promise((resolve, reject) => {
+            const interval = 100;
+            let elapsedTime = 0;
+            const timer = setInterval(() => {
+                // XPath шукає будь-який елемент (*), що містить заданий текст
+                const xpath = `//*[contains(text(), '${text}')]`;
+                const matchingElement = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                if (matchingElement && $(matchingElement).is(':visible')) {
+                    // Перевіряємо, чи це клікабельний елемент або його батько
+                    matchingElement.click();
+                    clearInterval(timer);
+                    resolve();
+                }
+                
+                elapsedTime += interval;
+                if (elapsedTime >= timeout) {
+                    clearInterval(timer);
+                    // Не реджектимо жорстко, щоб не ламати весь процес, якщо меню не знайдено, але виводимо в консоль
+                    console.warn(`SYH: Element with text "${text}" not found.`);
+                    resolve(); // Продовжуємо навіть якщо не знайшли (таймер залишиться як був)
+                }
+            }, interval);
+        });
+    }
 };
+
+
