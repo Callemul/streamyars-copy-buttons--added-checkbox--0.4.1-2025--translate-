@@ -16,11 +16,17 @@ window.SYH_BANNER_CREATOR = {
 
     processAndCreateBanners: async function(rawText) {
         let questions = [];
+        let isStandardFormat = false;
 
+        // 1. Визначаємо формат
         if (/[1-9🔟]️⃣/.test(rawText)) {
+            this.log("Формат: Емодзі 1️⃣");
             questions = this.PARSERS.parseEmojiNumberedQuestions(rawText);
+            isStandardFormat = false; 
         } else {
+            this.log("Формат: Стандартний 1.");
             questions = this.PARSERS.parseStandardNumberedQuestions(rawText);
+            isStandardFormat = true;
         }
 
         if (questions.length === 0) {
@@ -28,80 +34,151 @@ window.SYH_BANNER_CREATOR = {
             return;
         }
 
+        // 2. ПРИМУСОВЕ ОЧИЩЕННЯ ПЕРЕД СТАРТОМ
+        // Це гарантує, що ми починаємо з закритої форми (Scenario A)
+        await this.ensureCleanStart(); 
+
         let createdCount = 0;
+        
+        // 3. Створення банерів
         for (const [index, question] of questions.entries()) {
             this.log(`>>> Обробка банера ${index + 1} з ${questions.length}`);
             try {
-                // Для ПЕРШОГО банера даємо трохи більше часу на "розгон" інтерфейсу
-                const pauseTime = index === 0 ? 1500 : 800;
+                // Для першого банера даємо більше часу, бо React "прокидається"
+                const pauseTime = index === 0 ? 1200 : 800;
                 await new Promise(r => setTimeout(r, pauseTime));
                 
-                await this.createSingleBanner(question);
+                // createSingleBanner сама відкриє форму
+                // true = це перший банер, треба "прогріти" меню
+                await this.createSingleBanner(question, index === 0);
                 createdCount++;
             } catch (error) {
                 console.error(error);
                 this.log(`Помилка: ${error.message}`);
+                // Аварійне закриття, щоб спробувати наступний
+                await this.finalCleanup();
             }
         }
         
-        await this.createSingleBanner("----Питання глядачів----");
-        alert(`Готово! Створено: ${createdCount} з ${questions.length}.`);
+        // 4. Розділювач (ТІЛЬКИ якщо це план ефіру)
+        if (isStandardFormat) {
+            this.log("Додаю розділювач...");
+            await new Promise(r => setTimeout(r, 600));
+            await this.createSingleBanner("----Питання глядачів----", false);
+            createdCount++;
+        }
+
+        // 5. Фінальне прибирання
+        await this.finalCleanup();
+
+        alert(`Готово! Створено: ${createdCount}.`);
     },
 
-    // Ця функція не випустить скрипт далі, поки таймер реально не стане OFF
-    makeSureTimerIsOff: async function() {
-        const MAX_ATTEMPTS = 5;
-        const timerBtnSelector = this.SELECTORS.timerDropdownButton;
-        // Використовуємо селектор з конфігу (там має бути #banner-timer-dropdown-option-null)
-        const offOptionSelector = this.SELECTORS.timerOptionOffId || '#banner-timer-dropdown-option-null';
+    // Закриває форму, якщо вона була відкрита до запуску скрипта
+    ensureCleanStart: async function() {
+        this.log("Перевірка на чистоту старту...");
+        const form = document.querySelector(this.SELECTORS.createBannerForm);
+        
+        if (form) {
+            this.log("Форма була відкрита. Закриваю (Cancel)...");
+            const cancelButton = form.querySelector('button:not([type="submit"])');
+            if (cancelButton) cancelButton.click();
+            // Чекаємо поки форма зникне
+            await new Promise(r => setTimeout(r, 800));
+        } else {
+            this.log("Форма закрита. Старт нормальний.");
+        }
+    },
 
-        for (let i = 0; i < MAX_ATTEMPTS; i++) {
-            // 1. Отримуємо актуальну кнопку
-            const timerBtn = document.querySelector(timerBtnSelector);
-            if (!timerBtn) return false;
-
-            // 2. Читаємо, що там написано ЗАРАЗ
-            const text = timerBtn.textContent || "";
-            // Якщо вже Timer off - чудово, виходимо
-            if (text.toLowerCase().includes("timer off")) {
-                this.log(`Перевірка: Таймер вимкнено (Спроба ${i+1}). ОК.`);
-                return true;
-            }
-
-            this.log(`Таймер стоїть на: "${text.trim()}". Пробую змінити... (Спроба ${i+1})`);
-
-            // 3. Відкриваємо меню
-            timerBtn.click();
-            
-            // 4. Чекаємо меню і клікаємо опцію
-            try {
-                // ВАЖЛИВА ЗМІНА: Ми не просто чекаємо паузу, ми чекаємо саме ПОЯВУ елемента
-                // Це вирішує проблему першого банера, коли меню вантажиться довше
-                const offOption = await this.UTILS.waitForElement(offOptionSelector, 2000);
-                
-                this.log(`Меню відкрито. Клікаю опцію (ID знайдено)...`);
-                offOption.click();
-
-                // 5. КРИТИЧНО: Чекаємо поки React опрацює клік
-                await new Promise(r => setTimeout(r, 600));
-
-            } catch (e) {
-                this.log(`Помилка пошуку ID в меню: ${e.message}. Пробую ще раз...`);
-                // Якщо меню зависло, спробуємо закрити його кліком по кнопці, щоб почати з чистого листа
-                const btn = document.querySelector(timerBtnSelector);
-                if (btn) btn.click();
+    // Закриває хвости (меню, форми) після роботи
+    finalCleanup: async function() {
+        // Закриваємо меню таймера, якщо висить (шукаємо ID, який є тільки в відкритому меню)
+        const offOption = document.getElementById('banner-timer-dropdown-option-null');
+        if (offOption) {
+            this.log("Прибирання: Закриваю меню таймера...");
+            const timerBtn = document.querySelector(this.SELECTORS.timerDropdownButton);
+            if (timerBtn) {
+                timerBtn.click();
                 await new Promise(r => setTimeout(r, 300));
             }
         }
 
-        this.log("НЕ ВДАЛОСЯ вимкнути таймер після всіх спроб.");
+        // Закриваємо форму
+        const form = document.querySelector(this.SELECTORS.createBannerForm);
+        if (form) {
+            this.log("Прибирання: Закриваю форму...");
+            const cancelButton = form.querySelector('button:not([type="submit"])');
+            if (cancelButton) cancelButton.click();
+        }
+    },
+
+    // Циклічна спроба вимкнути таймер
+    makeSureTimerIsOff: async function(isFirstRun) {
+        const MAX_LOOPS = 4;
+        const timerBtnSelector = this.SELECTORS.timerDropdownButton;
+        const offOptionId = 'banner-timer-dropdown-option-null';
+
+        // ХАК ДЛЯ ПЕРШОГО БАНЕРА: Відкрити/Закрити меню ("Прогрів")
+        // Це змушує React завантажити елементи в кеш
+        if (isFirstRun) {
+            this.log("Перший прохід: Прогріваю меню...");
+            const btn = document.querySelector(timerBtnSelector);
+            if (btn) {
+                btn.click(); // Відкрити
+                await new Promise(r => setTimeout(r, 500));
+                
+                // Якщо відкрилось - закрити
+                if (document.getElementById(offOptionId)) {
+                    btn.click(); 
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            }
+        }
+
+        // Основний цикл перевірки
+        for (let i = 0; i < MAX_LOOPS; i++) {
+            const timerBtn = document.querySelector(timerBtnSelector);
+            if (!timerBtn) return false;
+
+            // Перевірка тексту
+            const text = timerBtn.textContent || "";
+            if (text.toLowerCase().includes("timer off")) {
+                this.log(`Таймер вже OFF. ОК.`);
+                return true;
+            }
+
+            this.log(`Спроба ${i+1}: Таймер зараз "${text.trim()}". Змінюю...`);
+
+            // Клік по меню
+            timerBtn.click();
+            
+            try {
+                // Чекаємо ID кнопки OFF. 
+                // Якщо ID не з'явиться за 1.5 сек, викине помилку і піде в catch
+                const offOption = await this.UTILS.waitForElement(`#${offOptionId}`, 1500);
+                
+                this.log("Меню відкрито. Клікаю OFF...");
+                offOption.click();
+
+                // Чекаємо оновлення
+                await new Promise(r => setTimeout(r, 600));
+
+            } catch (e) {
+                this.log(`Меню не прогрузилось (ID не знайдено). Закриваю/Відкриваю знову...`);
+                // Якщо меню "зависло" або не відкрилось, клік по кнопці допоможе
+                const btn = document.querySelector(timerBtnSelector);
+                if (btn) btn.click();
+                await new Promise(r => setTimeout(r, 400));
+            }
+        }
+        
         return false;
     },
 
-    createSingleBanner: function(text) {
+    createSingleBanner: function(text, isFirstBanner) {
         return new Promise(async (resolve, reject) => {
             try {
-                // 1. Відкриваємо форму
+                // 1. Відкриваємо форму (вона гарантовано закрита функцією ensureCleanStart)
                 let createBtn = document.querySelector(this.SELECTORS.createBannerButton);
                 if (!createBtn) {
                      createBtn = await this.UTILS.waitForElement(this.SELECTORS.createBannerButton, 2000);
@@ -113,29 +190,26 @@ window.SYH_BANNER_CREATOR = {
                 const textarea = form.querySelector('textarea');
                 const addButton = form.querySelector('button[type="submit"]');
                 
-                // 3. Вставляємо текст
+                // 3. Вставка тексту
                 textarea.focus();
                 textarea.value = text;
                 textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                textarea.blur(); // Знімаємо фокус (важливо!)
                 
-                // ВАЖЛИВО: Робимо blur, щоб зафіксувати текст
-                textarea.blur();
-                
-                // Пауза залежить від довжини тексту
-                const waitTime = text.length > 50 ? 1000 : 500;
+                const waitTime = text.length > 50 ? 800 : 400;
                 await new Promise(r => setTimeout(r, waitTime));
 
-                // 4. ЗАЛІЗНА ЛОГІКА ТАЙМЕРА
-                await this.makeSureTimerIsOff();
+                // 4. ТАЙМЕР
+                await this.makeSureTimerIsOff(isFirstBanner);
 
-                // 5. Додаємо
+                // 5. Add Banner
                 if (addButton.disabled) await new Promise(r => setTimeout(r, 300));
                 addButton.click();
                 
-                // 6. Чекаємо банер
+                // 6. Чекаємо появи
                 await this.UTILS.waitForNewBanner(text, 6000);
                 
-                // 7. Закриваємо
+                // 7. Закриваємо форму
                 if (document.querySelector(this.SELECTORS.createBannerForm)) {
                     const cancelButton = form.querySelector('button:not([type="submit"])');
                     if (cancelButton) cancelButton.click();
