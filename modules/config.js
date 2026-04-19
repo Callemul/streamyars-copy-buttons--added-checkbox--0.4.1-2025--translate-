@@ -14,8 +14,9 @@ window.SYH_CONFIG = {
         bannerText: '[class*="Banner__BannerText"]',
         bannerHeader: '[class*="BannersHeader__Header"]',
         bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]',
-        // ТОЧНИЙ СЕЛЕКТОР для кнопки видалення (корзини)
-        bannerDeleteButton: 'button:has(svg path[d^="M6 19c0 1.1"])',
+        
+        // ОНОВЛЕНИЙ ТОЧНИЙ СЕЛЕКТОР для кнопки видалення (корзини) - тепер шукає нову іконку lucide-trash2
+        bannerDeleteButton: 'button:has(svg.lucide-trash2)',
 
         // Форма створення банера
         createBannerButton: '[class*="BannerList__BottomRow"] button',
