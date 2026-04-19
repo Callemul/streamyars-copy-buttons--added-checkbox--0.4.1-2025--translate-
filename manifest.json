@@ -27,7 +27,9 @@
         "modules/parsers.js",
         "modules/banner_creator.js",
         "modules/event_handlers.js",
+        "modules/video_copier.js",
         "main.js"
+        
       ]
     },
     {
