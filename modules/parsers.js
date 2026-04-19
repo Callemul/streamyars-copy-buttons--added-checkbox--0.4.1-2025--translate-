@@ -1,4 +1,3 @@
-// modules/parsers.js
 window.SYH_PARSERS = {
     /**
      * Парсер для формату з emoji-цифрами, що підтримує підпункти '🔹'.
@@ -63,9 +62,16 @@ window.SYH_PARSERS = {
      */
     parseStandardNumberedQuestions: function(rawText) {
         console.log("Parsing as Standard-numbered questions.");
-        return rawText.split('\n')
+        
+        // 1. Спочатку ми знаходимо всі місця, де є "цифра + крапка" (наприклад, " 1.", " 2.")
+        // і примусово ставимо перед ними перенесення рядка (\n).
+        // Це гарантує, що питання відірветься від вступного тексту ("Вопросы к уроку...").
+        const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
+
+        return formattedText.split('\n')
             .map(line => line.trim())
-            .filter(line => /^\d/.test(line))
+            // 2. Тепер безпечно фільтруємо: беремо тільки ті рядки, що починаються з "1.", "2." тощо
+            .filter(line => /^\d+\./.test(line))
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0 && line.length < 200);
     }
