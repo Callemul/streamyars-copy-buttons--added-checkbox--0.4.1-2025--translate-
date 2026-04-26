@@ -19,7 +19,8 @@ window.SYH_PARSERS = {
         const lines = rawText.split('\n').map(l => l.trim());
 
         for (const line of lines) {
-            if (/^([1-9]️⃣|🔟)+$/.test(line)) {
+            // Оновлена регулярка: підтримує всі варіанти цифр у квадратиках
+            if (/^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/.test(line)) {
                 if (currentQuestion) groupedQuestions.push(currentQuestion);
                 currentQuestion = { number: line, author: '', textLines: [] };
             } else if (currentQuestion && !currentQuestion.author && line) {
@@ -62,15 +63,10 @@ window.SYH_PARSERS = {
      */
     parseStandardNumberedQuestions: function(rawText) {
         console.log("Parsing as Standard-numbered questions.");
-        
-        // 1. Спочатку ми знаходимо всі місця, де є "цифра + крапка" (наприклад, " 1.", " 2.")
-        // і примусово ставимо перед ними перенесення рядка (\n).
-        // Це гарантує, що питання відірветься від вступного тексту ("Вопросы к уроку...").
         const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
 
         return formattedText.split('\n')
             .map(line => line.trim())
-            // 2. Тепер безпечно фільтруємо: беремо тільки ті рядки, що починаються з "1.", "2." тощо
             .filter(line => /^\d+\./.test(line))
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0 && line.length < 200);

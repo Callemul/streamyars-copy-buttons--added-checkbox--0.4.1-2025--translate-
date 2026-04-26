@@ -1,6 +1,3 @@
-// ==========================================
-// ЧАСТИНА 1: СТАРИЙ КОД
-// ==========================================
 var db = {};
 function translitToRussian(translitText) {
     const translitMap = { "A": "А", "B": "Б", "V": "В", "G": "Г", "D": "Д", "E": "Е", "YO": "Ё", "J": "Ж", "ZH": "Ж", "Z": "З", "I": "И", "Y": "Й", "K": "К", "L": "Л", "M": "М", "N": "Н", "O": "О", "P": "П", "R": "Р", "S": "С", "T": "Т", "U": "У", "F": "Ф", "H": "Х", "C": "Ц", "CH": "Ч", "SH": "Ш", "SHCH": "Щ", "YU": "Ю", "YA": "Я", "'": "ь", "Y'": "Ы", "X": "Х", "\"": "\"", ":": ":", ";": ";", ".": ".", ",": ",", "!": "!", "?": "?", "%": "%", "*": "*", "(": "(", ")": ")", "-": "-", "_": "_", "@": "@", "~": "~", "a": "а", "b": "б", "v": "в", "g": "г", "d": "д", "e": "е", "yo": "ё", "j": "ж", "zh": "ж", "z": "з", "i": "и", "y": "ы", "k": "к", "l": "л", "m": "м", "n": "н", "o": "о", "p": "п", "r": "р", "s": "с", "t": "т", "u": "у", "f": "ф", "h": "х", "c": "ц", "ch": "ч", "sh": "ш", "shch": "щ", "Yu": "Ю", "yu": "ю", "Ya": "Я", "ya": "я", "'": "ь", "y'": "ы", "x": "х" };
@@ -21,12 +18,15 @@ function translitToRussian(translitText) {
 }
 function saveDataToStorage() { chrome.storage.local.set({'db':db}); }
 
-// ==========================================
-// ЧАСТИНА 2: НОВИЙ КОД (ТЕЛЕГРАМ)
-// ==========================================
-
 $(document).ready(function(){
-    // ВІДНОВЛЕННЯ
+    if ($('#tgTotalCount').length === 0) {
+        $('label:contains("3. Нові питання з Telegram")').append(' <span id="tgTotalCount" style="color: #2b7de9; font-weight: bold; font-size: 12px;"></span>');
+    }
+    
+    if ($('.stat-item.total').length === 0) {
+        $('#statsBar').append('<span class="stat-item total" style="background:#e3f2fd; border:1px solid #2196f3; font-weight:bold;">Разом: <b id="countTotal">0</b></span>');
+    }
+
     chrome.storage.local.get(['tg_oldList', 'tg_answered', 'tg_newTelegram', 'db'], function(result) {
         if (result.tg_oldList) {
             $('#oldList').val(result.tg_oldList);
@@ -40,7 +40,6 @@ $(document).ready(function(){
         if(result.db) { db = result.db; if(db.newTitleSS) $("#sschoolName").val(db.newTitleSS); if(db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach); }
     });
 
-    // Лісенери
     $('#oldList').on('input', function() {
         chrome.storage.local.set({'tg_oldList': $(this).val()});
         updateOldInputStats();
@@ -96,37 +95,28 @@ $(document).ready(function(){
     });
 });
 
-// --- HELPERS ---
 function countQuestionsInText(text) {
     if (!text) return 0;
     const bullets = (text.match(/🔹/g) || []).length;
     return bullets > 0 ? bullets : 1;
 }
 
-// --- СТАТИСТИКА ВХІДНИХ ДАНИХ (СТАРИЙ СПИСОК) ---
 function updateOldInputStats() {
     const text = $('#oldList').val();
     if (!text) { $('#oldTotalCount').text(''); return; }
 
-    // Використовуємо ТОЙ САМИЙ ПАРСЕР, що і для обробки.
-    // Передаємо пустий масив filterIds, щоб нічого не видаляти і порахувати все.
     const parsed = parseAndFilterOldList(text, []); 
     
-    // Тепер це точні дані (19 людей)
     const qPeople = parsed.questions.length;
-    
-    // Рахуємо суму питань (підпунктів)
     let qQuestions = 0;
     parsed.questions.forEach(q => qQuestions += countQuestionsInText(q.text));
 
     const pCount = parsed.prayers.length;
     
-    // Формат: (19 людей - 34 питання | Молитви: 12)
-    $('#oldTotalCount').text(`(${qPeople} людей - ${qQuestions} питань | Молитви: ${pCount})`);
+    $('#oldTotalCount').text(`(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`);
     $('#oldTotalCount').css({'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px'});
 }
 
-// --- СТАТИСТИКА ВХІДНИХ ДАНИХ (НОВИЙ ТЕЛЕГРАМ) ---
 function updateNewInputStats() {
     const text = $('#newTelegram').val();
     if (!text) { $('#tgTotalCount').text(''); return; }
@@ -137,12 +127,9 @@ function updateNewInputStats() {
     let questionsCount = 0;
     items.forEach(q => questionsCount += countQuestionsInText(q.text));
 
-    $('#tgTotalCount').text(`(${peopleCount} людей - ${questionsCount} питань)`);
+    $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит.)`);
     $('#tgTotalCount').css({'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px'});
 }
-
-
-// --- ГОЛОВНА ЛОГІКА ОБРОБКИ ---
 
 function processTelegramData() {
     const oldListText = $('#oldList').val();
@@ -159,19 +146,14 @@ function processTelegramData() {
     const combinedQuestions = [...preservedData.questions, ...newItems];
     const combinedPrayers = [...preservedData.prayers];
 
-    // --- ПІДРАХУНОК РЕЗУЛЬТАТІВ ---
-    
-    // 1. Старі (що залишились)
     let oldPeople = preservedData.questions.length;
     let oldQuestionsTotal = 0;
     preservedData.questions.forEach(q => oldQuestionsTotal += countQuestionsInText(q.text));
 
-    // 2. Нові
     let newPeople = newItems.length;
     let newQuestionsTotal = 0;
     newItems.forEach(q => newQuestionsTotal += countQuestionsInText(q.text));
 
-    // 3. Видалені
     let delPeople = 0;
     let delQuestionsTotal = 0;
     
@@ -184,18 +166,15 @@ function processTelegramData() {
         }
     });
 
-    // 4. Разом
     let totalPeople = oldPeople + newPeople;
     let totalQuestions = oldQuestionsTotal + newQuestionsTotal;
 
-    // Оновлюємо UI Статистики
     $('.stat-item.old').html(`Залишилось старих: <b>${oldPeople} люд. - ${oldQuestionsTotal} пит.</b>`);
     $('#countDel').text(`${delPeople} люд. - ${delQuestionsTotal} пит.`);
     $('#countNew').text(`${newPeople} люд. - ${newQuestionsTotal} пит.`);
     $('#countTotal').text(`${totalPeople} люд. - ${totalQuestions} пит.`);
     $('#statsBar').show();
 
-    // Генерація HTML
     const outputDiv = $('#finalResultDiv');
     outputDiv.empty();
 
@@ -267,12 +246,11 @@ function parseAndFilterOldList(text, answeredIds) {
         let currentItem = null;
         let currentCounter = 0;
         
-        const emojiNumberRegex = /^([0-9]*[️⃣🔟])+\s*$/; 
+        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/; 
 
         lines.forEach(line => {
             const trimmedLine = line.trim();
             if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
-            // Важливо: це сміттєві рядки, які можуть поламати логіку, якщо їх не видалити
             if (trimmedLine.includes("Віталій Кривко")) return;
 
             if (emojiNumberRegex.test(trimmedLine)) {
