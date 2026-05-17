@@ -17,7 +17,7 @@ window.SYH_STATS_TRACKER = {
     setupObservers: function() {
         const self = this;
         
-        // Функція для вставки кнопки, яку ми будемо викликати і одразу, і при змінах DOM
+        // Функція для вставки кнопки в ШАПКУ (Header)
         function injectAnalyticsButton() {
             // Шукаємо центральний блок шапки та блок статусу
             const headerCenter = document.querySelector('[data-testid="header-center"]');
@@ -31,6 +31,7 @@ window.SYH_STATS_TRACKER = {
                 btnAnalytics.innerText = '📈 Аналітика';
                 btnAnalytics.title = 'Відкрити графіки ефіру';
                 
+                // Стилізація для шапки
                 btnAnalytics.style.cssText = `
                     background: #005DF7; 
                     color: white; 
@@ -43,9 +44,9 @@ window.SYH_STATS_TRACKER = {
                     height: 28px; 
                     display: inline-flex; 
                     align-items: center; 
-                    margin: 0 15px; /* Відступи по боках, щоб красиво розділити текст і статус */
+                    margin: 0 15px; 
                     transition: background 0.2s;
-                    flex-shrink: 0; /* Забороняємо стискати кнопку, якщо текст довгий */
+                    flex-shrink: 0; 
                     z-index: 100;
                 `;
                 
@@ -54,7 +55,7 @@ window.SYH_STATS_TRACKER = {
                 
                 btnAnalytics.onclick = () => self.showAnalyticsModal();
                 
-                // Робимо батьківський блок флексом, щоб елементи стали в один ряд по центру
+                // Вирівнюємо елементи в шапці
                 headerCenter.style.display = 'flex';
                 headerCenter.style.alignItems = 'center';
                 headerCenter.style.flexDirection = 'row';
@@ -64,10 +65,10 @@ window.SYH_STATS_TRACKER = {
             }
         }
 
-        // 1. Запускаємо одразу при ініціалізації (раптом шапка вже є)
-        setTimeout(injectAnalyticsButton, 1000); // невелика затримка для надійності
+        // Запускаємо одразу
+        setTimeout(injectAnalyticsButton, 1000); 
 
-        // 2. Запускаємо спостерігач, якщо сторінка оновлюється динамічно
+        // Спостерігач для динамічного оновлення
         const uiObserver = new MutationObserver(() => {
             injectAnalyticsButton();
         });
@@ -83,15 +84,15 @@ window.SYH_STATS_TRACKER = {
             const liveTag = document.querySelector('span[class*="Tags__LiveTag"]');
             if (!liveTag) return; 
 
-            // Намагаємось знайти поточну "програму" (бренд)
+            // Бренд (програма)
             const brandNode = document.querySelector('.BrandSelect__BrandNameText-sc-16g9tfx-1');
             if (brandNode) self.currentBrand = brandNode.innerText.trim();
 
-            // Витягуємо час
+            // Таймер
             const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]');
             const timerText = timerWrapper ? timerWrapper.innerText.replace(/\n/g, '').trim() : "0:00";
 
-            // Витягуємо глядачів
+            // Глядачі (з того самого блоку, що ти скинув)
             const viewerEl = document.querySelector('p[class*="ViewerCount__StatText"]');
             const viewerCount = viewerEl ? parseInt(viewerEl.innerText.trim(), 10) : 0;
 
@@ -108,6 +109,7 @@ window.SYH_STATS_TRACKER = {
                 const session = db[self.currentBrand][today];
                 const lastEntry = session.data[session.data.length - 1];
                 
+                // Захист від подвійного запису
                 if (lastEntry && lastEntry.time === timerText) return;
 
                 session.data.push({

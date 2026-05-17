@@ -16,8 +16,24 @@ window.SYH_EVENT_HANDLERS = {
     bindEvents: function() {
         const self = this;
 
+        // Вимикаємо стандартне меню при кліку правою кнопкою на кнопку 🙏
         $(document).on('contextmenu', '.syh-button[data-action="copy-prayer"]', function(e) {
             e.preventDefault();
+        });
+
+        // НОВЕ: Правий клік (ПКМ) по самому коментарю (прозорому покривалу) перемикає галочку!
+        $(document).on('contextmenu', '.PlatformComment__CoverButton-sc-qde2xw-2', function(e) {
+            e.preventDefault(); // Забороняємо стандартне меню браузера
+            e.stopPropagation();
+
+            const $commentBlock = $(this).closest(self.SELECTORS.commentBlock);
+            const $checkbox = $commentBlock.find('.syh-checkbox');
+            
+            if ($checkbox.length > 0) {
+                // Міняємо стан чекбокса на протилежний
+                const isChecked = $checkbox.prop('checked');
+                $checkbox.prop('checked', !isChecked).trigger('change');
+            }
         });
 
         $(document).on('mousedown', '.syh-button', function(e) {
@@ -31,7 +47,6 @@ window.SYH_EVENT_HANDLERS = {
                 const text = $commentBlock.find(self.SELECTORS.commentText).text();
                 self.removeFromDatabase(text);
                 
-                // ОНОВЛЕНО: Тепер використовуємо централізовану функцію
                 if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'none');
             }
         });
@@ -82,7 +97,6 @@ window.SYH_EVENT_HANDLERS = {
                     textToCopy = `@${author}\n\n${commentText}`; 
                     
                     self.saveToDatabase(author, commentText, "question", "❓");
-                    // ОНОВЛЕНО: Миттєво міняємо колір через UI функцію
                     if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'question');
                 }
                 else if (action === 'copy-prayer') { 
@@ -94,8 +108,12 @@ window.SYH_EVENT_HANDLERS = {
                     textToCopy = `\n\n\n${prayerIcon} @${author}\n\n${commentText}`; 
                     
                     self.saveToDatabase(author, commentText, "prayer", prayerIcon);
-                    // ОНОВЛЕНО: Миттєво міняємо колір через UI функцію
                     if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'prayer');
+
+                    // Автоматично ставимо відмітку на графік
+                    if (window.SYH_STATS_TRACKER) {
+                        window.SYH_STATS_TRACKER.registerPrayerMarker();
+                    }
                 }
                 
                 if (textToCopy) {
