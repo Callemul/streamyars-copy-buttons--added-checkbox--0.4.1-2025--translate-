@@ -1,121 +1,298 @@
 window.SYH_STATS_TRACKER = {
     intervalId: null,
-    
+    currentBrand: "DefaultShow",
+    chartInstance: null,
+    prayerMarkedThisMinute: false,
+
     init: function() {
+        this.setupObservers();
         this.startTracking();
-        this.injectExportButton();
+    },
+
+    registerPrayerMarker: function() {
+        this.prayerMarkedThisMinute = true;
+        console.log("[SYH] Автоматичну відмітку молитви зафіксовано для графіка!");
+    },
+
+    setupObservers: function() {
+        const self = this;
+        
+        // Функція для вставки кнопки, яку ми будемо викликати і одразу, і при змінах DOM
+        function injectAnalyticsButton() {
+            // Шукаємо центральний блок шапки та блок статусу
+            const headerCenter = document.querySelector('[data-testid="header-center"]');
+            const statusWrap = document.querySelector('[data-testid="header-status-wrap"]');
+            const existingBtn = document.getElementById('syh-analytics-btn');
+            
+            // Якщо блоки існують, а кнопки ще немає
+            if (headerCenter && statusWrap && !existingBtn) {
+                const btnAnalytics = document.createElement('button');
+                btnAnalytics.id = 'syh-analytics-btn';
+                btnAnalytics.innerText = '📈 Аналітика';
+                btnAnalytics.title = 'Відкрити графіки ефіру';
+                
+                btnAnalytics.style.cssText = `
+                    background: #005DF7; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 4px; 
+                    padding: 0 12px; 
+                    cursor: pointer; 
+                    font-weight: bold; 
+                    font-size: 13px; 
+                    height: 28px; 
+                    display: inline-flex; 
+                    align-items: center; 
+                    margin: 0 15px; /* Відступи по боках, щоб красиво розділити текст і статус */
+                    transition: background 0.2s;
+                    flex-shrink: 0; /* Забороняємо стискати кнопку, якщо текст довгий */
+                    z-index: 100;
+                `;
+                
+                btnAnalytics.onmouseenter = () => btnAnalytics.style.background = '#004BD6';
+                btnAnalytics.onmouseleave = () => btnAnalytics.style.background = '#005DF7';
+                
+                btnAnalytics.onclick = () => self.showAnalyticsModal();
+                
+                // Робимо батьківський блок флексом, щоб елементи стали в один ряд по центру
+                headerCenter.style.display = 'flex';
+                headerCenter.style.alignItems = 'center';
+                headerCenter.style.flexDirection = 'row';
+
+                // Вставляємо кнопку РІВНО МІЖ назвою та статусом
+                headerCenter.insertBefore(btnAnalytics, statusWrap);
+            }
+        }
+
+        // 1. Запускаємо одразу при ініціалізації (раптом шапка вже є)
+        setTimeout(injectAnalyticsButton, 1000); // невелика затримка для надійності
+
+        // 2. Запускаємо спостерігач, якщо сторінка оновлюється динамічно
+        const uiObserver = new MutationObserver(() => {
+            injectAnalyticsButton();
+        });
+        
+        uiObserver.observe(document.body, { childList: true, subtree: true });
     },
 
     startTracking: function() {
-        // Запускаємо перевірку кожні 60 секунд (60000 мілісекунд)
-        this.intervalId = setInterval(() => this.recordStats(), 60000);
-    },
-
-    recordStats: function() {
-        // Перевіряємо, чи ми взагалі зараз в ефірі (шукаємо плашку LIVE)
-        const liveTag = document.querySelector('span[class*="Tags__LiveTag"]');
-        if (!liveTag) return; // Якщо не в ефірі - нічого не пишемо
-
-        // Шукаємо час ефіру
-        const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]');
-        const timerText = timerWrapper ? timerWrapper.innerText.trim() : "0:00";
-
-        // Шукаємо кількість глядачів
-        const viewerEl = document.querySelector('p[class*="ViewerCount__StatText"]');
-        const viewerCount = viewerEl ? parseInt(viewerEl.innerText.trim(), 10) : 0;
-
-        if (isNaN(viewerCount)) return;
-
-        // Формуємо дати
-        const today = new Date().toISOString().split('T')[0]; // Наприклад: "2026-05-16"
-        const realTime = new Date().toLocaleTimeString('uk-UA'); // Наприклад: "22:15:30"
-
-        // Зберігаємо в пам'ять розширення
-        chrome.storage.local.get(['syh_stream_stats'], function(result) {
-            let allStats = result.syh_stream_stats || {};
-            
-            if (!allStats[today]) {
-                allStats[today] = [];
-            }
-            
-            // Захист від дублів (якщо ефір завис)
-            const lastEntry = allStats[today][allStats[today].length - 1];
-            if (lastEntry && lastEntry.streamTime === timerText) return;
-
-            // Додаємо новий запис
-            allStats[today].push({
-                realTime: realTime,
-                streamTime: timerText,
-                viewers: viewerCount
-            });
-
-            chrome.storage.local.set({ 'syh_stream_stats': allStats });
-        });
-    },
-
-    injectExportButton: function() {
-        const observer = new MutationObserver(() => {
-            // Шукаємо блок кнопок керування відео (там де кнопка Fullscreen)
-            const controlsWrapper = document.querySelector('div[class*="styled__VideoRightControlsWrapper"]');
-            
-            if (controlsWrapper && !document.getElementById('syh-export-stats-btn')) {
-                const btn = document.createElement('button');
-                btn.id = 'syh-export-stats-btn';
-                btn.innerText = '📊 CSV';
-                btn.title = 'Скачати статистику ефіру';
-                
-                btn.style.cssText = `
-                    background: #28a745; 
-                    color: white; 
-                    border: none; 
-                    border-radius: 4px;
-                    padding: 4px 10px; 
-                    margin-right: 15px; 
-                    cursor: pointer; 
-                    font-weight: bold;
-                    height: 24px;
-                    font-size: 12px;
-                    display: flex;
-                    align-items: center;
-                `;
-                
-                btn.onclick = () => this.exportCSV();
-                
-                // Вставляємо кнопку ПЕРЕД кнопкою Fullscreen
-                controlsWrapper.insertBefore(btn, controlsWrapper.firstChild);
-            }
-        });
+        const self = this;
         
-        observer.observe(document.body, { childList: true, subtree: true });
+        this.intervalId = setInterval(() => {
+            // Перевіряємо, чи ми зараз LIVE
+            const liveTag = document.querySelector('span[class*="Tags__LiveTag"]');
+            if (!liveTag) return; 
+
+            // Намагаємось знайти поточну "програму" (бренд)
+            const brandNode = document.querySelector('.BrandSelect__BrandNameText-sc-16g9tfx-1');
+            if (brandNode) self.currentBrand = brandNode.innerText.trim();
+
+            // Витягуємо час
+            const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]');
+            const timerText = timerWrapper ? timerWrapper.innerText.replace(/\n/g, '').trim() : "0:00";
+
+            // Витягуємо глядачів
+            const viewerEl = document.querySelector('p[class*="ViewerCount__StatText"]');
+            const viewerCount = viewerEl ? parseInt(viewerEl.innerText.trim(), 10) : 0;
+
+            if (isNaN(viewerCount)) return;
+
+            const today = new Date().toISOString().split('T')[0];
+
+            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+                let db = result.syh_stream_charts || {};
+                
+                if (!db[self.currentBrand]) db[self.currentBrand] = {};
+                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [], markers: [] };
+
+                const session = db[self.currentBrand][today];
+                const lastEntry = session.data[session.data.length - 1];
+                
+                if (lastEntry && lastEntry.time === timerText) return;
+
+                session.data.push({
+                    time: timerText,
+                    viewers: viewerCount
+                });
+                
+                if (self.prayerMarkedThisMinute) {
+                    session.markers.push(timerText);
+                    self.prayerMarkedThisMinute = false; 
+                }
+
+                chrome.storage.local.set({ 'syh_stream_charts': db });
+            });
+        }, 60000); 
     },
 
-    exportCSV: function() {
+    showAnalyticsModal: function() {
+        if (document.getElementById('syh-chart-modal')) return;
+
+        const modalHtml = `
+            <div id="syh-chart-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999999; display: flex; align-items: center; justify-content: center;">
+                <div style="background: #1B1F29; border-radius: 12px; width: 900px; max-width: 95vw; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0; font-size: 20px;">📈 Аналітика ефіру: <span style="color: #005DF7;">${this.currentBrand}</span></h2>
+                        <button id="syh-close-chart" style="background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; padding: 0 10px;">&times;</button>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center;">
+                        <label style="font-size: 14px; color: #ccc;">Порівняти з минулим ефіром:</label>
+                        <select id="syh-compare-select" style="padding: 6px; border-radius: 4px; background: #2A303C; color: white; border: 1px solid #4F5461; outline: none; cursor: pointer;">
+                            <option value="none">--- Не порівнювати ---</option>
+                        </select>
+                        <button id="syh-dl-csv-btn" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold; margin-left: auto; transition: 0.2s;">📥 Завантажити CSV</button>
+                    </div>
+
+                    <div style="position: relative; height: 400px; width: 100%;">
+                        <canvas id="syhChartCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        document.getElementById('syh-close-chart').onclick = () => {
+            document.getElementById('syh-chart-modal').remove();
+            if (this.chartInstance) this.chartInstance.destroy();
+        };
+
+        this.loadChartData();
+    },
+
+    loadChartData: function() {
+        const self = this;
         const today = new Date().toISOString().split('T')[0];
-        
-        chrome.storage.local.get(['syh_stream_stats'], function(result) {
-            const allStats = result.syh_stream_stats || {};
-            const todayStats = allStats[today];
 
-            if (!todayStats || todayStats.length === 0) {
-                alert("Немає даних за сьогодні. Ефір ще не йшов або статистика ще не зібралась (зачекайте 1 хвилину після старту).");
-                return;
-            }
-
-            // Додаємо BOM (\uFEFF), щоб Excel нормально читав кирилицю
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "Реальний час,Час ефіру,Глядачі онлайн\n";
-
-            todayStats.forEach(row => {
-                csvContent += `${row.realTime},${row.streamTime},${row.viewers}\n`;
+        chrome.storage.local.get(['syh_stream_charts'], function(result) {
+            const db = result.syh_stream_charts || {};
+            const brandData = db[self.currentBrand] || {};
+            
+            const select = document.getElementById('syh-compare-select');
+            const dates = Object.keys(brandData).filter(d => d !== today).sort().reverse();
+            
+            dates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d;
+                select.appendChild(opt);
             });
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Stream_Stats_${today}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            self.renderChart(brandData[today], null);
+
+            select.onchange = (e) => {
+                const pastDate = e.target.value;
+                const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
+                self.renderChart(brandData[today], pastData);
+            };
+
+            document.getElementById('syh-dl-csv-btn').onclick = () => {
+                self.exportCSV(brandData[today], today);
+            };
         });
+    },
+
+    renderChart: function(todayData, pastData) {
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+        }
+
+        if (!todayData || !todayData.data || todayData.data.length === 0) {
+            const ctx = document.getElementById('syhChartCanvas').getContext('2d');
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#aaa";
+            ctx.fillText("Немає даних. Ефір ще не йшов або Ви ще не були LIVE жодної хвилини.", 20, 50);
+            return;
+        }
+
+        const labels = todayData.data.map(d => d.time);
+        const viewersToday = todayData.data.map(d => d.viewers);
+
+        const datasets = [
+            {
+                label: 'Глядачі (Сьогодні)',
+                data: viewersToday,
+                borderColor: '#005DF7',
+                backgroundColor: 'rgba(0, 93, 247, 0.1)',
+                type: 'line',
+                yAxisID: 'y',
+                fill: true,
+                tension: 0.4
+            }
+        ];
+
+        if (pastData && pastData.data) {
+            const viewersPast = labels.map(time => {
+                const p = pastData.data.find(d => d.time === time);
+                return p ? p.viewers : null;
+            });
+
+            datasets.push({
+                label: 'Глядачі (Минулий раз)',
+                data: viewersPast,
+                borderColor: '#888',
+                borderDash: [5, 5],
+                type: 'line',
+                yAxisID: 'y',
+                tension: 0.4
+            });
+        }
+
+        if (typeof Chart === 'undefined') {
+            alert("Помилка: Бібліотека Chart.js не завантажена. Перевірте, чи є файл lib/chart.js");
+            return;
+        }
+
+        const ctx = document.getElementById('syhChartCanvas').getContext('2d');
+        this.chartInstance = new Chart(ctx, {
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { ticks: { color: '#ccc' } },
+                    y: { 
+                        type: 'linear', display: true, position: 'left',
+                        title: { display: true, text: 'Глядачі онлайн', color: '#005DF7' },
+                        ticks: { color: '#ccc' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: 'white' } },
+                    tooltip: {
+                        callbacks: {
+                            afterBody: function(context) {
+                                const time = context[0].label;
+                                if (todayData.markers && todayData.markers.includes(time)) {
+                                    return '\n📍 БУЛА ВІДМІТКА (Молитва/Подяка)';
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    },
+
+    exportCSV: function(dataObj, dateStr) {
+        if (!dataObj || !dataObj.data) return;
+        let csv = "data:text/csv;charset=utf-8,\uFEFFЧас Ефіру,Глядачі,Відмітка\n";
+        
+        dataObj.data.forEach(row => {
+            const hasMarker = (dataObj.markers && dataObj.markers.includes(row.time)) ? "ТАК" : "";
+            csv += `${row.time},${row.viewers},${hasMarker}\n`;
+        });
+
+        const encodedUri = encodeURI(csv);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `StreamStats_${this.currentBrand}_${dateStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 };

@@ -46,6 +46,14 @@
                 $node.find(SELECTORS.commentBlock).addBack($node.filter(SELECTORS.commentBlock)).each((i, el) => SYH_UI.addButtonsToComment(el));
                 $node.find(SELECTORS.bannerBlock).addBack($node.filter(SELECTORS.bannerBlock)).each((i, el) => { SYH_UI.addButtonsToBanner(el); bannerStateChanged = true; });
                 $node.find(SELECTORS.bannerHeader).addBack($node.filter(SELECTORS.bannerHeader)).each((i, el) => SYH_UI.addBannerHeaderControls(el));
+                // НОВЕ: Ловимо заголовок Starred коментарів
+                $node.find('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5').addBack($node.filter('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5')).each((i, el) => SYH_UI.addStarredTabControls(el));
+                // Якщо додано коментар у Starred - застосовуємо поточні фільтри
+                if ($node.hasClass('StarredCommentList__ItemWrap-sc-1qtlqu2-6') || $node.closest('.StarredCommentList__List-sc-1qtlqu2-1').length > 0) {
+                    if (window.SYH_UI && typeof window.SYH_UI.filterStarredComments === 'function') {
+                        setTimeout(() => window.SYH_UI.filterStarredComments(), 50);
+                    }
+                }
             }
             if (mutation.removedNodes.length > 0) bannerStateChanged = true;
         }

@@ -20,6 +20,7 @@
       "css": ["styles.css"],
       "js": [
         "lib/jquery-3.5.0.js",
+        "lib/chart.js",
         "modules/config.js",
         "modules/state.js",
         "modules/utils.js",

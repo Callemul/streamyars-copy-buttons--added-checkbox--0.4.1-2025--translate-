@@ -1,4 +1,3 @@
-// modules/event_handlers.js
 window.SYH_EVENT_HANDLERS = {
     SELECTORS: null,
     STATE: null,
@@ -17,13 +16,35 @@ window.SYH_EVENT_HANDLERS = {
     bindEvents: function() {
         const self = this;
 
-        $(document).on('click', '.syh-button', function(e) {
+        $(document).on('contextmenu', '.syh-button[data-action="copy-prayer"]', function(e) {
+            e.preventDefault();
+        });
+
+        $(document).on('mousedown', '.syh-button', function(e) {
+            if (e.button === 1) e.preventDefault(); 
+        });
+
+        $(document).on('click', self.SELECTORS.starButton, function() {
+            const $btn = $(this);
+            if ($btn.attr('aria-selected') === 'true') {
+                const $commentBlock = $btn.closest(self.SELECTORS.commentBlock);
+                const text = $commentBlock.find(self.SELECTORS.commentText).text();
+                self.removeFromDatabase(text);
+                
+                // ОНОВЛЕНО: Тепер використовуємо централізовану функцію
+                if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'none');
+            }
+        });
+
+        $(document).on('mouseup', '.syh-button', function(e) {
             e.preventDefault();
             e.stopPropagation();
 
             const $button = $(this);
             const action = $button.data('action');
             const type = $button.data('type');
+
+            if (e.button !== 0 && action !== 'copy-prayer') return;
 
             if (action === 'create-from-text') {
                 const text = prompt("Вставте список питань для створення банерів:", "");
@@ -33,18 +54,12 @@ window.SYH_EVENT_HANDLERS = {
             
             if (action === 'delete-selected-banners') {
                 const $checkedBanners = $('.syh-checkbox[data-type="banner"]:checked');
-                if ($checkedBanners.length === 0) {
-                    alert("Немає вибраних банерів для видалення.");
-                    return;
-                }
+                if ($checkedBanners.length === 0) return;
+                
                 if (confirm(`Ви впевнені, що хочете видалити ${$checkedBanners.length} банер(ів)?`)) {
                     $checkedBanners.each(function() {
                         const deleteButton = $(this).closest(self.SELECTORS.bannerBlock).find(self.SELECTORS.bannerDeleteButton)[0];
-                        if (deleteButton) {
-                            deleteButton.click();
-                        } else {
-                            console.error("Не вдалося знайти кнопку видалення для банера:", $(this).closest(self.SELECTORS.bannerBlock).find(self.SELECTORS.bannerText).text());
-                        }
+                        if (deleteButton) deleteButton.click();
                     });
                 }
                 return;
@@ -52,19 +67,44 @@ window.SYH_EVENT_HANDLERS = {
 
             if (type === 'comment') {
                 const $commentBlock = $button.closest(self.SELECTORS.commentBlock);
-                const author = $commentBlock.find(self.SELECTORS.commentAuthor).text();
-                const comment = $commentBlock.find(self.SELECTORS.commentText).text();
+                let author = $commentBlock.find(self.SELECTORS.commentAuthor).text().trim();
+                while(author.startsWith('@')) author = author.substring(1);
+
+                const commentText = $commentBlock.find(self.SELECTORS.commentText).text();
                 let textToCopy, header;
-                if (action === 'copy-comment') { header = "📄 Комент (без автора)"; textToCopy = comment; }
-                else if (action === 'copy-author-comment') { header = "📑 Автор і його 📄 комент"; textToCopy = `${author}\n\n${comment}`; }
-                else if (action === 'copy-prayer') { header = "📑 Автор і його 🙏 прохання"; textToCopy = `\n\n\n🙏🙏🙏 ${author}\n\n${comment}`; }
+                
+                if (action === 'copy-comment') { 
+                    header = "📄 Комент (без автора)"; 
+                    textToCopy = commentText; 
+                }
+                else if (action === 'copy-author-comment') { 
+                    header = "📑 Автор і його ❓ питання"; 
+                    textToCopy = `@${author}\n\n${commentText}`; 
+                    
+                    self.saveToDatabase(author, commentText, "question", "❓");
+                    // ОНОВЛЕНО: Миттєво міняємо колір через UI функцію
+                    if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'question');
+                }
+                else if (action === 'copy-prayer') { 
+                    let prayerIcon = "🙏🙏🙏";
+                    if (e.button === 1) prayerIcon = "🙏❤️🙏"; 
+                    if (e.button === 2) prayerIcon = "❤️❤️❤️"; 
+                    
+                    header = `📑 Автор і його ${prayerIcon}`; 
+                    textToCopy = `\n\n\n${prayerIcon} @${author}\n\n${commentText}`; 
+                    
+                    self.saveToDatabase(author, commentText, "prayer", prayerIcon);
+                    // ОНОВЛЕНО: Миттєво міняємо колір через UI функцію
+                    if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'prayer');
+                }
                 
                 if (textToCopy) {
                     self.UTILS.copyAndShowBanner(textToCopy, header);
                     $commentBlock.find('.syh-checkbox').prop('checked', true).trigger('change');
-                    if (action === 'copy-author-comment') {
-                        const $starButton = $commentBlock.find(self.SELECTORS.starButton);
-                        if ($starButton.length > 0 && $starButton.attr('aria-selected') === 'false') $starButton.trigger('click');
+                    
+                    const $starButton = $commentBlock.find(self.SELECTORS.starButton);
+                    if ($starButton.length > 0 && $starButton.attr('aria-selected') === 'false') {
+                        $starButton.trigger('click');
                     }
                 }
             } else if (type === 'banner') {
@@ -75,16 +115,13 @@ window.SYH_EVENT_HANDLERS = {
             }
         });
 
-        $(document).on('click', '.syh-checkbox', function(e) {
-            e.stopPropagation();
-        });
-
+        $(document).on('click', '.syh-checkbox', function(e) { e.stopPropagation(); });
         $(document).on('change', '.syh-checkbox', function(e) {
             const $checkbox = $(this);
             const type = $checkbox.data('type');
-            let textKey = '';
-            if (type === 'comment') textKey = $checkbox.closest(self.SELECTORS.commentBlock).find(self.SELECTORS.commentText).text();
-            else if (type === 'banner') textKey = $checkbox.closest(self.SELECTORS.bannerBlock).find(self.SELECTORS.bannerText).text();
+            let textKey = type === 'comment' 
+                ? $checkbox.closest(self.SELECTORS.commentBlock).find(self.SELECTORS.commentText).text()
+                : $checkbox.closest(self.SELECTORS.bannerBlock).find(self.SELECTORS.bannerText).text();
             
             self.STATE.updateState(textKey, $checkbox.is(':checked'));
             if (type === 'banner') self.UI.updateMasterCheckboxState();
@@ -94,6 +131,23 @@ window.SYH_EVENT_HANDLERS = {
             const isChecked = $(this).is(':checked');
             $(this).prop('indeterminate', false);
             $(self.SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
+        });
+    },
+
+    saveToDatabase: function(author, text, type, icon) {
+        chrome.storage.local.get(['syh_prayers'], function(result) {
+            let list = result.syh_prayers || [];
+            list = list.filter(item => item.text !== text);
+            list.push({ author: author, text: text, type: type, icon: icon });
+            chrome.storage.local.set({ 'syh_prayers': list });
+        });
+    },
+
+    removeFromDatabase: function(text) {
+        chrome.storage.local.get(['syh_prayers'], function(result) {
+            let list = result.syh_prayers || [];
+            list = list.filter(item => item.text !== text);
+            chrome.storage.local.set({ 'syh_prayers': list });
         });
     }
 };
