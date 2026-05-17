@@ -70,6 +70,9 @@
             window.SYH_VIDEO_COPIER.init();
         }
 
+        // Запуск трекера статистики
+        if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
+
         // Прив'язуємо обробники подій
         SYH_EVENT_HANDLERS.bindEvents();
 

@@ -5,9 +5,10 @@ window.SYH_VIDEO_COPIER = {
 
     startObserver: function() {
         const observer = new MutationObserver(() => {
-            this.injectTitleButton(); // Для сторінки окремого відео
-            this.injectModalButton(); // Для модалки "Share"
-            this.injectListButtons(); // НОВЕ: Для загального списку відео
+            this.injectTitleButton();
+            this.injectModalButton();
+            this.injectListButtons();
+            this.injectMasterDownloadButton();
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
@@ -114,32 +115,38 @@ window.SYH_VIDEO_COPIER = {
         }
     },
 
-    // --- НОВЕ: КНОПКИ В ЗАГАЛЬНОМУ СПИСКУ ВІДЕО ---
+    // --- КНОПКИ В ЗАГАЛЬНОМУ СПИСКУ ВІДЕО ---
     injectListButtons: function() {
-        // Знаходимо всі карточки відео
         const videoCards = document.querySelectorAll('a.media-item-card');
         const now = new Date();
+        now.setHours(0, 0, 0, 0); // Обнуляємо години для чистого підрахунку днів
+        let foundSS = false; 
 
         videoCards.forEach(card => {
-            // Перевіряємо, чи ми вже не додали сюди кнопки
-            if (card.querySelector('.syh-list-controls')) return;
-
-            // Витягуємо дату створення відео
             const dateElement = card.querySelector('[data-testid="library-media-subtitle"]');
-            if (!dateElement) return;
+            const titleElement = card.querySelector('span[class*="MediaTitle"]');
+            
+            if (!dateElement || !titleElement) return;
 
-            // Формат дати: "May 9, 2026, 07:05 PM"
-            // Відрізаємо час, залишаємо "May 9, 2026" і парсимо
+            const videoTitle = titleElement.innerText.toUpperCase();
             const dateString = dateElement.innerText.split(',').slice(0,2).join(',');
             const videoDate = new Date(dateString);
             
-            // Якщо дату розпізнано
             if (!isNaN(videoDate)) {
-                const diffTime = Math.abs(now - videoDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                videoDate.setHours(0, 0, 0, 0);
+                // Рахуємо чисті дні
+                const diffDays = Math.round(Math.abs(now - videoDate) / (1000 * 60 * 60 * 24)); 
+                let isFresh = (diffDays <= 5);
 
-                // Додаємо кнопки ТІЛЬКИ якщо відео свіже (не старіше 7 днів)
-                if (diffDays <= 7) {
+                if (isFresh && videoTitle.includes('СУББОТНЯЯ ШКОЛА')) {
+                    if (foundSS) {
+                        isFresh = false; 
+                    } else {
+                        foundSS = true; 
+                    }
+                }
+
+                if (isFresh && !card.querySelector('.syh-list-controls')) {
                     this.appendButtonsToCard(card);
                 }
             }
@@ -147,33 +154,26 @@ window.SYH_VIDEO_COPIER = {
     },
 
     appendButtonsToCard: function(card) {
-        // Знаходимо контейнер з кнопкою "три крапки", щоб вставити наші кнопки ПЕРЕД нею
         const menuContainer = card.querySelector('div[class*="MediaCardMenu"]');
         if (!menuContainer) return;
 
-        // Створюємо нашу обгортку
         const controlsWrap = document.createElement('div');
         controlsWrap.className = 'syh-list-controls';
         controlsWrap.style.cssText = 'display: flex; gap: 8px; margin-right: 12px; z-index: 10; position: relative;';
 
-        // Витягуємо заголовок (для першої кнопки)
         const titleElement = card.querySelector('span[class*="MediaTitle"]');
         const videoTitle = titleElement ? titleElement.innerText.trim() : 'Назву не знайдено';
 
-        // Витягуємо ID відео з href, щоб сформувати повне посилання (для другої кнопки)
-        // href виглядає як "/teams/P4ZVhrlIiAbRLoNRYER4F4JY/videos/swxz83ry8sgz"
         const href = card.getAttribute('href');
         const videoId = href ? href.split('/').pop() : '';
         const videoFullUrl = `https://streamyard.com/${videoId}`;
 
-        // Кнопка 1: Копіювати Назву (Іконка Тексту/Документа)
         const btnCopyTitle = this.createSquareButton('📝', 'Копіювати назву', () => {
             navigator.clipboard.writeText(videoTitle).then(() => {
                 this.tempIconChange(btnCopyTitle, '✅');
             });
         });
 
-        // Кнопка 2: Копіювати URL + Текст (Іконка Лінки)
         const btnCopyUrl = this.createSquareButton('🔗', 'Копіювати посилання', () => {
             if (videoId) {
                 const finalString = `Видео (в хорошем качестве)\n\n${videoFullUrl}`;
@@ -185,7 +185,6 @@ window.SYH_VIDEO_COPIER = {
             }
         });
 
-        // Зупиняємо перехід по посиланню (клік на карточку), коли клацаємо на наші кнопки
         controlsWrap.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -193,17 +192,14 @@ window.SYH_VIDEO_COPIER = {
 
         controlsWrap.appendChild(btnCopyTitle);
         controlsWrap.appendChild(btnCopyUrl);
-
-        // Вставляємо наш контейнер перед меню "три крапки"
         menuContainer.parentNode.insertBefore(controlsWrap, menuContainer);
     },
 
     createSquareButton: function(icon, tooltipText, onClickCallback) {
         const btn = document.createElement('button');
         btn.innerHTML = icon;
-        btn.title = tooltipText; // Вбудована підказка при наведенні
+        btn.title = tooltipText;
         
-        // Стилізуємо під розмір їхньої кнопки "три крапки" (приблизно 32x32)
         btn.style.cssText = `
             width: 32px;
             height: 32px;
@@ -239,5 +235,129 @@ window.SYH_VIDEO_COPIER = {
         setTimeout(() => {
             btn.innerHTML = originalIcon;
         }, 2000);
+    },
+
+    // --- ГОЛОВНА КНОПКА МАСОВОГО СКАЧУВАННЯ ---
+    injectMasterDownloadButton: function() {
+        const listContainer = document.querySelector('div[class*="ListWrap"]');
+        
+        if (listContainer && !document.getElementById('syh-master-download-btn')) {
+            const btn = document.createElement('button');
+            btn.id = 'syh-master-download-btn';
+            btn.innerText = '📥 Завантажити всі свіжі відео (Video Only)';
+            btn.style.cssText = `
+                display: block; width: 100%; padding: 15px; margin-bottom: 20px;
+                background-color: #005DF7; color: white; font-size: 16px; font-weight: bold;
+                border: none; border-radius: 8px; cursor: pointer;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
+            `;
+            
+            btn.onmouseover = () => btn.style.backgroundColor = '#0047cc';
+            btn.onmouseout = () => btn.style.backgroundColor = '#005DF7';
+
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                btn.innerText = '⏳ Запускаю завантаження... Не чіпайте мишку!';
+                btn.style.backgroundColor = '#f39c12';
+                btn.disabled = true;
+
+                await this.downloadAllFreshVideos();
+
+                btn.innerText = '✅ Всі завантаження ініційовано!';
+                btn.style.backgroundColor = '#28a745';
+                setTimeout(() => {
+                    btn.innerText = '📥 Завантажити всі свіжі відео (Video Only)';
+                    btn.style.backgroundColor = '#005DF7';
+                    btn.disabled = false;
+                }, 5000);
+            };
+
+            listContainer.parentNode.insertBefore(btn, listContainer);
+        }
+    },
+
+    downloadAllFreshVideos: async function() {
+        const videoCards = document.querySelectorAll('a.media-item-card');
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Обнуляємо години
+        const freshCards = [];
+        let foundSS = false;
+
+        videoCards.forEach(card => {
+            const dateElement = card.querySelector('[data-testid="library-media-subtitle"]');
+            const titleElement = card.querySelector('span[class*="MediaTitle"]');
+            
+            if (dateElement && titleElement) {
+                const videoTitle = titleElement.innerText.toUpperCase();
+                const dateString = dateElement.innerText.split(',').slice(0,2).join(',');
+                const videoDate = new Date(dateString);
+                
+                if (!isNaN(videoDate)) {
+                    videoDate.setHours(0, 0, 0, 0);
+                    const diffDays = Math.round(Math.abs(now - videoDate) / (1000 * 60 * 60 * 24));
+                    let isFresh = (diffDays <= 5);
+
+                    if (isFresh && videoTitle.includes('СУББОТНЯЯ ШКОЛА')) {
+                        if (foundSS) {
+                            isFresh = false;
+                        } else {
+                            foundSS = true;
+                        }
+                    }
+
+                    if (isFresh) {
+                        freshCards.push(card);
+                    }
+                }
+            }
+        });
+
+        if (freshCards.length === 0) {
+            alert("Немає свіжих відео для завантаження.");
+            return;
+        }
+
+        console.log(`[SYH] Знайдено ${freshCards.length} свіжих відео для скачування.`);
+
+        for (let i = 0; i < freshCards.length; i++) {
+            const card = freshCards[i];
+            try {
+                // 1. Клік на 3 крапки
+                const moreBtn = card.querySelector('button[aria-label="More options"]');
+                if (moreBtn) moreBtn.click();
+                await new Promise(r => setTimeout(r, 600));
+
+                // 2. Клік на Download у меню
+                const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0'));
+                const downloadSpan = menuItems.find(el => el.innerText.includes('Download'));
+                if (downloadSpan) {
+                    downloadSpan.closest('button').click();
+                }
+                
+                // 3. Чекаємо на появу модального вікна
+                await new Promise(r => setTimeout(r, 1200));
+
+                // 4. Клік на кнопку завантаження ВІДЕО
+                const videoDownloadBtn = document.querySelector('[data-testid="download-row-download-button-video"]');
+                if (videoDownloadBtn) {
+                    videoDownloadBtn.click();
+                    console.log(`[SYH] Завантаження ${i+1} розпочато.`);
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+
+                // 5. Закриваємо модалку
+                const closeBtn = document.querySelector('button[aria-label="Close modal"]');
+                if (closeBtn) {
+                    closeBtn.click();
+                } else {
+                    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));
+                }
+
+                await new Promise(r => setTimeout(r, 1000));
+
+            } catch (err) {
+                console.error(`[SYH] Помилка на відео ${i+1}: `, err);
+            }
+        }
     }
 };
