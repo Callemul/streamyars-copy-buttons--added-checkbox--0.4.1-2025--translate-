@@ -29,7 +29,7 @@
 
   chrome.notifications.create('test', {
     type: 'basic',
-    iconUrl: '1.png',
+    iconUrl: 'assets/imgs/1.png',
     title: 'Test Message',
     message: 'You are awesome!',
     priority: 2

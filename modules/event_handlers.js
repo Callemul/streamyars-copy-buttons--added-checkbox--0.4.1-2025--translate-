@@ -1,3 +1,4 @@
+// event_handlers.js
 window.SYH_EVENT_HANDLERS = {
     SELECTORS: null,
     STATE: null,
@@ -22,7 +23,8 @@ window.SYH_EVENT_HANDLERS = {
         });
 
         // НОВЕ: Правий клік (ПКМ) по самому коментарю (прозорому покривалу) перемикає галочку!
-        $(document).on('contextmenu', '.PlatformComment__CoverButton-sc-qde2xw-2', function(e) {
+        // Використовуємо стабільний селектор, що стійкий до оновлень StreamYard
+        $(document).on('contextmenu', '[class*="PlatformComment__CoverButton"]', function(e) {
             e.preventDefault(); // Забороняємо стандартне меню браузера
             e.stopPropagation();
 
@@ -33,6 +35,18 @@ window.SYH_EVENT_HANDLERS = {
                 // Міняємо стан чекбокса на протилежний
                 const isChecked = $checkbox.prop('checked');
                 $checkbox.prop('checked', !isChecked).trigger('change');
+            }
+        });
+
+        // Автоматична відмітка чекбоксу (Auto-check on Show/Hide) при взаємодії з кнопками екрану
+        $(document).on('click', 'button[data-testid="show-comment-button"], button[data-testid="hide-comment-button"]', function() {
+            const $commentBlock = $(this).closest(self.SELECTORS.commentBlock);
+            if ($commentBlock.length === 0) return;
+
+            const $checkbox = $commentBlock.find('.syh-checkbox');
+            if ($checkbox.length > 0 && !$checkbox.prop('checked')) {
+                $checkbox.prop('checked', true).trigger('change');
+                console.log("SYH_EVENT_HANDLERS: Клікнуто кнопку відображення/приховування коментаря. Автоматично встановлено checked = true.");
             }
         });
 

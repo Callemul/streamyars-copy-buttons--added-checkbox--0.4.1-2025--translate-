@@ -1,3 +1,4 @@
+// ui.js
 window.SYH_UI = {
     SELECTORS: null,
     STATE: null,
@@ -38,7 +39,9 @@ window.SYH_UI = {
             $targetContainer.append(buttonsHTML);
             
             const commentText = $(commentNode).find(this.SELECTORS.commentText).text();
-            if (this.STATE.getCheckedState(commentText)) {
+            
+            // Відновлення стану збереженого чекбокса
+            if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(commentText)) {
                 $targetContainer.find('.syh-checkbox').prop('checked', true);
             }
             this.applySavedLabels(commentNode, commentText);
@@ -186,7 +189,11 @@ window.SYH_UI = {
                 </div>`;
             $bannerWrap.append(buttonsHTML);
             const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
-            if (this.STATE.getCheckedState(bannerText)) $bannerWrap.find('.syh-checkbox').prop('checked', true);
+            
+            // Відновлення стану збереженого чекбокса на банерах
+            if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(bannerText)) {
+                $bannerWrap.find('.syh-checkbox').prop('checked', true);
+            }
         }
     },
 

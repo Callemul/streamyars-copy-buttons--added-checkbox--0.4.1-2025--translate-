@@ -7,7 +7,6 @@
     // Отримуємо доступ до всіх наших модулів
     const { SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_PARSERS, SYH_BANNER_CREATOR, SYH_EVENT_HANDLERS, SYH_VIDEO_COPIER } = window;
     
-    // ОСЬ РЯДОК, ЯКИЙ Я ГУБИВ:
     const { SELECTORS } = SYH_CONFIG;
 
     // Стан для відстеження, чи було заплановано нагадування
@@ -46,8 +45,10 @@
                 $node.find(SELECTORS.commentBlock).addBack($node.filter(SELECTORS.commentBlock)).each((i, el) => SYH_UI.addButtonsToComment(el));
                 $node.find(SELECTORS.bannerBlock).addBack($node.filter(SELECTORS.bannerBlock)).each((i, el) => { SYH_UI.addButtonsToBanner(el); bannerStateChanged = true; });
                 $node.find(SELECTORS.bannerHeader).addBack($node.filter(SELECTORS.bannerHeader)).each((i, el) => SYH_UI.addBannerHeaderControls(el));
-                // НОВЕ: Ловимо заголовок Starred коментарів
+                
+                // Ловимо заголовок Starred коментарів
                 $node.find('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5').addBack($node.filter('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5')).each((i, el) => SYH_UI.addStarredTabControls(el));
+                
                 // Якщо додано коментар у Starred - застосовуємо поточні фільтри
                 if ($node.hasClass('StarredCommentList__ItemWrap-sc-1qtlqu2-6') || $node.closest('.StarredCommentList__List-sc-1qtlqu2-1').length > 0) {
                     if (window.SYH_UI && typeof window.SYH_UI.filterStarredComments === 'function') {
@@ -60,7 +61,7 @@
         if (bannerStateChanged) SYH_UI.updateMasterCheckboxState();
 
         // При кожній зміні в DOM перевіряємо статус стріму
-        //checkForStreamEnd();
+        // checkForStreamEnd();
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
@@ -90,7 +91,12 @@
         $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
         
         // Перша перевірка статусу стріму на випадок, якщо сторінка завантажилась вже після завершення
-        //checkForStreamEnd();
+        // checkForStreamEnd();
+
+        // Ініціалізація та завантаження локального стану перед запуском спостерігача
+        if (SYH_STATE && typeof SYH_STATE.init === 'function') {
+            SYH_STATE.init();
+        }
 
         // Запускаємо спостерігач
         observer.observe(document.body, { childList: true, subtree: true });

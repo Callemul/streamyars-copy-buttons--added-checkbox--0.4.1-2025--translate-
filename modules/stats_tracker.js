@@ -1,3 +1,5 @@
+// --- stats_tracker.js ---
+
 window.SYH_STATS_TRACKER = {
     intervalId: null,
     currentBrand: "DefaultShow",
@@ -349,10 +351,30 @@ window.SYH_STATS_TRACKER = {
         let tQ = dataObj.phase_questions_start || "99:99:99";
         let tP = dataObj.phase_prayers_start || "99:99:99";
 
+        // Посилений парсер часу для запобігання NaN
+        const toSec = t => {
+            if (!t || typeof t !== 'string') return 0;
+            const clean = t.replace(/\s/g, ''); // видаляємо пробіли
+            if (!clean) return 0;
+            
+            const parts = clean.split(':');
+            let sec = 0;
+            
+            // Конвертуємо елементи та валідуємо їх
+            const parsedParts = parts.map(part => {
+                const parsed = parseInt(part, 10);
+                return isNaN(parsed) ? 0 : parsed;
+            });
+            
+            // Розрахунок залежно від порядку: [секунди, хвилини, години (якщо є)]
+            parsedParts.reverse().forEach((val, i) => {
+                sec += val * Math.pow(60, i);
+            });
+            
+            return sec;
+        };
+
         dataObj.data.forEach(d => {
-            // Просте порівняння строк часу працює, якщо формат H:MM:SS або MM:SS консистентний, 
-            // але для надійності конвертуємо в секунди:
-            const toSec = t => t.split(':').reverse().reduce((prev, curr, i) => prev + parseInt(curr) * Math.pow(60, i), 0);
             const sTime = toSec(d.time);
             const sQ = toSec(tQ);
             const sP = toSec(tP);
