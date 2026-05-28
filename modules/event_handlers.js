@@ -1,4 +1,3 @@
-// event_handlers.js
 window.SYH_EVENT_HANDLERS = {
     SELECTORS: null,
     STATE: null,
@@ -17,52 +16,74 @@ window.SYH_EVENT_HANDLERS = {
     bindEvents: function() {
         const self = this;
 
+        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ (ВІДМІТКА "ОПРАЦЬОВАНО") ---
+        setInterval(() => {
+            const coverButtons = document.querySelectorAll('[data-testid="show-comment-button"]');
+            coverButtons.forEach(btn => {
+                if (btn.textContent.includes('Hide') || btn.querySelector('.lucide-circle-minus')) {
+                    const commentBlock = btn.closest(self.SELECTORS.commentBlock);
+                    if (commentBlock) {
+                        const checkbox = commentBlock.querySelector('.syh-checkbox[data-type="comment"]');
+                        if (checkbox && !checkbox.checked) {
+                            checkbox.checked = true;
+                            const textKey = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
+                            if (self.STATE && textKey) {
+                                self.STATE.updateState(textKey, true);
+                            }
+                        }
+                    }
+                }
+            });
+        }, 500);
+
+        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT) ---
+        document.addEventListener('click', function(e) {
+            // Перехоплення зняття Зірочки
+            const starBtn = e.target.closest(self.SELECTORS.starButton);
+            if (starBtn) {
+                // Фаза занурення: aria-selected ще має старе значення. Якщо 'true' - зірочку знімають.
+                if (starBtn.getAttribute('aria-selected') === 'true') {
+                    const commentBlock = starBtn.closest(self.SELECTORS.commentBlock);
+                    if (commentBlock) {
+                        const text = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
+                        if (text) {
+                            self.removeFromDatabase(text);
+                        }
+                        if (self.UI) {
+                            self.UI.updateCommentVisuals($(commentBlock), 'none');
+                        }
+                    }
+                }
+            }
+        }, true);
+
+        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ (ПЕРЕМИКАННЯ ТУДИ-СЮДИ) ---
+        document.addEventListener('contextmenu', function(e) {
+            const coverBtn = e.target.closest('[data-testid="show-comment-button"], [class*="PlatformComment__CoverButton"]');
+            if (coverBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const commentBlock = coverBtn.closest(self.SELECTORS.commentBlock);
+                if (commentBlock) {
+                    const checkbox = commentBlock.querySelector('.syh-checkbox[data-type="comment"]');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        const textKey = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
+                        if (self.STATE && textKey) {
+                            self.STATE.updateState(textKey, checkbox.checked);
+                        }
+                    }
+                }
+            }
+        }, true);
+
         // Вимикаємо стандартне меню при кліку правою кнопкою на кнопку 🙏
         $(document).on('contextmenu', '.syh-button[data-action="copy-prayer"]', function(e) {
             e.preventDefault();
         });
 
-        // НОВЕ: Правий клік (ПКМ) по самому коментарю (прозорому покривалу) перемикає галочку!
-        // Використовуємо стабільний селектор, що стійкий до оновлень StreamYard
-        $(document).on('contextmenu', '[class*="PlatformComment__CoverButton"]', function(e) {
-            e.preventDefault(); // Забороняємо стандартне меню браузера
-            e.stopPropagation();
-
-            const $commentBlock = $(this).closest(self.SELECTORS.commentBlock);
-            const $checkbox = $commentBlock.find('.syh-checkbox');
-            
-            if ($checkbox.length > 0) {
-                // Міняємо стан чекбокса на протилежний
-                const isChecked = $checkbox.prop('checked');
-                $checkbox.prop('checked', !isChecked).trigger('change');
-            }
-        });
-
-        // Автоматична відмітка чекбоксу (Auto-check on Show/Hide) при взаємодії з кнопками екрану
-        $(document).on('click', 'button[data-testid="show-comment-button"], button[data-testid="hide-comment-button"]', function() {
-            const $commentBlock = $(this).closest(self.SELECTORS.commentBlock);
-            if ($commentBlock.length === 0) return;
-
-            const $checkbox = $commentBlock.find('.syh-checkbox');
-            if ($checkbox.length > 0 && !$checkbox.prop('checked')) {
-                $checkbox.prop('checked', true).trigger('change');
-                console.log("SYH_EVENT_HANDLERS: Клікнуто кнопку відображення/приховування коментаря. Автоматично встановлено checked = true.");
-            }
-        });
-
         $(document).on('mousedown', '.syh-button', function(e) {
             if (e.button === 1) e.preventDefault(); 
-        });
-
-        $(document).on('click', self.SELECTORS.starButton, function() {
-            const $btn = $(this);
-            if ($btn.attr('aria-selected') === 'true') {
-                const $commentBlock = $btn.closest(self.SELECTORS.commentBlock);
-                const text = $commentBlock.find(self.SELECTORS.commentText).text();
-                self.removeFromDatabase(text);
-                
-                if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'none');
-            }
         });
 
         $(document).on('mouseup', '.syh-button', function(e) {
@@ -124,8 +145,8 @@ window.SYH_EVENT_HANDLERS = {
                     self.saveToDatabase(author, commentText, "prayer", prayerIcon);
                     if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'prayer');
 
-                    // Автоматично ставимо відмітку на графік
-                    if (window.SYH_STATS_TRACKER) {
+                    // ФІКС: Безпечна перевірка наявності функції перед її викликом
+                    if (window.SYH_STATS_TRACKER && typeof window.SYH_STATS_TRACKER.registerPrayerMarker === 'function') {
                         window.SYH_STATS_TRACKER.registerPrayerMarker();
                     }
                 }
@@ -134,9 +155,9 @@ window.SYH_EVENT_HANDLERS = {
                     self.UTILS.copyAndShowBanner(textToCopy, header);
                     $commentBlock.find('.syh-checkbox').prop('checked', true).trigger('change');
                     
-                    const $starButton = $commentBlock.find(self.SELECTORS.starButton);
-                    if ($starButton.length > 0 && $starButton.attr('aria-selected') === 'false') {
-                        $starButton.trigger('click');
+                    const starBtnNode = $commentBlock.find(self.SELECTORS.starButton)[0];
+                    if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
+                        starBtnNode.click();
                     }
                 }
             } else if (type === 'banner') {
@@ -176,6 +197,10 @@ window.SYH_EVENT_HANDLERS = {
     },
 
     removeFromDatabase: function(text) {
+        if (this.UI && this.UI.prayersCache) {
+            this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
+        }
+
         chrome.storage.local.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
             list = list.filter(item => item.text !== text);

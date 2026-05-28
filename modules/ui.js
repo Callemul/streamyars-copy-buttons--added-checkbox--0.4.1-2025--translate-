@@ -1,4 +1,3 @@
-// ui.js
 window.SYH_UI = {
     SELECTORS: null,
     STATE: null,
@@ -12,6 +11,24 @@ window.SYH_UI = {
         
         const self = this;
         
+        // НОВЕ: Ін'єкція глобального CSS (бронебійний захист від білого фону StreamYard)
+        // Цей стиль намертво закріплює градієнти, щойно коментар отримує атрибут data-syh-type
+        if (!document.getElementById('syh-global-styles')) {
+            const style = document.createElement('style');
+            style.id = 'syh-global-styles';
+            style.innerHTML = `
+                div[class*="PlatformComment__Wrap"][data-syh-type="prayer"] > div[class*="PlatformCommentShell__Wrap"] {
+                    border-left: 12px solid #005DF7 !important;
+                    background: linear-gradient(90deg, rgba(0,93,247,0.15) 0%, rgba(255,255,255,0) 100%) !important;
+                }
+                div[class*="PlatformComment__Wrap"][data-syh-type="question"] > div[class*="PlatformCommentShell__Wrap"] {
+                    border-left: 12px solid #f39c12 !important;
+                    background: linear-gradient(90deg, rgba(243,156,18,0.15) 0%, rgba(255,255,255,0) 100%) !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         chrome.storage.local.get(['syh_prayers'], function(result) {
             self.prayersCache = result.syh_prayers || [];
         });
@@ -40,7 +57,6 @@ window.SYH_UI = {
             
             const commentText = $(commentNode).find(this.SELECTORS.commentText).text();
             
-            // Відновлення стану збереженого чекбокса
             if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(commentText)) {
                 $targetContainer.find('.syh-checkbox').prop('checked', true);
             }
@@ -48,31 +64,14 @@ window.SYH_UI = {
         }
     },
 
-    // --- НОВА ЄДИНА ФУНКЦІЯ ПЕРЕФАРБОВУВАННЯ ---
     updateCommentVisuals: function($commentWrap, type) {
-        // Примусово зчищаємо старі тонкі рамки (4px), якщо вони десь зависли
-        $commentWrap.css('border-left', 'none');
-
-        const $shell = $commentWrap.find('.PlatformCommentShell__Wrap-sc-reu44y-0');
-        
+        // Завдяки глобальному CSS нам потрібно лише керувати атрибутом
         if (type === 'prayer') {
             $commentWrap.attr('data-syh-type', 'prayer');
-            $shell.css({
-                'border-left': '12px solid #005DF7',
-                'background': 'linear-gradient(90deg, rgba(0,93,247,0.15) 0%, rgba(255,255,255,0) 100%)'
-            });
         } else if (type === 'question') {
             $commentWrap.attr('data-syh-type', 'question');
-            $shell.css({
-                'border-left': '12px solid #f39c12',
-                'background': 'linear-gradient(90deg, rgba(243,156,18,0.15) 0%, rgba(255,255,255,0) 100%)'
-            });
         } else {
             $commentWrap.removeAttr('data-syh-type');
-            $shell.css({
-                'border-left': 'none',
-                'background': 'none'
-            });
         }
     },
 
@@ -157,7 +156,6 @@ window.SYH_UI = {
             const foundInCache = self.prayersCache.find(item => item.text === originalText);
             const commentType = foundInCache ? foundInCache.type : 'none';
             
-            // Всі візуальні апдейти тепер йдуть через одну функцію
             self.updateCommentVisuals($commentWrap, commentType);
             
             let isVisible = true;
@@ -190,7 +188,6 @@ window.SYH_UI = {
             $bannerWrap.append(buttonsHTML);
             const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
             
-            // Відновлення стану збереженого чекбокса на банерах
             if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(bannerText)) {
                 $bannerWrap.find('.syh-checkbox').prop('checked', true);
             }
