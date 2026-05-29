@@ -4,8 +4,18 @@
 
     console.log("StreamYard Helper v0.9.7 [Reminder Feature] Loaded!");
 
-    // Отримуємо доступ до всіх наших модулів
-    const { SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_PARSERS, SYH_BANNER_CREATOR, SYH_EVENT_HANDLERS, SYH_VIDEO_COPIER } = window;
+    // Отримуємо доступ до всіх наших модулів, включаючи нові розділені модулі подій
+    const { 
+        SYH_CONFIG, 
+        SYH_STATE, 
+        SYH_UTILS, 
+        SYH_UI, 
+        SYH_PARSERS, 
+        SYH_BANNER_CREATOR, 
+        SYH_EVENT_COMMENTS, 
+        SYH_EVENT_BANNERS, 
+        SYH_VIDEO_COPIER 
+    } = window;
     
     const { SELECTORS } = SYH_CONFIG;
 
@@ -59,20 +69,20 @@
             if (mutation.removedNodes.length > 0) bannerStateChanged = true;
         }
         if (bannerStateChanged) SYH_UI.updateMasterCheckboxState();
-
-        // При кожній зміні в DOM перевіряємо статус стріму
-        // checkForStreamEnd();
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
     function init() {
         console.log("Initializing SYH modules...");
 
-        // Ініціалізуємо кожен модуль
+        // Ініціалізуємо базові модулі конфігурацій, утиліт та UI
         SYH_UTILS.init(SYH_CONFIG);
         SYH_UI.init(SYH_CONFIG, SYH_STATE);
         SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
-        SYH_EVENT_HANDLERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
+        
+        // Ініціалізація нових розділених модулів подій коментарів та банерів
+        SYH_EVENT_COMMENTS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI);
+        SYH_EVENT_BANNERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
 
         // Запуск копіювальника відео
         if (window.SYH_VIDEO_COPIER) {
@@ -82,16 +92,14 @@
         // Запуск трекера статистики
         if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
 
-        // Прив'язуємо обробники подій
-        SYH_EVENT_HANDLERS.bindEvents();
+        // Прив'язуємо розділені обробники подій
+        SYH_EVENT_COMMENTS.bindEvents();
+        SYH_EVENT_BANNERS.bindEvents();
 
         // Початкове сканування сторінки
         $(SELECTORS.commentBlock).each((i, el) => SYH_UI.addButtonsToComment(el));
         $(SELECTORS.bannerBlock).each((i, el) => SYH_UI.addButtonsToBanner(el));
         $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
-        
-        // Перша перевірка статусу стріму на випадок, якщо сторінка завантажилась вже після завершення
-        // checkForStreamEnd();
 
         // Ініціалізація та завантаження локального стану перед запуском спостерігача
         if (SYH_STATE && typeof SYH_STATE.init === 'function') {

@@ -1,14 +1,20 @@
+// video_copier.js
 window.SYH_VIDEO_COPIER = {
     init: function() {
         this.startObserver();
     },
 
     startObserver: function() {
+        let timeoutId = null;
         const observer = new MutationObserver(() => {
-            this.injectTitleButton();
-            this.injectModalButton();
-            this.injectListButtons();
-            this.injectMasterDownloadButton();
+            // ФІКС ПРОДУКТИВНОСТІ: Дебаунс 200мс для запобігання перевантаження CPU при частих мутаціях DOM
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                this.injectTitleButton();
+                this.injectModalButton();
+                this.injectListButtons();
+                this.injectMasterDownloadButton();
+            }, 200);
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
@@ -119,10 +125,13 @@ window.SYH_VIDEO_COPIER = {
     injectListButtons: function() {
         const videoCards = document.querySelectorAll('a.media-item-card');
         const now = new Date();
-        now.setHours(0, 0, 0, 0); // Обнуляємо години для чистого підрахунку днів
+        now.setHours(0, 0, 0, 0); 
         let foundSS = false; 
 
         videoCards.forEach(card => {
+            // ОПТИМІЗАЦІЯ: Якщо картку вже аналізували раніше — миттєво пропускаємо її
+            if (card.classList.contains('syh-processed')) return;
+
             const dateElement = card.querySelector('[data-testid="library-media-subtitle"]');
             const titleElement = card.querySelector('span[class*="MediaTitle"]');
             
@@ -134,7 +143,6 @@ window.SYH_VIDEO_COPIER = {
             
             if (!isNaN(videoDate)) {
                 videoDate.setHours(0, 0, 0, 0);
-                // Рахуємо чисті дні
                 const diffDays = Math.round(Math.abs(now - videoDate) / (1000 * 60 * 60 * 24)); 
                 let isFresh = (diffDays <= 5);
 
@@ -146,9 +154,14 @@ window.SYH_VIDEO_COPIER = {
                     }
                 }
 
-                if (isFresh && !card.querySelector('.syh-list-controls')) {
-                    this.appendButtonsToCard(card);
+                if (isFresh) {
+                    if (!card.querySelector('.syh-list-controls')) {
+                        this.appendButtonsToCard(card);
+                    }
                 }
+                
+                // Маркуємо картку як оброблену, щоб більше ніколи не зчитувати її властивості повторно
+                card.classList.add('syh-processed');
             }
         });
     },
@@ -279,7 +292,7 @@ window.SYH_VIDEO_COPIER = {
     downloadAllFreshVideos: async function() {
         const videoCards = document.querySelectorAll('a.media-item-card');
         const now = new Date();
-        now.setHours(0, 0, 0, 0); // Обнуляємо години
+        now.setHours(0, 0, 0, 0); 
         const freshCards = [];
         let foundSS = false;
 
@@ -322,22 +335,18 @@ window.SYH_VIDEO_COPIER = {
         for (let i = 0; i < freshCards.length; i++) {
             const card = freshCards[i];
             try {
-                // 1. Клік на 3 крапки
                 const moreBtn = card.querySelector('button[aria-label="More options"]');
                 if (moreBtn) moreBtn.click();
                 await new Promise(r => setTimeout(r, 600));
 
-                // 2. Клік на Download у меню
                 const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0'));
                 const downloadSpan = menuItems.find(el => el.innerText.includes('Download'));
                 if (downloadSpan) {
                     downloadSpan.closest('button').click();
                 }
                 
-                // 3. Чекаємо на появу модального вікна
                 await new Promise(r => setTimeout(r, 1200));
 
-                // 4. Клік на кнопку завантаження ВІДЕО
                 const videoDownloadBtn = document.querySelector('[data-testid="download-row-download-button-video"]');
                 if (videoDownloadBtn) {
                     videoDownloadBtn.click();
@@ -345,7 +354,6 @@ window.SYH_VIDEO_COPIER = {
                     await new Promise(r => setTimeout(r, 1500));
                 }
 
-                // 5. Закриваємо модалку
                 const closeBtn = document.querySelector('button[aria-label="Close modal"]');
                 if (closeBtn) {
                     closeBtn.click();
