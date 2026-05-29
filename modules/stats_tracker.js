@@ -15,26 +15,27 @@ window.SYH_STATS_TRACKER = {
         const self = this;
         self.lastKnownBrand = ""; // Локальний кеш останнього зчитаного бренда для відображення на всіх вкладках
         
-        // Вставляємо кнопки в шапку: Фази + Аналітика + Назва папки медіа
+        // Вставляємо кнопки в шапку: Фази + Аналітика
         function injectHeaderButtons() {
             const headerCenter = document.querySelector('[data-testid="header-center"]');
             const statusWrap = document.querySelector('[data-testid="header-status-wrap"]');
             
             if (headerCenter && statusWrap) {
-                // Намагаємось зчитати назву папки медіа (стійкий селектор часткового збігу)
+                // Намагаємось зчитати назву папки медіа (стійкий селектор наскрізного зчитування)
                 const brandNode = document.querySelector('[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1, [aria-controls="brand-select-menu"]');
                 let brandName = "";
 
-                // ФІКС (НАСКРІЗНЕ ЗЧИТУВАННЯ): Використовуємо textContent замість innerText для зчитування бренду з прихованих вкладок
                 if (brandNode) {
                     const rawText = brandNode.textContent ? brandNode.textContent.replace(/chevron-down/gi, "").trim() : "";
-                    // Захист від зчитування системних кнопок інтерфейсу
                     if (rawText && rawText !== "Share ▾" && rawText !== "Return to dashboard") {
                         brandName = rawText;
                         self.lastKnownBrand = rawText;
                     }
                 } else {
-                    brandName = self.lastKnownBrand;
+                    brandName = self.getBrandFromLocalStorage() || self.lastKnownBrand;
+                    if (brandName) {
+                        self.lastKnownBrand = brandName;
+                    }
                 }
 
                 // Зчитуємо заголовок стріму в шапці сайту
@@ -42,7 +43,7 @@ window.SYH_STATS_TRACKER = {
                 const titleText = titleNode ? titleNode.innerText.toLowerCase() : "";
 
                 // Критерії Суботньої школи з двома авторами (Молчанов і Опарін)
-                const isSabbathSchool = (titleText.includes("суббот") || titleText.includes("субот")) && 
+                const isSabbathSchool = (titleText.includes("суббот") || titleText.includes("субут") || titleText.includes("субот")) && 
                                         titleText.includes("молчанов") && 
                                         titleText.includes("опар");
 
@@ -55,12 +56,6 @@ window.SYH_STATS_TRACKER = {
                     btnContainer = document.createElement('div');
                     btnContainer.id = 'syh-header-controls';
                     btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100; align-items: center;';
-
-                    // Створюємо елемент папки медіа (динамічна плашка)
-                    const brandDisplay = document.createElement('span');
-                    brandDisplay.id = 'syh-active-brand-display';
-                    brandDisplay.style.display = 'none'; // За замовчуванням прихована
-                    btnContainer.appendChild(brandDisplay);
 
                     // Кнопка фіксації блоку питань
                     const btnQ = document.createElement('button');
@@ -83,7 +78,6 @@ window.SYH_STATS_TRACKER = {
                     btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
                     btnAnalytics.onclick = () => self.showAnalyticsModal();
 
-                    btnContainer.appendChild(brandDisplay);
                     btnContainer.appendChild(btnQ);
                     btnContainer.appendChild(btnP);
                     btnContainer.appendChild(btnAnalytics);
@@ -93,9 +87,9 @@ window.SYH_STATS_TRACKER = {
                     self.restoreButtonStates(btnQ, btnP);
                 }
 
-                // Керування плашкою бренда та валідацією поточної папки
-                const brandDisplay = document.getElementById('syh-active-brand-display');
-                if (brandDisplay) {
+                // 4. ФІКС СИГНАЛУ НА ВКЛАДЦІ «МЕДІА»: Націлюємося на бічну кнопку "Media assets"
+                const mediaTabBtn = document.getElementById('broadcast-aside-tab-assets') || document.querySelector('[id*="tab-assets"]');
+                if (mediaTabBtn) {
                     const currentBrand = brandName;
                     
                     if (currentBrand) {
@@ -104,20 +98,23 @@ window.SYH_STATS_TRACKER = {
 
                         // Якщо заголовок стріму — "Суботня школа Молчанов-Опарін", але вибраний бренд НЕ Субботня школа (наприклад, Опарін чи Тест)
                         if (isSabbathSchool && !isBrandCorrect) {
-                            const targetWarningText = `⚠️ ПОМИЛКА: Папка має бути "Субботняя школа"!`;
-                            if (brandDisplay.innerText.trim() !== targetWarningText.trim()) {
-                                brandDisplay.innerText = targetWarningText;
-                                // Червона миготлива тривога (робимо видимою)
-                                brandDisplay.style.cssText = 'color: white; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #e74c3c; border-radius: 4px; border: 2px solid #ff4757; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(231, 76, 60, 0.7); animation: syhActivePulse 1.5s infinite alternate;';
+                            if (!mediaTabBtn.dataset.originalTitle) {
+                                mediaTabBtn.dataset.originalTitle = mediaTabBtn.getAttribute('title') || mediaTabBtn.getAttribute('aria-label') || "Media assets";
                             }
+                            
+                            // Робимо бічну вкладку червоною, додаємо тултіп-попередження та анімацію пульсації
+                            mediaTabBtn.setAttribute('title', '⚠️ ПОМИЛКА: Папка медіа має бути "Субботняя школа"!');
+                            mediaTabBtn.style.cssText = 'background: #e74c3c !important; color: white !important; border: 1px solid #ff4757 !important; animation: syhActivePulse 1.5s infinite alternate !important;';
                         } else {
-                            // ФІКС: Якщо все вибрано правильно, ПОВНІСТЮ приховуємо плашку з шапки
-                            brandDisplay.innerText = "";
-                            brandDisplay.style.display = 'none';
+                            // Якщо все налаштовано правильно: знімаємо червоні стилі та повертаємо оригінальний тултіп
+                            mediaTabBtn.style.cssText = '';
+                            if (mediaTabBtn.dataset.originalTitle) {
+                                mediaTabBtn.setAttribute('title', mediaTabBtn.dataset.originalTitle);
+                                mediaTabBtn.removeAttribute('data-original-title');
+                            }
                         }
                     } else {
-                        brandDisplay.innerText = "";
-                        brandDisplay.style.display = 'none';
+                        mediaTabBtn.style.cssText = '';
                     }
                 }
             }
