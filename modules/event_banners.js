@@ -21,11 +21,26 @@ window.SYH_EVENT_BANNERS = {
         document.addEventListener('contextmenu', function(e) {
             const bannerBlock = e.target.closest(self.SELECTORS.bannerBlock);
             if (bannerBlock) {
-                // Запобігаємо перехопленню, якщо клікнули на текстове поле, чекбокс або кастомні кнопки керування всередині банера
-                if (e.target.closest('input, textarea, button, .syh-button')) return;
+                // Ігноруємо прямі кліки на інпути та текстові поля
+                if (e.target.closest('input, textarea')) return;
 
+                const button = e.target.closest('button');
+                if (button) {
+                    // Ігноруємо наші власні кнопки
+                    if (button.classList.contains('syh-button')) return;
+
+                    // Ігноруємо кнопки редагування (pencil) та видалення (trash)
+                    const isEditOrDelete = button.querySelector('svg[class*="pencil"], svg[class*="trash"], [class*="pencil"], [class*="trash"]') || 
+                                           button.getAttribute('aria-label')?.toLowerCase().includes('edit') ||
+                                           button.getAttribute('aria-label')?.toLowerCase().includes('delete') ||
+                                           button.getAttribute('aria-label')?.toLowerCase().includes('remove');
+                    if (isEditOrDelete) return;
+                }
+
+                // Запобігаємо появі дефолтного меню для Show, Off та самого банера
                 e.preventDefault();
                 e.stopPropagation();
+                
                 const checkbox = bannerBlock.querySelector('.syh-checkbox[data-type="banner"]');
                 if (checkbox) {
                     checkbox.checked = !checkbox.checked;
