@@ -10,9 +10,10 @@ window.SYH_STATS_TRACKER = {
         this.startTracking();
     },
 
-    // stats_tracker.js
+
     setupObservers: function() {
         const self = this;
+        self.lastKnownBrand = ""; // Локальний кеш останнього зчитаного бренда для відображення на всіх вкладках
         
         // Вставляємо кнопки в шапку: Фази + Аналітика + Назва папки медіа
         function injectHeaderButtons() {
@@ -21,8 +22,29 @@ window.SYH_STATS_TRACKER = {
             
             if (headerCenter && statusWrap) {
                 // Намагаємось зчитати назву папки медіа (стійкий селектор часткового збігу)
-                const brandNode = document.querySelector('[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1');
-                const brandName = brandNode ? brandNode.innerText.trim() : "";
+                const brandNode = document.querySelector('[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1, [aria-controls="brand-select-menu"]');
+                let brandName = "";
+
+                // ФІКС (НАСКРІЗНЕ ЗЧИТУВАННЯ): Використовуємо textContent замість innerText для зчитування бренду з прихованих вкладок
+                if (brandNode) {
+                    const rawText = brandNode.textContent ? brandNode.textContent.replace(/chevron-down/gi, "").trim() : "";
+                    // Захист від зчитування системних кнопок інтерфейсу
+                    if (rawText && rawText !== "Share ▾" && rawText !== "Return to dashboard") {
+                        brandName = rawText;
+                        self.lastKnownBrand = rawText;
+                    }
+                } else {
+                    brandName = self.lastKnownBrand;
+                }
+
+                // Зчитуємо заголовок стріму в шапці сайту
+                const titleNode = document.querySelector('[data-testid="header-title-wrap"] p');
+                const titleText = titleNode ? titleNode.innerText.toLowerCase() : "";
+
+                // Критерії Суботньої школи з двома авторами (Молчанов і Опарін)
+                const isSabbathSchool = (titleText.includes("суббот") || titleText.includes("субот")) && 
+                                        titleText.includes("молчанов") && 
+                                        titleText.includes("опар");
 
                 let btnContainer = document.getElementById('syh-header-controls');
                 if (!btnContainer) {
@@ -34,14 +56,11 @@ window.SYH_STATS_TRACKER = {
                     btnContainer.id = 'syh-header-controls';
                     btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100; align-items: center;';
 
-                    // Створюємо елемент папки медіа, ТІЛЬКИ якщо вона знайдена в DOM і не порожня
-                    if (brandName) {
-                        const brandDisplay = document.createElement('span');
-                        brandDisplay.id = 'syh-active-brand-display';
-                        brandDisplay.style.cssText = 'color: #9cdcfe; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #2A303C; border-radius: 4px; border: 1px solid #4F5461; display: inline-flex; align-items: center; gap: 4px;';
-                        brandDisplay.innerText = `📁 Папка: ${brandName}`;
-                        btnContainer.appendChild(brandDisplay);
-                    }
+                    // Створюємо елемент папки медіа (динамічна плашка)
+                    const brandDisplay = document.createElement('span');
+                    brandDisplay.id = 'syh-active-brand-display';
+                    brandDisplay.style.display = 'none'; // За замовчуванням прихована
+                    btnContainer.appendChild(brandDisplay);
 
                     // Кнопка фіксації блоку питань
                     const btnQ = document.createElement('button');
@@ -64,6 +83,7 @@ window.SYH_STATS_TRACKER = {
                     btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
                     btnAnalytics.onclick = () => self.showAnalyticsModal();
 
+                    btnContainer.appendChild(brandDisplay);
                     btnContainer.appendChild(btnQ);
                     btnContainer.appendChild(btnP);
                     btnContainer.appendChild(btnAnalytics);
@@ -71,22 +91,33 @@ window.SYH_STATS_TRACKER = {
                     headerCenter.insertBefore(btnContainer, statusWrap);
                     
                     self.restoreButtonStates(btnQ, btnP);
-                } else {
-                    // Керування показом/оновленням плашки медіа, якщо вона з'являється чи змінюється динамічно
-                    let brandDisplay = document.getElementById('syh-active-brand-display');
-                    if (brandName) {
-                        const targetText = `📁 Папка: ${brandName}`;
-                        if (!brandDisplay) {
-                            brandDisplay = document.createElement('span');
-                            brandDisplay.id = 'syh-active-brand-display';
-                            brandDisplay.style.cssText = 'color: #9cdcfe; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #2A303C; border-radius: 4px; border: 1px solid #4F5461; display: inline-flex; align-items: center; gap: 4px;';
-                            brandDisplay.innerText = targetText;
-                            btnContainer.insertBefore(brandDisplay, btnContainer.firstChild);
-                        } else if (brandDisplay.innerText.trim() !== targetText.trim()) {
-                            brandDisplay.innerText = targetText;
+                }
+
+                // Керування плашкою бренда та валідацією поточної папки
+                const brandDisplay = document.getElementById('syh-active-brand-display');
+                if (brandDisplay) {
+                    const currentBrand = brandName;
+                    
+                    if (currentBrand) {
+                        const isBrandCorrect = currentBrand.toLowerCase().includes("суббот") || 
+                                               currentBrand.toLowerCase().includes("субот");
+
+                        // Якщо заголовок стріму — "Суботня школа Молчанов-Опарін", але вибраний бренд НЕ Субботня школа (наприклад, Опарін чи Тест)
+                        if (isSabbathSchool && !isBrandCorrect) {
+                            const targetWarningText = `⚠️ ПОМИЛКА: Папка має бути "Субботняя школа"!`;
+                            if (brandDisplay.innerText.trim() !== targetWarningText.trim()) {
+                                brandDisplay.innerText = targetWarningText;
+                                // Червона миготлива тривога (робимо видимою)
+                                brandDisplay.style.cssText = 'color: white; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #e74c3c; border-radius: 4px; border: 2px solid #ff4757; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(231, 76, 60, 0.7); animation: syhActivePulse 1.5s infinite alternate;';
+                            }
+                        } else {
+                            // ФІКС: Якщо все вибрано правильно, ПОВНІСТЮ приховуємо плашку з шапки
+                            brandDisplay.innerText = "";
+                            brandDisplay.style.display = 'none';
                         }
-                    } else if (brandDisplay) {
-                        brandDisplay.remove();
+                    } else {
+                        brandDisplay.innerText = "";
+                        brandDisplay.style.display = 'none';
                     }
                 }
             }
@@ -97,6 +128,53 @@ window.SYH_STATS_TRACKER = {
         uiObserver.observe(document.body, { childList: true, subtree: true });
     },
 
+    // Рекурсивний сканер для автоматичного пошуку активного бренда в сховищі без кліку по вкладці
+    getBrandFromLocalStorage: function() {
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key) continue;
+                
+                // Перевіряємо ключі, пов'язані зі станом студії чи збереженими брендами
+                if (key.includes('brand') || key.includes('studio') || key.includes('store') || key.includes('state')) {
+                    const val = localStorage.getItem(key);
+                    if (!val) continue;
+                    
+                    if (val.startsWith('{') || val.startsWith('[')) {
+                        const data = JSON.parse(val);
+                        const foundName = this.searchBrandNameInObject(data);
+                        if (foundName) return foundName;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("[SYH] Помилка автозчитування бренда з localStorage:", e);
+        }
+        return "";
+    },
+
+    // Допоміжний рекурсивний обхідник JSON-дерева для знаходження імені бренда
+    searchBrandNameInObject: function(obj) {
+        if (!obj || typeof obj !== 'object') return null;
+        
+        if (obj.activeBrand && obj.activeBrand.name) return obj.activeBrand.name;
+        if (obj.currentBrand && obj.currentBrand.name) return obj.currentBrand.name;
+        if (obj.brand && obj.brand.name) return obj.brand.name;
+        
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                const val = obj[key];
+                if (key === 'activeBrandName' || key === 'brandName' || key === 'currentBrandName') {
+                    if (typeof val === 'string') return val;
+                }
+                if (typeof val === 'object') {
+                    const res = this.searchBrandNameInObject(val);
+                    if (res) return res;
+                }
+            }
+        }
+        return null;
+    },
 
     
     restoreButtonStates: function(btnQ, btnP) {
