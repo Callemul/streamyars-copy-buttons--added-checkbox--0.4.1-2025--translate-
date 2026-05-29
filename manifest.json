@@ -1,7 +1,7 @@
 {
-  "name": "StreamYard copy buttons v0.66",
+  "name": "StreamYard copy buttons v0.7",
   "manifest_version": 3,
-  "version": "0.66",
+  "version": "0.7",
   "description": "Streamyard.com Extension. Add new buttons to commets and banners",
   "permissions": [
     "alarms",
@@ -43,7 +43,7 @@
     }
   ],
   "action": {
-    "default_title": "Streamyard Helper 0.66",
+    "default_title": "Streamyard Helper 0.7",
     "default_popup": "popup/popup.html"
   },
   "icons": {
