@@ -1,3 +1,4 @@
+// ui.js
 window.SYH_UI = {
     SELECTORS: null,
     STATE: null,
@@ -15,22 +16,34 @@ window.SYH_UI = {
             const style = document.createElement('style');
             style.id = 'syh-global-styles';
             style.innerHTML = `
-                /* Звичайний стан: напівпрозорий градієнт */
+                /* Звичайний стан: СУЦІЛЬНА напівпрозора заливка без градієнтів */
                 div[class*="PlatformComment__Wrap"][data-syh-type="prayer"] > div[class*="PlatformCommentShell__Wrap"] {
                     border-left: 12px solid #005DF7 !important;
-                    background: linear-gradient(90deg, rgba(0,93,247,0.15) 0%, rgba(255,255,255,0) 100%) !important;
+                    background: rgba(0, 93, 247, 0.15) !important;
                 }
                 div[class*="PlatformComment__Wrap"][data-syh-type="question"] > div[class*="PlatformCommentShell__Wrap"] {
                     border-left: 12px solid #f39c12 !important;
-                    background: linear-gradient(90deg, rgba(243,156,18,0.15) 0%, rgba(255,255,255,0) 100%) !important;
+                    background: rgba(243, 156, 18, 0.15) !important;
                 }
 
-                /* АКТИВНИЙ СТАН (виведено на екран): суцільна заливка для контрасту з білими буквами */
+                /* АКТИВНИЙ СТАН (виведено на екран): суцільна 100% повна заливка */
                 div[class*="PlatformComment__Wrap"][data-syh-type="prayer"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
                     background: #005DF7 !important; 
                 }
                 div[class*="PlatformComment__Wrap"][data-syh-type="question"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
                     background: #f39c12 !important;
+                }
+
+                /* ФІКС: Візуальне виділення БУДЬ-ЯКОГО активного коментаря (у тому числі у вкладці Starred), який виведений на екран */
+                div[class*="PlatformComment__Wrap"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
+                    outline: 3px solid #ff4757 !important;
+                    outline-offset: -3px;
+                    box-shadow: 0 0 15px rgba(255, 71, 87, 0.6) !important;
+                    animation: syhActivePulse 2s infinite alternate;
+                }
+                @keyframes syhActivePulse {
+                    0% { box-shadow: 0 0 10px rgba(255, 71, 87, 0.4); }
+                    100% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.8); }
                 }
             `;
             document.head.appendChild(style);
@@ -72,7 +85,6 @@ window.SYH_UI = {
     },
 
     updateCommentVisuals: function($commentWrap, type) {
-        // Завдяки глобальному CSS нам потрібно лише керувати атрибутом
         if (type === 'prayer') {
             $commentWrap.attr('data-syh-type', 'prayer');
         } else if (type === 'question') {
@@ -83,16 +95,19 @@ window.SYH_UI = {
     },
 
     applySavedLabels: function(commentNode, text) {
+        // ФІКС: Запобігаємо обробці пустих або пробільних текстових значень (для уникнення помилкових збігів у тестових коментарях)
+        if (!text || !text.trim()) return; 
+        
         const found = this.prayersCache.find(item => item.text === text);
         const type = found ? found.type : 'none';
         this.updateCommentVisuals($(commentNode), type);
     },
 
+    // ui.js
     addStarredTabControls: function(starredHeaderNode) {
         const $headerWrap = $(starredHeaderNode);
         if ($headerWrap.length > 0 && !$headerWrap.find('.syh-starred-controls').length) {
             
-            // Ін'єкція CSS для анімації пульсації, хрестика та пустого стану
             if (!document.getElementById('syh-starred-styles')) {
                 const style = document.createElement('style');
                 style.id = 'syh-starred-styles';
@@ -106,9 +121,9 @@ window.SYH_UI = {
                         animation: syhPulse 0.5s ease-out;
                         border-color: #f39c12 !important;
                     }
-                    .syh-search-wrapper { position: relative; width: 100%; }
+                    .syh-search-wrapper { position: relative; width: 100%; display: flex; gap: 6px; align-items: center; }
                     .syh-clear-search {
-                        position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+                        position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
                         background: #ccc; color: white; border: none; border-radius: 50%;
                         width: 16px; height: 16px; font-size: 10px; cursor: pointer;
                         display: flex; align-items: center; justify-content: center;
@@ -127,8 +142,9 @@ window.SYH_UI = {
             const controlsHTML = `
                 <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                     <div class="syh-search-wrapper">
-                        <input type="text" id="syh-starred-search" value="${this.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." style="width: 100%; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                        <input type="text" id="syh-starred-search" value="${this.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
                         <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${this.searchQuery ? 'flex' : 'none'};" title="Очистити пошук">✕</button>
+                        <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані">🎯</button>
                     </div>
                     
                     <div style="display: flex; gap: 5px; background: #eee; padding: 3px; border-radius: 6px;">
@@ -141,7 +157,6 @@ window.SYH_UI = {
             
             $headerWrap.empty().append(controlsHTML);
 
-            // Додаємо плашку про пустий стан, якщо її ще немає
             if (!$('#syh-empty-state-msg').length) {
                 $('.StarredCommentList__List-sc-1qtlqu2-1').after(`
                     <div id="syh-empty-state-msg" class="syh-empty-state">
@@ -156,6 +171,7 @@ window.SYH_UI = {
         }
     },
 
+    // ui.js
     bindStarredControls: function() {
         const self = this;
         const $searchInput = $('#syh-starred-search');
@@ -167,7 +183,6 @@ window.SYH_UI = {
             self.filterStarredComments(); 
         });
 
-        // Кнопка очищення
         $clearBtn.on('click', function() {
             $searchInput.val('');
             self.searchQuery = '';
@@ -175,10 +190,18 @@ window.SYH_UI = {
             self.filterStarredComments();
         });
 
-        // Кнопка очищення з пустої плашки
+        // Слухач кнопки 🎯 (Повернутися до активного коментаря на екрані)
+        $('#syh-scroll-to-active-btn').on('click', function(e) {
+            e.preventDefault();
+            self.scrollToActiveComment();
+        });
+
         $(document).off('click', '#syh-empty-clear-link').on('click', '#syh-empty-clear-link', function(e) {
             e.preventDefault();
-            $clearBtn.click();
+            $searchInput.val('');
+            self.searchQuery = '';
+            $clearBtn.hide();
+            $('.syh-filter-btn[data-filter="all"]').click(); 
         });
 
         $('.syh-filter-btn').on('click', function() {
@@ -188,10 +211,9 @@ window.SYH_UI = {
             self.activeFilter = $(this).data('filter');
             self.filterStarredComments();
 
-            // Якщо є текст у пошуку - блимаємо полем вводу для привернення уваги
             if (self.searchQuery) {
                 $searchInput.removeClass('syh-search-pulse');
-                void $searchInput[0].offsetWidth; // Скидаємо анімацію (trick)
+                void $searchInput[0].offsetWidth; 
                 $searchInput.addClass('syh-search-pulse');
             }
         });
@@ -223,7 +245,7 @@ window.SYH_UI = {
 
         $commentList.css({ 'display': 'flex', 'flex-direction': 'column' });
 
-        let visibleCount = 0; // Рахуємо скільки відфільтровано
+        let visibleCount = 0;
 
         $commentList.find('> li').each(function() {
             const $li = $(this);
@@ -249,18 +271,29 @@ window.SYH_UI = {
                 $li.show();
                 const exactOrder = sortedTexts.indexOf(originalText);
                 $li.css('order', exactOrder !== -1 ? exactOrder : 9999);
-                visibleCount++; // Збільшуємо лічильник
+                visibleCount++;
             } else {
                 $li.hide();
                 $li.css('order', 9999); 
             }
         });
 
-        // Логіка показу плашки "Нічого не знайдено"
         const $emptyState = $('#syh-empty-state-msg');
-        if (visibleCount === 0 && searchQuery) {
-            $('#syh-empty-query').text(searchQuery);
-            $emptyState.show();
+        if (visibleCount === 0) {
+            let messageHTML = '';
+            if (searchQuery) {
+                messageHTML = `Нічого не знайдено по запиту: <b style="color: #e74c3c;">"${searchQuery}"</b>`;
+            } else if (activeFilter !== 'all') {
+                const filterNames = { 'question': '❓ Питання', 'prayer': '🙏 Молитовні' };
+                messageHTML = `Порожньо в категорії: <b style="color: #005DF7;">"${filterNames[activeFilter]}"</b>`;
+            }
+
+            if (messageHTML) {
+                $('#syh-empty-query').html(messageHTML);
+                $emptyState.show();
+            } else {
+                $emptyState.hide();
+            }
         } else {
             $emptyState.hide();
         }
@@ -271,7 +304,7 @@ window.SYH_UI = {
         if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {
             const buttonsHTML = `
                 <div class="syh-banner-controls">
-                    <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати текст банера">📋</button>
+                    <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати text банера">📋</button>
                     <div class="syh-checkbox-container">
                         <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване">
                     </div>
@@ -318,6 +351,27 @@ window.SYH_UI = {
             $masterCheckbox.prop({ 'checked': true, 'indeterminate': false });
         } else {
             $masterCheckbox.prop({ 'checked': false, 'indeterminate': true });
+        }
+    },
+
+    scrollToActiveComment: function() {
+        const $commentList = $('.StarredCommentList__List-sc-1qtlqu2-1');
+        if ($commentList.length) {
+            const $activeLi = $commentList.find('> li:has(.lucide-circle-minus)');
+            if ($activeLi.length) {
+                const el = $activeLi[0];
+                const rect = el.getBoundingClientRect();
+                const scrollParent = el.closest('div[class*="Scroll"]');
+                if (scrollParent) {
+                    const parentRect = scrollParent.getBoundingClientRect();
+                    const isVisible = (rect.top >= parentRect.top && rect.bottom <= parentRect.bottom);
+                    if (!isVisible) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } else {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
     }
 };

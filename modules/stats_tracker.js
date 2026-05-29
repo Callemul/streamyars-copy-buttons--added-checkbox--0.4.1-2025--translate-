@@ -10,52 +10,85 @@ window.SYH_STATS_TRACKER = {
         this.startTracking();
     },
 
+    // stats_tracker.js
     setupObservers: function() {
         const self = this;
         
-        // Вставляємо кнопки в шапку: Фази + Аналітика
+        // Вставляємо кнопки в шапку: Фази + Аналітика + Назва папки медіа
         function injectHeaderButtons() {
             const headerCenter = document.querySelector('[data-testid="header-center"]');
             const statusWrap = document.querySelector('[data-testid="header-status-wrap"]');
             
-            if (headerCenter && statusWrap && !document.getElementById('syh-header-controls')) {
-                headerCenter.style.display = 'flex';
-                headerCenter.style.alignItems = 'center';
-                headerCenter.style.flexDirection = 'row';
+            if (headerCenter && statusWrap) {
+                // Намагаємось зчитати назву папки медіа (стійкий селектор часткового збігу)
+                const brandNode = document.querySelector('[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1');
+                const brandName = brandNode ? brandNode.innerText.trim() : "";
 
-                const btnContainer = document.createElement('div');
-                btnContainer.id = 'syh-header-controls';
-                btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100;';
+                let btnContainer = document.getElementById('syh-header-controls');
+                if (!btnContainer) {
+                    headerCenter.style.display = 'flex';
+                    headerCenter.style.alignItems = 'center';
+                    headerCenter.style.flexDirection = 'row';
 
-                // Кнопка фіксації блоку питань
-                const btnQ = document.createElement('button');
-                btnQ.innerText = '❓ Старт: Питання';
-                btnQ.title = 'Натисни, коли починається блок питань';
-                btnQ.style.cssText = 'background: #f39c12; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-                btnQ.onclick = () => self.markPhase('questions', btnQ);
+                    btnContainer = document.createElement('div');
+                    btnContainer.id = 'syh-header-controls';
+                    btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100; align-items: center;';
 
-                // Кнопка фіксації блоку молитов
-                const btnP = document.createElement('button');
-                btnP.innerText = '🙏 Старт: Молитви';
-                btnP.title = 'Натисни, коли починається молитовний блок';
-                btnP.style.cssText = 'background: #005DF7; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-                btnP.onclick = () => self.markPhase('prayers', btnP);
+                    // Створюємо елемент папки медіа, ТІЛЬКИ якщо вона знайдена в DOM і не порожня
+                    if (brandName) {
+                        const brandDisplay = document.createElement('span');
+                        brandDisplay.id = 'syh-active-brand-display';
+                        brandDisplay.style.cssText = 'color: #9cdcfe; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #2A303C; border-radius: 4px; border: 1px solid #4F5461; display: inline-flex; align-items: center; gap: 4px;';
+                        brandDisplay.innerText = `📁 Папка: ${brandName}`;
+                        btnContainer.appendChild(brandDisplay);
+                    }
 
-                // Кнопка Аналітики
-                const btnAnalytics = document.createElement('button');
-                btnAnalytics.id = 'syh-analytics-btn';
-                btnAnalytics.innerText = '📈 Аналітика';
-                btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
-                btnAnalytics.onclick = () => self.showAnalyticsModal();
+                    // Кнопка фіксації блоку питань
+                    const btnQ = document.createElement('button');
+                    btnQ.innerText = '❓ Старт: Питання';
+                    btnQ.title = 'Натисни, коли починається блок питань';
+                    btnQ.style.cssText = 'background: #f39c12; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
+                    btnQ.onclick = () => self.markPhase('questions', btnQ);
 
-                btnContainer.appendChild(btnQ);
-                btnContainer.appendChild(btnP);
-                btnContainer.appendChild(btnAnalytics);
+                    // Кнопка фіксації блоку молитов
+                    const btnP = document.createElement('button');
+                    btnP.innerText = '🙏 Старт: Молитви';
+                    btnP.title = 'Натисни, коли починається молитовний блок';
+                    btnP.style.cssText = 'background: #005DF7; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
+                    btnP.onclick = () => self.markPhase('prayers', btnP);
 
-                headerCenter.insertBefore(btnContainer, statusWrap);
-                
-                // Перевіряємо, чи вже зафіксовані фази в базі, щоб змінити текст кнопок
-                self.restoreButtonStates(btnQ, btnP);
+                    // Кнопка Аналітики
+                    const btnAnalytics = document.createElement('button');
+                    btnAnalytics.id = 'syh-analytics-btn';
+                    btnAnalytics.innerText = '📈 Аналітика';
+                    btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
+                    btnAnalytics.onclick = () => self.showAnalyticsModal();
+
+                    btnContainer.appendChild(btnQ);
+                    btnContainer.appendChild(btnP);
+                    btnContainer.appendChild(btnAnalytics);
+
+                    headerCenter.insertBefore(btnContainer, statusWrap);
+                    
+                    self.restoreButtonStates(btnQ, btnP);
+                } else {
+                    // Керування показом/оновленням плашки медіа, якщо вона з'являється чи змінюється динамічно
+                    let brandDisplay = document.getElementById('syh-active-brand-display');
+                    if (brandName) {
+                        const targetText = `📁 Папка: ${brandName}`;
+                        if (!brandDisplay) {
+                            brandDisplay = document.createElement('span');
+                            brandDisplay.id = 'syh-active-brand-display';
+                            brandDisplay.style.cssText = 'color: #9cdcfe; font-weight: bold; font-size: 12px; margin-right: 5px; padding: 4px 8px; background: #2A303C; border-radius: 4px; border: 1px solid #4F5461; display: inline-flex; align-items: center; gap: 4px;';
+                            brandDisplay.innerText = targetText;
+                            btnContainer.insertBefore(brandDisplay, btnContainer.firstChild);
+                        } else if (brandDisplay.innerText.trim() !== targetText.trim()) {
+                            brandDisplay.innerText = targetText;
+                        }
+                    } else if (brandDisplay) {
+                        brandDisplay.remove();
+                    }
+                }
             }
         }
 
@@ -64,24 +97,32 @@ window.SYH_STATS_TRACKER = {
         uiObserver.observe(document.body, { childList: true, subtree: true });
     },
 
+
+    
     restoreButtonStates: function(btnQ, btnP) {
         const today = new Date().toISOString().split('T')[0];
         const self = this;
-        chrome.storage.local.get(['syh_stream_charts'], function(result) {
-            const db = result.syh_stream_charts || {};
-            if (db[self.currentBrand] && db[self.currentBrand][today]) {
-                if (db[self.currentBrand][today].phase_questions_start) {
-                    btnQ.innerText = '✅ Питання';
-                    btnQ.style.opacity = '0.7';
+        
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+                const db = result.syh_stream_charts || {};
+                if (db[self.currentBrand] && db[self.currentBrand][today]) {
+                    if (db[self.currentBrand][today].phase_questions_start) {
+                        btnQ.innerText = '✅ Питання';
+                        btnQ.style.opacity = '0.7';
+                    }
+                    if (db[self.currentBrand][today].phase_prayers_start) {
+                        btnP.innerText = '✅ Молитви';
+                        btnP.style.opacity = '0.7';
+                    }
                 }
-                if (db[self.currentBrand][today].phase_prayers_start) {
-                    btnP.innerText = '✅ Молитви';
-                    btnP.style.opacity = '0.7';
-                }
-            }
-        });
+            });
+        } else {
+            console.warn("[SYH] Сховище chrome.storage недоступне у цьому контексті.");
+        }
     },
 
+    
     markPhase: function(phase, btnElement) {
         const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]');
         if (!timerWrapper) {
@@ -93,24 +134,29 @@ window.SYH_STATS_TRACKER = {
         const today = new Date().toISOString().split('T')[0];
         const self = this;
 
-        chrome.storage.local.get(['syh_stream_charts'], function(result) {
-            let db = result.syh_stream_charts || {};
-            if (!db[self.currentBrand]) db[self.currentBrand] = {};
-            if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+                let db = result.syh_stream_charts || {};
+                if (!db[self.currentBrand]) db[self.currentBrand] = {};
+                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
-            if (phase === 'questions') {
-                db[self.currentBrand][today].phase_questions_start = timerText;
-                btnElement.innerText = '✅ Питання';
-            } else if (phase === 'prayers') {
-                db[self.currentBrand][today].phase_prayers_start = timerText;
-                btnElement.innerText = '✅ Молитви';
-            }
-            btnElement.style.opacity = '0.7';
+                if (phase === 'questions') {
+                    db[self.currentBrand][today].phase_questions_start = timerText;
+                    btnElement.innerText = '✅ Питання';
+                } else if (phase === 'prayers') {
+                    db[self.currentBrand][today].phase_prayers_start = timerText;
+                    btnElement.innerText = '✅ Молитви';
+                }
+                btnElement.style.opacity = '0.7';
 
-            chrome.storage.local.set({ 'syh_stream_charts': db });
-        });
+                chrome.storage.local.set({ 'syh_stream_charts': db });
+            });
+        } else {
+            console.warn("[SYH] Не вдалося зберегти фазу: chrome.storage недоступне.");
+        }
     },
 
+    
     startTracking: function() {
         const self = this;
         
@@ -131,29 +177,31 @@ window.SYH_STATS_TRACKER = {
 
             const today = new Date().toISOString().split('T')[0];
 
-            chrome.storage.local.get(['syh_stream_charts'], function(result) {
-                let db = result.syh_stream_charts || {};
-                
-                if (!db[self.currentBrand]) db[self.currentBrand] = {};
-                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                chrome.storage.local.get(['syh_stream_charts'], function(result) {
+                    let db = result.syh_stream_charts || {};
+                    
+                    if (!db[self.currentBrand]) db[self.currentBrand] = {};
+                    if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
-                const session = db[self.currentBrand][today];
-                
-                // Фіксуємо кількість людей, які очікували на старті (перший запис)
-                if (session.initial_viewers === undefined && session.data.length === 0) {
-                    session.initial_viewers = viewerCount;
-                }
+                    const session = db[self.currentBrand][today];
+                    
+                    // Фіксуємо кількість людей, які очікували на старті (перший запис)
+                    if (session.initial_viewers === undefined && session.data.length === 0) {
+                        session.initial_viewers = viewerCount;
+                    }
 
-                const lastEntry = session.data[session.data.length - 1];
-                if (lastEntry && lastEntry.time === timerText) return;
+                    const lastEntry = session.data[session.data.length - 1];
+                    if (lastEntry && lastEntry.time === timerText) return;
 
-                session.data.push({
-                    time: timerText,
-                    viewers: viewerCount
+                    session.data.push({
+                        time: timerText,
+                        viewers: viewerCount
+                    });
+
+                    chrome.storage.local.set({ 'syh_stream_charts': db });
                 });
-
-                chrome.storage.local.set({ 'syh_stream_charts': db });
-            });
+            }
         }, 60000); 
     },
 
@@ -195,35 +243,40 @@ window.SYH_STATS_TRACKER = {
         this.loadChartData();
     },
 
+    // stats_tracker.js
     loadChartData: function() {
         const self = this;
         const today = new Date().toISOString().split('T')[0];
 
-        chrome.storage.local.get(['syh_stream_charts'], function(result) {
-            const db = result.syh_stream_charts || {};
-            const brandData = db[self.currentBrand] || {};
-            
-            const select = document.getElementById('syh-compare-select');
-            const dates = Object.keys(brandData).filter(d => d !== today).sort().reverse();
-            
-            dates.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d;
-                opt.innerText = d;
-                select.appendChild(opt);
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+                const db = result.syh_stream_charts || {};
+                const brandData = db[self.currentBrand] || {};
+                
+                const select = document.getElementById('syh-compare-select');
+                const dates = Object.keys(brandData).filter(d => d !== today).sort().reverse();
+                
+                dates.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.innerText = d;
+                    select.appendChild(opt);
+                });
+
+                self.renderChart(brandData[today], null);
+
+                select.onchange = (e) => {
+                    const pastDate = e.target.value;
+                    const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
+                    self.renderChart(brandData[today], pastData);
+                };
+
+                document.getElementById('syh-dl-csv-btn').onclick = () => self.exportCSV(brandData[today], today);
+                document.getElementById('syh-dl-pres-btn').onclick = () => self.exportPresentation(brandData[today], today);
             });
-
-            self.renderChart(brandData[today], null);
-
-            select.onchange = (e) => {
-                const pastDate = e.target.value;
-                const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
-                self.renderChart(brandData[today], pastData);
-            };
-
-            document.getElementById('syh-dl-csv-btn').onclick = () => self.exportCSV(brandData[today], today);
-            document.getElementById('syh-dl-pres-btn').onclick = () => self.exportPresentation(brandData[today], today);
-        });
+        } else {
+            console.warn("[SYH] Не вдалося завантажити аналітику: chrome.storage недоступне.");
+        }
     },
 
     renderChart: function(todayData, pastData) {

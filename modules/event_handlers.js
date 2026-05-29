@@ -17,6 +17,8 @@ window.SYH_EVENT_HANDLERS = {
         const self = this;
 
         // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ (ВІДМІТКА "ОПРАЦЬОВАНО") ---
+        // event_handlers.js
+        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ (ВІДМІТКА "ОПРАЦЬОВАНО") ---
         setInterval(() => {
             const coverButtons = document.querySelectorAll('[data-testid="show-comment-button"]');
             coverButtons.forEach(btn => {
@@ -34,6 +36,7 @@ window.SYH_EVENT_HANDLERS = {
                     }
                 }
             });
+            // ФІКС: Рядок автоматичного скролу scrollToActiveComment() тут повністю стерто.
         }, 500);
 
         // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT) ---
@@ -59,6 +62,7 @@ window.SYH_EVENT_HANDLERS = {
 
         // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ (ПЕРЕМИКАННЯ ТУДИ-СЮДИ) ---
         document.addEventListener('contextmenu', function(e) {
+            // 1. Коментарі: Перехоплення кліку на кнопках показу
             const coverBtn = e.target.closest('[data-testid="show-comment-button"], [class*="PlatformComment__CoverButton"]');
             if (coverBtn) {
                 e.preventDefault();
@@ -71,6 +75,28 @@ window.SYH_EVENT_HANDLERS = {
                         const textKey = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
                         if (self.STATE && textKey) {
                             self.STATE.updateState(textKey, checkbox.checked);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // 2. Банери: Перехоплення кліку на блоці банера для перемикання чекбоксу (ПКМ)
+            const bannerBlock = e.target.closest(self.SELECTORS.bannerBlock);
+            if (bannerBlock) {
+                // Запобігаємо перехопленню, якщо клікнули на текстове поле, чекбокс або кастомні кнопки керування всередині банера
+                if (e.target.closest('input, textarea, button, .syh-button')) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                const checkbox = bannerBlock.querySelector('.syh-checkbox[data-type="banner"]');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    const textKey = bannerBlock.querySelector(self.SELECTORS.bannerText)?.textContent;
+                    if (self.STATE && textKey) {
+                        self.STATE.updateState(textKey, checkbox.checked);
+                        if (self.UI) {
+                            self.UI.updateMasterCheckboxState();
                         }
                     }
                 }
@@ -153,7 +179,18 @@ window.SYH_EVENT_HANDLERS = {
                 
                 if (textToCopy) {
                     self.UTILS.copyAndShowBanner(textToCopy, header);
-                    $commentBlock.find('.syh-checkbox').prop('checked', true).trigger('change');
+
+                    // ФІКС ГАЛОЧКИ: Примусове нативне проставлення checked та генерація події для реакції React
+                    const checkboxNode = $commentBlock.find('.syh-checkbox[data-type="comment"]')[0];
+                    if (checkboxNode) {
+                        checkboxNode.checked = true;
+                        checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (self.STATE) {
+                            self.STATE.updateState(commentText, true);
+                        }
+                    }
+
+                    $commentBlock.find('.syh-checkbox').prop('checked', true);
                     
                     const starBtnNode = $commentBlock.find(self.SELECTORS.starButton)[0];
                     if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
@@ -187,24 +224,75 @@ window.SYH_EVENT_HANDLERS = {
         });
     },
 
+    // event_handlers.js
     saveToDatabase: function(author, text, type, icon) {
-        chrome.storage.local.get(['syh_prayers'], function(result) {
+        const self = this;
+        // Резервний механізм (Fallback) на випадок відсутності chrome.storage.local
+        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
+            ? chrome.storage.local 
+            : {
+                get: function(keys, cb) {
+                    const res = {};
+                    keys.forEach(k => {
+                        try {
+                            const val = localStorage.getItem(k);
+                            res[k] = val ? JSON.parse(val) : null;
+                        } catch(e) { res[k] = null; }
+                    });
+                    cb(res);
+                },
+                set: function(items, cb) {
+                    for (const k in items) {
+                        try {
+                            localStorage.setItem(k, JSON.stringify(items[k]));
+                        } catch(e) {}
+                    }
+                    if (cb) cb();
+                }
+            };
+
+        storage.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
             list = list.filter(item => item.text !== text);
             list.push({ author: author, text: text, type: type, icon: icon });
-            chrome.storage.local.set({ 'syh_prayers': list });
+            storage.set({ 'syh_prayers': list });
         });
     },
 
     removeFromDatabase: function(text) {
+        const self = this;
         if (this.UI && this.UI.prayersCache) {
             this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
         }
 
-        chrome.storage.local.get(['syh_prayers'], function(result) {
+        // Резервний механізм (Fallback) на випадок відсутності chrome.storage.local
+        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
+            ? chrome.storage.local 
+            : {
+                get: function(keys, cb) {
+                    const res = {};
+                    keys.forEach(k => {
+                        try {
+                            const val = localStorage.getItem(k);
+                            res[k] = val ? JSON.parse(val) : null;
+                        } catch(e) { res[k] = null; }
+                    });
+                    cb(res);
+                },
+                set: function(items, cb) {
+                    for (const k in items) {
+                        try {
+                            localStorage.setItem(k, JSON.stringify(items[k]));
+                        } catch(e) {}
+                    }
+                    if (cb) cb();
+                }
+            };
+
+        storage.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
             list = list.filter(item => item.text !== text);
-            chrome.storage.local.set({ 'syh_prayers': list });
+            storage.set({ 'syh_prayers': list });
         });
     }
 };

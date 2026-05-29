@@ -13,6 +13,7 @@ window.SYH_BANNER_CREATOR = {
         console.log(`[SYH] ${msg}`);
     },
 
+    // banner_creator.js
     processAndCreateBanners: async function(rawText) {
         let questions = [];
         let isStandardFormat = false;
@@ -56,7 +57,6 @@ window.SYH_BANNER_CREATOR = {
             this.log("Додаю розділювач...");
             await new Promise(r => setTimeout(r, 300));
             await this.createSingleBanner("----Питання глядачів----");
-            createdCount++;
         }
 
         await this.finalCleanup();

@@ -1,3 +1,4 @@
+// state.js
 const SYH_STATE = {
     itemStates: {},
     lastDate: null,
@@ -6,7 +7,32 @@ const SYH_STATE = {
         const self = this;
         const today = new Date().toISOString().split('T')[0];
 
-        chrome.storage.local.get(['syh_checkbox_state'], function(result) {
+        // Резервний адаптер для безпечного читання/видалення даних за відсутності chrome.storage.local
+        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local)
+            ? chrome.storage.local
+            : {
+                get: function(keys, cb) {
+                    const res = {};
+                    keys.forEach(k => {
+                        try {
+                            const val = localStorage.getItem(k);
+                            res[k] = val ? JSON.parse(val) : null;
+                        } catch(e) { res[k] = null; }
+                    });
+                    cb(res);
+                },
+                remove: function(keys, cb) {
+                    const arr = Array.isArray(keys) ? keys : [keys];
+                    arr.forEach(k => {
+                        try {
+                            localStorage.removeItem(k);
+                        } catch(e) {}
+                    });
+                    if (cb) cb();
+                }
+            };
+
+        storage.get(['syh_checkbox_state'], function(result) {
             const stored = result.syh_checkbox_state || {};
             const savedDate = stored.date;
             
@@ -17,7 +43,7 @@ const SYH_STATE = {
                 console.log("SYH_STATE: Виявлено новий день. Очищення стану збережених чекбоксів.");
                 self.itemStates = {};
                 self.lastDate = today;
-                chrome.storage.local.remove('syh_checkbox_state', function() {
+                storage.remove('syh_checkbox_state', function() {
                     self.restoreDomCheckboxes();
                     if (callback) callback();
                 });
@@ -80,8 +106,23 @@ const SYH_STATE = {
             date: today,
             data: this.itemStates
         };
-        chrome.storage.local.set({ 'syh_checkbox_state': stateToSave }, function() {
-            console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано в chrome.storage.local.");
+
+        // Резервний адаптер для безпечного запису даних за відсутності chrome.storage.local
+        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local)
+            ? chrome.storage.local
+            : {
+                set: function(items, cb) {
+                    for (const k in items) {
+                        try {
+                            localStorage.setItem(k, JSON.stringify(items[k]));
+                        } catch(e) {}
+                    }
+                    if (cb) cb();
+                }
+            };
+
+        storage.set({ 'syh_checkbox_state': stateToSave }, function() {
+            console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
         });
     }
 };

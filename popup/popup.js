@@ -1,3 +1,4 @@
+// popup.js
 var db = {};
 
 function translitToRussian(translitText) {
@@ -41,7 +42,7 @@ $(document).ready(function(){
         }
     });
 
-    // === ЛОГІКА ВКАЛДКИ МОЛИТОВ ===
+    // === ЛОГІКА ВКЛАДКИ МОЛИТОВ ===
     function renderPrayers(prayersList) {
         const outputDiv = $('#prayersResultDiv');
         outputDiv.empty();
@@ -126,12 +127,13 @@ $(document).ready(function(){
                 block.append(textContainer);
             } else {
                 grouped[author].forEach((item, idx) => {
-                    // Якщо декілька прохань, додаємо до тексту копіювання іконку кожного пункту
+                    // Копіювання в буфер обміну залишено без змін (іконки зберігаються)
                     fullTextForCopy += `${idx + 1}) ${item.icon} ${item.text}\n`;
                     
                     const textContainer = $('<div>').css({display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px'});
                     
-                    const indexSpan = $('<span>').css({color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap'}).text(`${idx + 1}) ${item.icon}`);
+                    // ФІКС ВІЗУАЛУ: Прибираємо іконку ТІЛЬКИ з візуального інтерфейсу попапу, залишаючи лише номер
+                    const indexSpan = $('<span>').css({color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap'}).text(`${idx + 1}) `);
                     
                     const textSpan = $('<span>')
                         .addClass('editable-prayer')
@@ -294,7 +296,6 @@ function processTelegramData() {
     let totalQuestions = oldQuestionsTotal + newQuestionsTotal;
     $('.stat-item.old').html(`Залишилось старих: <b>${oldPeople} люд. - ${oldQuestionsTotal} пит.</b>`);
     $('#countDel').text(`${delPeople} люд. - ${delQuestionsTotal} пит.`);
-    $('#countNew').text(`${newPeople} люд. - ${newQuestionsTotal} пит.`);
     $('#countTotal').text(`${totalPeople} люд. - ${totalQuestions} пит.`);
     $('#statsBar').show();
     const outputDiv = $('#finalResultDiv');
