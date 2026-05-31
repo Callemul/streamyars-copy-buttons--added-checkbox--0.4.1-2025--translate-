@@ -21,26 +21,11 @@ window.SYH_EVENT_BANNERS = {
         document.addEventListener('contextmenu', function(e) {
             const bannerBlock = e.target.closest(self.SELECTORS.bannerBlock);
             if (bannerBlock) {
-                // Ігноруємо прямі кліки на інпути та текстові поля
-                if (e.target.closest('input, textarea')) return;
+                // Запобігаємо перехопленню, якщо клікнули на текстове поле, чекбокс або кастомні кнопки керування всередині банера
+                if (e.target.closest('input, textarea, button, .syh-button')) return;
 
-                const button = e.target.closest('button');
-                if (button) {
-                    // Ігноруємо наші власні кнопки
-                    if (button.classList.contains('syh-button')) return;
-
-                    // Ігноруємо кнопки редагування (pencil) та видалення (trash)
-                    const isEditOrDelete = button.querySelector('svg[class*="pencil"], svg[class*="trash"], [class*="pencil"], [class*="trash"]') || 
-                                           button.getAttribute('aria-label')?.toLowerCase().includes('edit') ||
-                                           button.getAttribute('aria-label')?.toLowerCase().includes('delete') ||
-                                           button.getAttribute('aria-label')?.toLowerCase().includes('remove');
-                    if (isEditOrDelete) return;
-                }
-
-                // Запобігаємо появі дефолтного меню для Show, Off та самого банера
                 e.preventDefault();
                 e.stopPropagation();
-                
                 const checkbox = bannerBlock.querySelector('.syh-checkbox[data-type="banner"]');
                 if (checkbox) {
                     checkbox.checked = !checkbox.checked;
@@ -60,14 +45,14 @@ window.SYH_EVENT_BANNERS = {
             if (e.button === 1) e.preventDefault(); 
         });
 
-        // Обробка натискання ЛКМ на кнопки керування банерами
+        // Обробка натискання ЛКМ на кнопки керування банерами (Оновлено під 3 кнопки маркування)
         $(document).on('mouseup', '.syh-button', function(e) {
             const $button = $(this);
             const action = $button.data('action');
             const type = $button.data('type');
 
             // Якщо подія не пов'язана з банерами, негайно завершуємо
-            if (type !== 'banner' && action !== 'create-from-text' && action !== 'delete-selected-banners') return;
+            if (type !== 'banner' && action !== 'create-from-text' && action !== 'delete-selected-banners' && action !== 'mark-stream' && action !== 'mark-audience' && action !== 'mark-prayer') return;
 
             e.preventDefault();
             e.stopPropagation();
@@ -101,6 +86,55 @@ window.SYH_EVENT_BANNERS = {
                 const bannerText = $bannerBlock.find(self.SELECTORS.bannerText).text();
                 self.UTILS.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
                 $bannerBlock.find('.syh-checkbox').prop('checked', true).trigger('change');
+                return;
+            }
+
+            // ФІКС: Ручне маркування банера як "Питання ефіру" (📺)
+            if (action === 'mark-stream') {
+                const $bannerBlock = $button.closest(self.SELECTORS.bannerBlock);
+                const bannerText = $bannerBlock.find(self.SELECTORS.bannerText).text();
+                
+                // Перемикаємо/записуємо стан
+                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'stream') ? 'none' : 'stream';
+                self.saveBannerCategory(bannerText, currentType).then(() => {
+                    if (self.UI) {
+                        self.UI.bannerCategoriesCache[bannerText] = currentType;
+                        self.UI.filterBanners();
+                    }
+                });
+                return;
+            }
+
+            // ФІКС: Ручне маркування банера як "Питання глядачів" (❓)
+            if (action === 'mark-audience') {
+                const $bannerBlock = $button.closest(self.SELECTORS.bannerBlock);
+                const bannerText = $bannerBlock.find(self.SELECTORS.bannerText).text();
+                
+                // Перемикаємо/записуємо стан
+                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'audience') ? 'none' : 'audience';
+                self.saveBannerCategory(bannerText, currentType).then(() => {
+                    if (self.UI) {
+                        self.UI.bannerCategoriesCache[bannerText] = currentType;
+                        self.UI.filterBanners();
+                    }
+                });
+                return;
+            }
+
+            // ФІКС: Ручне маркування банера як "Молитовне" (🙏)
+            if (action === 'mark-prayer') {
+                const $bannerBlock = $button.closest(self.SELECTORS.bannerBlock);
+                const bannerText = $bannerBlock.find(self.SELECTORS.bannerText).text();
+                
+                // Перемикаємо/записуємо стан
+                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'prayer') ? 'none' : 'prayer';
+                self.saveBannerCategory(bannerText, currentType).then(() => {
+                    if (self.UI) {
+                        self.UI.bannerCategoriesCache[bannerText] = currentType;
+                        self.UI.filterBanners();
+                    }
+                });
+                return;
             }
         });
 
@@ -120,6 +154,95 @@ window.SYH_EVENT_BANNERS = {
             const isChecked = $(this).is(':checked');
             $(this).prop('indeterminate', false);
             $(self.SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
+        });
+    },
+
+    // Зв'язування подій текстового пошуку та кнопок фільтрації банерів
+    bindBannersFilterControls: function() {
+        const self = this;
+        const $searchInput = $('#syh-banner-search');
+        const $clearBtn = $('#syh-clear-banner-search-btn');
+
+        $searchInput.off('input').on('input', function() { 
+            if (self.UI) {
+                self.UI.bannerSearchQuery = $(this).val().toLowerCase();
+                $clearBtn.css('display', self.UI.bannerSearchQuery ? 'flex' : 'none');
+                self.UI.filterBanners();
+            }
+        });
+
+        $clearBtn.off('click').on('click', function() {
+            $searchInput.val('');
+            if (self.UI) {
+                self.UI.bannerSearchQuery = '';
+                $(this).hide();
+                self.UI.filterBanners();
+            }
+        });
+
+        $('#syh-scroll-to-active-banner-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            if (self.UI) self.UI.scrollToActiveBanner();
+        });
+
+        $(document).off('click', '#syh-banner-empty-clear-link').on('click', '#syh-banner-empty-clear-link', function(e) {
+            e.preventDefault();
+            $searchInput.val('');
+            if (self.UI) {
+                self.UI.bannerSearchQuery = '';
+                $clearBtn.hide();
+                $('.syh-banner-filter-btn[data-filter="all"]').click(); 
+            }
+        });
+
+        $('.syh-banner-filter-btn').off('click').on('click', function() {
+            $('.syh-banner-filter-btn').css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'}).removeClass('active');
+            $(this).css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'}).addClass('active');
+            
+            if (self.UI) {
+                self.UI.bannerActiveFilter = $(this).data('filter');
+                self.UI.filterBanners();
+            }
+
+            if (self.UI && self.UI.bannerSearchQuery) {
+                $searchInput.removeClass('syh-banner-search-pulse');
+                void $searchInput[0].offsetWidth; 
+                $searchInput.addClass('syh-banner-search-pulse');
+            }
+        });
+    },
+
+    // Метод запису категорії банера в базу даних з вбудованим fallback
+    saveBannerCategory: function(text, type) {
+        return new Promise(resolve => {
+            const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
+                ? chrome.storage.local 
+                : {
+                    get: function(keys, cb) {
+                        const res = {};
+                        keys.forEach(k => {
+                            try {
+                                const val = localStorage.getItem(k);
+                                res[k] = val ? JSON.parse(val) : null;
+                            } catch(e) { res[k] = null; }
+                        });
+                        cb(res);
+                    },
+                    set: function(items, cb) {
+                        for (const k in items) {
+                            try {
+                                localStorage.setItem(k, JSON.stringify(items[k]));
+                            } catch(e) {}
+                        }
+                        if (cb) cb();
+                    }
+                };
+
+            storage.get(['syh_banner_categories'], function(result) {
+                let db = result.syh_banner_categories || {};
+                db[text] = type;
+                storage.set({ 'syh_banner_categories': db }, resolve);
+            });
         });
     }
 };

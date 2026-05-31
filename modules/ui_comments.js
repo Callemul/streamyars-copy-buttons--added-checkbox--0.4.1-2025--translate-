@@ -1,66 +1,8 @@
-// ui.js
-window.SYH_UI = {
-    SELECTORS: null,
-    STATE: null,
-    activeFilter: 'all', 
-    searchQuery: '',     
-    prayersCache: [],    
-
-    init: function(config, state) {
-        this.SELECTORS = config.SELECTORS;
-        this.STATE = state;
-        
-        const self = this;
-        
-        if (!document.getElementById('syh-global-styles')) {
-            const style = document.createElement('style');
-            style.id = 'syh-global-styles';
-            style.innerHTML = `
-                /* Звичайний стан: СУЦІЛЬНА напівпрозора заливка без градієнтів */
-                div[class*="PlatformComment__Wrap"][data-syh-type="prayer"] > div[class*="PlatformCommentShell__Wrap"] {
-                    border-left: 12px solid #005DF7 !important;
-                    background: rgba(0, 93, 247, 0.15) !important;
-                }
-                div[class*="PlatformComment__Wrap"][data-syh-type="question"] > div[class*="PlatformCommentShell__Wrap"] {
-                    border-left: 12px solid #f39c12 !important;
-                    background: rgba(243, 156, 18, 0.15) !important;
-                }
-
-                /* АКТИВНИЙ СТАН (виведено на екран): суцільна 100% повна заливка */
-                div[class*="PlatformComment__Wrap"][data-syh-type="prayer"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                    background: #005DF7 !important; 
-                }
-                div[class*="PlatformComment__Wrap"][data-syh-type="question"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                    background: #f39c12 !important;
-                }
-
-                /* ФІКС: Візуальне виділення БУДЬ-ЯКОГО активного коментаря (у тому числі у вкладці Starred), який виведений на екран */
-                div[class*="PlatformComment__Wrap"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                    outline: 3px solid #ff4757 !important;
-                    outline-offset: -3px;
-                    box-shadow: 0 0 15px rgba(255, 71, 87, 0.6) !important;
-                    animation: syhActivePulse 2s infinite alternate;
-                }
-                @keyframes syhActivePulse {
-                    0% { box-shadow: 0 0 10px rgba(255, 71, 87, 0.4); }
-                    100% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.8); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        chrome.storage.local.get(['syh_prayers'], function(result) {
-            self.prayersCache = result.syh_prayers || [];
-        });
-
-        chrome.storage.onChanged.addListener(function(changes) {
-            if (changes.syh_prayers) {
-                self.prayersCache = changes.syh_prayers.newValue || [];
-                self.filterStarredComments(); 
-            }
-        });
-    },
-
+// ui_comments.js
+// Розширення єдиного об'єкта SYH_UI логікою рендерингу та фільтрації коментарів
+Object.assign(window.SYH_UI, {
+    
+    // Додавання кастомних кнопок копіювання/маркування під коментар
     addButtonsToComment: function(commentNode) {
         const $targetContainer = $(commentNode).find(this.SELECTORS.commentButtonContainer);
         if ($targetContainer.length > 0 && !$targetContainer.find('.syh-custom-buttons-comment').length) {
@@ -84,6 +26,7 @@ window.SYH_UI = {
         }
     },
 
+    // Оновлення кольорового маркування коментаря за атрибутом
     updateCommentVisuals: function($commentWrap, type) {
         if (type === 'prayer') {
             $commentWrap.attr('data-syh-type', 'prayer');
@@ -94,8 +37,8 @@ window.SYH_UI = {
         }
     },
 
+    // Перевірка та автоматичне забарвлення коментаря при першому монтуванні
     applySavedLabels: function(commentNode, text) {
-        // ФІКС: Запобігаємо обробці пустих або пробільних текстових значень (для уникнення помилкових збігів у тестових коментарях)
         if (!text || !text.trim()) return; 
         
         const found = this.prayersCache.find(item => item.text === text);
@@ -103,7 +46,7 @@ window.SYH_UI = {
         this.updateCommentVisuals($(commentNode), type);
     },
 
-    // ui.js
+    // Створення елементів пошуку та фільтрації у шапці вкладки Starred коментарів
     addStarredTabControls: function(starredHeaderNode) {
         const $headerWrap = $(starredHeaderNode);
         if ($headerWrap.length > 0 && !$headerWrap.find('.syh-starred-controls').length) {
@@ -171,7 +114,7 @@ window.SYH_UI = {
         }
     },
 
-    // ui.js
+    // Зв'язування подій текстового пошуку та кнопок фільтра коментарів
     bindStarredControls: function() {
         const self = this;
         const $searchInput = $('#syh-starred-search');
@@ -190,7 +133,6 @@ window.SYH_UI = {
             self.filterStarredComments();
         });
 
-        // Слухач кнопки 🎯 (Повернутися до активного коментаря на екрані)
         $('#syh-scroll-to-active-btn').on('click', function(e) {
             e.preventDefault();
             self.scrollToActiveComment();
@@ -219,6 +161,7 @@ window.SYH_UI = {
         });
     },
 
+    // Головний метод фільтрації списку Starred коментарів
     filterStarredComments: function() {
         const $commentList = $('.StarredCommentList__List-sc-1qtlqu2-1');
         if (!$commentList.length) return;
@@ -299,61 +242,7 @@ window.SYH_UI = {
         }
     },
 
-    addButtonsToBanner: function(bannerNode) {
-        const $bannerWrap = $(bannerNode).find(this.SELECTORS.bannerWrap);
-        if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {
-            const buttonsHTML = `
-                <div class="syh-banner-controls">
-                    <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати text банера">📋</button>
-                    <div class="syh-checkbox-container">
-                        <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване">
-                    </div>
-                </div>`;
-            $bannerWrap.append(buttonsHTML);
-            const bannerText = $(bannerNode).find(this.SELECTORS.bannerText).text();
-            
-            if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(bannerText)) {
-                $bannerWrap.find('.syh-checkbox').prop('checked', true);
-            }
-        }
-    },
-
-    addBannerHeaderControls: function(headerNode) {
-        const $header = $(headerNode);
-        if ($header.length > 0 && !$header.find('.syh-banner-header-controls').length) {
-            const controlsHTML = `
-                <div class="syh-banner-header-controls">
-                    <button class="syh-button" data-action="create-from-text" title="Створити банери з тексту">📝</button>
-                    <label class="syh-master-checkbox-label" title="Вибрати все / Зняти все">
-                        <input type="checkbox" class="syh-master-checkbox">
-                    </label>
-                    <button class="syh-button syh-delete-selected-banners" data-action="delete-selected-banners" title="Видалити вибрані">🗑️</button>
-                </div>
-            `;
-            $header.append(controlsHTML);
-            this.updateMasterCheckboxState();
-        }
-    },
-
-    updateMasterCheckboxState: function() {
-        const $masterCheckbox = $('.syh-master-checkbox');
-        if (!$masterCheckbox.length) return;
-        const $allBannerCheckboxes = $(this.SELECTORS.bannerBlock).find('.syh-checkbox[data-type="banner"]');
-        const total = $allBannerCheckboxes.length;
-        if (total === 0) {
-            $masterCheckbox.prop({ 'checked': false, 'indeterminate': false });
-            return;
-        }
-        const checkedCount = $allBannerCheckboxes.filter(':checked').length;
-        if (checkedCount === 0) {
-            $masterCheckbox.prop({ 'checked': false, 'indeterminate': false });
-        } else if (checkedCount === total) {
-            $masterCheckbox.prop({ 'checked': true, 'indeterminate': false });
-        } else {
-            $masterCheckbox.prop({ 'checked': false, 'indeterminate': true });
-        }
-    },
-
+    // Скрол до поточного виведеного на екран коментаря (ручний виклик)
     scrollToActiveComment: function() {
         const $commentList = $('.StarredCommentList__List-sc-1qtlqu2-1');
         if ($commentList.length) {
@@ -374,4 +263,4 @@ window.SYH_UI = {
             }
         }
     }
-};
+});

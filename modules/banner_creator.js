@@ -1,3 +1,4 @@
+// banner_creator.js
 window.SYH_BANNER_CREATOR = {
     SELECTORS: null,
     UTILS: null,
@@ -13,12 +14,17 @@ window.SYH_BANNER_CREATOR = {
         console.log(`[SYH] ${msg}`);
     },
 
-    // banner_creator.js
     processAndCreateBanners: async function(rawText) {
         let questions = [];
         let isStandardFormat = false;
 
-        // Оновлена перевірка формату
+        // ФІКС ПАРСЕРА: Перевіряємо, чи є введений пакет списком молитовних прохань (якщо заголовок містить слово "МОЛИТВ")
+        const isPrayerBatch = rawText.toUpperCase().includes("МОЛИТВ");
+        const defaultCategory = isPrayerBatch ? "prayer" : "stream";
+
+        this.log(`Автовизначення типу пакету: ${isPrayerBatch ? "МОЛИТВИ 🙏" : "ПИТАННЯ ЕФІРУ 📺"}`);
+
+        // Перевірка формату
         if (/(?:\d+\uFE0F?\u20E3|🔟)/.test(rawText)) {
             this.log("Формат: Емодзі 1️⃣");
             questions = this.PARSERS.parseEmojiNumberedQuestions(rawText);
@@ -44,7 +50,14 @@ window.SYH_BANNER_CREATOR = {
                 const pauseTime = index === 0 ? 600 : 250;
                 await new Promise(r => setTimeout(r, pauseTime));
                 
-                await this.createSingleBanner(question);
+                // ФІКС ПАРСЕРА: Очищення дужок з авторами, навіть якщо дужка не закрита (наприклад, " ( Опарин , Молчанов")
+                const cleanQuestion = question.replace(/\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi, "").trim();
+
+                await this.createSingleBanner(cleanQuestion);
+                
+                // Автоматично проштамповуємо створений банер у правильну категорію (Молитви або Питання ефіру)
+                await this.saveBannerCategory(cleanQuestion, defaultCategory);
+
                 createdCount++;
             } catch (error) {
                 console.error(error);
@@ -129,6 +142,40 @@ window.SYH_BANNER_CREATOR = {
             } catch (error) {
                 reject(error);
             }
+        });
+    },
+
+    // Метод запису категорії банера в базу даних
+    saveBannerCategory: function(text, type) {
+        return new Promise(resolve => {
+            const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
+                ? chrome.storage.local 
+                : {
+                    get: function(keys, cb) {
+                        const res = {};
+                        keys.forEach(k => {
+                            try {
+                                const val = localStorage.getItem(k);
+                                res[k] = val ? JSON.parse(val) : null;
+                            } catch(e) { res[k] = null; }
+                        });
+                        cb(res);
+                    },
+                    set: function(items, cb) {
+                        for (const k in items) {
+                            try {
+                                localStorage.setItem(k, JSON.stringify(items[k]));
+                            } catch(e) {}
+                        }
+                        if (cb) cb();
+                    }
+                };
+
+            storage.get(['syh_banner_categories'], function(result) {
+                let db = result.syh_banner_categories || {};
+                db[text] = type;
+                storage.set({ 'syh_banner_categories': db }, resolve);
+            });
         });
     }
 };
