@@ -60,7 +60,7 @@ Object.assign(window.SYH_UI, {
                         border-radius: 4px;
                         background: transparent;
                         cursor: pointer;
-                        font-size: 11px;
+                        font-size: 13px !important; /* ЗБІЛЬШЕНО ДО 13px ДЛЯ ВІДПОВІДНОСТІ КОМЕНТАРЯМ */
                         color: #666;
                         transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
                         white-space: nowrap;
@@ -92,7 +92,7 @@ Object.assign(window.SYH_UI, {
                     }
 
                     .syh-banner-filter-btn .tab-count {
-                        font-size: 10px;
+                        font-size: 12px !important; /* ЗБІЛЬШЕНО ДО 12px */
                         opacity: 0.8;
                     }
 
@@ -158,6 +158,7 @@ Object.assign(window.SYH_UI, {
                         gap: 6px !important;
                         z-index: 10 !important;
                         background: transparent !important; /* Усуває утворення фонових рамок навколо контейнера */
+                        border: none !important; /* НАДІЙНО ПРИБИРАЄМО СІРУ РАМКУ */
                         box-shadow: none !important;
                         margin: 0 !important;
                         padding: 0 !important;
@@ -175,10 +176,18 @@ Object.assign(window.SYH_UI, {
                         margin: 0 !important;
                     }
                     .syh-banner-controls .syh-checkbox {
-                        width: 14px !important;
-                        height: 14px !important;
+                        width: 24px !important; /* ЗБІЛЬШЕНО З 14px ДО 24px ДЛЯ ОДНАКОВОГО РОЗМІРУ З КНОПКАМИ */
+                        height: 24px !important; /* ЗБІЛЬШЕНО З 14px ДО 24px */
                         cursor: pointer !important;
-                        margin: 0 0 0 4px !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    .syh-banner-controls .syh-checkbox-container {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        width: 24px !important;
+                        height: 24px !important;
                     }
                 `;
                 document.head.appendChild(style);
