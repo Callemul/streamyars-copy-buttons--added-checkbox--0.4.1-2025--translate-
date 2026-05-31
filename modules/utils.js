@@ -1,9 +1,42 @@
-// modules/utils.js
 window.SYH_UTILS = {
     SELECTORS: null,
     init: function(config) {
         this.SELECTORS = config.SELECTORS;
     },
+
+    // Централізований адаптер для роботи зі сховищем із підтримкою localStorage як fallback
+    storage: (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
+        ? chrome.storage.local 
+        : {
+            get: function(keys, cb) {
+                const res = {};
+                const arr = Array.isArray(keys) ? keys : [keys];
+                arr.forEach(k => {
+                    try {
+                        const val = localStorage.getItem(k);
+                        res[k] = val ? JSON.parse(val) : null;
+                    } catch(e) { res[k] = null; }
+                });
+                cb(res);
+            },
+            set: function(items, cb) {
+                for (const k in items) {
+                    try {
+                        localStorage.setItem(k, JSON.stringify(items[k]));
+                    } catch(e) {}
+                }
+                if (cb) cb();
+            },
+            remove: function(keys, cb) {
+                const arr = Array.isArray(keys) ? keys : [keys];
+                arr.forEach(k => {
+                    try {
+                        localStorage.removeItem(k);
+                    } catch(e) {}
+                });
+                if (cb) cb();
+            }
+        },
 
     copyAndShowBanner: function(textToCopy, bannerMessage) {
         if (!textToCopy) { console.error("No text provided to copy."); return; }
@@ -55,7 +88,6 @@ window.SYH_UTILS = {
         });
     },
 
-    // НОВА ФУНКЦІЯ
     waitForNewBanner: function(bannerText, timeout = 5000) {
         return new Promise((resolve, reject) => {
             const interval = 100;
@@ -77,22 +109,17 @@ window.SYH_UTILS = {
                 }
             }, interval);
         });
-    }
-    ,
+    },
 
-    // --- НОВА ФУНКЦІЯ ---
-    // Шукає елемент за текстом (через XPath) і клікає по ньому
     clickElementByText: function(text, timeout = 2000) {
         return new Promise((resolve, reject) => {
             const interval = 100;
             let elapsedTime = 0;
             const timer = setInterval(() => {
-                // XPath шукає будь-який елемент (*), що містить заданий текст
                 const xpath = `//*[contains(text(), '${text}')]`;
                 const matchingElement = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
                 if (matchingElement && $(matchingElement).is(':visible')) {
-                    // Перевіряємо, чи це клікабельний елемент або його батько
                     matchingElement.click();
                     clearInterval(timer);
                     resolve();
@@ -101,13 +128,10 @@ window.SYH_UTILS = {
                 elapsedTime += interval;
                 if (elapsedTime >= timeout) {
                     clearInterval(timer);
-                    // Не реджектимо жорстко, щоб не ламати весь процес, якщо меню не знайдено, але виводимо в консоль
                     console.warn(`SYH: Element with text "${text}" not found.`);
-                    resolve(); // Продовжуємо навіть якщо не знайшли (таймер залишиться як був)
+                    resolve();
                 }
             }, interval);
         });
     }
 };
-
-

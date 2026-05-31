@@ -1,4 +1,3 @@
-// banner_creator.js
 window.SYH_BANNER_CREATOR = {
     SELECTORS: null,
     UTILS: null,
@@ -148,28 +147,15 @@ window.SYH_BANNER_CREATOR = {
     // Метод запису категорії банера в базу даних
     saveBannerCategory: function(text, type) {
         return new Promise(resolve => {
-            const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
-                ? chrome.storage.local 
-                : {
-                    get: function(keys, cb) {
-                        const res = {};
-                        keys.forEach(k => {
-                            try {
-                                const val = localStorage.getItem(k);
-                                res[k] = val ? JSON.parse(val) : null;
-                            } catch(e) { res[k] = null; }
-                        });
-                        cb(res);
-                    },
-                    set: function(items, cb) {
-                        for (const k in items) {
-                            try {
-                                localStorage.setItem(k, JSON.stringify(items[k]));
-                            } catch(e) {}
-                        }
-                        if (cb) cb();
-                    }
-                };
+            const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+                ? window.SYH_UTILS.storage
+                : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+
+            if (!storage) {
+                console.error("SYH_BANNER_CREATOR: Не знайдено адаптер сховища!");
+                resolve();
+                return;
+            }
 
             storage.get(['syh_banner_categories'], function(result) {
                 let db = result.syh_banner_categories || {};

@@ -163,30 +163,16 @@ window.SYH_EVENT_COMMENTS = {
         });
     },
 
-    // Безпечне збереження в БД
+    // Безпечне збереження в БД через централізований адаптер
     saveToDatabase: function(author, text, type, icon) {
-        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
-            ? chrome.storage.local 
-            : {
-                get: function(keys, cb) {
-                    const res = {};
-                    keys.forEach(k => {
-                        try {
-                            const val = localStorage.getItem(k);
-                            res[k] = val ? JSON.parse(val) : null;
-                        } catch(e) { res[k] = null; }
-                    });
-                    cb(res);
-                },
-                set: function(items, cb) {
-                    for (const k in items) {
-                        try {
-                            localStorage.setItem(k, JSON.stringify(items[k]));
-                        } catch(e) {}
-                    }
-                    if (cb) cb();
-                }
-            };
+        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+            ? window.SYH_UTILS.storage
+            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+
+        if (!storage) {
+            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
+            return;
+        }
 
         storage.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
@@ -196,34 +182,20 @@ window.SYH_EVENT_COMMENTS = {
         });
     },
 
-    // Безпечне видалення з БД
+    // Безпечне видалення з БД через централізований адаптер
     removeFromDatabase: function(text) {
         if (this.UI && this.UI.prayersCache) {
             this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
         }
 
-        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) 
-            ? chrome.storage.local 
-            : {
-                get: function(keys, cb) {
-                    const res = {};
-                    keys.forEach(k => {
-                        try {
-                            const val = localStorage.getItem(k);
-                            res[k] = val ? JSON.parse(val) : null;
-                        } catch(e) { res[k] = null; }
-                    });
-                    cb(res);
-                },
-                set: function(items, cb) {
-                    for (const k in items) {
-                        try {
-                            localStorage.setItem(k, JSON.stringify(items[k]));
-                        } catch(e) {}
-                    }
-                    if (cb) cb();
-                }
-            };
+        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+            ? window.SYH_UTILS.storage
+            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+
+        if (!storage) {
+            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
+            return;
+        }
 
         storage.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];

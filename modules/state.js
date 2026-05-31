@@ -1,4 +1,3 @@
-// state.js
 const SYH_STATE = {
     itemStates: {},
     lastDate: null,
@@ -7,30 +6,16 @@ const SYH_STATE = {
         const self = this;
         const today = new Date().toISOString().split('T')[0];
 
-        // Резервний адаптер для безпечного читання/видалення даних за відсутності chrome.storage.local
-        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local)
-            ? chrome.storage.local
-            : {
-                get: function(keys, cb) {
-                    const res = {};
-                    keys.forEach(k => {
-                        try {
-                            const val = localStorage.getItem(k);
-                            res[k] = val ? JSON.parse(val) : null;
-                        } catch(e) { res[k] = null; }
-                    });
-                    cb(res);
-                },
-                remove: function(keys, cb) {
-                    const arr = Array.isArray(keys) ? keys : [keys];
-                    arr.forEach(k => {
-                        try {
-                            localStorage.removeItem(k);
-                        } catch(e) {}
-                    });
-                    if (cb) cb();
-                }
-            };
+        // Безпечне отримання централізованого адаптера сховища з FALLBACK-запобіжником
+        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+            ? window.SYH_UTILS.storage
+            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+
+        if (!storage) {
+            console.error("SYH_STATE: Не знайдено адаптер сховища!");
+            if (callback) callback();
+            return;
+        }
 
         storage.get(['syh_checkbox_state'], function(result) {
             const stored = result.syh_checkbox_state || {};
@@ -107,23 +92,18 @@ const SYH_STATE = {
             data: this.itemStates
         };
 
-        // Резервний адаптер для безпечного запису даних за відсутності chrome.storage.local
-        const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local)
-            ? chrome.storage.local
-            : {
-                set: function(items, cb) {
-                    for (const k in items) {
-                        try {
-                            localStorage.setItem(k, JSON.stringify(items[k]));
-                        } catch(e) {}
-                    }
-                    if (cb) cb();
-                }
-            };
+        // Безпечне отримання централізованого адаптера сховища з FALLBACK-запобіжником
+        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+            ? window.SYH_UTILS.storage
+            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
 
-        storage.set({ 'syh_checkbox_state': stateToSave }, function() {
-            console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
-        });
+        if (storage) {
+            storage.set({ 'syh_checkbox_state': stateToSave }, function() {
+                console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
+            });
+        } else {
+            console.error("SYH_STATE: Не вдалося зберегти стан, адаптер сховища відсутній!");
+        }
     }
 };
 
