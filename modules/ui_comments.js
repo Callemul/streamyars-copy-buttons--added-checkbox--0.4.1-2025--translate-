@@ -65,32 +65,55 @@ Object.assign(window.SYH_UI, {
                         border-color: #f39c12 !important;
                     }
                     .syh-search-wrapper { position: relative; width: 100%; display: flex; gap: 6px; align-items: center; }
-                    .syh-clear-search {
-                        position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
-                        background: #ccc; color: white; border: none; border-radius: 50%;
-                        width: 16px; height: 16px; font-size: 10px; cursor: pointer;
-                        display: flex; align-items: center; justify-content: center;
-                        padding: 0; transition: 0.2s;
-                    }
-                    .syh-clear-search:hover { background: #e74c3c; }
                     .syh-empty-state {
                         text-align: center; padding: 20px; color: #666; font-size: 14px;
                         background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;
                         margin-top: 15px; display: none;
                     }
+                    /* СУЧАСНІ ДИНАМІЧНІ ТАБИ ДЛЯ КОМЕНТАРІВ */
                     .syh-filter-btn {
-                        flex: 1; padding: 4px; border: none; border-radius: 4px;
-                        background: transparent; cursor: pointer; font-size: 11px;
-                        color: #666; font-weight: normal; transition: 0.2s;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        padding: 4px 6px;
+                        border: none;
+                        border-radius: 4px;
+                        background: transparent;
+                        cursor: pointer;
+                        font-size: 13px !important;
+                        color: #666;
+                        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+                        white-space: nowrap;
+                        overflow: hidden;
+                        flex: 1;
                     }
                     .syh-filter-btn.active {
-                        background: #fff !important; font-weight: bold !important;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; color: #000 !important;
+                        background: #fff !important;
+                        color: #000 !important;
+                        font-weight: bold !important;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+                        flex: 1.8;
+                        padding: 4px 8px;
+                    }
+                    .syh-filter-btn .tab-text {
+                        display: none;
+                        opacity: 0;
+                        transition: opacity 0.15s;
+                    }
+                    .syh-filter-btn.active .tab-text {
+                        display: inline;
+                        opacity: 1;
+                    }
+                    .syh-filter-btn .tab-count {
+                        font-size: 12px !important;
+                        opacity: 0.8;
                     }
                 `;
                 document.head.appendChild(style);
             }
 
+            // Оновлено: повертаємо класичний знак питання ❓ для вкладки коментарів
             const controlsHTML = `
                 <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                     <div class="syh-search-wrapper">
@@ -99,11 +122,19 @@ Object.assign(window.SYH_UI, {
                         <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані">🎯</button>
                     </div>
                     
-                    <div style="display: flex; gap: 5px; background: #eee; padding: 3px; border-radius: 6px;">
-                        <button class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all">Всі ⭐</button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question">🎙️ Питання</button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer">🙏 Молитви</button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'other' ? 'active' : ''}" data-filter="other">📝 Інші</button>
+                    <div style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
+                        <button class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
+                            <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
+                        </button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
+                            <span>❓</span><span class="tab-text">Питання</span><span class="tab-count"></span>
+                        </button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
+                            <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
+                        </button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
+                            <span>📝</span><span class="tab-text">Інші</span><span class="tab-count"></span>
+                        </button>
                     </div>
                 </div>
             `;
@@ -130,20 +161,20 @@ Object.assign(window.SYH_UI, {
         const $searchInput = $('#syh-starred-search');
         const $clearBtn = $('#syh-clear-search-btn');
 
-        $searchInput.on('input', function() { 
+        $searchInput.off('input').on('input', function() { 
             self.searchQuery = $(this).val().toLowerCase();
             $clearBtn.css('display', self.searchQuery ? 'flex' : 'none');
             self.filterStarredComments(); 
         });
 
-        $clearBtn.on('click', function() {
+        $clearBtn.off('click').on('click', function() {
             $searchInput.val('');
             self.searchQuery = '';
             $(this).hide();
             self.filterStarredComments();
         });
 
-        $('#syh-scroll-to-active-btn').on('click', function(e) {
+        $('#syh-scroll-to-active-btn').off('click').on('click', function(e) {
             e.preventDefault();
             self.scrollToActiveComment();
         });
@@ -153,10 +184,11 @@ Object.assign(window.SYH_UI, {
             $searchInput.val('');
             self.searchQuery = '';
             $clearBtn.hide();
-            $('.syh-filter-btn[data-filter="all"]').click(); 
+            // ФІКС 2: При скиданні пошуку більше не скидаємо вкладку у "Всі". Залишаємось на поточній!
+            self.filterStarredComments();
         });
 
-        $('.syh-filter-btn').on('click', function() {
+        $('.syh-filter-btn').off('click').on('click', function() {
             $('.syh-filter-btn').css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'}).removeClass('active');
             $(this).css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'}).addClass('active');
             
@@ -183,23 +215,9 @@ Object.assign(window.SYH_UI, {
         const safeHtmlUpdate = (jqEl, newHtml) => {
             if (jqEl.length && jqEl.html() !== newHtml) jqEl.html(newHtml);
         };
-
-        const normalizeText = (str) => {
-            if (!str) return "";
-            let normalized = str.toLowerCase().trim();
-            const replacementMap = {
-                'a': 'а', 'e': 'е', 'o': 'о', 'i': 'і', 'c': 'с', 'p': 'р', 'x': 'х', 'y': 'у', 't': 'т', 'h': 'н'
-            };
-            for (const char in replacementMap) {
-                normalized = normalized.replaceAll(char, replacementMap[char]);
-            }
-            return normalized;
-        };
-
-        const queryWords = searchQuery ? searchQuery.toLowerCase().split(/\s+/).filter(Boolean).map(normalizeText) : [];
-        const matchesQuery = (targetText) => {
-            const normalizedTarget = normalizeText(targetText);
-            return queryWords.every(word => normalizedTarget.includes(word));
+        const safeTextUpdate = (selector, newText) => {
+            const el = $(selector);
+            if (el.length && el.text() !== newText) el.text(newText);
         };
 
         let sortedTexts = [];
@@ -222,30 +240,44 @@ Object.assign(window.SYH_UI, {
         if ($commentList.css('display') !== 'flex') $commentList.css({ 'display': 'flex', 'flex-direction': 'column' });
 
         let visibleCount = 0;
-        let countInTabs = { all: 0, question: 0, prayer: 0, other: 0 };
+        let countAbsolute = { all: 0, question: 0, prayer: 0, other: 0 };
+        let countSearch = { all: 0, question: 0, prayer: 0, other: 0 };
 
         $commentList.find('> li').each(function() {
             const $li = $(this);
+            
+            // ІГНОРУВАННЯ МЕРТВИХ ВУЗЛІВ: Пропускаємо коментарі, з яких щойно зняли зірку
+            if ($li.attr('data-syh-deleted') === 'true') return;
+
             const $commentWrap = $li.find(self.SELECTORS.commentBlock);
             if (!$commentWrap.length) return;
 
             const originalText = $commentWrap.find(self.SELECTORS.commentText).text();
-            const text = originalText.toLowerCase();
-            const author = $commentWrap.find(self.SELECTORS.commentAuthor).text().toLowerCase();
+            const authorText = $commentWrap.find(self.SELECTORS.commentAuthor).text();
             
             const foundInCache = self.prayersCache.find(item => item.text === originalText);
             const commentType = foundInCache ? foundInCache.type : 'none';
             
             self.updateCommentVisuals($commentWrap, commentType);
             
+            countAbsolute.all++;
+            if (commentType === 'question') countAbsolute.question++;
+            else if (commentType === 'prayer') countAbsolute.prayer++;
+            else countAbsolute.other++;
+            
             let matchesSearch = true;
-            if (searchQuery) matchesSearch = matchesQuery(text) || matchesQuery(author);
+            if (searchQuery) {
+                const combinedTarget = originalText + " " + authorText;
+                matchesSearch = window.SYH_UTILS && typeof window.SYH_UTILS.smartSearch === 'function'
+                    ? window.SYH_UTILS.smartSearch(searchQuery, combinedTarget)
+                    : combinedTarget.toLowerCase().includes(searchQuery.toLowerCase());
+            }
 
             if (matchesSearch) {
-                countInTabs.all++;
-                if (commentType === 'question') countInTabs.question++;
-                else if (commentType === 'prayer') countInTabs.prayer++;
-                else countInTabs.other++;
+                countSearch.all++;
+                if (commentType === 'question') countSearch.question++;
+                else if (commentType === 'prayer') countSearch.prayer++;
+                else countSearch.other++;
             }
 
             let isVisible = matchesSearch;
@@ -266,6 +298,25 @@ Object.assign(window.SYH_UI, {
             }
         });
 
+        const $otherTabBtn = $('#syh-comment-filter-other');
+        if (countAbsolute.other === 0) {
+            if ($otherTabBtn.css('display') !== 'none') $otherTabBtn.hide();
+            
+            if (this.activeFilter === 'other') {
+                this.activeFilter = 'all';
+                $('.syh-filter-btn').removeClass('active');
+                $('#syh-comment-filter-all').addClass('active');
+                return this.filterStarredComments(); 
+            }
+        } else {
+            if ($otherTabBtn.css('display') === 'none') $otherTabBtn.css('display', 'inline-flex');
+        }
+
+        safeTextUpdate('#syh-comment-filter-all .tab-count', ` (${countAbsolute.all})`);
+        safeTextUpdate('#syh-comment-filter-question .tab-count', ` (${countAbsolute.question})`);
+        safeTextUpdate('#syh-comment-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
+        safeTextUpdate('#syh-comment-filter-other .tab-count', ` (${countAbsolute.other})`);
+
         const $emptyState = $('#syh-empty-state-msg');
         const $emptyQuery = $('#syh-empty-query');
         const $emptySuggestion = $('#syh-empty-suggestion');
@@ -275,13 +326,13 @@ Object.assign(window.SYH_UI, {
             
             if (searchQuery) {
                 messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
-                <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук</a>`;
+                <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
                 
                 let suggestions = [];
-                if (activeFilter !== 'all' && countInTabs.all > 0) {
-                    if (countInTabs.question > 0 && activeFilter !== 'question') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="question" style="color: #f39c12; text-decoration: underline;">🎙️ Питання (${countInTabs.question})</a>`);
-                    if (countInTabs.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countInTabs.prayer})</a>`);
-                    if (countInTabs.other > 0 && activeFilter !== 'other') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="other" style="color: #f39c12; text-decoration: underline;">📝 Інші (${countInTabs.other})</a>`);
+                if (activeFilter !== 'all' && countSearch.all > 0) {
+                    if (countSearch.question > 0 && activeFilter !== 'question') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="question" style="color: #f39c12; text-decoration: underline;">❓ Питання (${countSearch.question})</a>`);
+                    if (countSearch.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countSearch.prayer})</a>`);
+                    if (countSearch.other > 0 && activeFilter !== 'other') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="other" style="color: #f39c12; text-decoration: underline;">📝 Інші (${countSearch.other})</a>`);
                 }
                 
                 if (suggestions.length > 0) {
@@ -300,7 +351,7 @@ Object.assign(window.SYH_UI, {
                 if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
                 const filterNames = { 
                     'all': 'списку коментарів', 
-                    'question': 'категорії "🎙️ Питання"', 
+                    'question': 'категорії "❓ Питання"', 
                     'prayer': 'категорії "🙏 Молитви"', 
                     'other': 'категорії "📝 Інші"' 
                 };

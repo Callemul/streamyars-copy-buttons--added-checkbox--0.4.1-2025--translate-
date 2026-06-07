@@ -15,8 +15,14 @@ window.SYH_EVENT_COMMENTS = {
     bindEvents: function() {
         const self = this;
 
-        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ (ВІДМІТКА "ОПРАЦЬОВАНО") ---
-        setInterval(() => {
+        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ ТА САМОВІДНОВЛЕННЯ БАЗИ ---
+        const scanInterval = setInterval(() => {
+            if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
+                clearInterval(scanInterval);
+                return;
+            }
+
+            // 1. Відмітка "Опрацьовано" для коментарів на екрані
             const coverButtons = document.querySelectorAll('[data-testid="show-comment-button"]');
             coverButtons.forEach(btn => {
                 if (btn.textContent.includes('Hide') || btn.querySelector('.lucide-circle-minus')) {
@@ -33,14 +39,36 @@ window.SYH_EVENT_COMMENTS = {
                     }
                 }
             });
+
+            // 2. ФІКС "ПРИВИДІВ" (Auto-Heal): Синхронізація локальної бази зі StreamYard
+            const syhComments = document.querySelectorAll('[data-syh-type="prayer"], [data-syh-type="question"]');
+            syhComments.forEach(commentBlock => {
+                const starBtn = commentBlock.querySelector(self.SELECTORS.starButton);
+                // Якщо коментар є в базі (підсвічений), але на сервері втратив зірочку
+                if (starBtn && starBtn.getAttribute('aria-selected') === 'false') {
+                    // Перевіряємо, чи це не новий коментар, який ще не встиг отримати зірочку від React
+                    if (commentBlock.getAttribute('data-syh-just-added') !== 'true') {
+                        const text = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
+                        if (text) {
+                            console.log("[SYH] Auto-Heal: Виявлено коментар без зірки. Очищую з бази.");
+                            self.removeFromDatabase(text);
+                            if (self.UI) {
+                                self.UI.updateCommentVisuals($(commentBlock), 'none');
+                                if (typeof self.UI.filterStarredComments === 'function') {
+                                    setTimeout(() => self.UI.filterStarredComments(), 100);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
         }, 500);
 
-        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT) ---
+        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT ТА ФІКС ЛІЧИЛЬНИКІВ) ---
         document.addEventListener('click', function(e) {
-            // Перехоплення зняття Зірочки
             const starBtn = e.target.closest(self.SELECTORS.starButton);
             if (starBtn) {
-                // Фаза занурення: aria-selected ще має старе значення. Якщо 'true' - зірочку знімають.
                 if (starBtn.getAttribute('aria-selected') === 'true') {
                     const commentBlock = starBtn.closest(self.SELECTORS.commentBlock);
                     if (commentBlock) {
@@ -50,27 +78,10 @@ window.SYH_EVENT_COMMENTS = {
                         }
                         if (self.UI) {
                             self.UI.updateCommentVisuals($(commentBlock), 'none');
-                        }
-                    }
-                }
-            }
-        }, true);
-
-        // --- ПЕРЕХОПЛЮВАЧ СЕРЕДНЬОГО КЛІКУ (КОЛІЩАТКА) НА КНОПКУ HIDE ДЛЯ ЗНЯТТЯ ЗІРКИ З ПИТАНЬ ---
-        document.addEventListener('mousedown', function(e) {
-            if (e.button === 1) { // 1 = середній клік (коліщатко)
-                const hideBtn = e.target.closest('[data-testid="show-comment-button"], [class*="PlatformComment__CoverButton"]');
-                if (hideBtn && (hideBtn.textContent.trim() === 'Hide' || hideBtn.querySelector('.lucide-circle-minus'))) {
-                    const commentBlock = hideBtn.closest(self.SELECTORS.commentBlock);
-                    if (commentBlock) {
-                        // Виконуємо автоматичне зняття зірки, якщо це коментар типу "питання"
-                        const isQuestion = commentBlock.getAttribute('data-syh-type') === 'question';
-                        if (isQuestion) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const starBtnNode = commentBlock.querySelector(self.SELECTORS.starButton);
-                            if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
-                                starBtnNode.click();
+                            $(commentBlock).closest('li').attr('data-syh-deleted', 'true').hide();
+                            
+                            if (typeof self.UI.filterStarredComments === 'function') {
+                                setTimeout(() => self.UI.filterStarredComments(), 50);
                             }
                         }
                     }
@@ -78,9 +89,26 @@ window.SYH_EVENT_COMMENTS = {
             }
         }, true);
 
+        // --- ПЕРЕХОПЛЮВАЧ СЕРЕДНЬОГО КЛІКУ (КОЛІЩАТКА) ДЛЯ ЗНЯТТЯ ЗІРКИ ---
+        document.addEventListener('mousedown', function(e) {
+            if (e.button === 1) { 
+                if (e.target.closest('.syh-button')) return;
+
+                const commentBlock = e.target.closest(self.SELECTORS.commentBlock);
+                if (commentBlock) {
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    
+                    const starBtnNode = commentBlock.querySelector(self.SELECTORS.starButton);
+                    if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
+                        starBtnNode.click(); 
+                    }
+                }
+            }
+        }, true);
+
         // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ ДЛЯ КОМЕНТАРІВ (У ТОМУ ЧИСЛІ НА ТРИ КРАПКИ) ---
         document.addEventListener('contextmenu', function(e) {
-            // Дозволяємо ПКМ на оверлеях показу/приховування, а також на кнопці "Три крапки" (aria-label="Comment actions")
             const targetBtn = e.target.closest([
                 '[data-testid="show-comment-button"]',
                 '[class*="PlatformComment__CoverButton"]',
@@ -105,17 +133,14 @@ window.SYH_EVENT_COMMENTS = {
             }
         }, true);
 
-        // Вимикаємо стандартне меню при кліку правою кнопкою на кнопку 🙏
         $(document).on('contextmenu', '.syh-button[data-action="copy-prayer"]', function(e) {
             e.preventDefault();
         });
 
-        // Запобігаємо стандартній дії при натисканні коліщатка миші на кастомні кнопки коментарів
         $(document).on('mousedown', '.syh-button[data-type="comment"]', function(e) {
             if (e.button === 1) e.preventDefault(); 
         });
 
-        // Обробник копіювання коментарів та маркування
         $(document).on('mouseup', '.syh-button[data-type="comment"]', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -132,6 +157,12 @@ window.SYH_EVENT_COMMENTS = {
             const commentText = $commentBlock.find(self.SELECTORS.commentText).text();
             let textToCopy, header;
             
+            // Встановлюємо таймер-запобіжник для Auto-Heal сканера
+            if (action === 'copy-author-comment' || action === 'copy-prayer') {
+                $commentBlock[0].setAttribute('data-syh-just-added', 'true');
+                setTimeout(() => { $commentBlock[0].removeAttribute('data-syh-just-added'); }, 2000);
+            }
+
             if (action === 'copy-comment') { 
                 header = "📄 Комент (без автора)"; 
                 textToCopy = commentText; 
@@ -162,7 +193,6 @@ window.SYH_EVENT_COMMENTS = {
             if (textToCopy) {
                 self.UTILS.copyAndShowBanner(textToCopy, header);
 
-                // Нативна генерація події change для синхронізації з React
                 const checkboxNode = $commentBlock.find('.syh-checkbox[data-type="comment"]')[0];
                 if (checkboxNode) {
                     checkboxNode.checked = true;
@@ -181,7 +211,6 @@ window.SYH_EVENT_COMMENTS = {
             }
         });
 
-        // Слухач подій перемикання стану чекбоксів коментарів
         $(document).on('change', '.syh-checkbox[data-type="comment"]', function(e) {
             const $checkbox = $(this);
             const textKey = $checkbox.closest(self.SELECTORS.commentBlock).find(self.SELECTORS.commentText).text();
@@ -193,6 +222,7 @@ window.SYH_EVENT_COMMENTS = {
     },
 
     // Безпечне збереження в БД через централізований адаптер
+    // Безпечне збереження в БД через централізований адаптер (З додаванням RoomID та Timestamp)
     saveToDatabase: function(author, text, type, icon) {
         const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
             ? window.SYH_UTILS.storage
@@ -203,10 +233,65 @@ window.SYH_EVENT_COMMENTS = {
             return;
         }
 
+        // Отримуємо поточний ID кімнати з URL (наприклад: "bqdhfwh6ru")
+        const currentRoomId = window.location.pathname.replace(/\//g, '');
+        const now = Date.now();
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
         storage.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
+            
+            // GARBAGE COLLECTION: Очищуємо старі записи, яким більше 30 днів
+            list = list.filter(item => {
+                if (!item.timestamp) return true; // Зберігаємо дуже старі записи без мітки (або можна видалити, але краще залишити)
+                return (now - item.timestamp) < thirtyDaysMs;
+            });
+
+            // Видаляємо старий дублікат тексту, якщо є
             list = list.filter(item => item.text !== text);
-            list.push({ author: author, text: text, type: type, icon: icon });
+            
+            // Додаємо нове прохання з міткою кімнати та часу
+            list.push({ 
+                author: author, 
+                text: text, 
+                type: type, 
+                icon: icon,
+                roomId: currentRoomId,
+                timestamp: now
+            });
+            
+            storage.set({ 'syh_prayers': list });
+        });
+    },
+
+    // Безпечне видалення з БД через централізований адаптер (З Garbage Collection)
+    removeFromDatabase: function(text) {
+        if (this.UI && this.UI.prayersCache) {
+            this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
+        }
+
+        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
+            ? window.SYH_UTILS.storage
+            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+
+        if (!storage) {
+            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
+            return;
+        }
+
+        const now = Date.now();
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+        storage.get(['syh_prayers'], function(result) {
+            let list = result.syh_prayers || [];
+            
+            // Видаляємо цільовий текст + попутно чистимо базу від старих записів (>30 днів)
+            list = list.filter(item => {
+                if (item.text === text) return false;
+                if (item.timestamp && (now - item.timestamp) > thirtyDaysMs) return false;
+                return true;
+            });
+            
             storage.set({ 'syh_prayers': list });
         });
     },

@@ -129,8 +129,9 @@ window.SYH_STATS_TRACKER = {
         const today = new Date().toISOString().split('T')[0];
         const self = this;
         
-        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+        const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
+        if (storage) {
+            storage.get(['syh_stream_charts'], function(result) {
                 const db = result.syh_stream_charts || {};
                 if (db[self.currentBrand] && db[self.currentBrand][today]) {
                     if (db[self.currentBrand][today].phase_questions_start) {
@@ -157,8 +158,9 @@ window.SYH_STATS_TRACKER = {
         const today = new Date().toISOString().split('T')[0];
         const self = this;
 
-        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+        const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
+        if (storage) {
+            storage.get(['syh_stream_charts'], function(result) {
                 let db = result.syh_stream_charts || {};
                 if (!db[self.currentBrand]) db[self.currentBrand] = {};
                 if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
@@ -172,7 +174,7 @@ window.SYH_STATS_TRACKER = {
                 }
                 btnElement.style.opacity = '0.7';
 
-                chrome.storage.local.set({ 'syh_stream_charts': db });
+                storage.set({ 'syh_stream_charts': db });
             });
         }
     },
@@ -181,6 +183,12 @@ window.SYH_STATS_TRACKER = {
         const self = this;
         
         this.intervalId = setInterval(() => {
+            // KILL SWITCH: Тихе самознищення таймера без виведення помилок у панель
+            if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
+                clearInterval(self.intervalId);
+                return;
+            }
+
             const liveTag = document.querySelector('span[class*="Tags__LiveTag"]');
             if (!liveTag) return; 
 
@@ -197,8 +205,9 @@ window.SYH_STATS_TRACKER = {
 
             const today = new Date().toISOString().split('T')[0];
 
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                chrome.storage.local.get(['syh_stream_charts'], function(result) {
+            const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
+            if (storage) {
+                storage.get(['syh_stream_charts'], function(result) {
                     let db = result.syh_stream_charts || {};
                     
                     if (!db[self.currentBrand]) db[self.currentBrand] = {};
@@ -206,7 +215,6 @@ window.SYH_STATS_TRACKER = {
 
                     const session = db[self.currentBrand][today];
                     
-                    // Фіксуємо кількість людей, які очікували на старті (перший запис)
                     if (session.initial_viewers === undefined && session.data.length === 0) {
                         session.initial_viewers = viewerCount;
                     }
@@ -219,7 +227,7 @@ window.SYH_STATS_TRACKER = {
                         viewers: viewerCount
                     });
 
-                    chrome.storage.local.set({ 'syh_stream_charts': db });
+                    storage.set({ 'syh_stream_charts': db });
                 });
             }
         }, 60000); 

@@ -35,14 +35,6 @@ Object.assign(window.SYH_UI, {
                         border-color: #f39c12 !important;
                     }
                     .syh-banner-search-wrapper { position: relative; width: 100%; display: flex; gap: 6px; align-items: center; }
-                    .syh-clear-banner-search {
-                        position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
-                        background: #ccc; color: white; border: none; border-radius: 50%;
-                        width: 16px; height: 16px; font-size: 10px; cursor: pointer;
-                        display: flex; align-items: center; justify-content: center;
-                        padding: 0; transition: 0.2s;
-                    }
-                    .syh-clear-banner-search:hover { background: #e74c3c; }
                     .syh-banner-empty-state {
                         text-align: center; padding: 20px; color: #666; font-size: 14px;
                         background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;
@@ -60,7 +52,7 @@ Object.assign(window.SYH_UI, {
                         border-radius: 4px;
                         background: transparent;
                         cursor: pointer;
-                        font-size: 13px !important; /* ЗБІЛЬШЕНО ДО 13px ДЛЯ ВІДПОВІДНОСТІ КОМЕНТАРЯМ */
+                        font-size: 13px !important;
                         color: #666;
                         transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
                         white-space: nowrap;
@@ -68,7 +60,6 @@ Object.assign(window.SYH_UI, {
                         flex: 1;
                     }
 
-                    /* Активний таб плавно забирає більше простору */
                     .syh-banner-filter-btn.active {
                         background: #fff !important;
                         color: #000 !important;
@@ -78,31 +69,29 @@ Object.assign(window.SYH_UI, {
                         padding: 4px 8px;
                     }
 
-                    /* Приховуємо текст у неактивних вкладках для економії простору */
                     .syh-banner-filter-btn .tab-text {
                         display: none;
                         opacity: 0;
                         transition: opacity 0.15s;
                     }
 
-                    /* Показуємо текст тільки в активній вкладці */
                     .syh-banner-filter-btn.active .tab-text {
                         display: inline;
                         opacity: 1;
                     }
 
                     .syh-banner-filter-btn .tab-count {
-                        font-size: 12px !important; /* ЗБІЛЬШЕНО ДО 12px */
+                        font-size: 12px !important;
                         opacity: 0.8;
                     }
 
-                    /* ІЗОЛЬОВАНИЙ ФІКС ВЕРСТКИ ТА ПОЗИЦІОНУВАННЯ КНОПОК БАНЕРА (БЕЗ ВПЛИВУ НА КОМЕНТАРІ) */
+                    /* ІЗОЛЬОВАНИЙ ФІКС ВЕРСТКИ ТА ПОЗИЦІОНУВАННЯ КНОПОК БАНЕРА */
                     li:has(.syh-banner-controls), [class*="Banner__LiWrap"]:has(.syh-banner-controls) {
                         position: relative !important;
                     }
                     div[class*="Banner__Wrap"] {
                         position: relative !important;
-                        padding-bottom: 26px !important; /* Надійний просторий відступ знизу */
+                        padding-bottom: 26px !important; 
                     }
                     
                     /* Звичайний напівпрозорий стан банерів: суцільна заливка */
@@ -119,22 +108,22 @@ Object.assign(window.SYH_UI, {
                         background: rgba(0, 93, 247, 0.12) !important;
                     }
 
-                    /* Активний стан банерів на екрані (суцільна повна заливка) */
-                    div[class*="Banner__Wrap"][data-syh-banner-type="stream"]:has(.lucide-circle-minus) {
+                    /* ФІКС: Активний стан банерів на екрані (суцільна повна заливка) - іконка eye-off */
+                    div[class*="Banner__Wrap"][data-syh-banner-type="stream"]:has(svg.lucide-eye-off) {
                         background: #8e44ad !important;
                         color: white !important;
                     }
-                    div[class*="Banner__Wrap"][data-syh-banner-type="audience"]:has(.lucide-circle-minus) {
+                    div[class*="Banner__Wrap"][data-syh-banner-type="audience"]:has(svg.lucide-eye-off) {
                         background: #f39c12 !important;
                         color: white !important;
                     }
-                    div[class*="Banner__Wrap"][data-syh-banner-type="prayer"]:has(.lucide-circle-minus) {
+                    div[class*="Banner__Wrap"][data-syh-banner-type="prayer"]:has(svg.lucide-eye-off) {
                         background: #005DF7 !important;
                         color: white !important;
                     }
 
-                    /* Золотисто-жовта рамка пульсації навколо виведеного банера */
-                    div[class*="Banner__Wrap"]:has(.lucide-circle-minus) {
+                    /* ФІКС: Золотисто-жовта рамка пульсації навколо виведеного банера (eye-off) */
+                    div[class*="Banner__Wrap"]:has(svg.lucide-eye-off) {
                         outline: 3px solid #ffcc00 !important;
                         outline-offset: -3px;
                         box-shadow: 0 0 15px rgba(255, 204, 0, 0.6) !important;
@@ -145,20 +134,19 @@ Object.assign(window.SYH_UI, {
                         100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.8); }
                     }
 
-                    /* Кнопки просторо у нижньому правому кутку без перекриття тексту коментаря */
                     .syh-banner-controls {
                         position: absolute !important;
-                        top: auto !important; /* Усуває вертикальне розтягування */
-                        bottom: 4px !important; /* Чітко знизу */
-                        right: 36px !important; /* Чітко праворуч, ліворуч від трьох нативних крапок */
-                        height: 24px !important; /* Суворо за висотою кнопок */
+                        top: auto !important;
+                        bottom: 4px !important;
+                        right: 36px !important;
+                        height: 24px !important;
                         display: flex !important;
                         flex-direction: row !important;
                         align-items: center !important;
                         gap: 6px !important;
                         z-index: 10 !important;
-                        background: transparent !important; /* Усуває утворення фонових рамок навколо контейнера */
-                        border: none !important; /* НАДІЙНО ПРИБИРАЄМО СІРУ РАМКУ */
+                        background: transparent !important;
+                        border: none !important;
                         box-shadow: none !important;
                         margin: 0 !important;
                         padding: 0 !important;
@@ -176,8 +164,8 @@ Object.assign(window.SYH_UI, {
                         margin: 0 !important;
                     }
                     .syh-banner-controls .syh-checkbox {
-                        width: 24px !important; /* ЗБІЛЬШЕНО З 14px ДО 24px ДЛЯ ОДНАКОВОГО РОЗМІРУ З КНОПКАМИ */
-                        height: 24px !important; /* ЗБІЛЬШЕНО З 14px ДО 24px */
+                        width: 24px !important;
+                        height: 24px !important;
                         cursor: pointer !important;
                         margin: 0 !important;
                         padding: 0 !important;
@@ -195,20 +183,18 @@ Object.assign(window.SYH_UI, {
 
             const searchContainerHTML = `
                 <div id="syh-banner-search-container" style="padding: 10px 15px 5px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eee; background: #fff; width: 100%; box-sizing: border-box;">
-                    <!-- Рядок пошуку -->
                     <div class="syh-banner-search-wrapper">
                         <input type="text" id="syh-banner-search" value="${this.bannerSearchQuery || ''}" placeholder="🔍 Пошук банерів..." style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
                         <button id="syh-clear-banner-search-btn" class="syh-clear-banner-search" style="display: ${this.bannerSearchQuery ? 'flex' : 'none'};" title="Очистити пошук">✕</button>
                         <button id="syh-scroll-to-active-banner-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до активного банера на екрані">🎯</button>
                     </div>
                     
-                    <!-- Сучасні еластичні вкладки-фільтри з підтримкою лічильників на всіх категоріях -->
                     <div style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
                         <button class="syh-banner-filter-btn ${this.bannerActiveFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-banner-filter-all">
                             <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
                         </button>
                         <button class="syh-banner-filter-btn ${this.bannerActiveFilter === 'stream' ? 'active' : ''}" data-filter="stream" id="syh-banner-filter-stream">
-                            <span>📺</span><span class="tab-text">Ефір</span><span class="tab-count"></span>
+                            <span>🎙️</span><span class="tab-text">Ефір</span><span class="tab-count"></span>
                         </button>
                         <button class="syh-banner-filter-btn ${this.bannerActiveFilter === 'audience' ? 'active' : ''}" data-filter="audience" id="syh-banner-filter-audience">
                             <span>❓</span><span class="tab-text">Глядачі</span><span class="tab-count"></span>
@@ -222,12 +208,11 @@ Object.assign(window.SYH_UI, {
             
             $bannerList.before(searchContainerHTML);
 
-            // Додаємо плашку про пустий стан банерів
             if (!$('#syh-banner-empty-state-msg').length) {
                 $bannerList.after(`
                     <div id="syh-banner-empty-state-msg" class="syh-banner-empty-state">
-                        Нічого не знайдено по запиту <b id="syh-banner-empty-query"></b><br><br>
-                        <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук</a>
+                        <div id="syh-banner-empty-query"></div>
+                        <div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
                     </div>
                 `);
             }

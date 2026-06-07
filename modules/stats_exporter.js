@@ -48,8 +48,11 @@ window.SYH_STATS_EXPORTER = {
         const self = this;
         const today = new Date().toISOString().split('T')[0];
 
-        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            chrome.storage.local.get(['syh_stream_charts'], function(result) {
+        // ФІКС: Використовуємо захищений адаптер замість сирого chrome.storage
+        const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
+        
+        if (storage) {
+            storage.get(['syh_stream_charts'], function(result) {
                 const db = result.syh_stream_charts || {};
                 const brandData = db[currentBrand] || {};
                 

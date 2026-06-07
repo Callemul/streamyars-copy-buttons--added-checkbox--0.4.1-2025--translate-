@@ -17,11 +17,22 @@ window.SYH_BANNER_CREATOR = {
         let questions = [];
         let isStandardFormat = false;
 
-        // ФІКС ПАРСЕРА: Перевіряємо, чи є введений пакет списком молитовних прохань (якщо заголовок містить слово "МОЛИТВ")
-        const isPrayerBatch = rawText.toUpperCase().includes("МОЛИТВ");
-        const defaultCategory = isPrayerBatch ? "prayer" : "stream";
+        // ФІКС ПАРСЕРА КАТЕГОРІЙ: Скануємо заголовок (перші 200 символів) для точного визначення контексту
+        const headerText = rawText.substring(0, 200).toUpperCase();
+        
+        let defaultCategory = "stream"; // За замовчуванням: Ефір 🎙️
+        let categoryLogName = "ПИТАННЯ ЕФІРУ 🎙️";
 
-        this.log(`Автовизначення типу пакету: ${isPrayerBatch ? "МОЛИТВИ 🙏" : "ПИТАННЯ ЕФІРУ 📺"}`);
+        // Порядок перевірок важливий. Спочатку шукаємо молитви, потім питання глядачів
+        if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
+            defaultCategory = "prayer";
+            categoryLogName = "МОЛИТВИ 🙏";
+        } else if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
+            defaultCategory = "audience";
+            categoryLogName = "ПИТАННЯ ГЛЯДАЧІВ ❓";
+        }
+
+        this.log(`Автовизначення типу пакету: ${categoryLogName}`);
 
         // Перевірка формату
         if (/(?:\d+\uFE0F?\u20E3|🔟)/.test(rawText)) {
@@ -49,12 +60,12 @@ window.SYH_BANNER_CREATOR = {
                 const pauseTime = index === 0 ? 600 : 250;
                 await new Promise(r => setTimeout(r, pauseTime));
                 
-                // ФІКС ПАРСЕРА: Очищення дужок з авторами, навіть якщо дужка не закрита (наприклад, " ( Опарин , Молчанов")
+                // Очищення дужок з авторами, навіть якщо дужка не закрита (наприклад, " ( Опарин , Молчанов")
                 const cleanQuestion = question.replace(/\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi, "").trim();
 
                 await this.createSingleBanner(cleanQuestion);
                 
-                // Автоматично проштамповуємо створений банер у правильну категорію (Молитви або Питання ефіру)
+                // Автоматично проштамповуємо створений банер у правильну категорію
                 await this.saveBannerCategory(cleanQuestion, defaultCategory);
 
                 createdCount++;

@@ -116,3 +116,43 @@ div[class*="PlatformCommentShell__Wrap"] {
   cursor: pointer;
   margin-left: 10px;
 }
+
+
+/* Оновлений дизайн кнопки швидкого очищення пошуку в коментарях та банерах (pill-дизайн) */
+.syh-clear-search, .syh-clear-banner-search {
+    position: absolute !important;
+    right: 40px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: #e74c3c !important; /* Червона кнопка */
+    color: white !important;
+    border: none !important;
+    border-radius: 20px !important; /* Овальна форма */
+    height: 22px !important;
+    padding: 0 10px !important;
+    font-size: 0 !important; /* Приховуємо початковий дрібний хрестик */
+    font-weight: bold !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    line-height: 1 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+    transition: background 0.2s ease !important;
+}
+
+.syh-clear-search:hover, .syh-clear-banner-search:hover {
+    background: #c0392b !important;
+}
+
+.syh-clear-search::after, .syh-clear-banner-search::after {
+    content: "Очистити ✕" !important;
+    font-size: 11px !important;
+    color: white !important;
+}
+
+/* Збільшений внутрішній відступ полів введення, щоб текст не перекривався новою великою кнопкою */
+#syh-starred-search, #syh-banner-search {
+    padding-right: 120px !important;
+}

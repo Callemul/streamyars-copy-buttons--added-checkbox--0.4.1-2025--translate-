@@ -19,10 +19,8 @@ window.SYH_UI = {
             
             const self = this;
 
-            // Запуск захищеної валідації синтаксису селекторів
             this.validateSelectorsSyntax();
             
-            // Ін'єкція базових стилів та анімацій (спільних для коментарів та банерів)
             if (!document.getElementById('syh-global-styles')) {
                 const style = document.createElement('style');
                 style.id = 'syh-global-styles';
@@ -45,52 +43,51 @@ window.SYH_UI = {
                         background: #f39c12 !important;
                     }
 
-                    /* Надійне виділення БУДЬ-ЯКОГО активного коментаря на екрані */
+                    /* ФІКС: Надійне виділення БУДЬ-ЯКОГО активного коментаря на екрані (Жовта обводка) */
                     div[class*="PlatformComment__Wrap"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                        outline: 3px solid #ff4757 !important;
+                        outline: 3px solid #ffcc00 !important;
                         outline-offset: -3px;
-                        box-shadow: 0 0 15px rgba(255, 71, 87, 0.6) !important;
-                        animation: syhActivePulse 2s infinite alternate;
+                        box-shadow: 0 0 15px rgba(255, 204, 0, 0.6) !important;
+                        animation: syhActiveCommentPulse 2s infinite alternate;
                     }
 
                     /* Звичайний стан банерів: напівпрозора заливка за категоріями */
                     [class*="Banner__LiWrap"][data-syh-banner-type="stream"], li[data-syh-banner-type="stream"] {
-                        border-left: 12px solid #8e44ad !important; /* Фіолетовий (Ефір) */
+                        border-left: 12px solid #8e44ad !important;
                         background: rgba(142, 68, 173, 0.12) !important;
                     }
                     [class*="Banner__LiWrap"][data-syh-banner-type="audience"], li[data-syh-banner-type="audience"] {
-                        border-left: 12px solid #f39c12 !important; /* Оранжевий (Глядачі) */
+                        border-left: 12px solid #f39c12 !important;
                         background: rgba(243, 156, 18, 0.12) !important;
                     }
                     [class*="Banner__LiWrap"][data-syh-banner-type="prayer"], li[data-syh-banner-type="prayer"] {
-                        border-left: 12px solid #005DF7 !important; /* Синій (Молитви) */
+                        border-left: 12px solid #005DF7 !important;
                         background: rgba(0, 93, 247, 0.12) !important;
                     }
 
                     /* Активний стан банерів на екрані (повна заливка) */
-                    [class*="Banner__LiWrap"][data-syh-banner-type="stream"]:has(.lucide-circle-minus), li[data-syh-banner-type="stream"]:has(.lucide-circle-minus) {
+                    [class*="Banner__LiWrap"][data-syh-banner-type="stream"]:has(svg.lucide-eye-off), li[data-syh-banner-type="stream"]:has(svg.lucide-eye-off) {
                         background: #8e44ad !important;
                         color: white !important;
                     }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="audience"]:has(.lucide-circle-minus), li[data-syh-banner-type="audience"]:has(.lucide-circle-minus) {
+                    [class*="Banner__LiWrap"][data-syh-banner-type="audience"]:has(svg.lucide-eye-off), li[data-syh-banner-type="audience"]:has(svg.lucide-eye-off) {
                         background: #f39c12 !important;
                         color: white !important;
                     }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="prayer"]:has(.lucide-circle-minus), li[data-syh-banner-type="prayer"]:has(.lucide-circle-minus) {
+                    [class*="Banner__LiWrap"][data-syh-banner-type="prayer"]:has(svg.lucide-eye-off), li[data-syh-banner-type="prayer"]:has(svg.lucide-eye-off) {
                         background: #005DF7 !important;
                         color: white !important;
                     }
 
-                    /* Спільна анімація пульсації для активних коментарів та банерів */
-                    @keyframes syhActivePulse {
-                        0% { box-shadow: 0 0 10px rgba(255, 71, 87, 0.4); }
-                        100% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.8); }
+                    /* Спільна анімація пульсації для активних коментарів (Золота) */
+                    @keyframes syhActiveCommentPulse {
+                        0% { box-shadow: 0 0 10px rgba(255, 204, 0, 0.4); }
+                        100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.8); }
                     }
                 `;
                 document.head.appendChild(style);
             }
 
-            // Завантаження кешу з централізованого адаптера сховища (виключаємо прямий chrome.storage.local)
             const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
                 ? window.SYH_UTILS.storage
                 : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
@@ -104,7 +101,6 @@ window.SYH_UI = {
                 console.warn("[SYH] Сховище недоступне під час первинної ініціалізації кешу UI.");
             }
 
-            // Безпечна синхронізація кешу при будь-яких зовнішніх змінах
             if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
                 chrome.storage.onChanged.addListener(function(changes) {
                     try {
@@ -128,7 +124,7 @@ window.SYH_UI = {
         } catch (error) {
             console.error("[SYH] Критичний збій ініціалізації модуля UI Core. Запущено авто-відновлення:", error);
         }
-    },
+    },  
 
     // Метод захисної валідації синтаксису селекторів (захист від невалідних запусків)
     validateSelectorsSyntax: function() {

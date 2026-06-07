@@ -196,7 +196,8 @@ window.SYH_EVENT_BANNERS = {
             if (self.UI) {
                 self.UI.bannerSearchQuery = '';
                 $clearBtn.hide();
-                $('.syh-banner-filter-btn[data-filter="all"]').click(); 
+                // ФІКС 3: При скиданні пошуку банерів більше не перекидаємо у вкладку "Всі". Залишаємо поточну!
+                self.UI.filterBanners();
             }
         });
 

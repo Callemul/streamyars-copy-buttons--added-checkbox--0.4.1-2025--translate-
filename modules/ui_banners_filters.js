@@ -32,7 +32,7 @@ Object.assign(window.SYH_UI, {
         const searchQuery = this.bannerSearchQuery || '';
         const self = this;
 
-        // Функція безпечного оновлення DOM без виклику подій Mutation, якщо контент не змінився
+        // Безпечне оновлення DOM (Захист від зависання)
         const safeTextUpdate = (selector, newText) => {
             const el = $(selector);
             if (el.length && el.text() !== newText) el.text(newText);
@@ -41,31 +41,10 @@ Object.assign(window.SYH_UI, {
             if (jqEl.length && jqEl.html() !== newHtml) jqEl.html(newHtml);
         };
 
-        const normalizeText = (str) => {
-            if (!str) return "";
-            let normalized = str.toLowerCase().trim();
-            const replacementMap = {
-                'a': 'а', 'e': 'е', 'o': 'о', 'i': 'і', 'c': 'с', 'p': 'р', 'x': 'х', 'y': 'у', 't': 'т', 'h': 'н'
-            };
-            for (const char in replacementMap) {
-                normalized = normalized.replaceAll(char, replacementMap[char]);
-            }
-            return normalized;
-        };
-
-        const queryWords = searchQuery ? searchQuery.toLowerCase().split(/\s+/).filter(Boolean).map(normalizeText) : [];
-        const matchesQuery = (targetText) => {
-            const normalizedTarget = normalizeText(targetText);
-            return queryWords.every(word => normalizedTarget.includes(word));
-        };
-
-        let totalCount = 0;
-        let streamCount = 0;
-        let audienceCount = 0;
-        let prayerCount = 0;
-
         let visibleCount = 0;
-        let countInTabs = { all: 0, stream: 0, audience: 0, prayer: 0 };
+        // РОЗДІЛЯЄМО ЛІЧИЛЬНИКИ ДЛЯ БАНЕРІВ: Абсолютні (для вкладок) та Пошукові (для підказок крос-пошуку)
+        let countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
+        let countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
 
         $bannerList.find('> li, > div[class*="Banner__LiWrap"]').each(function() {
             const $li = $(this);
@@ -73,24 +52,30 @@ Object.assign(window.SYH_UI, {
             if (!$bannerWrap.length) return;
 
             const originalText = $bannerWrap.find(self.SELECTORS.bannerText).text();
-            const text = originalText.toLowerCase();
             const commentType = self.bannerCategoriesCache[originalText] || 'none';
             
             self.updateBannerVisuals($bannerWrap, commentType);
             
-            totalCount++;
-            if (commentType === 'stream') streamCount++;
-            if (commentType === 'audience') audienceCount++;
-            if (commentType === 'prayer') prayerCount++;
+            // Нарощення абсолютних лічильників
+            countAbsolute.all++;
+            if (commentType === 'stream') countAbsolute.stream++;
+            else if (commentType === 'audience') countAbsolute.audience++;
+            else if (commentType === 'prayer') countAbsolute.prayer++;
 
+            // Використання нового глобального Розумного Пошуку (Smart Search)
             let matchesSearch = true;
-            if (searchQuery) matchesSearch = matchesQuery(text);
+            if (searchQuery) {
+                matchesSearch = window.SYH_UTILS && typeof window.SYH_UTILS.smartSearch === 'function' 
+                    ? window.SYH_UTILS.smartSearch(searchQuery, originalText)
+                    : originalText.toLowerCase().includes(searchQuery.toLowerCase());
+            }
 
+            // Нарощення пошукових лічильників
             if (matchesSearch) {
-                countInTabs.all++;
-                if (commentType === 'stream') countInTabs.stream++;
-                else if (commentType === 'audience') countInTabs.audience++;
-                else if (commentType === 'prayer') countInTabs.prayer++;
+                countSearch.all++;
+                if (commentType === 'stream') countSearch.stream++;
+                else if (commentType === 'audience') countSearch.audience++;
+                else if (commentType === 'prayer') countSearch.prayer++;
             }
 
             let isVisible = matchesSearch;
@@ -107,11 +92,11 @@ Object.assign(window.SYH_UI, {
             }
         });
 
-        // ФІКС РЕКУРСІЇ: Безпечне оновлення лічильників
-        safeTextUpdate('#syh-banner-filter-all .tab-count', ` (${totalCount})`);
-        safeTextUpdate('#syh-banner-filter-stream .tab-count', ` (${streamCount})`);
-        safeTextUpdate('#syh-banner-filter-audience .tab-count', ` (${audienceCount})`);
-        safeTextUpdate('#syh-banner-filter-prayer .tab-count', ` (${prayerCount})`);
+        // Безпечне оновлення лічильників вкладок
+        safeTextUpdate('#syh-banner-filter-all .tab-count', ` (${countAbsolute.all})`);
+        safeTextUpdate('#syh-banner-filter-stream .tab-count', ` (${countAbsolute.stream})`);
+        safeTextUpdate('#syh-banner-filter-audience .tab-count', ` (${countAbsolute.audience})`);
+        safeTextUpdate('#syh-banner-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
 
         const $emptyState = $('#syh-banner-empty-state-msg');
         const $emptyQuery = $('#syh-banner-empty-query');
@@ -126,13 +111,14 @@ Object.assign(window.SYH_UI, {
             let messageHTML = '';
             if (searchQuery) {
                 messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
-                <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук</a>`;
+                <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
                 
                 let suggestions = [];
-                if (activeFilter !== 'all' && countInTabs.all > 0) {
-                    if (countInTabs.stream > 0 && activeFilter !== 'stream') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="stream" style="color: #f39c12; text-decoration: underline;">🎙️ Ефір (${countInTabs.stream})</a>`);
-                    if (countInTabs.audience > 0 && activeFilter !== 'audience') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="audience" style="color: #f39c12; text-decoration: underline;">❓ Глядачі (${countInTabs.audience})</a>`);
-                    if (countInTabs.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countInTabs.prayer})</a>`);
+                // Використовуємо countSearch для точних рекомендацій
+                if (activeFilter !== 'all' && countSearch.all > 0) {
+                    if (countSearch.stream > 0 && activeFilter !== 'stream') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="stream" style="color: #f39c12; text-decoration: underline;">🎙️ Ефір (${countSearch.stream})</a>`);
+                    if (countSearch.audience > 0 && activeFilter !== 'audience') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="audience" style="color: #f39c12; text-decoration: underline;">❓ Глядачі (${countSearch.audience})</a>`);
+                    if (countSearch.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countSearch.prayer})</a>`);
                 }
 
                 if (suggestions.length > 0) {
