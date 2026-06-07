@@ -15,12 +15,26 @@
 [class*="PlatformComment__TopRightButtonGroup"] {
   display: flex !important;
   align-items: center !important;
+  flex-wrap: nowrap !important;
 }
 .syh-custom-buttons-comment {
   display: flex !important;
   align-items: center !important;
   order: 1 !important; 
   margin-left: 8px !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Запобігання налізанню великих і коротких коментарів один на одного */
+div[class*="PlatformComment__Wrap"],
+li:has([class*="PlatformComment__Wrap"]) {
+  min-height: fit-content !important;
+  height: auto !important;
+}
+div[class*="PlatformCommentShell__Wrap"] {
+  min-height: fit-content !important;
+  height: auto !important;
 }
 
 /* ========================================================================= */
@@ -76,7 +90,7 @@
 
 /* --- СТИЛІ ДЛЯ НАГАДУВАННЯ ПРО ПУБЛІКАЦІЮ --- */
 .syh-telegram-reminder {
-  background-color: #d9534f; /* Червоний фон */
+  background-color: #d9534f; /* - Червоний фон */
   color: white; /* Білий текст */
   padding: 10px 15px;
   margin-top: 10px;

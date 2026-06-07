@@ -46,6 +46,7 @@
     }
 
     // --- OBSERVER ---
+    let filterBannersTimeout;
     const observer = new MutationObserver((mutationsList) => {
         let bannerStateChanged = false;
         for (const mutation of mutationsList) {
@@ -59,16 +60,34 @@
                 // Ловимо заголовок Starred коментарів
                 $node.find('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5').addBack($node.filter('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5')).each((i, el) => SYH_UI.addStarredTabControls(el));
                 
-                // Якщо додано коментар у Starred - застосовуємо поточні фільтри
+                // Якщо додано коментар у Starred - застосовуємо поточні фільтри (з Debounce)
                 if ($node.hasClass('StarredCommentList__ItemWrap-sc-1qtlqu2-6') || $node.closest('.StarredCommentList__List-sc-1qtlqu2-1').length > 0) {
                     if (window.SYH_UI && typeof window.SYH_UI.filterStarredComments === 'function') {
-                        setTimeout(() => window.SYH_UI.filterStarredComments(), 50);
+                        clearTimeout(window.SYH_UI._commentsTimeout);
+                        window.SYH_UI._commentsTimeout = setTimeout(() => window.SYH_UI.filterStarredComments(), 100);
                     }
                 }
             }
-            if (mutation.removedNodes.length > 0) bannerStateChanged = true;
+            
+            // ФІКС РЕКУРСІЇ: Спостерігач реагує лише на видалення HTML-елементів (не текстових вузлів)
+            for (const node of mutation.removedNodes) {
+                if (node.nodeType === 1) {
+                    // Якщо видалений вузол є банером або містить банери всередині
+                    if (node.matches(SELECTORS.bannerBlock) || node.querySelector(SELECTORS.bannerBlock)) {
+                        bannerStateChanged = true;
+                    }
+                }
+            }
         }
-        if (bannerStateChanged) SYH_UI.updateMasterCheckboxState();
+        
+        if (bannerStateChanged) {
+            SYH_UI.updateMasterCheckboxState();
+            if (window.SYH_UI && typeof window.SYH_UI.filterBanners === 'function') {
+                // ФІКС ЗАВИСАННЯ: Debounce для захисту процесора від спаму мутацій
+                clearTimeout(filterBannersTimeout);
+                filterBannersTimeout = setTimeout(() => window.SYH_UI.filterBanners(), 150);
+            }
+        }
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---

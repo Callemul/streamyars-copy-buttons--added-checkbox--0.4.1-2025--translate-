@@ -4,7 +4,6 @@ window.renderPrayers = function(prayersList) {
     const outputDiv = $('#prayersResultDiv');
     outputDiv.empty();
     
-    // Вимикаємо редагування всього блоку, будемо редагувати точково
     outputDiv.removeAttr('contenteditable');
 
     if (!prayersList || prayersList.length === 0) {
@@ -21,11 +20,9 @@ window.renderPrayers = function(prayersList) {
     const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
 
     onlyPrayers.forEach((p, originalIndex) => {
-        // Зачищаємо всі @ на початку імені, щоб не було дублів
         const cleanAuthor = p.author.replace(/^@+/, '');
         if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
         
-        // Зберігаємо оригінальний індекс масиву, щоб знати, що редагувати/видаляти
         grouped[cleanAuthor].push({ 
             text: p.text, 
             icon: p.icon || '🙏🙏🙏',
@@ -43,7 +40,6 @@ window.renderPrayers = function(prayersList) {
         let hasPrayer = false;
         let hasThanks = false;
         
-        // Логіка визначення загальної іконки автора для заголовка
         grouped[author].forEach(item => {
             if (item.icon === '🙏🙏🙏') hasPrayer = true;
             if (item.icon === '❤️❤️❤️') hasThanks = true;
@@ -57,7 +53,17 @@ window.renderPrayers = function(prayersList) {
         fullTextForCopy += `${authorIcon} @${author}\n`;
         
         const block = $('<div>').addClass('q-block q-pray').css('position', 'relative');
-        const header = $(`<div style="margin-bottom: 5px;"><b style="color: #0b5394;">${authorIcon} @${author}</b></div>`);
+        
+        // Заголовок з редагованою span-зоною для імені та олівцем
+        const header = $(`
+            <div style="margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <span style="color: #0b5394; font-weight: bold;">${authorIcon} @</span>
+                    <span class="editable-author" contenteditable="true" style="color: #0b5394; font-weight: bold; outline: none; border-bottom: 1px dashed transparent;">${author}</span>
+                </div>
+                <button class="edit-prayer-btn" title="Редагувати автора та повідомлення" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 4px;">✏️</button>
+            </div>
+        `);
         block.append(header);
 
         if (grouped[author].length === 1) {
@@ -84,12 +90,11 @@ window.renderPrayers = function(prayersList) {
             block.append(textContainer);
         } else {
             grouped[author].forEach((item, idx) => {
-                // Копіювання в буфер обміну залишено без змін (іконки зберігаються)
-                fullTextForCopy += `${idx + 1}) ${item.icon} ${item.text}\n`;
+                // ФІКС 12: Прибираємо спам іконок з кожної лінії при копіюванні
+                fullTextForCopy += `${idx + 1}) ${item.text}\n`;
                 
                 const textContainer = $('<div>').css({display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px'});
                 
-                // ФІКС ВІЗУАЛУ: Прибираємо іконку ТІЛЬКИ з візуального інтерфейсу попапу, залишаючи лише номер
                 const indexSpan = $('<span>').css({color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap'}).text(`${idx + 1}) `);
                 
                 const textSpan = $('<span>')
@@ -134,6 +139,50 @@ $(document).ready(function() {
                 chrome.storage.local.set({ 'syh_prayers': list });
             }
         });
+    });
+
+    // Слухач подій для фокусу/збереження змін при редагуванні Імені Автора
+    $(document).on('focus', '.editable-author', function() {
+        $(this).css('border-bottom', '1px dashed #2b7de9');
+        $(this).data('old-val', $(this).text().trim());
+    }).on('blur', '.editable-author', function() {
+        $(this).css('border-bottom', '1px dashed transparent');
+        
+        const oldAuthor = $(this).data('old-val');
+        const newAuthor = $(this).text().trim();
+        
+        if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
+            chrome.storage.local.get(['syh_prayers'], function(result) {
+                let list = result.syh_prayers || [];
+                let updated = false;
+                list.forEach(item => {
+                    if (item.author === oldAuthor) {
+                        item.author = newAuthor;
+                        updated = true;
+                    }
+                });
+                if (updated) {
+                    chrome.storage.local.set({ 'syh_prayers': list });
+                }
+            });
+        }
+    });
+
+    // Клік по олівцю - фокусує ім'я автора для швидкого редагування
+    $(document).on('click', '.edit-prayer-btn', function() {
+        const block = $(this).closest('.q-block');
+        const authorSpan = block.find('.editable-author');
+        authorSpan.focus();
+        
+        const el = authorSpan[0];
+        if (el) {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     });
 
     // 2. Слухач кліку для видалення індивідуального прохання

@@ -78,6 +78,15 @@ Object.assign(window.SYH_UI, {
                         background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;
                         margin-top: 15px; display: none;
                     }
+                    .syh-filter-btn {
+                        flex: 1; padding: 4px; border: none; border-radius: 4px;
+                        background: transparent; cursor: pointer; font-size: 11px;
+                        color: #666; font-weight: normal; transition: 0.2s;
+                    }
+                    .syh-filter-btn.active {
+                        background: #fff !important; font-weight: bold !important;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important; color: #000 !important;
+                    }
                 `;
                 document.head.appendChild(style);
             }
@@ -91,9 +100,10 @@ Object.assign(window.SYH_UI, {
                     </div>
                     
                     <div style="display: flex; gap: 5px; background: #eee; padding: 3px; border-radius: 6px;">
-                        <button class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all" style="flex: 1; padding: 4px; border: none; border-radius: 4px; background: ${this.activeFilter === 'all' ? '#fff' : 'transparent'}; cursor: pointer; font-weight: ${this.activeFilter === 'all' ? 'bold' : 'normal'}; box-shadow: ${this.activeFilter === 'all' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; color: ${this.activeFilter === 'all' ? '#000' : '#666'};">Всі ⭐</button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question" style="flex: 1; padding: 4px; border: none; border-radius: 4px; background: ${this.activeFilter === 'question' ? '#fff' : 'transparent'}; cursor: pointer; font-weight: ${this.activeFilter === 'question' ? 'bold' : 'normal'}; box-shadow: ${this.activeFilter === 'question' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; color: ${this.activeFilter === 'question' ? '#000' : '#666'};">❓ Питання</button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" style="flex: 1; padding: 4px; border: none; border-radius: 4px; background: ${this.activeFilter === 'prayer' ? '#fff' : 'transparent'}; cursor: pointer; font-weight: ${this.activeFilter === 'prayer' ? 'bold' : 'normal'}; box-shadow: ${this.activeFilter === 'prayer' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; color: ${this.activeFilter === 'prayer' ? '#000' : '#666'};">🙏 Молитовні</button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all">Всі ⭐</button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question">🎙️ Питання</button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer">🙏 Молитви</button>
+                        <button class="syh-filter-btn ${this.activeFilter === 'other' ? 'active' : ''}" data-filter="other">📝 Інші</button>
                     </div>
                 </div>
             `;
@@ -103,8 +113,8 @@ Object.assign(window.SYH_UI, {
             if (!$('#syh-empty-state-msg').length) {
                 $('.StarredCommentList__List-sc-1qtlqu2-1').after(`
                     <div id="syh-empty-state-msg" class="syh-empty-state">
-                        Нічого не знайдено по запиту <b id="syh-empty-query"></b><br><br>
-                        <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук</a>
+                        <div id="syh-empty-query"></div>
+                        <div id="syh-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
                     </div>
                 `);
             }
@@ -170,12 +180,35 @@ Object.assign(window.SYH_UI, {
         const searchQuery = this.searchQuery;
         const self = this;
 
+        const safeHtmlUpdate = (jqEl, newHtml) => {
+            if (jqEl.length && jqEl.html() !== newHtml) jqEl.html(newHtml);
+        };
+
+        const normalizeText = (str) => {
+            if (!str) return "";
+            let normalized = str.toLowerCase().trim();
+            const replacementMap = {
+                'a': 'а', 'e': 'е', 'o': 'о', 'i': 'і', 'c': 'с', 'p': 'р', 'x': 'х', 'y': 'у', 't': 'т', 'h': 'н'
+            };
+            for (const char in replacementMap) {
+                normalized = normalized.replaceAll(char, replacementMap[char]);
+            }
+            return normalized;
+        };
+
+        const queryWords = searchQuery ? searchQuery.toLowerCase().split(/\s+/).filter(Boolean).map(normalizeText) : [];
+        const matchesQuery = (targetText) => {
+            const normalizedTarget = normalizeText(targetText);
+            return queryWords.every(word => normalizedTarget.includes(word));
+        };
+
         let sortedTexts = [];
         let grouped = {};
         
         self.prayersCache.forEach(p => {
             if (activeFilter === 'prayer' && p.type !== 'prayer') return;
             if (activeFilter === 'question' && p.type !== 'question') return;
+            if (activeFilter === 'other') return; 
             
             const cleanAuthor = p.author.replace(/^@+/, '');
             if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
@@ -186,9 +219,10 @@ Object.assign(window.SYH_UI, {
             sortedTexts = sortedTexts.concat(grouped[author]);
         }
 
-        $commentList.css({ 'display': 'flex', 'flex-direction': 'column' });
+        if ($commentList.css('display') !== 'flex') $commentList.css({ 'display': 'flex', 'flex-direction': 'column' });
 
         let visibleCount = 0;
+        let countInTabs = { all: 0, question: 0, prayer: 0, other: 0 };
 
         $commentList.find('> li').each(function() {
             const $li = $(this);
@@ -204,41 +238,80 @@ Object.assign(window.SYH_UI, {
             
             self.updateCommentVisuals($commentWrap, commentType);
             
-            let isVisible = true;
+            let matchesSearch = true;
+            if (searchQuery) matchesSearch = matchesQuery(text) || matchesQuery(author);
+
+            if (matchesSearch) {
+                countInTabs.all++;
+                if (commentType === 'question') countInTabs.question++;
+                else if (commentType === 'prayer') countInTabs.prayer++;
+                else countInTabs.other++;
+            }
+
+            let isVisible = matchesSearch;
 
             if (activeFilter === 'prayer' && commentType !== 'prayer') isVisible = false;
             if (activeFilter === 'question' && commentType !== 'question') isVisible = false;
-            if (searchQuery && !text.includes(searchQuery) && !author.includes(searchQuery)) isVisible = false;
+            if (activeFilter === 'other' && commentType !== 'none') isVisible = false;
 
             if (isVisible) {
-                $li.show();
+                if ($li.css('display') === 'none') $li.show();
                 const exactOrder = sortedTexts.indexOf(originalText);
-                $li.css('order', exactOrder !== -1 ? exactOrder : 9999);
+                const targetOrder = exactOrder !== -1 ? exactOrder : 9999;
+                if (parseInt($li.css('order')) !== targetOrder) $li.css('order', targetOrder);
                 visibleCount++;
             } else {
-                $li.hide();
-                $li.css('order', 9999); 
+                if ($li.css('display') !== 'none') $li.hide();
+                if (parseInt($li.css('order')) !== 9999) $li.css('order', 9999); 
             }
         });
 
         const $emptyState = $('#syh-empty-state-msg');
+        const $emptyQuery = $('#syh-empty-query');
+        const $emptySuggestion = $('#syh-empty-suggestion');
+
         if (visibleCount === 0) {
             let messageHTML = '';
+            
             if (searchQuery) {
-                messageHTML = `Нічого не знайдено по запиту: <b style="color: #e74c3c;">"${searchQuery}"</b>`;
-            } else if (activeFilter !== 'all') {
-                const filterNames = { 'question': '❓ Питання', 'prayer': '🙏 Молитовні' };
-                messageHTML = `Порожньо в категорії: <b style="color: #005DF7;">"${filterNames[activeFilter]}"</b>`;
+                messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
+                <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук</a>`;
+                
+                let suggestions = [];
+                if (activeFilter !== 'all' && countInTabs.all > 0) {
+                    if (countInTabs.question > 0 && activeFilter !== 'question') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="question" style="color: #f39c12; text-decoration: underline;">🎙️ Питання (${countInTabs.question})</a>`);
+                    if (countInTabs.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countInTabs.prayer})</a>`);
+                    if (countInTabs.other > 0 && activeFilter !== 'other') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="other" style="color: #f39c12; text-decoration: underline;">📝 Інші (${countInTabs.other})</a>`);
+                }
+                
+                if (suggestions.length > 0) {
+                    safeHtmlUpdate($emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
+                    if ($emptySuggestion.css('display') === 'none') $emptySuggestion.show();
+                    
+                    $('.syh-switch-tab').off('click').on('click', function(e) {
+                        e.preventDefault();
+                        const filter = $(this).data('filter');
+                        $(`.syh-filter-btn[data-filter="${filter}"]`).click();
+                    });
+                } else {
+                    if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+                }
+            } else {
+                if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+                const filterNames = { 
+                    'all': 'списку коментарів', 
+                    'question': 'категорії "🎙️ Питання"', 
+                    'prayer': 'категорії "🙏 Молитви"', 
+                    'other': 'категорії "📝 Інші"' 
+                };
+                messageHTML = `<span style="color: #777;">Тут ще немає коментарів для ${filterNames[activeFilter]}</span>`;
             }
 
-            if (messageHTML) {
-                $('#syh-empty-query').html(messageHTML);
-                $emptyState.show();
-            } else {
-                $emptyState.hide();
-            }
+            safeHtmlUpdate($emptyQuery, messageHTML);
+            if ($emptyState.css('display') === 'none') $emptyState.show();
         } else {
-            $emptyState.hide();
+            if ($emptyState.css('display') !== 'none') $emptyState.hide();
+            if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
         }
     },
 

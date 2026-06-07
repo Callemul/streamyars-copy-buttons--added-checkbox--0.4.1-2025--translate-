@@ -56,13 +56,42 @@ window.SYH_EVENT_COMMENTS = {
             }
         }, true);
 
-        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ ДЛЯ КОМЕНТАРІВ ---
+        // --- ПЕРЕХОПЛЮВАЧ СЕРЕДНЬОГО КЛІКУ (КОЛІЩАТКА) НА КНОПКУ HIDE ДЛЯ ЗНЯТТЯ ЗІРКИ З ПИТАНЬ ---
+        document.addEventListener('mousedown', function(e) {
+            if (e.button === 1) { // 1 = середній клік (коліщатко)
+                const hideBtn = e.target.closest('[data-testid="show-comment-button"], [class*="PlatformComment__CoverButton"]');
+                if (hideBtn && (hideBtn.textContent.trim() === 'Hide' || hideBtn.querySelector('.lucide-circle-minus'))) {
+                    const commentBlock = hideBtn.closest(self.SELECTORS.commentBlock);
+                    if (commentBlock) {
+                        // Виконуємо автоматичне зняття зірки, якщо це коментар типу "питання"
+                        const isQuestion = commentBlock.getAttribute('data-syh-type') === 'question';
+                        if (isQuestion) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const starBtnNode = commentBlock.querySelector(self.SELECTORS.starButton);
+                            if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
+                                starBtnNode.click();
+                            }
+                        }
+                    }
+                }
+            }
+        }, true);
+
+        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ ДЛЯ КОМЕНТАРІВ (У ТОМУ ЧИСЛІ НА ТРИ КРАПКИ) ---
         document.addEventListener('contextmenu', function(e) {
-            const coverBtn = e.target.closest('[data-testid="show-comment-button"], [class*="PlatformComment__CoverButton"]');
-            if (coverBtn) {
+            // Дозволяємо ПКМ на оверлеях показу/приховування, а також на кнопці "Три крапки" (aria-label="Comment actions")
+            const targetBtn = e.target.closest([
+                '[data-testid="show-comment-button"]',
+                '[class*="PlatformComment__CoverButton"]',
+                '[aria-label="Comment actions"]',
+                '[class*="DesktopMoreButton"]'
+            ].join(','));
+
+            if (targetBtn) {
                 e.preventDefault();
                 e.stopPropagation();
-                const commentBlock = coverBtn.closest(self.SELECTORS.commentBlock);
+                const commentBlock = targetBtn.closest(self.SELECTORS.commentBlock);
                 if (commentBlock) {
                     const checkbox = commentBlock.querySelector('.syh-checkbox[data-type="comment"]');
                     if (checkbox) {
