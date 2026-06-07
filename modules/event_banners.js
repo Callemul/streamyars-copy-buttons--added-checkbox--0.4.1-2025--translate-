@@ -22,8 +22,13 @@ window.SYH_EVENT_BANNERS = {
             const bannerBlock = e.target.closest(self.SELECTORS.bannerBlock);
             if (bannerBlock) {
                 // Запобігаємо перехопленню, якщо клікнули на текстове поле, чекбокс або кастомні кнопки керування всередині банера
-                if (e.target.closest('input, textarea, button, .syh-button')) return;
+                const isInputOrCustom = e.target.closest('input, textarea, .syh-button');
+                // Окремо захищаємо кнопки редагування та видалення в кутку банера (наприклад, TopIconRow з пензликом та кошиком)
+                const isSystemEditOrDelete = e.target.closest('button:has(svg.lucide-pencil), button:has(svg.lucide-trash-2), button:has(svg.lucide-trash2), [class*="DesktopTopIconRow"] button');
 
+                if (isInputOrCustom || isSystemEditOrDelete) return;
+
+                // Дозволяємо ПКМ на оверлеях та кнопках керування показом (Show/Hide/Off/Показати/Вимкнено)
                 e.preventDefault();
                 e.stopPropagation();
                 const checkbox = bannerBlock.querySelector('.syh-checkbox[data-type="banner"]');

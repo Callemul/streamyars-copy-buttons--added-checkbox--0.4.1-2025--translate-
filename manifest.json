@@ -1,7 +1,7 @@
 {
   "name": "StreamYard Helper",
   "manifest_version": 3,
-  "version": "0.7",
+  "version": "0.8",
   "description": "Streamyard.com Extension. Add new buttons to comments and banners",
   "permissions": [
     "alarms",
