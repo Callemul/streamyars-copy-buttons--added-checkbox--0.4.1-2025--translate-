@@ -86,9 +86,6 @@ Object.assign(window.SYH_UI, {
                     }
 
                     /* ІЗОЛЬОВАНИЙ ФІКС ВЕРСТКИ ТА ПОЗИЦІОНУВАННЯ КНОПОК БАНЕРА */
-                    li:has(.syh-banner-controls), [class*="Banner__LiWrap"]:has(.syh-banner-controls) {
-                        position: relative !important;
-                    }
                     div[class*="Banner__Wrap"] {
                         position: relative !important;
                         padding-bottom: 26px !important; 
