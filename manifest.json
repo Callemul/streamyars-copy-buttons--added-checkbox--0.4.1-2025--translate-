@@ -11,9 +11,7 @@
     "scripting",
     "tabs"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
+  
   "content_scripts": [
     {
       "matches": ["https://streamyard.com/*"],
@@ -38,17 +36,10 @@
         "modules/stats_exporter.js",
         "main.js"
       ]
-    },
-    {
-      "run_at": "document_end",
-      "js": ["google_forms.js"],
-      "matches": [
-        "https://docs.google.com/forms/d/1Uv2PfvWwVCbS_FKEOFA0-YwISzLicsISMqVscMeBlTU/edit?ts=62502c5a"
-      ]
     }
   ],
   "action": {
-    "default_title": "Streamyard Helper 0.9.7",
+    "default_title": "Streamyard Helper 0.8",
     "default_popup": "popup/popup.html"
   },
   "icons": {
