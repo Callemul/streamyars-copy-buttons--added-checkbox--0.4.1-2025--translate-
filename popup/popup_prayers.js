@@ -26,22 +26,21 @@ window.renderPrayers = function(prayersList) {
     
     // Прибираємо старе попередження про інший ефір, якщо воно було
     $('#syh-room-warning').remove();
-    
     outputDiv.removeAttr('contenteditable');
 
     if (!prayersList || prayersList.length === 0) {
         $('#prayersTotalCount').text('0 люд. - 0 прохань');
-        outputDiv.html('<span style="color:#999; font-style:italic;">Список порожній. Натискайте 🙏 біля коментарів у StreamYard, щоб додати сюди молитовні прохання.</span>');
+        outputDiv.html('<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>');
         outputDiv.data('raw-text', '');
         return;
     }
 
-    // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 30 днів
+    // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
     const now = Date.now();
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
     let cleanedList = prayersList.filter(item => {
         if (!item.timestamp) return true;
-        return (now - item.timestamp) < thirtyDaysMs;
+        return (now - item.timestamp) < twoDaysMs;
     });
 
     if (cleanedList.length !== prayersList.length) {
@@ -49,7 +48,7 @@ window.renderPrayers = function(prayersList) {
         prayersList = cleanedList;
     }
 
-    // 2. СИГНАЛІЗАЦІЯ РОЗСИНХРОНІЗАЦІЇ (ROOM ID TRACKING) з вибором дій
+    // 2. СИГНАЛІЗАЦІЯ РОЗСИНХРОНІЗАЦІЇ (ROOM ID TRACKING)
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         if (!tabs[0] || !tabs[0].url) return;
         try {
@@ -61,13 +60,13 @@ window.renderPrayers = function(prayersList) {
             
             if (hasForeignPrayers) {
                 const warningHTML = `
-                    <div id="syh-room-warning" style="background: #e74c3c; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div id="syh-room-warning" style="background: #f39c12; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <span>⚠️ Збережено молитви з іншого ефіру!</span>
+                            <span>⚠️ Знайдено молитви з минулого ефіру!</span>
                         </div>
                         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button id="syh-relink-foreign-prayers" style="background: #2ecc71; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Переприв'язати всі старі молитви до поточного архіву чи кімнати">🔗 Переприв'язати</button>
-                            <button id="syh-clear-foreign-prayers" style="background: white; color: #e74c3c; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Видалити чужі молитви та зняти з них зірки">🧹 Очистити ефір</button>
+                            <button id="syh-keep-prayers" style="background: #27ae60; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Залишити як є">✅ Залишити (Це мої)</button>
+                            <button id="syh-wipe-prayers" style="background: #c0392b; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Видалити старі молитви з пам'яті розширення">🗑️ Очистити все</button>
                         </div>
                     </div>
                 `;
@@ -186,7 +185,6 @@ window.renderPrayers = function(prayersList) {
 };
 
 $(document).ready(function() {
-    // 1. Слухач подій для фокусу/збереження змін при редагуванні молитов
     $(document).on('focus', '.editable-prayer', function() {
         $(this).css('border-bottom', '1px dashed #2b7de9');
     }).on('blur', '.editable-prayer', function() {
@@ -204,7 +202,6 @@ $(document).ready(function() {
         });
     });
 
-    // Слухач подій для фокусу/збереження змін при редагуванні Імені Автора
     $(document).on('focus', '.editable-author', function() {
         $(this).css('border-bottom', '1px dashed #2b7de9');
         $(this).data('old-val', $(this).text().trim());
@@ -231,7 +228,6 @@ $(document).ready(function() {
         }
     });
 
-    // Клік по олівцю - фокусує ім'я автора для швидкого редагування
     $(document).on('click', '.edit-prayer-btn', function() {
         const block = $(this).closest('.q-block');
         const authorSpan = block.find('.editable-author');
@@ -248,7 +244,6 @@ $(document).ready(function() {
         }
     });
 
-    // Клік по кнопці масового видалення автора (🗑️) — знімає зірки в SY та видаляє з бази
     $(document).on('click', '.del-author-btn', function() {
         const authorToDelete = $(this).data('author');
         if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
@@ -256,7 +251,6 @@ $(document).ready(function() {
                 let list = result.syh_prayers || [];
                 const authorPrayers = list.filter(item => item.author === authorToDelete);
                 
-                // Двостороння синхронізація: автоматично unstar ці коментарі у StreamYard
                 sendUnstarMessagesForList(authorPrayers);
                 
                 list = list.filter(item => item.author !== authorToDelete);
@@ -267,8 +261,17 @@ $(document).ready(function() {
         }
     });
 
-    // Клік по кнопці "Переприв'язати" у плашці попередження
-    $(document).on('click', '#syh-relink-foreign-prayers', function() {
+    // Примусово очистити ВСЮ базу молитов без зняття зірок
+    $(document).on('click', '#syh-wipe-prayers', function() {
+        if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
+            chrome.storage.local.set({ 'syh_prayers': [] }, function() {
+                if (window.renderPrayers) window.renderPrayers([]);
+            });
+        }
+    });
+
+    // Залишити молитви (оновити Room ID)
+    $(document).on('click', '#syh-keep-prayers', function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (!tabs[0] || !tabs[0].url) return;
             try {
@@ -278,10 +281,9 @@ $(document).ready(function() {
                 chrome.storage.local.get(['syh_prayers'], function(result) {
                     let list = result.syh_prayers || [];
                     list.forEach(item => {
-                        // Переприв'язуємо чужі молитви під поточну кімнату архіву/ефіру
                         if (item.type === 'prayer') {
                             item.roomId = currentRoomId;
-                            item.timestamp = Date.now(); // Оновлюємо мітку часу, щоб уникнути GC видалення
+                            item.timestamp = Date.now(); 
                         }
                     });
                     chrome.storage.local.set({ 'syh_prayers': list }, function() {
@@ -292,41 +294,12 @@ $(document).ready(function() {
         });
     });
 
-    // Клік по кнопці очищення ЧУЖИХ молитов у плашці попередження (З Двостронньою Синхронізацією)
-    $(document).on('click', '#syh-clear-foreign-prayers', function() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (!tabs[0] || !tabs[0].url) return;
-            try {
-                const url = new URL(tabs[0].url);
-                const currentRoomId = url.pathname.replace(/\//g, '');
-                
-                chrome.storage.local.get(['syh_prayers'], function(result) {
-                    let list = result.syh_prayers || [];
-                    const foreignPrayers = list.filter(item => item.roomId && item.roomId !== currentRoomId);
-                    
-                    // Двостороння синхронізація: знімаємо зірки з чужих коментарів у StreamYard
-                    sendUnstarMessagesForList(foreignPrayers);
-                    
-                    // Залишаємо виключно свої прохання для цього ефіру
-                    list = list.filter(item => {
-                        return !item.roomId || item.roomId === currentRoomId;
-                    });
-                    chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                        if (window.renderPrayers) window.renderPrayers(list);
-                    });
-                });
-            } catch(e) {}
-        });
-    });
-
-    // Слухач кліку для видалення індивідуального прохання (З МИТТЄВИМ ОНОВЛЕННЯМ UI ТА UNSTAR СИГНАЛОМ)
     $(document).on('click', '.del-prayer-btn', function() {
         const index = $(this).data('index');
         chrome.storage.local.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
             const targetItem = list[index];
             if (targetItem) {
-                // Двостороння синхронізація: знімаємо зірку з коментаря у StreamYard
                 sendUnstarMessage(targetItem.text);
             }
             list.splice(index, 1);
@@ -336,7 +309,6 @@ $(document).ready(function() {
         });
     });
 
-    // 3. Обробник копіювання списку молитов в буфер
     $('#copyPrayersBtn').click(function() {
         const text = $('#prayersResultDiv').data('raw-text');
         if (!text) return;
@@ -350,7 +322,7 @@ $(document).ready(function() {
         setTimeout(() => $(this).text(originalText), 2000);
     });
 
-    // 4. Обробник повного очищення списку молитовних прохань (З МИТТЄВИМ ОНОВЛЕННЯМ UI — Без зняття зірок у SY за ТЗ)
+    // Очищення через червону кнопку корзини
     $('#clearPrayersBtn').click(function() {
         if (confirm("Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.")) {
             chrome.storage.local.get(['syh_prayers'], function(result) {
@@ -361,5 +333,83 @@ $(document).ready(function() {
                 });
             });
         }
+    });
+
+    // 🔄 НОВЕ: ФОНОВЕ ПІДТЯГУВАННЯ ЗІРКОВИХ КОМЕНТАРІВ ЗІ STREAMYARD (ТІЛЬКИ МОЛИТВИ)
+    $('#fetchPrayersBtn').click(function() {
+        const originalText = $(this).text();
+        $(this).text("⌛...");
+        
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (!tabs[0] || !tabs[0].url) {
+                alert("Не знайдено активну вкладку StreamYard.");
+                $('#fetchPrayersBtn').text(originalText);
+                return;
+            }
+            
+            // Запускаємо скан прямо на сторінці StreamYard
+            chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                func: () => {
+                    const currentRoomId = window.location.pathname.replace(/\//g, '');
+                    // ФІКС: Шукаємо ТІЛЬКИ ті коментарі, які промарковані як "prayer" (🙏)
+                    const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
+                    let newPrayers = [];
+                    const now = Date.now();
+                    
+                    comments.forEach(block => {
+                        const starBtn = block.querySelector('[class*="PlatformComment__StarButton"]');
+                        // Перевіряємо, чи цей молитовний коментар має активну зірочку
+                        if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
+                            let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent.trim() || "Глядач";
+                            while (author.startsWith('@')) author = author.substring(1);
+                            
+                            const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
+                            
+                            if (text) {
+                                newPrayers.push({
+                                    author: author,
+                                    text: text,
+                                    type: "prayer",
+                                    icon: "🙏🙏🙏",
+                                    roomId: currentRoomId,
+                                    timestamp: now
+                                });
+                            }
+                        }
+                    });
+                    return newPrayers;
+                }
+            }, (results) => {
+                if (results && results[0] && results[0].result) {
+                    const fetched = results[0].result;
+                    
+                    chrome.storage.local.get(['syh_prayers'], function(res) {
+                        let list = res.syh_prayers || [];
+                        let addedCount = 0;
+                        
+                        // Додаємо тільки ті, яких ще немає в базі
+                        fetched.forEach(f => {
+                            if (!list.find(p => p.text === f.text)) {
+                                list.push(f);
+                                addedCount++;
+                            }
+                        });
+                        
+                        chrome.storage.local.set({ 'syh_prayers': list }, function() {
+                            if (window.renderPrayers) window.renderPrayers(list);
+                            $('#fetchPrayersBtn').text(originalText);
+                            if (addedCount > 0) {
+                                alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
+                            } else {
+                                alert("[SYH] Зіркових МОЛИТОВ не знайдено (або вони всі вже є в списку).");
+                            }
+                        });
+                    });
+                } else {
+                    $('#fetchPrayersBtn').text(originalText);
+                }
+            });
+        });
     });
 });
