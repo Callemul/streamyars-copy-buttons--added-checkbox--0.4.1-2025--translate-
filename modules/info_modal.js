@@ -131,8 +131,15 @@ window.SYH_INFO_MODAL = {
         const codeBlocks = [];
         html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
             const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+            
+            // Підсвічуємо спеціальні анотації (піде в "...") в блоках коду у вигляді стильних бейджів
+            let highlighted = code.trim();
+            highlighted = highlighted.replace(/\((піде в "Глядачі")\)/g, '<span style="color: #38BDF8; font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.25); font-size: 11px; margin-left: 8px; display: inline-block; white-space: nowrap;">$1</span>');
+            highlighted = highlighted.replace(/\((піде в "Молитви")\)/g, '<span style="color: #34D399; font-weight: bold; background: rgba(52, 211, 153, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.25); font-size: 11px; margin-left: 8px; display: inline-block; white-space: nowrap;">$1</span>');
+            highlighted = highlighted.replace(/\((піде в "Ефір")\)/g, '<span style="color: #FB923C; font-weight: bold; background: rgba(251, 146, 60, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(251, 146, 60, 0.25); font-size: 11px; margin-left: 8px; display: inline-block; white-space: nowrap;">$1</span>');
+
             codeBlocks.push({
-                code: code.trim(),
+                code: highlighted,
                 marginLeft: '0px'
             });
             return placeholder;
