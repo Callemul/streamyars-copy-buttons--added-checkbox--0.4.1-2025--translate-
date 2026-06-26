@@ -54,36 +54,26 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
-    const parts = text.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
-    const questionsText = parts[0] || "";
-    const prayersText = parts[1] || "";
+    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\Snapshot_or_time\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+    const cleanRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+    
+    let messages = [];
+    let match;
+    let lastIdx = 0;
+    
+    // Розбиваємо за заголовками повідомлень Telegram
+    while ((match = cleanRegex.exec(text)) !== null) {
+        const part = text.substring(lastIdx, match.index).trim();
+        if (part) messages.push(part);
+        lastIdx = cleanRegex.lastIndex;
+    }
+    const lastPart = text.substring(lastIdx).trim();
+    if (lastPart) messages.push(lastPart);
+    if (messages.length === 0) messages = [text];
+
+    let allQuestions = [];
+    let allPrayers = [];
     const deletedItems = [];
-
-    const parseSection = (sectionText, filterIds, sourceType) => {
-        const lines = sectionText.split('\n');
-        const items = [];
-        let currentItem = null;
-        let currentCounter = 0;
-        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/; 
-
-        lines.forEach(line => {
-            const trimmedLine = line.trim();
-            if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
-            if (trimmedLine.includes("Віталій Кривко")) return;
-
-            if (emojiNumberRegex.test(trimmedLine)) {
-                if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
-                currentCounter++;
-                currentItem = { rawLines: [] };
-            } 
-            else if (currentItem) {
-                currentItem.rawLines.push(line);
-            }
-        });
-
-        if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
-        return items;
-    };
 
     const processOldItem = (itemsArray, itemObj, filterIds, id, deletedArr, src) => {
         let lines = itemObj.rawLines;
@@ -125,7 +115,48 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         itemsArray.push({ author, text: rawText, source: src });
     };
 
-    return { questions: parseSection(questionsText, answeredIds, 'old'), prayers: parseSection(prayersText, null, 'pray'), deleted: deletedItems };
+    const parseSection = (sectionText, filterIds, sourceType) => {
+        const lines = sectionText.split('\n');
+        const items = [];
+        let currentItem = null;
+        let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
+        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/; 
+
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
+            if (trimmedLine.includes("Віталій Кривко")) return;
+
+            if (emojiNumberRegex.test(trimmedLine)) {
+                if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
+                currentCounter++;
+                currentItem = { rawLines: [] };
+            } 
+            else if (currentItem) {
+                currentItem.rawLines.push(line);
+            }
+        });
+
+        if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
+        return items;
+    };
+
+    for (const msg of messages) {
+        const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+        const questionsText = parts[0] || "";
+        const prayersText = parts[1] || "";
+
+        if (questionsText.trim()) {
+            const qs = parseSection(questionsText, answeredIds, 'old');
+            allQuestions = allQuestions.concat(qs);
+        }
+        if (prayersText.trim()) {
+            const prs = parseSection(prayersText, null, 'pray');
+            allPrayers = allPrayers.concat(prs);
+        }
+    }
+
+    return { questions: allQuestions, prayers: allPrayers, deleted: deletedItems };
 };
 
 window.parseTelegramExportLineByLine = function(text) {

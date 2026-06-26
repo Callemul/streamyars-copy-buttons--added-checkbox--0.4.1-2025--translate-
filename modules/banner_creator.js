@@ -17,10 +17,21 @@ window.SYH_BANNER_CREATOR = {
         let bannersToCreate = [];
         let hasStandardFormat = false;
 
-        // Розбиваємо текст на блок питань та блок молитов
-        const parts = rawText.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
-        const questionsText = parts[0] || "";
-        const prayersText = parts[1] || "";
+        // 1. Розбиваємо загальний текст на повідомлення Telegram, якщо скопійовано декілька
+        const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+        
+        let messages = [];
+        let match;
+        let lastIdx = 0;
+        
+        while ((match = tgHeaderRegex.exec(rawText)) !== null) {
+            const part = rawText.substring(lastIdx, match.index).trim();
+            if (part) messages.push(part);
+            lastIdx = tgHeaderRegex.lastIndex;
+        }
+        const lastPart = rawText.substring(lastIdx).trim();
+        if (lastPart) messages.push(lastPart);
+        if (messages.length === 0) messages = [rawText];
 
         const parseBlock = (text, defaultCat) => {
             if (!text.trim()) return [];
@@ -60,16 +71,22 @@ window.SYH_BANNER_CREATOR = {
         };
 
         try {
-            if (questionsText.trim()) {
-                const qItems = parseBlock(questionsText, "stream");
-                bannersToCreate = bannersToCreate.concat(qItems);
-                if (qItems.some(item => item.isStandard)) {
-                    hasStandardFormat = true;
+            for (const msg of messages) {
+                const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+                const questionsText = parts[0] || "";
+                const prayersText = parts[1] || "";
+
+                if (questionsText.trim()) {
+                    const qItems = parseBlock(questionsText, "stream");
+                    bannersToCreate = bannersToCreate.concat(qItems);
+                    if (qItems.some(item => item.isStandard)) {
+                        hasStandardFormat = true;
+                    }
                 }
-            }
-            if (prayersText.trim()) {
-                const pItems = parseBlock(prayersText, "prayer");
-                bannersToCreate = bannersToCreate.concat(pItems);
+                if (prayersText.trim()) {
+                    const pItems = parseBlock(prayersText, "prayer");
+                    bannersToCreate = bannersToCreate.concat(pItems);
+                }
             }
         } catch (error) {
             alert(error.message);
