@@ -156,3 +156,16 @@ div[class*="PlatformCommentShell__Wrap"] {
 #syh-starred-search, #syh-banner-search {
     padding-right: 120px !important;
 }
+
+/* --- СТИЛІ ДЛЯ МОДАЛКИ ДОВІДКИ ТА ОНОВЛЕНЬ --- */
+.syh-info-tab-btn:hover {
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+#syh-close-info:hover {
+  color: #ef4444 !important;
+}
+@keyframes syhSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

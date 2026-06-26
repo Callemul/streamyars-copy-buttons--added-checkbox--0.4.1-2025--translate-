@@ -78,9 +78,26 @@ window.SYH_STATS_TRACKER = {
                     btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
                     btnAnalytics.onclick = () => self.showAnalyticsModal();
 
+                    // Кнопка Інформації (Release Notes / Daily Tips)
+                    const btnInfo = document.createElement('button');
+                    btnInfo.id = 'syh-info-btn';
+                    btnInfo.innerHTML = 'ⓘ';
+                    btnInfo.title = 'Оновлення та Інструкції';
+                    btnInfo.style.cssText = 'background: #4F5461; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 15px; margin-left: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;';
+                    btnInfo.onmouseover = () => btnInfo.style.background = '#636979';
+                    btnInfo.onmouseout = () => btnInfo.style.background = '#4F5461';
+                    btnInfo.onclick = () => {
+                        if (window.SYH_INFO_MODAL && typeof window.SYH_INFO_MODAL.showModal === 'function') {
+                            window.SYH_INFO_MODAL.showModal();
+                        } else {
+                            console.warn("[SYH] Модуль info_modal.js ще не завантажено.");
+                        }
+                    };
+
                     btnContainer.appendChild(btnQ);
                     btnContainer.appendChild(btnP);
                     btnContainer.appendChild(btnAnalytics);
+                    btnContainer.appendChild(btnInfo);
 
                     headerCenter.insertBefore(btnContainer, statusWrap);
                     

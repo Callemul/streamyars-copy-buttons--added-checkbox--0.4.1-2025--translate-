@@ -76,5 +76,27 @@ window.SYH_PARSERS = {
                 }
                 return line;
             });
+    },
+
+    parseSabbathSchoolUnnumberedQuestions: function(rawText) {
+        console.log("Parsing as Sabbath School Unnumbered questions.");
+        const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+        
+        // Знаходимо перший рядок з ключовими словами
+        const startIndex = lines.findIndex(l => /памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(l));
+        if (startIndex === -1) return [];
+        
+        // Ігноруємо заголовок (все перед startIndex)
+        const questionLines = lines.slice(startIndex);
+        
+        // Помилка якщо більше 10 питань
+        if (questionLines.length > 10) {
+            throw new Error("Помилка: Кількість питань перевищує ліміт (максимум 10)!");
+        }
+        
+        return questionLines.map(line => {
+            const cleanLine = line.replace(/\s*\([^)]+\)$/, '').trim();
+            return cleanLine.length >= 200 ? cleanLine.substring(0, 195) + "..." : cleanLine;
+        });
     }
 };

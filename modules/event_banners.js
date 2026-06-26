@@ -75,8 +75,69 @@ window.SYH_EVENT_BANNERS = {
             if (action === 'delete-selected-banners') {
                 const $checkedBanners = $('.syh-checkbox[data-type="banner"]:checked');
                 if ($checkedBanners.length === 0) return;
-                
-                if (confirm(`Ви впевнені, що хочете видалити ${$checkedBanners.length} банер(ів)?`)) {
+
+                const activeFilter = self.UI ? self.UI.bannerActiveFilter : 'all';
+                let proceed = false;
+
+                if (activeFilter && activeFilter !== 'all') {
+                    const filterNames = {
+                        'stream': 'Ефір',
+                        'audience': 'Глядачі',
+                        'prayer': 'Молитви'
+                    };
+                    const tabName = filterNames[activeFilter] || activeFilter;
+
+                    let currentTabCount = 0;
+                    let counts = {
+                        all: $checkedBanners.length,
+                        stream: 0,
+                        audience: 0,
+                        prayer: 0
+                    };
+
+                    $checkedBanners.each(function() {
+                        const bannerBlock = $(this).closest(self.SELECTORS.bannerBlock);
+                        const textKey = bannerBlock.find(self.SELECTORS.bannerText).text();
+                        const commentType = (self.UI && self.UI.bannerCategoriesCache) ? (self.UI.bannerCategoriesCache[textKey] || 'none') : 'none';
+                        
+                        if (commentType === activeFilter) {
+                            currentTabCount++;
+                        }
+                        
+                        if (commentType === 'stream') {
+                            counts.stream++;
+                        } else if (commentType === 'audience') {
+                            counts.audience++;
+                        } else if (commentType === 'prayer') {
+                            counts.prayer++;
+                        }
+                    });
+
+                    let confirmMessage = "";
+                    if (currentTabCount > 0) {
+                        confirmMessage = `Ви впевнені, що хочете видалити ${currentTabCount} банер(ів) з вкладки "${tabName}"?\n\n` +
+                                         `Зверніть увагу: ці банери будуть видалені не тільки з поточної вкладки, а й з усіх інших вкладок, і з вкладки "Всі" також.\n\n` +
+                                         `Буде видалено:\n` +
+                                         `- Всі: ${counts.all}\n` +
+                                         `- Ефір: ${counts.stream}\n` +
+                                         `- Глядачі: ${counts.audience}\n` +
+                                         `- Молитви: ${counts.prayer}`;
+                    } else {
+                        confirmMessage = `Увага! На поточній вкладці "${tabName}" не вибрано жодного банера, але вибрано банери на інших вкладках.\n\n` +
+                                         `Зверніть увагу: ці банери будуть видалені назавжди з усіх вкладок, і з вкладки "Всі" також.\n\n` +
+                                         `Буде видалено:\n` +
+                                         `- Всі: ${counts.all}\n` +
+                                         `- Ефір: ${counts.stream}\n` +
+                                         `- Глядачі: ${counts.audience}\n` +
+                                         `- Молитви: ${counts.prayer}`;
+                    }
+
+                    proceed = confirm(confirmMessage);
+                } else {
+                    proceed = confirm(`Ви впевнені, що хочете видалити ${$checkedBanners.length} банер(ів)?`);
+                }
+
+                if (proceed) {
                     $checkedBanners.each(function() {
                         const deleteButton = $(this).closest(self.SELECTORS.bannerBlock).find(self.SELECTORS.bannerDeleteButton)[0];
                         if (deleteButton) deleteButton.click();

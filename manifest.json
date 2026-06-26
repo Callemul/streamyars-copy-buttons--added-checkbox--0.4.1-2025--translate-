@@ -1,7 +1,7 @@
 {
   "name": "StreamYard Helper",
   "manifest_version": 3,
-  "version": "0.8",
+  "version": "0.81",
   "description": "Streamyard.com Extension. Add new buttons to comments and banners",
   "permissions": [
     "alarms",
@@ -34,8 +34,18 @@
         "modules/video_copier.js",
         "modules/stats_tracker.js",
         "modules/stats_exporter.js",
+        "modules/info_modal.js",
         "main.js"
       ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "Release_notes.md",
+        "Daily_tips.md"
+      ],
+      "matches": ["https://streamyard.com/*"]
     }
   ],
   "action": {
