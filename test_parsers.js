@@ -240,7 +240,18 @@ async function testCategoryDetection() {
         await bannerCreator.processAndCreateBanners(mixedInputWithWavingHand);
         assert.deepStrictEqual(capturedCategories, ['audience', 'prayer'], "Змішаний список із 👋 повинен розділяти категорії на 'audience' та 'prayer'");
 
-        console.log("✅ Тест 5 пройдено: Категорії та формати питань (включаючи очищення від заголовків, однорядкові списки, запитання про молитву та емодзі 👋/1⃣) автоматично визначаються правильно.");
+        // Кейс Ж: Питання про урок субботи з нечітким Saturday/Sabbath School заголовком (має йти в 'stream')
+        const lessonQuestionsInput = `Саша, привет,  вопросы по уроку на слудующую субботу
+
+Виталик, привет! Вопросы на субботу: Добрый вечер, Сергей Борисович! Высылаю на Ваше рассмотрение вопросы на субботнюю школу. 1. Как вы понимаете, что такое изучение? Чем чтение Библии отличается от ее изучения?
+2. Как лучше подобрать время и место для изучения Библии? А когда и где вы читаете и исследуете Библию?`;
+
+        capturedCategories = [];
+        await bannerCreator.processAndCreateBanners(lessonQuestionsInput);
+        assert.ok(capturedCategories.length > 0);
+        assert.ok(capturedCategories.every(cat => cat === 'stream'), "Питання про урок субботи мають йти в 'stream'");
+
+        console.log("✅ Тест 5 пройдено: Категорії та формати питань (включаючи очищення від заголовків, однорядкові списки, запитання про молитву, емодзі 👋/1⃣ та суботні/урокові ключі) автоматично визначаються правильно.");
     } catch (e) {
         console.error("❌ Тест 5 провалено:", e);
         process.exit(1);

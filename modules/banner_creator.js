@@ -36,7 +36,7 @@ window.SYH_BANNER_CREATOR = {
                 const headerText = (headerMatch[0] || "").trim().toUpperCase();
                 if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
                     blockCategory = "prayer";
-                } else if (headerText.includes("СУББОТН") || headerText.includes("СУБОТН")) {
+                } else if (headerText.includes("СУББОТ") || headerText.includes("СУБОТ") || headerText.includes("УРОК")) {
                     blockCategory = "stream";
                 } else if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
                     blockCategory = "audience";
