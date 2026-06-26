@@ -101,7 +101,7 @@ window.SYH_EVENT_BANNERS = {
                 
                 // Перемикаємо/записуємо стан
                 const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'stream') ? 'none' : 'stream';
-                self.saveBannerCategory(bannerText, currentType).then(() => {
+                window.SYH_UTILS.saveBannerCategory(bannerText, currentType).then(() => {
                     if (self.UI) {
                         self.UI.bannerCategoriesCache[bannerText] = currentType;
                         self.UI.filterBanners();
@@ -117,7 +117,7 @@ window.SYH_EVENT_BANNERS = {
                 
                 // Перемикаємо/записуємо стан
                 const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'audience') ? 'none' : 'audience';
-                self.saveBannerCategory(bannerText, currentType).then(() => {
+                window.SYH_UTILS.saveBannerCategory(bannerText, currentType).then(() => {
                     if (self.UI) {
                         self.UI.bannerCategoriesCache[bannerText] = currentType;
                         self.UI.filterBanners();
@@ -133,7 +133,7 @@ window.SYH_EVENT_BANNERS = {
                 
                 // Перемикаємо/записуємо стан
                 const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'prayer') ? 'none' : 'prayer';
-                self.saveBannerCategory(bannerText, currentType).then(() => {
+                window.SYH_UTILS.saveBannerCategory(bannerText, currentType).then(() => {
                     if (self.UI) {
                         self.UI.bannerCategoriesCache[bannerText] = currentType;
                         self.UI.filterBanners();
@@ -218,24 +218,4 @@ window.SYH_EVENT_BANNERS = {
         });
     },
 
-    // Метод запису категорії банера в базу даних через централізований адаптер
-    saveBannerCategory: function(text, type) {
-        return new Promise(resolve => {
-            const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-                ? window.SYH_UTILS.storage
-                : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
-
-            if (!storage) {
-                console.error("SYH_EVENT_BANNERS: Не знайдено адаптер сховища!");
-                resolve();
-                return;
-            }
-
-            storage.get(['syh_banner_categories'], function(result) {
-                let db = result.syh_banner_categories || {};
-                db[text] = type;
-                storage.set({ 'syh_banner_categories': db }, resolve);
-            });
-        });
-    }
 };

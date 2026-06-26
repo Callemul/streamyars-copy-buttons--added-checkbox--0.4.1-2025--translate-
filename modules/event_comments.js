@@ -294,27 +294,5 @@ window.SYH_EVENT_COMMENTS = {
             
             storage.set({ 'syh_prayers': list });
         });
-    },
-
-    // Безпечне видалення з БД через централізований адаптер
-    removeFromDatabase: function(text) {
-        if (this.UI && this.UI.prayersCache) {
-            this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
-        }
-
-        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-            ? window.SYH_UTILS.storage
-            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
-
-        if (!storage) {
-            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
-            return;
-        }
-
-        storage.get(['syh_prayers'], function(result) {
-            let list = result.syh_prayers || [];
-            list = list.filter(item => item.text !== text);
-            storage.set({ 'syh_prayers': list });
-        });
     }
 };

@@ -225,5 +225,21 @@ window.SYH_UTILS = {
             res += layoutMap[s[i]] || s[i];
         }
         return this.normalizeText(res);
+    },
+
+    saveBannerCategory: function(text, type) {
+        return new Promise(resolve => {
+            if (!this.storage) {
+                console.error("SYH_UTILS: Не знайдено адаптер сховища!");
+                resolve();
+                return;
+            }
+
+            this.storage.get(['syh_banner_categories'], (result) => {
+                let db = result.syh_banner_categories || {};
+                db[text] = type;
+                this.storage.set({ 'syh_banner_categories': db }, resolve);
+            });
+        });
     }
 };

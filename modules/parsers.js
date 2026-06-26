@@ -69,6 +69,12 @@ window.SYH_PARSERS = {
             .map(line => line.trim())
             .filter(line => /^\d+\./.test(line))
             .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
-            .filter(line => line.length > 0 && line.length < 200);
+            .filter(line => line.length > 0)
+            .map(line => {
+                if (line.length >= 200) {
+                    return line.substring(0, 195) + "...";
+                }
+                return line;
+            });
     }
 };

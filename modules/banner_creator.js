@@ -66,7 +66,7 @@ window.SYH_BANNER_CREATOR = {
                 await this.createSingleBanner(cleanQuestion);
                 
                 // Автоматично проштамповуємо створений банер у правильну категорію
-                await this.saveBannerCategory(cleanQuestion, defaultCategory);
+                await window.SYH_UTILS.saveBannerCategory(cleanQuestion, defaultCategory);
 
                 createdCount++;
             } catch (error) {
@@ -155,24 +155,4 @@ window.SYH_BANNER_CREATOR = {
         });
     },
 
-    // Метод запису категорії банера в базу даних
-    saveBannerCategory: function(text, type) {
-        return new Promise(resolve => {
-            const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-                ? window.SYH_UTILS.storage
-                : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
-
-            if (!storage) {
-                console.error("SYH_BANNER_CREATOR: Не знайдено адаптер сховища!");
-                resolve();
-                return;
-            }
-
-            storage.get(['syh_banner_categories'], function(result) {
-                let db = result.syh_banner_categories || {};
-                db[text] = type;
-                storage.set({ 'syh_banner_categories': db }, resolve);
-            });
-        });
-    }
 };
