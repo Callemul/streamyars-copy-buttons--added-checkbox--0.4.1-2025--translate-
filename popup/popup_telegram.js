@@ -21,11 +21,21 @@ window.updateOldInputStats = function() {
 window.updateNewInputStats = function() {
     const text = $('#newTelegram').val();
     if (!text) { $('#tgTotalCount').text(''); return; }
-    const items = window.parseTelegramExportLineByLine(text);
-    let peopleCount = items.length;
+    let peopleCount = 0;
     let questionsCount = 0;
-    items.forEach(q => questionsCount += window.countQuestionsInText(q.text));
-    $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит.)`);
+    let prayersCount = 0;
+    if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
+        const parsed = window.parseAndFilterOldList(text, []);
+        peopleCount = parsed.questions.length;
+        parsed.questions.forEach(q => questionsCount += window.countQuestionsInText(q.text));
+        prayersCount = parsed.prayers.length;
+        $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит. | Молитви: ${prayersCount})`);
+    } else {
+        const items = window.parseTelegramExportLineByLine(text);
+        peopleCount = items.length;
+        items.forEach(q => questionsCount += window.countQuestionsInText(q.text));
+        $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит.)`);
+    }
     $('#tgTotalCount').css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 };
 
@@ -44,7 +54,7 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
-    const parts = text.split(/🙏🙏🙏МОЛИТВЫ/i);
+    const parts = text.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
     const questionsText = parts[0] || "";
     const prayersText = parts[1] || "";
     const deletedItems = [];
@@ -161,27 +171,52 @@ window.processTelegramData = function() {
     const telegramText = $('#newTelegram').val();
     const answeredIds = answeredInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     let preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
-    let newItems = window.parseTelegramExportLineByLine(telegramText);
-    const combinedQuestions = [...preservedData.questions, ...newItems];
-    const combinedPrayers = [...preservedData.prayers];
+    
+    let newQuestions = [];
+    let newPrayers = [];
+    if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
+        let parsedNew = window.parseAndFilterOldList(telegramText, []);
+        newQuestions = parsedNew.questions.map(q => ({ ...q, source: 'new' }));
+        newPrayers = parsedNew.prayers.map(p => ({ ...p, source: 'pray' }));
+    } else {
+        newQuestions = window.parseTelegramExportLineByLine(telegramText);
+    }
+    
+    const combinedQuestions = [...preservedData.questions, ...newQuestions];
+    const combinedPrayers = [...preservedData.prayers, ...newPrayers];
+    
     let oldPeople = preservedData.questions.length;
     let oldQuestionsTotal = 0;
     preservedData.questions.forEach(q => oldQuestionsTotal += window.countQuestionsInText(q.text));
-    let newPeople = newItems.length;
+    
+    let newPeople = newQuestions.length;
     let newQuestionsTotal = 0;
-    newItems.forEach(q => newQuestionsTotal += window.countQuestionsInText(q.text));
+    newQuestions.forEach(q => newQuestionsTotal += window.countQuestionsInText(q.text));
+    
+    let newPrayersTotal = newPrayers.length;
+    
     let delPeople = 0;
     let delQuestionsTotal = 0;
     preservedData.deleted.forEach(d => {
         if (d.type === 'block') { delPeople++; delQuestionsTotal += d.count; } 
         else if (d.type === 'sub') { delQuestionsTotal += d.count; }
     });
+    
     let totalPeople = oldPeople + newPeople;
     let totalQuestions = oldQuestionsTotal + newQuestionsTotal;
+    let totalPrayers = combinedPrayers.length;
+    
     $('.stat-item.old').html(`Залишилось старих: <b>${oldPeople} люд. - ${oldQuestionsTotal} пит.</b>`);
     $('#countDel').text(`${delPeople} люд. - ${delQuestionsTotal} пит.`);
-    $('#countNew').text(`${newPeople} люд. - ${newQuestionsTotal} пит.`);
-    $('#countTotal').text(`${totalPeople} люд. - ${totalQuestions} пит.`);
+    
+    let newText = `${newPeople} люд. - ${newQuestionsTotal} пит.`;
+    if (newPrayersTotal > 0) newText += ` | Молитви: ${newPrayersTotal}`;
+    $('#countNew').html(newText);
+    
+    let totalText = `${totalPeople} люд. - ${totalQuestions} пит.`;
+    if (totalPrayers > 0) totalText += ` | Молитви: ${totalPrayers}`;
+    $('#countTotal').text(totalText);
+    
     $('#statsBar').show();
     
     const outputDiv = $('#finalResultDiv');

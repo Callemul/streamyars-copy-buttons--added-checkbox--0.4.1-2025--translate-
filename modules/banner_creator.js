@@ -14,38 +14,69 @@ window.SYH_BANNER_CREATOR = {
     },
 
     processAndCreateBanners: async function(rawText) {
-        let questions = [];
-        let isStandardFormat = false;
+        let bannersToCreate = [];
+        let hasStandardFormat = false;
 
-        // ФІКС ПАРСЕРА КАТЕГОРІЙ: Скануємо заголовок (перші 200 символів) для точного визначення контексту
-        const headerText = rawText.substring(0, 200).toUpperCase();
-        
-        let defaultCategory = "stream"; // За замовчуванням: Ефір 🎙️
-        let categoryLogName = "ПИТАННЯ ЕФІРУ 🎙️";
+        // Розбиваємо текст на блок питань та блок молитов
+        const parts = rawText.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+        const questionsText = parts[0] || "";
+        const prayersText = parts[1] || "";
 
-        // Порядок перевірок важливий. Спочатку шукаємо молитви, потім питання глядачів
-        if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
-            defaultCategory = "prayer";
-            categoryLogName = "МОЛИТВИ 🙏";
-        } else if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
-            defaultCategory = "audience";
-            categoryLogName = "ПИТАННЯ ГЛЯДАЧІВ ❓";
+        const parseBlock = (text, defaultCat) => {
+            if (!text.trim()) return [];
+            let blockCategory = defaultCat;
+            let blockQuestions = [];
+            let isStd = false;
+
+            const firstLine = text.split('\n').map(l => l.trim()).filter(l => l.length > 0)[0] || "";
+            const isQuestionStart = /^(?:\d+[\.\)]|(?:\d+\uFE0F?\u20E3|🔟)|🔹)/.test(firstLine);
+
+            if (!isQuestionStart && firstLine) {
+                const headerMatch = firstLine.split(/(?:^|\s)(?=\d+[\.\)])|(?:^|\s)(?=(?:\d+\uFE0F?\u20E3|🔟))|(?=🔹)/);
+                const headerText = (headerMatch[0] || "").trim().toUpperCase();
+                if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
+                    blockCategory = "prayer";
+                } else if (headerText.includes("СУББОТН") || headerText.includes("СУБОТН")) {
+                    blockCategory = "stream";
+                } else if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
+                    blockCategory = "audience";
+                }
+            }
+
+            if (/памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(text) && !/(?:^|\s)\d+[\.\)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+                this.log("Формат: Суботня Школа (без нумерації)");
+                blockQuestions = this.PARSERS.parseSabbathSchoolUnnumberedQuestions(text);
+                blockCategory = "stream"; 
+            } else if (/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+                this.log("Формат: Емодзі 1️⃣");
+                blockQuestions = this.PARSERS.parseEmojiNumberedQuestions(text);
+            } else {
+                this.log("Формат: Стандартний 1.");
+                blockQuestions = this.PARSERS.parseStandardNumberedQuestions(text);
+                isStd = true;
+            }
+
+            return blockQuestions.map(q => ({ text: q, category: blockCategory, isStandard: isStd }));
+        };
+
+        try {
+            if (questionsText.trim()) {
+                const qItems = parseBlock(questionsText, "stream");
+                bannersToCreate = bannersToCreate.concat(qItems);
+                if (qItems.some(item => item.isStandard)) {
+                    hasStandardFormat = true;
+                }
+            }
+            if (prayersText.trim()) {
+                const pItems = parseBlock(prayersText, "prayer");
+                bannersToCreate = bannersToCreate.concat(pItems);
+            }
+        } catch (error) {
+            alert(error.message);
+            return;
         }
 
-        this.log(`Автовизначення типу пакету: ${categoryLogName}`);
-
-        // Перевірка формату
-        if (/(?:\d+\uFE0F?\u20E3|🔟)/.test(rawText)) {
-            this.log("Формат: Емодзі 1️⃣");
-            questions = this.PARSERS.parseEmojiNumberedQuestions(rawText);
-            isStandardFormat = false; 
-        } else {
-            this.log("Формат: Стандартний 1.");
-            questions = this.PARSERS.parseStandardNumberedQuestions(rawText);
-            isStandardFormat = true;
-        }
-
-        if (questions.length === 0) {
+        if (bannersToCreate.length === 0) {
             alert("Питання не знайдені.");
             return;
         }
@@ -54,19 +85,19 @@ window.SYH_BANNER_CREATOR = {
 
         let createdCount = 0;
         
-        for (const [index, question] of questions.entries()) {
-            this.log(`>>> Обробка банера ${index + 1} з ${questions.length}`);
+        for (const [index, item] of bannersToCreate.entries()) {
+            this.log(`>>> Обробка банера ${index + 1} з ${bannersToCreate.length}`);
             try {
                 const pauseTime = index === 0 ? 600 : 250;
                 await new Promise(r => setTimeout(r, pauseTime));
                 
                 // Очищення дужок з авторами, навіть якщо дужка не закрита (наприклад, " ( Опарин , Молчанов")
-                const cleanQuestion = question.replace(/\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi, "").trim();
+                const cleanQuestion = item.text.replace(/\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi, "").trim();
 
                 await this.createSingleBanner(cleanQuestion);
                 
                 // Автоматично проштамповуємо створений банер у правильну категорію
-                await window.SYH_UTILS.saveBannerCategory(cleanQuestion, defaultCategory);
+                await window.SYH_UTILS.saveBannerCategory(cleanQuestion, item.category);
 
                 createdCount++;
             } catch (error) {
@@ -76,7 +107,7 @@ window.SYH_BANNER_CREATOR = {
             }
         }
         
-        if (isStandardFormat) {
+        if (hasStandardFormat) {
             this.log("Додаю розділювач...");
             await new Promise(r => setTimeout(r, 300));
             await this.createSingleBanner("----Питання глядачів----");
