@@ -1,6 +1,8 @@
-// ui_comments.js
+import { SYH_UI } from './ui_core.js';
+import { SYH_UTILS } from './utils.js';
+
 // Розширення єдиного об'єкта SYH_UI логікою рендерингу та фільтрації коментарів
-Object.assign(window.SYH_UI, {
+Object.assign(SYH_UI, {
     
     // Додавання кастомних кнопок копіювання/маркування під коментар
     addButtonsToComment: function(commentNode) {
@@ -8,18 +10,18 @@ Object.assign(window.SYH_UI, {
         if ($targetContainer.length > 0 && !$targetContainer.find('.syh-custom-buttons-comment').length) {
             const buttonsHTML = `
                 <div class="syh-custom-buttons-comment">
-                    <button class="syh-button" data-type="comment" data-action="copy-comment" title="Копіювати тільки коментар">📄</button>
-                    <button class="syh-button" data-type="comment" data-action="copy-author-comment" title="Відмітити як Питання">❓</button>
-                    <button class="syh-button" data-type="comment" data-action="copy-prayer" title="ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️">🙏</button>
+                    <button class="syh-button" data-type="comment" data-action="copy-comment" title="Копіювати тільки коментар" aria-label="Копіювати тільки коментар">📄</button>
+                    <button class="syh-button" data-type="comment" data-action="copy-author-comment" title="Відмітити як Питання" aria-label="Відмітити як Питання">❓</button>
+                    <button class="syh-button" data-type="comment" data-action="copy-prayer" title="ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️" aria-label="Відмітити як Молитву">🙏</button>
                     <div class="syh-checkbox-container">
-                        <input type="checkbox" class="syh-checkbox" data-type="comment" title="Відмітити як опрацьоване">
+                        <input type="checkbox" class="syh-checkbox" data-type="comment" title="Відмітити як опрацьоване" aria-label="Відмітити коментар як опрацьований">
                     </div>
                 </div>`;
             $targetContainer.append(buttonsHTML);
             
             const commentText = $(commentNode).find(this.SELECTORS.commentText).text();
             
-            if (this.STATE && typeof this.STATE.getCheckedState === 'function' && this.STATE.getCheckedState(commentText)) {
+            if (this.STATE && typeof this.STATE.getState === 'function' && this.STATE.getState(commentText)) {
                 $targetContainer.find('.syh-checkbox').prop('checked', true);
             }
             this.applySavedLabels(commentNode, commentText);
@@ -50,89 +52,26 @@ Object.assign(window.SYH_UI, {
     addStarredTabControls: function(starredHeaderNode) {
         const $headerWrap = $(starredHeaderNode);
         if ($headerWrap.length > 0 && !$headerWrap.find('.syh-starred-controls').length) {
-            
-            if (!document.getElementById('syh-starred-styles')) {
-                const style = document.createElement('style');
-                style.id = 'syh-starred-styles';
-                style.innerHTML = `
-                    @keyframes syhPulse {
-                        0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
-                        70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
-                        100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
-                    }
-                    .syh-search-pulse {
-                        animation: syhPulse 0.5s ease-out;
-                        border-color: #f39c12 !important;
-                    }
-                    .syh-search-wrapper { position: relative; width: 100%; display: flex; gap: 6px; align-items: center; }
-                    .syh-empty-state {
-                        text-align: center; padding: 20px; color: #666; font-size: 14px;
-                        background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;
-                        margin-top: 15px; display: none;
-                    }
-                    /* СУЧАСНІ ДИНАМІЧНІ ТАБИ ДЛЯ КОМЕНТАРІВ */
-                    .syh-filter-btn {
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 4px;
-                        padding: 4px 6px;
-                        border: none;
-                        border-radius: 4px;
-                        background: transparent;
-                        cursor: pointer;
-                        font-size: 13px !important;
-                        color: #666;
-                        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-                        white-space: nowrap;
-                        overflow: hidden;
-                        flex: 1;
-                    }
-                    .syh-filter-btn.active {
-                        background: #fff !important;
-                        color: #000 !important;
-                        font-weight: bold !important;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-                        flex: 1.8;
-                        padding: 4px 8px;
-                    }
-                    .syh-filter-btn .tab-text {
-                        display: none;
-                        opacity: 0;
-                        transition: opacity 0.15s;
-                    }
-                    .syh-filter-btn.active .tab-text {
-                        display: inline;
-                        opacity: 1;
-                    }
-                    .syh-filter-btn .tab-count {
-                        font-size: 12px !important;
-                        opacity: 0.8;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
             // Оновлено: повертаємо класичний знак питання ❓ для вкладки коментарів
             const controlsHTML = `
                 <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                     <div class="syh-search-wrapper">
-                        <input type="text" id="syh-starred-search" value="${this.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
-                        <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${this.searchQuery ? 'flex' : 'none'};" title="Очистити пошук">✕</button>
-                        <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані">🎯</button>
+                        <input type="text" id="syh-starred-search" value="${this.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                        <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${this.searchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук коментарів">✕</button>
+                        <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані" aria-label="Повернутися до коментаря на екрані">🎯</button>
                     </div>
                     
-                    <div style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
-                        <button class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
+                    <div role="tablist" aria-label="Фільтри коментарів" style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
+                        <button role="tab" aria-selected="${this.activeFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі коментарі" class="syh-filter-btn ${this.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
                             <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
                         </button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
+                        <button role="tab" aria-selected="${this.activeFilter === 'question' ? 'true' : 'false'}" aria-label="Показати питання" class="syh-filter-btn ${this.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
                             <span>❓</span><span class="tab-text">Питання</span><span class="tab-count"></span>
                         </button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
+                        <button role="tab" aria-selected="${this.activeFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитви" class="syh-filter-btn ${this.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
                             <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
                         </button>
-                        <button class="syh-filter-btn ${this.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
+                        <button role="tab" aria-selected="${this.activeFilter === 'other' ? 'true' : 'false'}" aria-label="Показати інші коментарі" class="syh-filter-btn ${this.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
                             <span>📝</span><span class="tab-text">Інші</span><span class="tab-count"></span>
                         </button>
                     </div>
@@ -142,7 +81,7 @@ Object.assign(window.SYH_UI, {
             $headerWrap.empty().append(controlsHTML);
 
             if (!$('#syh-empty-state-msg').length) {
-                $('.StarredCommentList__List-sc-1qtlqu2-1').after(`
+                $(this.SELECTORS.starredList).after(`
                     <div id="syh-empty-state-msg" class="syh-empty-state">
                         <div id="syh-empty-query"></div>
                         <div id="syh-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
@@ -189,8 +128,14 @@ Object.assign(window.SYH_UI, {
         });
 
         $('.syh-filter-btn').off('click').on('click', function() {
-            $('.syh-filter-btn').css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'}).removeClass('active');
-            $(this).css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'}).addClass('active');
+            $('.syh-filter-btn')
+                .css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'})
+                .removeClass('active')
+                .attr('aria-selected', 'false');
+            $(this)
+                .css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'})
+                .addClass('active')
+                .attr('aria-selected', 'true');
             
             self.activeFilter = $(this).data('filter');
             self.filterStarredComments();
@@ -205,7 +150,7 @@ Object.assign(window.SYH_UI, {
 
     // Головний метод фільтрації списку Starred коментарів
     filterStarredComments: function() {
-        const $commentList = $('.StarredCommentList__List-sc-1qtlqu2-1');
+        const $commentList = $(this.SELECTORS.starredList);
         if (!$commentList.length) return;
 
         const activeFilter = this.activeFilter;
@@ -322,7 +267,7 @@ Object.assign(window.SYH_UI, {
         const $emptySuggestion = $('#syh-empty-suggestion');
 
         if (visibleCount === 0) {
-            let messageHTML = '';
+            let messageHTML;
             
             if (searchQuery) {
                 messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
@@ -368,7 +313,7 @@ Object.assign(window.SYH_UI, {
 
     // Скрол до поточного виведеного на екран коментаря (ручний виклик)
     scrollToActiveComment: function() {
-        const $commentList = $('.StarredCommentList__List-sc-1qtlqu2-1');
+        const $commentList = $(this.SELECTORS.starredList);
         if ($commentList.length) {
             const $activeLi = $commentList.find('> li:has(.lucide-circle-minus)');
             if ($activeLi.length) {
@@ -388,3 +333,9 @@ Object.assign(window.SYH_UI, {
         }
     }
 });
+
+if (typeof window !== 'undefined') {
+    window.SYH_UI = SYH_UI;
+}
+
+export { SYH_UI };

@@ -1,0 +1,63 @@
+{
+  "name": "__MSG_extName__",
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "default_locale": "en",
+  "description": "__MSG_extDescription__",
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://streamyard.com/*"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "assets/jquery-3.7.1.js-T69IKIHc.js",
+        "assets/main.js-loader-BqSSwuts.js"
+      ],
+      "matches": [
+        "https://streamyard.com/*"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "https://streamyard.com/*"
+      ],
+      "resources": [
+        "Release_notes.md",
+        "Daily_tips.md",
+        "lib/chart.js",
+        "assets/jquery-3.7.1.js-T69IKIHc.js",
+        "assets/storage-D0Bv57CN.js",
+        "assets/main.js-Bc9591_9.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ],
+  "action": {
+    "default_title": "StreamYard Helper v1.0.0",
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "assets/imgs/1.png",
+    "32": "assets/imgs/1.png",
+    "48": "assets/imgs/1.png",
+    "128": "assets/imgs/1.png"
+  }
+}

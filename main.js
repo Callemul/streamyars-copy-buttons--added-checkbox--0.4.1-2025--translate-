@@ -1,4 +1,21 @@
-// main.js
+import { SYH_CONFIG } from './modules/config.ts';
+import { SYH_STORAGE } from './modules/storage.ts';
+import { SYH_STATE } from './modules/state.js';
+import { SYH_UTILS } from './modules/utils.js';
+import { SYH_UI } from './modules/ui_core.js';
+import './modules/ui_comments.js';
+import './modules/ui_banners_items.js';
+import './modules/ui_banners_tabs.js';
+import './modules/ui_banners_filters.js';
+import { SYH_PARSERS } from './modules/parsers.js';
+import { SYH_BANNER_CREATOR } from './modules/banner_creator.js';
+import { SYH_EVENT_COMMENTS } from './modules/event_comments.js';
+import { SYH_EVENT_BANNERS } from './modules/event_banners.js';
+import { SYH_VIDEO_COPIER } from './modules/video_copier.js';
+import { SYH_STATS_TRACKER } from './modules/stats_tracker.js';
+import { SYH_STATS_EXPORTER } from './modules/stats_exporter.js';
+import { SYH_INFO_MODAL } from './modules/info_modal.js';
+
 (function(window, $) {
     'use strict';
 
@@ -9,21 +26,13 @@
     }
     window.SYH_LOADED = true;
 
-    console.log("StreamYard Helper v0.9.9 [Anti-AFK & Stable] Loaded!");
+    const syhVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) 
+        ? chrome.runtime.getManifest().version 
+        : '1.0.0';
+    console.log(`StreamYard Helper v${syhVersion} [Anti-AFK & Stable] Loaded!`);
 
-    const { 
-        SYH_CONFIG, 
-        SYH_STATE, 
-        SYH_UTILS, 
-        SYH_UI, 
-        SYH_PARSERS, 
-        SYH_BANNER_CREATOR, 
-        SYH_EVENT_COMMENTS, 
-        SYH_EVENT_BANNERS, 
-        SYH_VIDEO_COPIER 
-    } = window;
     
-    const { SELECTORS } = SYH_CONFIG;
+    const { SELECTORS, TIMINGS } = SYH_CONFIG;
 
     let reminderScheduled = false;
 
@@ -34,11 +43,13 @@
 
         const $statusContainer = $(SELECTORS.streamStatusContainer);
 
-        if ($statusContainer.length > 0 && $statusContainer.text().includes('Ended')) {
+        const endedText = (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('streamEnded')) || 'Ended';
+
+        if ($statusContainer.length > 0 && ($statusContainer.text().includes(endedText) || $statusContainer.text().includes('Ended'))) {
             reminderScheduled = true;
             setTimeout(() => {
                 if(SYH_UI.createTelegramReminder) SYH_UI.createTelegramReminder();
-            }, 2 * 60 * 1000);
+            }, TIMINGS.REMINDER_DELAY);
         }
     }
 
@@ -56,32 +67,57 @@
             const modal = document.querySelector('div[role="dialog"][aria-label="Are you still there?"]');
             if (modal) {
                 const buttons = Array.from(modal.querySelectorAll('button'));
-                const stayBtn = buttons.find(b => b.textContent && b.textContent.trim() === 'Stay in the studio');
+                const stayText = (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('stayInStudio')) || 'Stay in the studio';
+                const stayBtn = buttons.find(b => b.textContent && (b.textContent.trim() === stayText || b.textContent.trim() === 'Stay in the studio'));
                 if (stayBtn) {
                     console.log("[SYH] AFK таймаут перехоплено! Натискаю 'Stay in the studio'.");
                     stayBtn.click();
                 }
             }
-        }, 30000); // 30 секунд
+        }, TIMINGS.ANTI_AFK_INTERVAL);
     }
 
     // --- OBSERVER ---
-    const observer = new MutationObserver((mutationsList) => {
+    let pendingMutations = [];
+    let rafScheduled = false;
+
+    function processMutations(mutationsList) {
         let bannerStateChanged = false;
         let commentStateChanged = false;
         
         for (const mutation of mutationsList) {
             for (const node of mutation.addedNodes) {
                 if (node.nodeType !== 1) continue;
-                const $node = $(node);
                 
-                $node.find(SELECTORS.commentBlock).addBack($node.filter(SELECTORS.commentBlock)).each((i, el) => SYH_UI.addButtonsToComment(el));
-                $node.find(SELECTORS.bannerBlock).addBack($node.filter(SELECTORS.bannerBlock)).each((i, el) => { SYH_UI.addButtonsToBanner(el); bannerStateChanged = true; });
-                $node.find(SELECTORS.bannerHeader).addBack($node.filter(SELECTORS.bannerHeader)).each((i, el) => SYH_UI.addBannerHeaderControls(el));
+                if (node.matches(SELECTORS.commentBlock)) {
+                    SYH_UI.addButtonsToComment(node);
+                } else if (node.querySelector(SELECTORS.commentBlock)) {
+                    node.querySelectorAll(SELECTORS.commentBlock).forEach(el => SYH_UI.addButtonsToComment(el));
+                }
                 
-                $node.find('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5').addBack($node.filter('.StarredCommentList__HeaderWrap-sc-1qtlqu2-5')).each((i, el) => SYH_UI.addStarredTabControls(el));
+                if (node.matches(SELECTORS.bannerBlock)) {
+                    SYH_UI.addButtonsToBanner(node);
+                    bannerStateChanged = true;
+                } else if (node.querySelector(SELECTORS.bannerBlock)) {
+                    node.querySelectorAll(SELECTORS.bannerBlock).forEach(el => {
+                        SYH_UI.addButtonsToBanner(el);
+                        bannerStateChanged = true;
+                    });
+                }
                 
-                if ($node.hasClass('StarredCommentList__ItemWrap-sc-1qtlqu2-6') || $node.closest('.StarredCommentList__List-sc-1qtlqu2-1').length > 0) {
+                if (node.matches(SELECTORS.bannerHeader)) {
+                    SYH_UI.addBannerHeaderControls(node);
+                } else if (node.querySelector(SELECTORS.bannerHeader)) {
+                    node.querySelectorAll(SELECTORS.bannerHeader).forEach(el => SYH_UI.addBannerHeaderControls(el));
+                }
+                
+                if (node.matches(SELECTORS.starredHeaderWrap)) {
+                    SYH_UI.addStarredTabControls(node);
+                } else if (node.querySelector(SELECTORS.starredHeaderWrap)) {
+                    node.querySelectorAll(SELECTORS.starredHeaderWrap).forEach(el => SYH_UI.addStarredTabControls(el));
+                }
+                
+                if (node.matches(SELECTORS.starredItemWrap) || (node.closest && node.closest(SELECTORS.starredList))) {
                     commentStateChanged = true;
                 }
             }
@@ -91,7 +127,7 @@
                     if (node.matches(SELECTORS.bannerBlock) || node.querySelector(SELECTORS.bannerBlock)) {
                         bannerStateChanged = true;
                     }
-                    if (node.matches(SELECTORS.commentBlock) || node.querySelector(SELECTORS.commentBlock) || node.matches('li[class*="StarredCommentList"]')) {
+                    if (node.matches(SELECTORS.commentBlock) || node.querySelector(SELECTORS.commentBlock) || node.matches(SELECTORS.starredCommentItem)) {
                         commentStateChanged = true;
                     }
                 }
@@ -102,72 +138,90 @@
             SYH_UI.updateMasterCheckboxState();
             if (window.SYH_UI && typeof window.SYH_UI.filterBanners === 'function') {
                 clearTimeout(window.SYH_UI._filterBannersTimeout);
-                window.SYH_UI._filterBannersTimeout = setTimeout(() => window.SYH_UI.filterBanners(), 150);
+                window.SYH_UI._filterBannersTimeout = setTimeout(() => window.SYH_UI.filterBanners(), TIMINGS.FILTER_DEBOUNCE);
             }
         }
 
         if (commentStateChanged) {
             if (window.SYH_UI && typeof window.SYH_UI.filterStarredComments === 'function') {
                 clearTimeout(window.SYH_UI._filterCommentsTimeout);
-                window.SYH_UI._filterCommentsTimeout = setTimeout(() => window.SYH_UI.filterStarredComments(), 150);
+                window.SYH_UI._filterCommentsTimeout = setTimeout(() => window.SYH_UI.filterStarredComments(), TIMINGS.FILTER_DEBOUNCE);
             }
+        }
+    }
+
+    const observer = new MutationObserver((mutationsList) => {
+        pendingMutations.push(...mutationsList);
+        if (!rafScheduled) {
+            rafScheduled = true;
+            requestAnimationFrame(() => {
+                const mutationsToProcess = pendingMutations;
+                pendingMutations = [];
+                rafScheduled = false;
+                processMutations(mutationsToProcess);
+            });
         }
     });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
-    // --- ІНІЦІАЛІЗАЦІЯ ---
-        function init() {
-            console.log("Initializing SYH modules...");
+    function init() {
+        console.log("Initializing SYH modules...");
 
-            SYH_UTILS.init(SYH_CONFIG);
-            SYH_UI.init(SYH_CONFIG, SYH_STATE);
-            SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
-            
-            SYH_EVENT_COMMENTS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI);
-            SYH_EVENT_BANNERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
+        SYH_UTILS.init(SYH_CONFIG);
+        SYH_UI.init(SYH_CONFIG, SYH_STATE);
+        SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
+        
+        SYH_EVENT_COMMENTS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI);
+        SYH_EVENT_BANNERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
 
-            if (window.SYH_VIDEO_COPIER) window.SYH_VIDEO_COPIER.init();
-            if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
+        if (window.SYH_VIDEO_COPIER) window.SYH_VIDEO_COPIER.init();
+        if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
 
-            SYH_EVENT_COMMENTS.bindEvents();
-            SYH_EVENT_BANNERS.bindEvents();
+        SYH_EVENT_COMMENTS.bindEvents();
+        SYH_EVENT_BANNERS.bindEvents();
 
-            // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі
-            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-                chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-                    if (message && message.action === 'unstar_comment') {
-                        const targetText = message.text ? message.text.trim() : "";
-                        if (!targetText) return;
+        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+            chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+                if (message && message.action === 'unstar_comment') {
+                    const targetText = message.text ? message.text.trim() : "";
+                    if (!targetText) return;
 
-                        const commentBlocks = document.querySelectorAll(SELECTORS.commentBlock);
-                        for (const block of commentBlocks) {
-                            const textNode = block.querySelector(SELECTORS.commentText);
-                            if (textNode && textNode.textContent.trim() === targetText) {
-                                const starBtnNode = block.querySelector(SELECTORS.starButton);
-                                if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
-                                    console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
-                                    starBtnNode.click();
-                                }
-                                break;
+                    const commentBlocks = document.querySelectorAll(SELECTORS.commentBlock);
+                    for (const block of commentBlocks) {
+                        const textNode = block.querySelector(SELECTORS.commentText);
+                        if (textNode && textNode.textContent.trim() === targetText) {
+                            const starBtnNode = block.querySelector(SELECTORS.starButton);
+                            if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
+                                console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
+                                starBtnNode.click();
                             }
+                            break;
                         }
                     }
-                });
-            }
-
-            // Запуск захисту від AFK
-            startAntiAfk();
-
-            $(SELECTORS.commentBlock).each((i, el) => SYH_UI.addButtonsToComment(el));
-            $(SELECTORS.bannerBlock).each((i, el) => SYH_UI.addButtonsToBanner(el));
-            $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
-
-            if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
-
-            observer.observe(document.body, { childList: true, subtree: true });
-            
-            console.log("SYH is running.");
+                }
+            });
         }
+
+        // Запуск захисту від AFK
+        startAntiAfk();
+
+        $(SELECTORS.commentBlock).each((i, el) => SYH_UI.addButtonsToComment(el));
+        $(SELECTORS.bannerBlock).each((i, el) => SYH_UI.addButtonsToBanner(el));
+        $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
+
+        if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
+
+        const targetContainer = document.querySelector('[data-testid="chat-container"]')
+            || document.querySelector('.chat-container')
+            || document.querySelector('#app')
+            || document.querySelector('#root')
+            || document.body;
+
+        observer.observe(targetContainer, { childList: true, subtree: true });
+        
+        console.log("SYH is running.");
+    }
 
     init();
 

@@ -1,5 +1,10 @@
-// event_banners.js
-window.SYH_EVENT_BANNERS = {
+import { SYH_CONFIG } from './config.ts';
+import { SYH_STATE } from './state.js';
+import { SYH_UTILS } from './utils.js';
+import { SYH_UI } from './ui_core.js';
+import { SYH_BANNER_CREATOR } from './banner_creator.js';
+
+export const SYH_EVENT_BANNERS = {
     SELECTORS: null,
     STATE: null,
     UTILS: null,
@@ -7,11 +12,11 @@ window.SYH_EVENT_BANNERS = {
     BANNER_CREATOR: null,
 
     init: function(config, state, utils, ui, bannerCreator) {
-        this.SELECTORS = config.SELECTORS;
-        this.STATE = state;
-        this.UTILS = utils;
-        this.UI = ui;
-        this.BANNER_CREATOR = bannerCreator;
+        this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
+        this.STATE = state || SYH_STATE;
+        this.UTILS = utils || SYH_UTILS;
+        this.UI = ui || SYH_UI;
+        this.BANNER_CREATOR = bannerCreator || SYH_BANNER_CREATOR;
     },
 
     bindEvents: function() {
@@ -77,7 +82,7 @@ window.SYH_EVENT_BANNERS = {
                 if ($checkedBanners.length === 0) return;
 
                 const activeFilter = self.UI ? self.UI.bannerActiveFilter : 'all';
-                let proceed = false;
+                let proceed;
 
                 if (activeFilter && activeFilter !== 'all') {
                     const filterNames = {
@@ -88,7 +93,7 @@ window.SYH_EVENT_BANNERS = {
                     const tabName = filterNames[activeFilter] || activeFilter;
 
                     let currentTabCount = 0;
-                    let counts = {
+                    const counts = {
                         all: $checkedBanners.length,
                         stream: 0,
                         audience: 0,
@@ -113,7 +118,7 @@ window.SYH_EVENT_BANNERS = {
                         }
                     });
 
-                    let confirmMessage = "";
+                    let confirmMessage;
                     if (currentTabCount > 0) {
                         confirmMessage = `Ви впевнені, що хочете видалити ${currentTabCount} банер(ів) з вкладки "${tabName}"?\n\n` +
                                          `Зверніть увагу: ці банери будуть видалені не тільки з поточної вкладки, а й з усіх інших вкладок, і з вкладки "Всі" також.\n\n` +
@@ -263,8 +268,14 @@ window.SYH_EVENT_BANNERS = {
         });
 
         $('.syh-banner-filter-btn').off('click').on('click', function() {
-            $('.syh-banner-filter-btn').css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'}).removeClass('active');
-            $(this).css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'}).addClass('active');
+            $('.syh-banner-filter-btn')
+                .css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'})
+                .removeClass('active')
+                .attr('aria-selected', 'false');
+            $(this)
+                .css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'})
+                .addClass('active')
+                .attr('aria-selected', 'true');
             
             if (self.UI) {
                 self.UI.bannerActiveFilter = $(this).data('filter');
@@ -277,6 +288,9 @@ window.SYH_EVENT_BANNERS = {
                 $searchInput.addClass('syh-banner-search-pulse');
             }
         });
-    },
-
+    }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_EVENT_BANNERS = SYH_EVENT_BANNERS;
+}

@@ -1,24 +1,34 @@
-// event_comments.js
-window.SYH_EVENT_COMMENTS = {
+import { SYH_CONFIG } from './config.ts';
+import { SYH_STATE } from './state.js';
+import { SYH_UTILS } from './utils.js';
+import { SYH_UI } from './ui_core.js';
+import { SYH_STORAGE } from './storage.ts';
+
+export const SYH_EVENT_COMMENTS = {
     SELECTORS: null,
     STATE: null,
     UTILS: null,
     UI: null,
 
+    TIMINGS: null,
+
     init: function(config, state, utils, ui) {
-        this.SELECTORS = config.SELECTORS;
-        this.STATE = state;
-        this.UTILS = utils;
-        this.UI = ui;
+        this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
+        this.TIMINGS = config ? config.TIMINGS : (SYH_CONFIG ? SYH_CONFIG.TIMINGS : null);
+        this.STATE = state || SYH_STATE;
+        this.UTILS = utils || SYH_UTILS;
+        this.UI = ui || SYH_UI;
     },
 
     bindEvents: function() {
         const self = this;
 
-        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ ТА САМОВІДНОВЛЕННЯ БАЗИ ---
-        const scanInterval = setInterval(() => {
+        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ ТА САМОВІДНОВЛЕННЯ БАЗИ (Event-Driven MutationObserver) ---
+        const runAutoHeal = () => {
             if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-                clearInterval(scanInterval);
+                if (self.autoHealObserver) {
+                    self.autoHealObserver.disconnect();
+                }
                 return;
             }
 
@@ -62,8 +72,32 @@ window.SYH_EVENT_COMMENTS = {
                     }
                 }
             });
+        };
 
-        }, 500);
+        let rafScheduled = false;
+        self.autoHealObserver = new MutationObserver(() => {
+            if (!rafScheduled) {
+                rafScheduled = true;
+                requestAnimationFrame(() => {
+                    rafScheduled = false;
+                    runAutoHeal();
+                });
+            }
+        });
+
+        const targetContainer = document.querySelector('[data-testid="chat-container"]')
+            || document.querySelector('.chat-container')
+            || document.body;
+
+        self.autoHealObserver.observe(targetContainer, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['aria-selected', 'class']
+        });
+
+        // Первинна перевірка при ініціалізації
+        runAutoHeal();
 
         // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT ТА ФІКС ЛІЧИЛЬНИКІВ) ---
         document.addEventListener('click', function(e) {
@@ -224,9 +258,7 @@ window.SYH_EVENT_COMMENTS = {
     // Безпечне збереження в БД через централізований адаптер
     // Безпечне збереження в БД через централізований адаптер (З додаванням RoomID та Timestamp)
     saveToDatabase: function(author, text, type, icon) {
-        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-            ? window.SYH_UTILS.storage
-            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+        const storage = window.SYH_STORAGE || (window.SYH_UTILS && window.SYH_UTILS.storage);
 
         if (!storage) {
             console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
@@ -270,9 +302,7 @@ window.SYH_EVENT_COMMENTS = {
             this.UI.prayersCache = this.UI.prayersCache.filter(item => item.text !== text);
         }
 
-        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-            ? window.SYH_UTILS.storage
-            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+        const storage = window.SYH_STORAGE || (window.SYH_UTILS && window.SYH_UTILS.storage);
 
         if (!storage) {
             console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
@@ -296,3 +326,7 @@ window.SYH_EVENT_COMMENTS = {
         });
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_EVENT_COMMENTS = SYH_EVENT_COMMENTS;
+}

@@ -1,55 +1,18 @@
-window.SYH_UTILS = {
+import { SYH_STORAGE } from './storage.ts';
+
+export const SYH_UTILS = {
     SELECTORS: null,
     init: function(config) {
         this.SELECTORS = config.SELECTORS;
     },
 
-    // Централізований адаптер для роботи зі сховищем із підтримкою localStorage як fallback
-    // Централізований адаптер із ЗАХИСТОМ ВІД ЗОМБІ-КОНТЕКСТУ (Extension context invalidated)
-    // Централізований адаптер із ЗАХИСТОМ ВІД ЗОМБІ-КОНТЕКСТУ (Безшумний)
-    storage: {
-        get: function(keys, cb) {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime && chrome.runtime.id) {
-                try {
-                    chrome.storage.local.get(keys, cb);
-                    return;
-                } catch(e) {} // Без console.warn, щоб не дратувати панель розширень
-            }
-            const res = {};
-            const arr = Array.isArray(keys) ? keys : [keys];
-            arr.forEach(k => {
-                try {
-                    const val = localStorage.getItem(k);
-                    res[k] = val ? JSON.parse(val) : null;
-                } catch(e) { res[k] = null; }
-            });
-            if (cb) cb(res);
-        },
-        set: function(items, cb) {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime && chrome.runtime.id) {
-                try {
-                    chrome.storage.local.set(items, cb);
-                    return;
-                } catch(e) {}
-            }
-            for (const k in items) {
-                try { localStorage.setItem(k, JSON.stringify(items[k])); } catch(e) {}
-            }
-            if (cb) cb();
-        },
-        remove: function(keys, cb) {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local && chrome.runtime && chrome.runtime.id) {
-                try {
-                    chrome.storage.local.remove(keys, cb);
-                    return;
-                } catch(e) {}
-            }
-            const arr = Array.isArray(keys) ? keys : [keys];
-            arr.forEach(k => {
-                try { localStorage.removeItem(k); } catch(e) {}
-            });
-            if (cb) cb();
-        }
+    // Посилання на централізований адаптер сховища
+    get storage() {
+        return SYH_STORAGE || window.SYH_STORAGE;
+    },
+
+    getTodayDateString: function() {
+        return new Date().toLocaleDateString('sv-SE');
     },
 
     copyAndShowBanner: function(textToCopy, bannerMessage) {
@@ -243,3 +206,7 @@ window.SYH_UTILS = {
         });
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_UTILS = SYH_UTILS;
+}

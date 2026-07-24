@@ -1,15 +1,20 @@
 {
-  "name": "StreamYard Helper",
+  "name": "__MSG_extName__",
   "manifest_version": 3,
-  "version": "0.81",
-  "description": "Streamyard.com Extension. Add new buttons to comments and banners",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "description": "__MSG_extDescription__",
+  "background": {
+    "service_worker": "background/service-worker.ts",
+    "type": "module"
+  },
   "permissions": [
-    "alarms",
-    "notifications",
     "storage",
     "activeTab",
-    "scripting",
-    "tabs"
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://streamyard.com/*"
   ],
   
   "content_scripts": [
@@ -17,24 +22,7 @@
       "matches": ["https://streamyard.com/*"],
       "css": ["styles.css"],
       "js": [
-        "lib/jquery-3.5.0.js",
-        "lib/chart.js",
-        "modules/config.js",
-        "modules/state.js",
-        "modules/utils.js",
-        "modules/ui_core.js",
-        "modules/ui_comments.js",
-        "modules/ui_banners_items.js",
-        "modules/ui_banners_tabs.js",
-        "modules/ui_banners_filters.js",
-        "modules/parsers.js",
-        "modules/banner_creator.js",
-        "modules/event_comments.js",
-        "modules/event_banners.js",
-        "modules/video_copier.js",
-        "modules/stats_tracker.js",
-        "modules/stats_exporter.js",
-        "modules/info_modal.js",
+        "lib/jquery-3.7.1.js",
         "main.js"
       ]
     }
@@ -43,14 +31,19 @@
     {
       "resources": [
         "Release_notes.md",
-        "Daily_tips.md"
+        "Daily_tips.md",
+        "lib/chart.js"
       ],
       "matches": ["https://streamyard.com/*"]
     }
   ],
   "action": {
-    "default_title": "Streamyard Helper 0.8",
+    "default_title": "StreamYard Helper v1.0.0",
     "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
   },
   "icons": {
     "16": "assets/imgs/1.png",

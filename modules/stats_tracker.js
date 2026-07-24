@@ -1,5 +1,7 @@
-// stats_tracker.js
-window.SYH_STATS_TRACKER = {
+import { SYH_CONFIG } from './config.ts';
+import { SYH_STORAGE } from './storage.ts';
+
+export const SYH_STATS_TRACKER = {
     intervalId: null,
     currentBrand: "DefaultShow",
     lastKnownBrand: "",
@@ -61,6 +63,7 @@ window.SYH_STATS_TRACKER = {
                     const btnQ = document.createElement('button');
                     btnQ.innerText = '❓ Старт: Питання';
                     btnQ.title = 'Натисни, коли починається блок питань';
+                    btnQ.setAttribute('aria-label', 'Фіксувати старт блоку питань');
                     btnQ.style.cssText = 'background: #f39c12; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
                     btnQ.onclick = () => self.markPhase('questions', btnQ);
 
@@ -68,6 +71,7 @@ window.SYH_STATS_TRACKER = {
                     const btnP = document.createElement('button');
                     btnP.innerText = '🙏 Старт: Молитви';
                     btnP.title = 'Натисни, коли починається молитовний блок';
+                    btnP.setAttribute('aria-label', 'Фіксувати старт молитовного блоку');
                     btnP.style.cssText = 'background: #005DF7; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
                     btnP.onclick = () => self.markPhase('prayers', btnP);
 
@@ -75,6 +79,7 @@ window.SYH_STATS_TRACKER = {
                     const btnAnalytics = document.createElement('button');
                     btnAnalytics.id = 'syh-analytics-btn';
                     btnAnalytics.innerText = '📈 Аналітика';
+                    btnAnalytics.setAttribute('aria-label', 'Відкрити аналітику');
                     btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
                     btnAnalytics.onclick = () => self.showAnalyticsModal();
 
@@ -83,6 +88,7 @@ window.SYH_STATS_TRACKER = {
                     btnInfo.id = 'syh-info-btn';
                     btnInfo.innerHTML = 'ⓘ';
                     btnInfo.title = 'Оновлення та Інструкції';
+                    btnInfo.setAttribute('aria-label', 'Відкрити довідку та оновлення');
                     btnInfo.style.cssText = 'background: #4F5461; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 15px; margin-left: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;';
                     btnInfo.onmouseover = () => btnInfo.style.background = '#636979';
                     btnInfo.onmouseout = () => btnInfo.style.background = '#4F5461';
@@ -143,7 +149,9 @@ window.SYH_STATS_TRACKER = {
     },
 
     restoreButtonStates: function(btnQ, btnP) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = window.SYH_UTILS && typeof window.SYH_UTILS.getTodayDateString === 'function'
+            ? window.SYH_UTILS.getTodayDateString()
+            : new Date().toLocaleDateString('sv-SE');
         const self = this;
         
         const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
@@ -172,7 +180,9 @@ window.SYH_STATS_TRACKER = {
         }
         
         const timerText = timerWrapper.innerText.replace(/\n/g, '').trim();
-        const today = new Date().toISOString().split('T')[0];
+        const today = window.SYH_UTILS && typeof window.SYH_UTILS.getTodayDateString === 'function'
+            ? window.SYH_UTILS.getTodayDateString()
+            : new Date().toLocaleDateString('sv-SE');
         const self = this;
 
         const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
@@ -220,7 +230,9 @@ window.SYH_STATS_TRACKER = {
 
             if (isNaN(viewerCount)) return;
 
-            const today = new Date().toISOString().split('T')[0];
+            const today = window.SYH_UTILS && typeof window.SYH_UTILS.getTodayDateString === 'function'
+                ? window.SYH_UTILS.getTodayDateString()
+                : new Date().toLocaleDateString('sv-SE');
 
             const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
             if (storage) {
@@ -247,7 +259,7 @@ window.SYH_STATS_TRACKER = {
                     storage.set({ 'syh_stream_charts': db });
                 });
             }
-        }, 60000); 
+        }, (window.SYH_CONFIG && window.SYH_CONFIG.TIMINGS && window.SYH_CONFIG.TIMINGS.STATS_TRACKING_INTERVAL) || 60000); 
     },
 
     // ДЕЛЕГУВАННЯ: Виклик великої модалки аналітики та експорту делегується в stats_exporter.js
@@ -307,3 +319,7 @@ window.SYH_STATS_TRACKER = {
         return null;
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_STATS_TRACKER = SYH_STATS_TRACKER;
+}

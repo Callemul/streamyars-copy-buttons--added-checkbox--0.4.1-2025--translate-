@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamYard Helper — Налаштування</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="options-container">
+        <!-- Header -->
+        <header class="options-header">
+            <div class="header-brand">
+                <img src="../assets/imgs/1.png" alt="Logo" class="app-logo">
+                <div>
+                    <h1>StreamYard Helper</h1>
+                    <span class="version-badge">v1.0.0 — Options & Preferences</span>
+                </div>
+            </div>
+            <button id="saveTopBtn" class="btn primary-btn">💾 Зберегти зміни</button>
+        </header>
+
+        <div class="options-body">
+            <!-- Sidebar Navigation -->
+            <nav class="options-nav">
+                <button class="nav-item active" data-target="section-general">
+                    <span class="icon">⚙️</span> Загальні
+                </button>
+                <button class="nav-item" data-target="section-automation">
+                    <span class="icon">🤖</span> Автоматизація
+                </button>
+                <button class="nav-item" data-target="section-ui">
+                    <span class="icon">🎨</span> Інтерфейс
+                </button>
+                <button class="nav-item" data-target="section-data">
+                    <span class="icon">💾</span> Дані & Резервні копії
+                </button>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="options-content">
+                <!-- Section 1: General Settings -->
+                <section id="section-general" class="content-section active">
+                    <h2>⚙️ Загальні налаштування</h2>
+                    <p class="section-desc">Налаштуйте стандартні шаблони назв для трансляцій та мову розширення.</p>
+
+                    <div class="card">
+                        <div class="form-group">
+                            <label for="optSschoolName">Назва Суботньої Школи (СШ)</label>
+                            <input type="text" id="optSschoolName" class="form-control" placeholder="Напр. СШ Урок 4">
+                            <small class="help-text">Використовується за замовчуванням для форматування запитань Суботньої школи.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="optPreachName">Назва Проповіді</label>
+                            <input type="text" id="optPreachName" class="form-control" placeholder="Напр. Тема: Віра і Надія">
+                            <small class="help-text">Використовується за замовчуванням для блоку проповідей.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="optLanguage">Мова інтерфейсу розширення</label>
+                            <select id="optLanguage" class="form-control">
+                                <option value="auto">Автоматично (мова браузера)</option>
+                                <option value="uk">Українська (uk)</option>
+                                <option value="en">English (en)</option>
+                                <option value="ru">Русский (ru)</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Automation & Anti-AFK -->
+                <section id="section-automation" class="content-section">
+                    <h2>🤖 Налаштування Автоматизації</h2>
+                    <p class="section-desc">Керування фоновими модулями захисту від сну та відновлення селекторів.</p>
+
+                    <div class="card">
+                        <div class="form-group checkbox-group">
+                            <label class="switch-label">
+                                <input type="checkbox" id="optAntiAfkEnabled" checked>
+                                <span class="slider"></span>
+                                <span class="label-text">Увімкнути Anti-AFK кликер</span>
+                            </label>
+                            <small class="help-text">Запобігає автоматичному відключенню від студії StreamYard при тривалій бездіяльності.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="optAntiAfkInterval">Інтервал Anti-AFK (секунди)</label>
+                            <input type="number" id="optAntiAfkInterval" class="form-control" min="5" max="300" step="5" value="30">
+                            <small class="help-text">Частота періодичних перевірок кнопкою "Stay in the studio". За замовчуванням: 30с.</small>
+                        </div>
+
+                        <hr class="divider">
+
+                        <div class="form-group checkbox-group">
+                            <label class="switch-label">
+                                <input type="checkbox" id="optAutoHealEnabled" checked>
+                                <span class="slider"></span>
+                                <span class="label-text">Увімкнути Auto-Heal (авто-відновлення селекторів)</span>
+                            </label>
+                            <small class="help-text">Автоматично виявляє та адаптується до динамічних змін DOM-структури StreamYard.</small>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 3: UI & Limits -->
+                <section id="section-ui" class="content-section">
+                    <h2>🎨 Інтерфейс та Ліміти</h2>
+                    <p class="section-desc">Налаштування відображення кнопок та параметрів довжини банерів.</p>
+
+                    <div class="card">
+                        <div class="form-group">
+                            <label for="optTruncationLength">Максимальна довжина тексту банера (символів)</label>
+                            <input type="number" id="optTruncationLength" class="form-control" min="50" max="500" value="195">
+                            <small class="help-text">Текст запитань, що перевищує цей ліміт, буде гарно обрізатися з трикрапкою (ліміт StreamYard).</small>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label class="switch-label">
+                                <input type="checkbox" id="optShowCopyButtons" checked>
+                                <span class="slider"></span>
+                                <span class="label-text">Показувати плаваючі кнопки швидкого копіювання</span>
+                            </label>
+                            <small class="help-text">Додає додаткові кнопки копіювання біля банерів та коментарів.</small>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4: Data & Backup -->
+                <section id="section-data" class="content-section">
+                    <h2>💾 Керування даними та Резервні копії</h2>
+                    <p class="section-desc">Експортуйте свої налаштування для переносу на інший ПК або скиньте до початкових.</p>
+
+                    <div class="card">
+                        <div class="actions-row">
+                            <button id="exportConfigBtn" class="btn secondary-btn">📥 Експортувати налаштування (JSON)</button>
+                            <label for="importConfigFile" class="btn secondary-btn file-input-label">
+                                📤 Імпортувати з файлу
+                                <input type="file" id="importConfigFile" accept=".json">
+                            </label>
+                        </div>
+                        <hr class="divider">
+                        <div class="actions-row">
+                            <button id="resetDefaultsBtn" class="btn danger-btn">⚠️ Скинути всі налаштування за замовчуванням</button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastNotification" class="toast" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="options.ts"></script>
+</body>
+</html>

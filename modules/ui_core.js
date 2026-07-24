@@ -1,5 +1,8 @@
-// ui_core.js
-window.SYH_UI = {
+import { SYH_STORAGE } from './storage.ts';
+import { SYH_STATE } from './state.js';
+import { SYH_CONFIG } from './config.ts';
+
+export const SYH_UI = {
     SELECTORS: null,
     STATE: null,
     activeFilter: 'all', 
@@ -14,83 +17,14 @@ window.SYH_UI = {
     // Головний метод первинної ініціалізації
     init: function(config, state) {
         try {
-            this.SELECTORS = config.SELECTORS;
-            this.STATE = state;
+            this.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
+            this.STATE = state || SYH_STATE;
             
             const self = this;
 
             this.validateSelectorsSyntax();
             
-            if (!document.getElementById('syh-global-styles')) {
-                const style = document.createElement('style');
-                style.id = 'syh-global-styles';
-                style.innerHTML = `
-                    /* Звичайний стан коментарів: суцільна напівпрозора заливка */
-                    div[class*="PlatformComment__Wrap"][data-syh-type="prayer"] > div[class*="PlatformCommentShell__Wrap"] {
-                        border-left: 12px solid #005DF7 !important;
-                        background: rgba(0, 93, 247, 0.15) !important;
-                    }
-                    div[class*="PlatformComment__Wrap"][data-syh-type="question"] > div[class*="PlatformCommentShell__Wrap"] {
-                        border-left: 12px solid #f39c12 !important;
-                        background: rgba(243, 156, 18, 0.15) !important;
-                    }
-
-                    /* Активний стан коментарів на екрані (повна заливка) */
-                    div[class*="PlatformComment__Wrap"][data-syh-type="prayer"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                        background: #005DF7 !important; 
-                    }
-                    div[class*="PlatformComment__Wrap"][data-syh-type="question"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                        background: #f39c12 !important;
-                    }
-
-                    /* ФІКС: Надійне виділення БУДЬ-ЯКОГО активного коментаря на екрані (Жовта обводка) */
-                    div[class*="PlatformComment__Wrap"]:has(.lucide-circle-minus) > div[class*="PlatformCommentShell__Wrap"] {
-                        outline: 3px solid #ffcc00 !important;
-                        outline-offset: -3px;
-                        box-shadow: 0 0 15px rgba(255, 204, 0, 0.6) !important;
-                        animation: syhActiveCommentPulse 2s infinite alternate;
-                    }
-
-                    /* Звичайний стан банерів: напівпрозора заливка за категоріями */
-                    [class*="Banner__LiWrap"][data-syh-banner-type="stream"], li[data-syh-banner-type="stream"] {
-                        border-left: 12px solid #8e44ad !important;
-                        background: rgba(142, 68, 173, 0.12) !important;
-                    }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="audience"], li[data-syh-banner-type="audience"] {
-                        border-left: 12px solid #f39c12 !important;
-                        background: rgba(243, 156, 18, 0.12) !important;
-                    }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="prayer"], li[data-syh-banner-type="prayer"] {
-                        border-left: 12px solid #005DF7 !important;
-                        background: rgba(0, 93, 247, 0.12) !important;
-                    }
-
-                    /* Активний стан банерів на екрані (повна заливка) */
-                    [class*="Banner__LiWrap"][data-syh-banner-type="stream"]:has(svg.lucide-eye-off), li[data-syh-banner-type="stream"]:has(svg.lucide-eye-off) {
-                        background: #8e44ad !important;
-                        color: white !important;
-                    }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="audience"]:has(svg.lucide-eye-off), li[data-syh-banner-type="audience"]:has(svg.lucide-eye-off) {
-                        background: #f39c12 !important;
-                        color: white !important;
-                    }
-                    [class*="Banner__LiWrap"][data-syh-banner-type="prayer"]:has(svg.lucide-eye-off), li[data-syh-banner-type="prayer"]:has(svg.lucide-eye-off) {
-                        background: #005DF7 !important;
-                        color: white !important;
-                    }
-
-                    /* Спільна анімація пульсації для активних коментарів (Золота) */
-                    @keyframes syhActiveCommentPulse {
-                        0% { box-shadow: 0 0 10px rgba(255, 204, 0, 0.4); }
-                        100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.8); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-                ? window.SYH_UTILS.storage
-                : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+            const storage = SYH_STORAGE || window.SYH_STORAGE;
 
             if (storage) {
                 storage.get(['syh_prayers', 'syh_banner_categories'], function(result) {
@@ -101,8 +35,8 @@ window.SYH_UI = {
                 console.warn("[SYH] Сховище недоступне під час первинної ініціалізації кешу UI.");
             }
 
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-                chrome.storage.onChanged.addListener(function(changes) {
+            if (storage && typeof storage.onChanged === 'function') {
+                storage.onChanged(function(changes) {
                     try {
                         if (changes.syh_prayers) {
                             self.prayersCache = changes.syh_prayers.newValue || [];
@@ -169,5 +103,39 @@ window.SYH_UI = {
         });
 
         $container.append($reminder);
+    },
+
+    restoreDomCheckboxes: function() {
+        const selectors = this.SELECTORS || (window.SYH_CONFIG ? window.SYH_CONFIG.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null));
+        const itemStates = (SYH_STATE ? SYH_STATE.itemStates : (window.SYH_STATE ? window.SYH_STATE.itemStates : {}));
+        
+        if (!selectors) {
+            console.warn("[SYH_UI] Конфігурація SELECTORS ще не завантажена.");
+            return;
+        }
+
+        console.log("[SYH_UI] Примусове відновлення стану чекбоксів у DOM для вирішення Race Condition.");
+        
+        $('.syh-checkbox').each(function() {
+            const $checkbox = $(this);
+            const type = $checkbox.data('type');
+            let textKey = "";
+
+            if (type === 'comment') {
+                const $commentBlock = $checkbox.closest(selectors.commentBlock || '[class*="PlatformComment__Wrap"]');
+                textKey = $commentBlock.find(selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]').text();
+            } else if (type === 'banner') {
+                const $bannerBlock = $checkbox.closest(selectors.bannerBlock || '[class*="Banner__LiWrap"]');
+                textKey = $bannerBlock.find(selectors.bannerText || '[class*="Banner__BannerText"]').text();
+            }
+
+            if (textKey && itemStates[textKey]) {
+                $checkbox.prop('checked', true);
+            }
+        });
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_UI = SYH_UI;
+}

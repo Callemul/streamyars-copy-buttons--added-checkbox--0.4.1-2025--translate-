@@ -1,6 +1,8 @@
-// ui_banners_filters.js
+import { SYH_UI } from './ui_core.js';
+import { SYH_UTILS } from './utils.js';
+
 // Розширення об'єкта SYH_UI логікою фільтрації, підрахунку та фокусування банерів
-Object.assign(window.SYH_UI, {
+Object.assign(SYH_UI, {
     
     // Оновлення стану головного чекбоксу виділення банерів
     updateMasterCheckboxState: function() {
@@ -108,7 +110,7 @@ Object.assign(window.SYH_UI, {
         }
 
         if (visibleCount === 0) {
-            let messageHTML = '';
+            let messageHTML;
             if (searchQuery) {
                 messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
                 <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
@@ -176,3 +178,9 @@ Object.assign(window.SYH_UI, {
         }
     }
 });
+
+if (typeof window !== 'undefined') {
+    window.SYH_UI = SYH_UI;
+}
+
+export { SYH_UI };

@@ -1,5 +1,4 @@
-// info_modal.js
-window.SYH_INFO_MODAL = {
+export const SYH_INFO_MODAL = {
     // Головний метод виклику модального вікна
     showModal: function() {
         if (document.getElementById('syh-info-modal')) return;
@@ -14,15 +13,15 @@ window.SYH_INFO_MODAL = {
                             <span style="background: #005DF7; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white;">ⓘ</span>
                             Довідка та оновлення
                         </h2>
-                        <button id="syh-close-info" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 0 5px; line-height: 1; transition: color 0.2s;">&times;</button>
+                        <button id="syh-close-info" title="Закрити" aria-label="Закрити вікно довідки" style="background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; padding: 0 5px; line-height: 1; transition: color 0.2s;">&times;</button>
                     </div>
 
                     <!-- Tabs Nav -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #2A303C; padding-bottom: 10px; flex-shrink: 0;">
-                        <button class="syh-info-tab-btn active" data-tab="release-notes" style="background: #005DF7; border: none; color: #fff; padding: 6px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 6px; position: relative; transition: all 0.2s;">
+                    <div role="tablist" aria-label="Вкладки довідки" style="display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 1px solid #2A303C; padding-bottom: 10px; flex-shrink: 0;">
+                        <button role="tab" aria-selected="true" aria-label="Показати оновлення" class="syh-info-tab-btn active" data-tab="release-notes" style="background: #005DF7; border: none; color: #fff; padding: 6px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 6px; position: relative; transition: all 0.2s;">
                             Оновлення
                         </button>
-                        <button class="syh-info-tab-btn" data-tab="daily-tips" style="background: none; border: none; color: #94a3b8; padding: 6px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 6px; position: relative; transition: all 0.2s;">
+                        <button role="tab" aria-selected="false" aria-label="Показати корисні поради" class="syh-info-tab-btn" data-tab="daily-tips" style="background: none; border: none; color: #94a3b8; padding: 6px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 6px; position: relative; transition: all 0.2s;">
                             Корисні поради
                         </button>
                     </div>
@@ -60,12 +59,14 @@ window.SYH_INFO_MODAL = {
             btn.onclick = (e) => {
                 tabBtns.forEach(b => {
                     b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
                     b.style.background = 'none';
                     b.style.color = '#94a3b8';
                 });
                 
                 const activeBtn = e.currentTarget;
                 activeBtn.classList.add('active');
+                activeBtn.setAttribute('aria-selected', 'true');
                 activeBtn.style.background = '#005DF7';
                 activeBtn.style.color = '#fff';
 
@@ -229,3 +230,8 @@ window.SYH_INFO_MODAL = {
         return resultHtml;
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_INFO_MODAL = SYH_INFO_MODAL;
+}
+

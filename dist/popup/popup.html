@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>StreamYard Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/popup.html-BrBnpChB.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="stylesheet" crossorigin href="/assets/popup-CpbGgC5H.css">
+</head>
+<body>
+
+    <div class="tabs" role="tablist" aria-label="Вкладки розширення">
+        <button class="tab-link active" role="tab" aria-selected="true" aria-controls="tab-prayers" data-tab="tab-prayers" aria-label="Молитовні">🙏 Молитовні</button>
+        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-telegram" data-tab="tab-telegram" aria-label="Telegram Питання">Telegram Питання 🚀</button>
+        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-old" data-tab="tab-old" aria-label="Трансліт та Налаштування">Трансліт / Налаштування</button>
+    </div>
+
+    <div id="tab-prayers" class="tab-content active" role="tabpanel" aria-label="Молитовні">
+        <div class="stats-bar">
+            <span class="stat-item total">
+                Разом: <b id="prayersTotalCount">0 люд. - 0 прохань</b>
+            </span>
+        </div>
+        
+        <div class="btn-row">
+            <button id="copyPrayersBtn" class="action-btn success" aria-label="Скопіювати всі прохання">📋 Скопіювати всі прохання</button>
+            <button id="fetchPrayersBtn" class="action-btn primary" title="Підтягнути зіркові коментарі з ефіру" aria-label="Підтягнути зіркові коментарі з ефіру">🔄 Підтягнути</button>
+            <button id="clearPrayersBtn" class="action-btn danger" title="Очистити список" aria-label="Очистити список прохань">🗑</button>
+        </div>
+
+        <div class="result-wrapper">
+            <div id="prayersResultDiv" class="rich-editor" contenteditable="true" aria-label="Результат молитовних прохань"></div>
+        </div>
+    </div>
+
+    <div id="tab-telegram" class="tab-content" role="tabpanel" aria-label="Telegram Питання">
+        <div class="input-group">
+            <label class="section-title" for="oldList">1. Старий список <span id="oldTotalCount"></span>:</label>
+            <textarea id="oldList" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label class="section-title" for="answeredIds">2. Номери ВІДПОВІДЕЙ (видалити):</label>
+            <input type="text" id="answeredIds" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
+        </div>
+
+        <div class="input-group">
+            <label class="section-title" for="newTelegram">3. Новий список: <span id="tgTotalCount"></span></label>
+            <textarea id="newTelegram" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
+        </div>
+
+        <div class="btn-row">
+            <button id="processTelegramBtn" class="action-btn primary" aria-label="Обробити список з Телеграму">ОБРОБИТИ СПИСОК 🚀</button>
+            <button id="clearStateBtn" class="action-btn danger" title="Очистити" aria-label="Очистити список питань">🗑</button>
+        </div>
+
+        <div id="statsBar" class="stats-bar">
+            <span class="stat-item old">Залишилось старих: <b id="countOld">0</b></span>
+            <span class="stat-item del">Видалено: <b id="countDel">0</b></span>
+            <span class="stat-item new">Нових: <b id="countNew">0</b></span>
+            <span class="stat-item total">Разом: <b id="countTotal">0</b></span>
+        </div>
+
+        <div class="input-group">
+            <label class="section-title">Результат:</label>
+            <div class="result-wrapper">
+                <button id="copyResultBtn" class="copy-btn-top" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
+                <div id="finalResultDiv" class="rich-editor" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
+            </div>
+        </div>
+
+        <details id="deletedLogDetails">
+            <summary>🗑 Лог видаленого</summary>
+            <div id="deletedLog" class="deleted-log"></div>
+        </details>
+    </div>
+
+    <div id="tab-old" class="tab-content" role="tabpanel" aria-label="Трансліт та Налаштування">
+        <h1>Transliteration</h1>
+        <table>
+            <tr><td><textarea id="textArea1_oldText" rows="5" placeholder="Input text..." aria-label="Вхідний текст для транслітерації"></textarea></td></tr>
+            <tr><td><textarea id="textArea2_generatedRuText" rows="5" aria-label="Результат транслітерації"></textarea></td></tr>
+        </table>
+        <button id="Translate" class="action-btn" aria-label="Перекласти">Translate</button>
+
+        <hr>
+        <h3>Налаштування</h3>
+        <div class="settings-box">
+            <input type="text" id="sschoolName" placeholder="Назва СШ" aria-label="Назва Суботньої школи">
+            <button id="sschoolNameBtn" class="small-btn" aria-label="Змінити назву Суботньої школи">Змінити СШ</button>
+        </div>
+        <div class="settings-box">
+            <input type="text" id="preachNameInput" placeholder="Назва Проповіді" aria-label="Назва проповіді">
+            <button id="preachNameBtn" class="small-btn" aria-label="Змінити назву проповіді">Змінити Проповідь</button>
+        </div>
+        <div class="settings-box" style="margin-top: 10px;">
+            <button id="openOptionsPageBtn" class="action-btn primary" style="width: 100%;" aria-label="Відкрити розширені налаштування">⚙️ Розширені Налаштування (Options)</button>
+        </div>
+    </div>
+
+    <script src="../lib/jquery-3.7.1.js"></script>
+</body>
+</html>

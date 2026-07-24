@@ -1,15 +1,18 @@
-const SYH_STATE = {
+import { SYH_STORAGE } from './storage.ts';
+import { SYH_UTILS } from './utils.js';
+
+export const SYH_STATE = {
     itemStates: {},
     lastDate: null,
 
     init: function(callback) {
         const self = this;
-        const today = new Date().toISOString().split('T')[0];
+        const today = (SYH_UTILS && typeof SYH_UTILS.getTodayDateString === 'function')
+            ? SYH_UTILS.getTodayDateString()
+            : new Date().toLocaleDateString('sv-SE');
 
-        // Безпечне отримання централізованого адаптера сховища з FALLBACK-запобіжником
-        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-            ? window.SYH_UTILS.storage
-            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+        // Отримання централізованого адаптера сховища
+        const storage = SYH_STORAGE || (window.SYH_STORAGE || (window.SYH_UTILS && window.SYH_UTILS.storage));
 
         if (!storage) {
             console.error("SYH_STATE: Не знайдено адаптер сховища!");
@@ -29,45 +32,19 @@ const SYH_STATE = {
                 self.itemStates = {};
                 self.lastDate = today;
                 storage.remove('syh_checkbox_state', function() {
-                    self.restoreDomCheckboxes();
+                    if (window.SYH_UI && typeof window.SYH_UI.restoreDomCheckboxes === 'function') {
+                        window.SYH_UI.restoreDomCheckboxes();
+                    }
                     if (callback) callback();
                 });
             } else {
                 self.itemStates = stored.data || {};
                 self.lastDate = savedDate || today;
                 console.log("SYH_STATE: Стан успішно завантажено з сховища:", self.itemStates);
-                self.restoreDomCheckboxes();
+                if (window.SYH_UI && typeof window.SYH_UI.restoreDomCheckboxes === 'function') {
+                    window.SYH_UI.restoreDomCheckboxes();
+                }
                 if (callback) callback();
-            }
-        });
-    },
-
-    restoreDomCheckboxes: function() {
-        const self = this;
-        const selectors = window.SYH_CONFIG ? window.SYH_CONFIG.SELECTORS : null;
-        
-        if (!selectors) {
-            console.warn("SYH_STATE: Конфігурація SYH_CONFIG ще не завантажена. Чекбокси будуть відновлені при рендерингу в ui.js.");
-            return;
-        }
-
-        console.log("SYH_STATE: Примусове відновлення стану чекбоксів у DOM для вирішення Race Condition.");
-        
-        $('.syh-checkbox').each(function() {
-            const $checkbox = $(this);
-            const type = $checkbox.data('type');
-            let textKey = "";
-
-            if (type === 'comment') {
-                const $commentBlock = $checkbox.closest(selectors.commentBlock || '[class*="PlatformComment__Wrap"]');
-                textKey = $commentBlock.find(selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]').text();
-            } else if (type === 'banner') {
-                const $bannerBlock = $checkbox.closest(selectors.bannerBlock || '[class*="Banner__LiWrap"]');
-                textKey = $bannerBlock.find(selectors.bannerText || '[class*="Banner__BannerText"]').text();
-            }
-
-            if (textKey && self.itemStates[textKey]) {
-                $checkbox.prop('checked', true);
             }
         });
     },
@@ -77,25 +54,21 @@ const SYH_STATE = {
         this.saveState();
     },
 
-    getCheckedState: function(key) {
-        return !!this.itemStates[key];
-    },
-
     getState: function(key) {
         return !!this.itemStates[key];
     },
 
     saveState: function() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = (SYH_UTILS && typeof SYH_UTILS.getTodayDateString === 'function')
+            ? SYH_UTILS.getTodayDateString()
+            : new Date().toLocaleDateString('sv-SE');
         const stateToSave = {
             date: today,
             data: this.itemStates
         };
 
-        // Безпечне отримання централізованого адаптера сховища з FALLBACK-запобіжником
-        const storage = (window.SYH_UTILS && window.SYH_UTILS.storage)
-            ? window.SYH_UTILS.storage
-            : (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local ? chrome.storage.local : null);
+        // Отримання централізованого адаптера сховища
+        const storage = SYH_STORAGE || (window.SYH_STORAGE || (window.SYH_UTILS && window.SYH_UTILS.storage));
 
         if (storage) {
             storage.set({ 'syh_checkbox_state': stateToSave }, function() {
@@ -107,4 +80,6 @@ const SYH_STATE = {
     }
 };
 
-window.SYH_STATE = SYH_STATE;
+if (typeof window !== 'undefined') {
+    window.SYH_STATE = SYH_STATE;
+}

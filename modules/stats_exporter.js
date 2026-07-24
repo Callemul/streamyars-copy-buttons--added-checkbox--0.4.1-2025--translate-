@@ -1,5 +1,6 @@
-// stats_exporter.js
-window.SYH_STATS_EXPORTER = {
+import { SYH_STORAGE } from './storage.ts';
+
+export const SYH_STATS_EXPORTER = {
     chartInstance: null,
 
     // Головний метод виклику модального вікна
@@ -12,16 +13,16 @@ window.SYH_STATS_EXPORTER = {
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h2 style="margin: 0; font-size: 20px;">📈 Аналітика: <span style="color: #005DF7;">${currentBrand}</span></h2>
-                        <button id="syh-close-chart" style="background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; padding: 0 10px;">&times;</button>
+                        <button id="syh-close-chart" title="Закрити" aria-label="Закрити вікно аналітики" style="background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; padding: 0 10px;">&times;</button>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-                        <label style="font-size: 14px; color: #ccc;">Порівняти з:</label>
-                        <select id="syh-compare-select" style="padding: 6px; border-radius: 4px; background: #2A303C; color: white; border: 1px solid #4F5461; outline: none; cursor: pointer;">
+                        <label style="font-size: 14px; color: #ccc;" for="syh-compare-select">Порівняти з:</label>
+                        <select id="syh-compare-select" aria-label="Виберіть дату для порівняння аналітики" style="padding: 6px; border-radius: 4px; background: #2A303C; color: white; border: 1px solid #4F5461; outline: none; cursor: pointer;">
                             <option value="none">--- Ні ---</option>
                         </select>
-                        <button id="syh-dl-csv-btn" style="background: #4F5461; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold; margin-left: auto;">CSV</button>
-                        <button id="syh-dl-pres-btn" style="background: #005DF7; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold;">📄 Презентація (HTML)</button>
+                        <button id="syh-dl-csv-btn" aria-label="Завантажити аналітику у форматі CSV" style="background: #4F5461; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold; margin-left: auto;">CSV</button>
+                        <button id="syh-dl-pres-btn" aria-label="Завантажити презентацію аналітики в HTML" style="background: #005DF7; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold;">📄 Презентація (HTML)</button>
                     </div>
 
                     <div style="position: relative; height: 400px; width: 100%;">
@@ -46,7 +47,9 @@ window.SYH_STATS_EXPORTER = {
 
     loadChartData: function(currentBrand) {
         const self = this;
-        const today = new Date().toISOString().split('T')[0];
+        const today = window.SYH_UTILS && typeof window.SYH_UTILS.getTodayDateString === 'function'
+            ? window.SYH_UTILS.getTodayDateString()
+            : new Date().toLocaleDateString('sv-SE');
 
         // ФІКС: Використовуємо захищений адаптер замість сирого chrome.storage
         const storage = window.SYH_UTILS && window.SYH_UTILS.storage ? window.SYH_UTILS.storage : null;
@@ -80,7 +83,27 @@ window.SYH_STATS_EXPORTER = {
         }
     },
 
-    renderChart: function(todayData, pastData) {
+    loadChartJs: function() {
+        if (typeof Chart !== 'undefined') return Promise.resolve(true);
+        if (this._chartLoadingPromise) return this._chartLoadingPromise;
+
+        this._chartLoadingPromise = new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
+                ? chrome.runtime.getURL('lib/chart.js') 
+                : 'lib/chart.js';
+            script.onload = () => resolve(true);
+            script.onerror = (err) => {
+                console.error("[SYH] Помилка завантаження Chart.js:", err);
+                resolve(false);
+            };
+            (document.head || document.documentElement).appendChild(script);
+        });
+
+        return this._chartLoadingPromise;
+    },
+
+    renderChart: async function(todayData, pastData) {
         if (this.chartInstance) {
             this.chartInstance.destroy();
             this.chartInstance = null;
@@ -95,41 +118,22 @@ window.SYH_STATS_EXPORTER = {
             return;
         }
 
-        const labels = todayData.data.map(d => d.time);
-        const viewersToday = todayData.data.map(d => d.viewers);
-
-        const datasets = [
-            {
-                label: 'Глядачі (Сьогодні)',
-                data: viewersToday,
-                borderColor: '#005DF7',
-                backgroundColor: 'rgba(0, 93, 247, 0.1)',
-                type: 'line',
-                yAxisID: 'y',
-                fill: true,
-                tension: 0.4
-            }
-        ];
-
-        if (pastData && pastData.data) {
-            const viewersPast = labels.map(time => {
-                const p = pastData.data.find(d => d.time === time);
-                return p ? p.viewers : null;
-            });
-            datasets.push({
-                label: 'Глядачі (Минулий раз)',
-                data: viewersPast,
-                borderColor: '#888',
-                borderDash: [5, 5],
-                type: 'line',
-                yAxisID: 'y',
-                tension: 0.4
-            });
+        const loaded = await this.loadChartJs();
+        if (!loaded || typeof Chart === 'undefined') {
+            console.warn("[SYH] Chart.js недоступний.");
+            return;
         }
 
-        if (typeof Chart === 'undefined') return;
-
         const ctx = document.getElementById('syhChartCanvas').getContext('2d');
+        const labels = todayData.data.map(item => item.time);
+        const datasets = [{
+            label: 'Глядачі',
+            data: todayData.data.map(item => item.viewers),
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+            fill: true,
+            tension: 0.3
+        }];
         
         // Малювання ліній вертикальних фаз
         const plugins = [];
@@ -318,3 +322,7 @@ window.SYH_STATS_EXPORTER = {
         link.click();
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_STATS_EXPORTER = SYH_STATS_EXPORTER;
+}

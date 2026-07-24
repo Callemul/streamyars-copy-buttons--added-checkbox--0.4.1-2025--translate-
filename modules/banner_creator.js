@@ -1,12 +1,16 @@
-window.SYH_BANNER_CREATOR = {
+import { SYH_CONFIG } from './config.ts';
+import { SYH_UTILS } from './utils.js';
+import { SYH_PARSERS } from './parsers.js';
+
+export const SYH_BANNER_CREATOR = {
     SELECTORS: null,
     UTILS: null,
     PARSERS: null,
 
     init: function(config, utils, parsers) {
-        this.SELECTORS = config.SELECTORS;
-        this.UTILS = utils;
-        this.PARSERS = parsers;
+        this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
+        this.UTILS = utils || SYH_UTILS;
+        this.PARSERS = parsers || SYH_PARSERS;
     },
 
     log: function(msg) {
@@ -36,14 +40,14 @@ window.SYH_BANNER_CREATOR = {
         const parseBlock = (text, defaultCat) => {
             if (!text.trim()) return [];
             let blockCategory = defaultCat;
-            let blockQuestions = [];
+            let blockQuestions;
             let isStd = false;
 
             const firstLine = text.split('\n').map(l => l.trim()).filter(l => l.length > 0)[0] || "";
-            const isQuestionStart = /^(?:\d+[\.\)]|(?:\d+\uFE0F?\u20E3|🔟)|🔹)/.test(firstLine);
+            const isQuestionStart = /^(?:\d+[.)]|(?:\d+\uFE0F?\u20E3|🔟)|🔹)/.test(firstLine);
 
             if (!isQuestionStart && firstLine) {
-                const headerMatch = firstLine.split(/(?:^|\s)(?=\d+[\.\)])|(?:^|\s)(?=(?:\d+\uFE0F?\u20E3|🔟))|(?=🔹)/);
+                const headerMatch = firstLine.split(/(?:^|\s)(?=\d+[.)])|(?:^|\s)(?=(?:\d+\uFE0F?\u20E3|🔟))|(?=🔹)/);
                 const headerText = (headerMatch[0] || "").trim().toUpperCase();
                 if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
                     blockCategory = "prayer";
@@ -54,7 +58,7 @@ window.SYH_BANNER_CREATOR = {
                 }
             }
 
-            if (/памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(text) && !/(?:^|\s)\d+[\.\)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+            if (/памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
                 this.log("Формат: Суботня Школа (без нумерації)");
                 blockQuestions = this.PARSERS.parseSabbathSchoolUnnumberedQuestions(text);
                 blockCategory = "stream"; 
@@ -167,8 +171,9 @@ window.SYH_BANNER_CREATOR = {
     },
 
     createSingleBanner: function(text) {
-        return new Promise(async (resolve, reject) => {
-            try {
+        return new Promise((resolve, reject) => {
+            (async () => {
+                try {
                 let createBtn = document.querySelector(this.SELECTORS.createBannerButton);
                 if (!createBtn) {
                      createBtn = await this.UTILS.waitForElement(this.SELECTORS.createBannerButton, 2000);
@@ -200,7 +205,11 @@ window.SYH_BANNER_CREATOR = {
             } catch (error) {
                 reject(error);
             }
+        })();
         });
-    },
-
+    }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_BANNER_CREATOR = SYH_BANNER_CREATOR;
+}

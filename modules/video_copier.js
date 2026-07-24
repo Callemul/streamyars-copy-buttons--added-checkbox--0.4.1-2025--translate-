@@ -1,5 +1,4 @@
-// video_copier.js
-window.SYH_VIDEO_COPIER = {
+export const SYH_VIDEO_COPIER = {
     init: function() {
         this.startObserver();
     },
@@ -340,7 +339,8 @@ window.SYH_VIDEO_COPIER = {
                 await new Promise(r => setTimeout(r, 600));
 
                 const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0'));
-                const downloadSpan = menuItems.find(el => el.innerText.includes('Download'));
+                const downloadText = (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('download')) || 'Download';
+                const downloadSpan = menuItems.find(el => el.innerText.includes(downloadText) || el.innerText.includes('Download'));
                 if (downloadSpan) {
                     downloadSpan.closest('button').click();
                 }
@@ -369,3 +369,7 @@ window.SYH_VIDEO_COPIER = {
         }
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_VIDEO_COPIER = SYH_VIDEO_COPIER;
+}

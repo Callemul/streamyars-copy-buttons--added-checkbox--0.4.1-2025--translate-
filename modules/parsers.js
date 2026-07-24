@@ -1,10 +1,13 @@
-window.SYH_PARSERS = {
+import { SYH_CONFIG } from './config.ts';
+
+export const SYH_PARSERS = {
     /**
      * Парсер для формату з emoji-цифрами, що підтримує підпункти '🔹'.
      */
     parseEmojiNumberedQuestions: function(rawText) {
         console.log("Parsing as Emoji-numbered questions with sub-item support.");
-        const MAX_LENGTH = 195;
+        const MAX_LENGTH = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
+                           (window.SYH_CONFIG && window.SYH_CONFIG.LIMITS && window.SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
         const ELLIPSIS = "...";
 
         const truncate = (text) => {
@@ -64,15 +67,17 @@ window.SYH_PARSERS = {
     parseStandardNumberedQuestions: function(rawText) {
         console.log("Parsing as Standard-numbered questions.");
         const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
+        const maxLen = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
+                       (window.SYH_CONFIG && window.SYH_CONFIG.LIMITS && window.SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
 
         return formattedText.split('\n')
             .map(line => line.trim())
             .filter(line => /^\d+\./.test(line))
-            .map(line => line.replace(/^\d+[\.\)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
+            .map(line => line.replace(/^\d+[.)]?\s*/, '').replace(/\s*\([^)]+\)$/, '').trim())
             .filter(line => line.length > 0)
             .map(line => {
                 if (line.length >= 200) {
-                    return line.substring(0, 195) + "...";
+                    return line.substring(0, maxLen) + "...";
                 }
                 return line;
             });
@@ -81,6 +86,8 @@ window.SYH_PARSERS = {
     parseSabbathSchoolUnnumberedQuestions: function(rawText) {
         console.log("Parsing as Sabbath School Unnumbered questions.");
         const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+        const maxLen = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
+                       (window.SYH_CONFIG && window.SYH_CONFIG.LIMITS && window.SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
         
         // Знаходимо перший рядок з ключовими словами
         const startIndex = lines.findIndex(l => /памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(l));
@@ -96,7 +103,15 @@ window.SYH_PARSERS = {
         
         return questionLines.map(line => {
             const cleanLine = line.replace(/\s*\([^)]+\)$/, '').trim();
-            return cleanLine.length >= 200 ? cleanLine.substring(0, 195) + "..." : cleanLine;
+            return cleanLine.length >= 200 ? cleanLine.substring(0, maxLen) + "..." : cleanLine;
         });
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.SYH_PARSERS = SYH_PARSERS;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SYH_PARSERS;
+}

@@ -40,9 +40,9 @@ $(document).ready(function() {
     // 2. Логіка навігації між вкладками попапу
     $('.tab-link').click(function() {
         const tabId = $(this).data('tab'); 
-        $('.tab-link').removeClass('active'); 
+        $('.tab-link').removeClass('active').attr('aria-selected', 'false'); 
         $('.tab-content').removeClass('active'); 
-        $(this).addClass('active'); 
+        $(this).addClass('active').attr('aria-selected', 'true'); 
         $('#' + tabId).addClass('active');
     });
 
@@ -97,5 +97,14 @@ $(document).ready(function() {
         window.db.newTitlePreach = $("#preachNameInput").val(); 
         window.saveDataToStorage(); 
         alert("Збережено!"); 
+    });
+
+    // 7. Відкриття повноцінної Options Page
+    $("#openOptionsPageBtn").click(function() {
+        if (chrome.runtime && chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('options/options.html'));
+        }
     });
 });

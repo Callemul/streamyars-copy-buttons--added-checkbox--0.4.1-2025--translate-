@@ -21,9 +21,9 @@ window.updateOldInputStats = function() {
 window.updateNewInputStats = function() {
     const text = $('#newTelegram').val();
     if (!text) { $('#tgTotalCount').text(''); return; }
-    let peopleCount = 0;
+    let peopleCount;
     let questionsCount = 0;
-    let prayersCount = 0;
+    let prayersCount;
     if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
         const parsed = window.parseAndFilterOldList(text, []);
         peopleCount = parsed.questions.length;
@@ -203,7 +203,7 @@ window.processTelegramData = function() {
     const answeredIds = answeredInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     let preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
     
-    let newQuestions = [];
+    let newQuestions;
     let newPrayers = [];
     if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
         let parsedNew = window.parseAndFilterOldList(telegramText, []);
@@ -300,15 +300,33 @@ $(document).ready(function() {
         } 
     });
     
-    $('#copyResultBtn').click(function() {
+    $('#copyResultBtn').click(async function() {
         const plainText = $('#finalResultDiv').text(); 
-        const $temp = $("<textarea>"); 
-        $("body").append($temp); 
-        $temp.val(plainText).select(); 
-        document.execCommand("copy"); 
-        $temp.remove(); 
-        const originalText = $(this).text(); 
-        $(this).text("Скопійовано! ✅"); 
-        setTimeout(() => $(this).text(originalText), 2000);
+        if (!plainText) return;
+
+        const $btn = $(this);
+        const originalText = $btn.text(); 
+
+        const copyFallback = (txt) => {
+            const $temp = $("<textarea>"); 
+            $("body").append($temp); 
+            $temp.val(txt).select(); 
+            document.execCommand("copy"); 
+            $temp.remove(); 
+        };
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(plainText);
+            } else {
+                copyFallback(plainText);
+            }
+        } catch (err) {
+            console.warn("Clipboard API failed, using fallback:", err);
+            copyFallback(plainText);
+        }
+
+        $btn.text("Скопійовано! ✅"); 
+        setTimeout(() => $btn.text(originalText), 2000);
     });
 });

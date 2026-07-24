@@ -1,0 +1,58 @@
+{
+  "extName": {
+    "message": "StreamYard Helper",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Streamyard.com Extension. Add new buttons to comments and banners",
+    "description": "Extension description"
+  },
+  "stayInStudio": {
+    "message": "Stay in the studio",
+    "description": "Anti-AFK button text in StreamYard"
+  },
+  "streamEnded": {
+    "message": "Ended",
+    "description": "Text indicating stream has ended"
+  },
+  "timerOff": {
+    "message": "Timer off",
+    "description": "Text indicating timer is disabled"
+  },
+  "download": {
+    "message": "Download",
+    "description": "Download button label"
+  },
+  "tabPrayers": {
+    "message": "🙏 Prayers",
+    "description": "Prayers tab title"
+  },
+  "tabTelegram": {
+    "message": "Telegram Questions 🚀",
+    "description": "Telegram questions tab title"
+  },
+  "tabSettings": {
+    "message": "Translit / Settings",
+    "description": "Settings tab title"
+  },
+  "copyPrayers": {
+    "message": "📋 Copy all requests",
+    "description": "Button label to copy all prayer requests"
+  },
+  "fetch": {
+    "message": "🔄 Fetch",
+    "description": "Fetch button label"
+  },
+  "clear": {
+    "message": "Clear",
+    "description": "Clear button title"
+  },
+  "processList": {
+    "message": "PROCESS LIST 🚀",
+    "description": "Process Telegram list button"
+  },
+  "copyText": {
+    "message": "📋 Copy text",
+    "description": "Copy text button label"
+  }
+}

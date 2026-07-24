@@ -354,17 +354,34 @@ $(document).ready(function() {
         });
     });
 
-    $('#copyPrayersBtn').click(function() {
+    $('#copyPrayersBtn').click(async function() {
         const text = $('#prayersResultDiv').data('raw-text');
         if (!text) return;
-        const $temp = $("<textarea>");
-        $("body").append($temp);
-        $temp.val(text).select();
-        document.execCommand("copy");
-        $temp.remove();
-        const originalText = $(this).text();
-        $(this).text("Скопійовано! ✅");
-        setTimeout(() => $(this).text(originalText), 2000);
+
+        const $btn = $(this);
+        const originalText = $btn.text();
+
+        const copyFallback = (txt) => {
+            const $temp = $("<textarea>");
+            $("body").append($temp);
+            $temp.val(txt).select();
+            document.execCommand("copy");
+            $temp.remove();
+        };
+
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                copyFallback(text);
+            }
+        } catch (err) {
+            console.warn("Clipboard API failed, using fallback:", err);
+            copyFallback(text);
+        }
+
+        $btn.text("Скопійовано! ✅");
+        setTimeout(() => $btn.text(originalText), 2000);
     });
 
     // Очищення через червону кнопку корзини

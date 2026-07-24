@@ -1,8 +1,7 @@
-// test_parsers.js
-const assert = require('node:assert');
+import assert from 'node:assert';
 
 // Мокаємо об'єкт window та alert для сумісності з браузерним скриптом у Node.js
-global.window = {};
+global.window = global;
 global.alert = () => {};
 global.document = {};
 
@@ -35,10 +34,13 @@ jQueryMock.ready = (fn) => fn();
 global.$ = jQueryMock;
 global.jQuery = jQueryMock;
 
-// Завантажуємо парсери та утиліти попапу
-require('./modules/parsers.js');
-const parsers = global.window.SYH_PARSERS;
-require('./popup/popup_telegram.js');
+// Динамічний імпорт модулів після виставляння global.window
+const { SYH_PARSERS } = await import('./modules/parsers.js');
+const { SYH_CONFIG } = await import('./modules/config.ts');
+const { SYH_BANNER_CREATOR } = await import('./modules/banner_creator.js');
+await import('./popup/popup_telegram.js');
+
+const parsers = SYH_PARSERS;
 
 console.log("=== Запуск тестів для парсерів StreamYard Helper ===\n");
 
@@ -126,9 +128,6 @@ try {
 // Тест 5: Автовизначення категорії банерів (Ефір 🎙️ vs Глядачі ❓)
 async function testCategoryDetection() {
     try {
-        // Підключаємо додаткові файли для мокання
-        require('./modules/config.js');
-        
         const utilsMock = {
             saveBannerCategory: () => Promise.resolve(),
             copyAndShowBanner: () => {},
@@ -136,9 +135,8 @@ async function testCategoryDetection() {
         };
         global.window.SYH_UTILS = utilsMock;
         
-        require('./modules/banner_creator.js');
-        const bannerCreator = global.window.SYH_BANNER_CREATOR;
-        bannerCreator.init(global.window.SYH_CONFIG, utilsMock, parsers);
+        const bannerCreator = SYH_BANNER_CREATOR;
+        bannerCreator.init(SYH_CONFIG, utilsMock, parsers);
 
         // Перевизначаємо методи для уникнення реальних DOM-операцій та запису категорій
         let capturedCategories = [];

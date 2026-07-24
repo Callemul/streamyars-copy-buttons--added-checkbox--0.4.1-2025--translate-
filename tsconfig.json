@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": false,
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "types": ["chrome", "jquery"]
+  },
+  "include": ["modules/**/*", "main.js", "main.ts", "popup/**/*"]
+}
