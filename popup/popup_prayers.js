@@ -115,18 +115,63 @@ window.renderPrayers = function(prayersList) {
         
         const block = $('<div>').addClass('q-block q-pray').css('position', 'relative');
         
-        const header = $(`
-            <div style="margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; width: 100%;">
-                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; flex: 1; min-width: 0;">
-                    <span style="color: #0b5394; font-weight: bold; margin-right: 2px; white-space: nowrap; flex-shrink: 0;">${authorIcon} @</span>
-                    <span class="editable-author" contenteditable="true" style="color: #0b5394; font-weight: bold; outline: none; border-bottom: 1px dashed transparent; white-space: nowrap; display: inline-block; overflow: hidden; text-overflow: ellipsis;">${author}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <button class="edit-prayer-btn" title="Редагувати автора" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 4px;">✏️</button>
-                    <button class="del-author-btn" data-author="${author}" title="Видалити автора з усіма проханнями" style="background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 4px;">🗑️</button>
-                </div>
-            </div>
-        `);
+        const header = $('<div>').css({
+            marginBottom: '5px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'nowrap',
+            width: '100%'
+        });
+
+        const leftWrap = $('<div>').css({
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'flex',
+            alignItems: 'center',
+            flex: '1',
+            minWidth: '0'
+        });
+
+        const iconSpan = $('<span>')
+            .css({ color: '#0b5394', fontWeight: 'bold', marginRight: '2px', whiteSpace: 'nowrap', flexShrink: '0' })
+            .text(`${authorIcon} @`);
+
+        const authorSpan = $('<span>')
+            .addClass('editable-author')
+            .attr('contenteditable', 'true')
+            .css({
+                color: '#0b5394',
+                fontWeight: 'bold',
+                outline: 'none',
+                borderBottom: '1px dashed transparent',
+                whiteSpace: 'nowrap',
+                display: 'inline-block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+            })
+            .text(author);
+
+        leftWrap.append(iconSpan, authorSpan);
+
+        const rightWrap = $('<div>').css({ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0' });
+
+        const editBtn = $('<button>')
+            .addClass('edit-prayer-btn')
+            .attr('title', 'Редагувати автора')
+            .css({ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' })
+            .text('✏️');
+
+        const delBtn = $('<button>')
+            .addClass('del-author-btn')
+            .attr('data-author', author)
+            .attr('title', 'Видалити автора з усіма проханнями')
+            .css({ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' })
+            .text('🗑️');
+
+        rightWrap.append(editBtn, delBtn);
+        header.append(leftWrap, rightWrap);
         block.append(header);
 
         if (grouped[author].length === 1) {
@@ -143,7 +188,7 @@ window.renderPrayers = function(prayersList) {
                 .text(item.text);
             
             const delBtn = $('<button>')
-                .html('❌')
+                .text('❌')
                 .attr('title', 'Видалити прохання')
                 .attr('data-index', item.originalIndex)
                 .addClass('del-prayer-btn')
@@ -167,7 +212,7 @@ window.renderPrayers = function(prayersList) {
                     .text(item.text);
                 
                 const delBtn = $('<button>')
-                    .html('❌')
+                    .text('❌')
                     .attr('title', 'Видалити прохання')
                     .attr('data-index', item.originalIndex)
                     .addClass('del-prayer-btn')
