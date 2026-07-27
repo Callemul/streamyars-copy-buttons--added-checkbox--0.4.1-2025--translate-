@@ -54,18 +54,17 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
-    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\Snapshot_or_time\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-    const cleanRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
     
     let messages = [];
     let match;
     let lastIdx = 0;
     
     // Розбиваємо за заголовками повідомлень Telegram
-    while ((match = cleanRegex.exec(text)) !== null) {
+    while ((match = tgHeaderRegex.exec(text)) !== null) {
         const part = text.substring(lastIdx, match.index).trim();
         if (part) messages.push(part);
-        lastIdx = cleanRegex.lastIndex;
+        lastIdx = tgHeaderRegex.lastIndex;
     }
     const lastPart = text.substring(lastIdx).trim();
     if (lastPart) messages.push(lastPart);

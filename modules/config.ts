@@ -21,9 +21,9 @@ export const SYH_CONFIG: SyhConfig = {
         commentAuthor: '[class*="PlatformCommentShell__NameText"]',
         commentText: '[class*="PlatformCommentShell__ContentSpan"]',
         starButton: '[class*="PlatformComment__StarButton"]',
-        starredHeaderWrap: '.StarredCommentList__HeaderWrap-sc-1qtlqu2-5',
-        starredItemWrap: '.StarredCommentList__ItemWrap-sc-1qtlqu2-6',
-        starredList: '.StarredCommentList__List-sc-1qtlqu2-1',
+        starredHeaderWrap: '[class*="StarredCommentList__HeaderWrap"]',
+        starredItemWrap: '[class*="StarredCommentList__ItemWrap"]',
+        starredList: '[class*="StarredCommentList__List"]',
         starredCommentItem: 'li[class*="StarredCommentList"]',
         
         // Банери
@@ -46,7 +46,9 @@ export const SYH_CONFIG: SyhConfig = {
         timerDropdownButton: '#banner-timer-dropdown-button', 
         timerOptionOffId: '#banner-timer-dropdown-option-null', 
         // Цей текст має співпадати з тим, що написано на кнопці, коли таймер вимкнено
-        timerOffTextResult: (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('timerOff')) || 'Timer off',
+        get timerOffTextResult(): string {
+            return (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('timerOff')) || 'Timer off';
+        },
         
         // НОВІ СЕЛЕКТОРИ ДЛЯ НАГАДУВАННЯ
         streamStatusContainer: '[class*="Tags__Wrap"]', // Контейнер, де з'являється "Ended"

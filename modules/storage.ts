@@ -26,13 +26,34 @@ export const SYH_STORAGE: StorageAdapter = {
     /**
      * Отримати значення за ключем або масивом ключів
      */
+    /**
+     * Отримати значення за ключем або масивом ключів
+     */
     get: function(keys: string | string[], cb: (result: Record<string, any>) => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.get(keys, cb);
+                chrome.storage.local.get(keys, (result) => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[SYH Storage] chrome.storage.local.get error:', chrome.runtime.lastError.message);
+                        const res: Record<string, any> = {};
+                        const arr = Array.isArray(keys) ? keys : [keys];
+                        arr.forEach(k => {
+                            try {
+                                const val = localStorage.getItem(k);
+                                res[k] = val !== null ? JSON.parse(val) : undefined;
+                            } catch (e: any) {
+                                console.warn('[SYH Storage] localStorage.getItem error:', e?.message || e);
+                                res[k] = undefined;
+                            }
+                        });
+                        if (cb) cb(res);
+                        return;
+                    }
+                    if (cb) cb(result);
+                });
                 return;
-            } catch (e) {
-                // Трапляється у разі розриву контексту (Extension context invalidated)
+            } catch (e: any) {
+                console.warn('[SYH Storage] Fallback to localStorage (get):', e?.message || e);
             }
         }
         const res: Record<string, any> = {};
@@ -40,9 +61,10 @@ export const SYH_STORAGE: StorageAdapter = {
         arr.forEach(k => {
             try {
                 const val = localStorage.getItem(k);
-                res[k] = val ? JSON.parse(val) : null;
-            } catch (e) {
-                res[k] = null;
+                res[k] = val !== null ? JSON.parse(val) : undefined;
+            } catch (e: any) {
+                console.warn('[SYH Storage] localStorage.getItem error:', e?.message || e);
+                res[k] = undefined;
             }
         });
         if (cb) cb(res);
@@ -54,15 +76,24 @@ export const SYH_STORAGE: StorageAdapter = {
     set: function(items: Record<string, any>, cb?: () => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.set(items, cb);
+                chrome.storage.local.set(items, () => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[SYH Storage] chrome.storage.local.set error:', chrome.runtime.lastError.message);
+                    }
+                    if (cb) cb();
+                });
                 return;
-            } catch (e) {}
+            } catch (e: any) {
+                console.warn('[SYH Storage] Fallback to localStorage (set):', e?.message || e);
+            }
         }
-        for (const k in items) {
+        Object.keys(items).forEach(k => {
             try {
                 localStorage.setItem(k, JSON.stringify(items[k]));
-            } catch (e) {}
-        }
+            } catch (e: any) {
+                console.warn('[SYH Storage] localStorage.setItem error:', e?.message || e);
+            }
+        });
         if (cb) cb();
     },
 
@@ -72,15 +103,24 @@ export const SYH_STORAGE: StorageAdapter = {
     remove: function(keys: string | string[], cb?: () => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.remove(keys, cb);
+                chrome.storage.local.remove(keys, () => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[SYH Storage] chrome.storage.local.remove error:', chrome.runtime.lastError.message);
+                    }
+                    if (cb) cb();
+                });
                 return;
-            } catch (e) {}
+            } catch (e: any) {
+                console.warn('[SYH Storage] Fallback to localStorage (remove):', e?.message || e);
+            }
         }
         const arr = Array.isArray(keys) ? keys : [keys];
         arr.forEach(k => {
             try {
                 localStorage.removeItem(k);
-            } catch (e) {}
+            } catch (e: any) {
+                console.warn('[SYH Storage] localStorage.removeItem error:', e?.message || e);
+            }
         });
         if (cb) cb();
     },
@@ -92,7 +132,9 @@ export const SYH_STORAGE: StorageAdapter = {
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
             try {
                 chrome.storage.onChanged.addListener(callback);
-            } catch (e) {}
+            } catch (e: any) {
+                console.warn('[SYH Storage] Failed to add onChanged listener:', e?.message || e);
+            }
         }
     }
 };

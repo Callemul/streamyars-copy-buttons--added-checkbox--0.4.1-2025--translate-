@@ -18,30 +18,38 @@
   ],
   "content_scripts": [
     {
-      "js": [
-        "assets/jquery-3.7.1.js-T69IKIHc.js",
-        "assets/main.js-loader-BqSSwuts.js"
-      ],
       "matches": [
         "https://streamyard.com/*"
       ],
       "css": [
         "styles.css"
+      ],
+      "js": [
+        "vendor/crx-content-css-0-loader.js",
+        "lib/jquery-3.7.1.js-loader.js",
+        "lib/chart.js-loader.js",
+        "main.js-loader.js"
       ]
     }
   ],
   "web_accessible_resources": [
     {
-      "matches": [
-        "https://streamyard.com/*"
-      ],
       "resources": [
         "Release_notes.md",
         "Daily_tips.md",
-        "lib/chart.js",
-        "assets/jquery-3.7.1.js-T69IKIHc.js",
-        "assets/storage-D0Bv57CN.js",
-        "assets/main.js-Bc9591_9.js"
+        "lib/chart.js"
+      ],
+      "matches": [
+        "https://streamyard.com/*"
+      ]
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "**/*",
+        "*"
       ],
       "use_dynamic_url": false
     }

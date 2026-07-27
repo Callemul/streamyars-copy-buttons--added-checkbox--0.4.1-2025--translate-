@@ -30,9 +30,15 @@ describe('SYH_UTILS tests', () => {
         assert.strictEqual(SYH_UTILS.smartSearch('артем', 'Артем Молчанов'), true);
     });
 
-    test('5. smartSearch - пошук у помилковій англійській розкладці (gjl -> под, vjk -> мол)', () => {
+    test('5. smartSearch - пошук у помилковій англійській розкладці (gjl -> под, vjk -> мол, fhntv -> артем)', () => {
         assert.strictEqual(SYH_UTILS.smartSearch('gjl', 'Подкаст Молчанова'), true);
         assert.strictEqual(SYH_UTILS.smartSearch('vjk', 'Молчанов Опарин'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('fhntv', 'Артем'), true);
+    });
+
+    test('5b. smartSearch - транслітерація латиницею (artem -> Артем, natasha -> Наташа)', () => {
+        assert.strictEqual(SYH_UTILS.smartSearch('artem', 'Артем Молчанов'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('natasha', 'Наташа'), true);
     });
 
     test('6. smartSearch - багатослівний пошук у помилковій розкладці (vjk gjl)', () => {
@@ -91,4 +97,22 @@ describe('SYH_UTILS tests', () => {
         if (origStorage) global.SYH_STORAGE = origStorage;
     });
 
+    test('15. smartSearch - гнучка транслітерація та варіанти авторських нікнеймів (@zaitseva, зай, zai, zaj, zay)', () => {
+        // Пошук за латинським нікнеймом @zaitseva
+        assert.strictEqual(SYH_UTILS.smartSearch('зай', '@zaitseva'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zai', '@zaitseva'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zaj', '@zaitseva'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zay', '@zaitseva'), true);
+
+        // Пошук за кириличним ім'ям @Зайцева
+        assert.strictEqual(SYH_UTILS.smartSearch('зай', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zai', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zaj', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zay', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zaitseva', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zajtseva', '@Зайцева'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('zaytseva', '@Зайцева'), true);
+    });
+
 });
+

@@ -1,6 +1,6 @@
-import { SYH_STORAGE } from './storage.ts';
-import { SYH_STATE } from './state.js';
-import { SYH_CONFIG } from './config.ts';
+import { SYH_STORAGE } from "/modules/storage.ts.js";
+import { SYH_STATE } from "/modules/state.js.js";
+import { SYH_CONFIG } from "/modules/config.ts.js";
 
 export const SYH_UI = {
     SELECTORS: null,

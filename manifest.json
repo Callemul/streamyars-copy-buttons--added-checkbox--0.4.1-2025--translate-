@@ -23,6 +23,7 @@
       "css": ["styles.css"],
       "js": [
         "lib/jquery-3.7.1.js",
+        "lib/chart.js",
         "main.js"
       ]
     }

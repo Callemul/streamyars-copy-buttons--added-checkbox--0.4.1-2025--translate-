@@ -1,8 +1,8 @@
-import { SYH_CONFIG } from './config.ts';
-import { SYH_STATE } from './state.js';
-import { SYH_UTILS } from './utils.js';
-import { SYH_UI } from './ui_core.js';
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_CONFIG } from "/modules/config.ts.js";
+import { SYH_STATE } from "/modules/state.js.js";
+import { SYH_UTILS } from "/modules/utils.js.js";
+import { SYH_UI } from "/modules/ui_core.js.js";
+import { SYH_STORAGE } from "/modules/storage.ts.js";
 
 export const SYH_EVENT_COMMENTS = {
     SELECTORS: null,

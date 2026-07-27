@@ -1,20 +1,20 @@
-import { SYH_CONFIG } from './modules/config.ts';
-import { SYH_STORAGE } from './modules/storage.ts';
-import { SYH_STATE } from './modules/state.js';
-import { SYH_UTILS } from './modules/utils.js';
-import { SYH_UI } from './modules/ui_core.js';
-import './modules/ui_comments.js';
-import './modules/ui_banners_items.js';
-import './modules/ui_banners_tabs.js';
-import './modules/ui_banners_filters.js';
-import { SYH_PARSERS } from './modules/parsers.js';
-import { SYH_BANNER_CREATOR } from './modules/banner_creator.js';
-import { SYH_EVENT_COMMENTS } from './modules/event_comments.js';
-import { SYH_EVENT_BANNERS } from './modules/event_banners.js';
-import { SYH_VIDEO_COPIER } from './modules/video_copier.js';
-import { SYH_STATS_TRACKER } from './modules/stats_tracker.js';
-import { SYH_STATS_EXPORTER } from './modules/stats_exporter.js';
-import { SYH_INFO_MODAL } from './modules/info_modal.js';
+import { SYH_CONFIG } from "/modules/config.ts.js";
+import { SYH_STORAGE } from "/modules/storage.ts.js";
+import { SYH_STATE } from "/modules/state.js.js";
+import { SYH_UTILS } from "/modules/utils.js.js";
+import { SYH_UI } from "/modules/ui_core.js.js";
+import "/modules/ui_comments.js.js";
+import "/modules/ui_banners_items.js.js";
+import "/modules/ui_banners_tabs.js.js";
+import "/modules/ui_banners_filters.js.js";
+import { SYH_PARSERS } from "/modules/parsers.js.js";
+import { SYH_BANNER_CREATOR } from "/modules/banner_creator.js.js";
+import { SYH_EVENT_COMMENTS } from "/modules/event_comments.js.js";
+import { SYH_EVENT_BANNERS } from "/modules/event_banners.js.js";
+import { SYH_VIDEO_COPIER } from "/modules/video_copier.js.js";
+import { SYH_STATS_TRACKER } from "/modules/stats_tracker.js.js";
+import { SYH_STATS_EXPORTER } from "/modules/stats_exporter.js.js";
+import { SYH_INFO_MODAL } from "/modules/info_modal.js.js";
 
 (function(window, $) {
     'use strict';

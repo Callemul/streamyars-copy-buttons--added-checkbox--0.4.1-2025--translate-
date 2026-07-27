@@ -56,6 +56,10 @@ const { SYH_UTILS } = await import('../modules/utils.js');
 describe('SYH_STATE tests', () => {
 
     beforeEach(() => {
+        if (SYH_STATE._saveTimer) {
+            clearTimeout(SYH_STATE._saveTimer);
+            SYH_STATE._saveTimer = null;
+        }
         mockStorageStore = {};
         SYH_STATE.itemStates = {};
         SYH_STATE.lastDate = null;
@@ -66,7 +70,7 @@ describe('SYH_STATE tests', () => {
     });
 
     test('2. updateState оновлює стан у пам’яті та зберігає у storage', () => {
-        SYH_STATE.updateState('item_1', true);
+        SYH_STATE.updateState('item_1', true, 0);
 
         assert.strictEqual(SYH_STATE.getState('item_1'), true);
 
@@ -78,10 +82,10 @@ describe('SYH_STATE tests', () => {
     });
 
     test('3. updateState підтримує зняття прапорця (false)', () => {
-        SYH_STATE.updateState('item_1', true);
+        SYH_STATE.updateState('item_1', true, 0);
         assert.strictEqual(SYH_STATE.getState('item_1'), true);
 
-        SYH_STATE.updateState('item_1', false);
+        SYH_STATE.updateState('item_1', false, 0);
         assert.strictEqual(SYH_STATE.getState('item_1'), false);
 
         const saved = mockStorageStore['syh_checkbox_state'];
@@ -158,7 +162,7 @@ describe('SYH_STATE tests', () => {
 
     test('9. saveState записує правильну структуру (date та data)', () => {
         SYH_STATE.itemStates = { 'test_key': true };
-        SYH_STATE.saveState();
+        SYH_STATE.saveState(0);
 
         const saved = mockStorageStore['syh_checkbox_state'];
         assert.ok(saved);
@@ -168,9 +172,43 @@ describe('SYH_STATE tests', () => {
 
     test('10. ізоляція дат гарантує локальний часовий пояс YYYY-MM-DD', () => {
         const today = SYH_UTILS.getTodayDateString();
-        SYH_STATE.updateState('tz_test', true);
+        SYH_STATE.updateState('tz_test', true, 0);
         const saved = mockStorageStore['syh_checkbox_state'];
         assert.strictEqual(saved.date, today);
+    });
+
+    test('11. onStateLoaded callback викликається при ініціалізації стану', async () => {
+        let callbackTriggered = false;
+        SYH_STATE.onStateLoaded = (states) => {
+            callbackTriggered = true;
+        };
+
+        await new Promise(resolve => SYH_STATE.init(resolve));
+        assert.strictEqual(callbackTriggered, true);
+        SYH_STATE.onStateLoaded = null;
+    });
+
+    test('12. saveState підтримує debounce для затримки викликів', async () => {
+        let saveCount = 0;
+        const origSet = mockStorageAdapter.set;
+        mockStorageAdapter.set = function(obj, cb) {
+            saveCount++;
+            return origSet.call(this, obj, cb);
+        };
+
+        SYH_STATE.itemStates = { 'k1': true };
+        SYH_STATE.saveState(50);
+        SYH_STATE.itemStates = { 'k1': true, 'k2': true };
+        SYH_STATE.saveState(50);
+
+        assert.strictEqual(saveCount, 0, 'Запис у storage ще не відбувся до закінчення debounce');
+
+        await new Promise(resolve => setTimeout(resolve, 80));
+
+        assert.strictEqual(saveCount, 1, 'Відбувся лише 1 запис у storage після дебаунсу');
+        assert.strictEqual(mockStorageStore['syh_checkbox_state'].data['k2'], true);
+
+        mockStorageAdapter.set = origSet;
     });
 
 });

@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE } from "/modules/storage.ts.js";
 
 export const SYH_STATS_EXPORTER = {
     chartInstance: null,
