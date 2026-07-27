@@ -21,21 +21,14 @@ export const SYH_BANNER_CREATOR = {
         let bannersToCreate = [];
         let hasStandardFormat = false;
 
-        // 1. Розбиваємо загальний текст на повідомлення Telegram, якщо скопійовано декілька
-        const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-        
-        let messages = [];
-        let match;
-        let lastIdx = 0;
-        
-        while ((match = tgHeaderRegex.exec(rawText)) !== null) {
-            const part = rawText.substring(lastIdx, match.index).trim();
-            if (part) messages.push(part);
-            lastIdx = tgHeaderRegex.lastIndex;
-        }
-        const lastPart = rawText.substring(lastIdx).trim();
-        if (lastPart) messages.push(lastPart);
-        if (messages.length === 0) messages = [rawText];
+        // 1. Спочатку очищаємо весь текст від таймкодів та ніків Telegram на початку та всередині блоків
+        const cleaner = (this.UTILS && this.UTILS.cleanTelegramHeaders) 
+            ? this.UTILS.cleanTelegramHeaders 
+            : (window.cleanTelegramHeaders || (t => t));
+        const cleanedText = cleaner(rawText);
+
+        let messages = cleanedText.split(/(?:^|\r?\n)(?=[❓🙏]|\bВопросы к|\bВопросы на\b|\bПредложения по|\bСаша, привет|\bВиталик, привет)/iu).map(m => m.trim()).filter(Boolean);
+        if (messages.length === 0) messages = [cleanedText];
 
         const parseBlock = (text, defaultCat) => {
             if (!text.trim()) return [];
@@ -76,7 +69,7 @@ export const SYH_BANNER_CREATOR = {
 
         try {
             for (const msg of messages) {
-                const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+                const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
                 const questionsText = parts[0] || "";
                 const prayersText = parts[1] || "";
 

@@ -1,3 +1,1 @@
-import 'http://localhost:5173/@vite/env';
-import 'http://localhost:5173/@crx/client-worker';
-import 'http://localhost:5173/background/service-worker.ts';
+import './assets/service-worker.ts-B7gxd-0l.js';

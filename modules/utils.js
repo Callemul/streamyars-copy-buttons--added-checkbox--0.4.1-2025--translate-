@@ -259,9 +259,18 @@ export const SYH_UTILS = {
                 this.storage.set({ 'syh_banner_categories': db }, resolve);
             });
         });
+    },
+
+    cleanTelegramHeaders: function(text) {
+        if (!text) return "";
+        const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+        return text.replace(tgHeaderRegex, (match, offset) => {
+            return offset === 0 ? "" : "\n";
+        }).trim();
     }
 };
 
 if (typeof window !== 'undefined') {
+    window.cleanTelegramHeaders = SYH_UTILS.cleanTelegramHeaders;
     window.SYH_UTILS = SYH_UTILS;
 }

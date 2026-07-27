@@ -54,21 +54,12 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
-    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-    
-    let messages = [];
-    let match;
-    let lastIdx = 0;
-    
-    // Розбиваємо за заголовками повідомлень Telegram
-    while ((match = tgHeaderRegex.exec(text)) !== null) {
-        const part = text.substring(lastIdx, match.index).trim();
-        if (part) messages.push(part);
-        lastIdx = tgHeaderRegex.lastIndex;
-    }
-    const lastPart = text.substring(lastIdx).trim();
-    if (lastPart) messages.push(lastPart);
-    if (messages.length === 0) messages = [text];
+    const cleaner = (window.SYH_UTILS && window.SYH_UTILS.cleanTelegramHeaders) 
+        ? window.SYH_UTILS.cleanTelegramHeaders 
+        : (window.cleanTelegramHeaders || (t => t));
+    const cleanedText = cleaner(text);
+
+    let messages = [cleanedText];
 
     let allQuestions = [];
     let allPrayers = [];
@@ -141,7 +132,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
     };
 
     for (const msg of messages) {
-        const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\nа-яА-Яa-zA-Z]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+        const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
         const questionsText = parts[0] || "";
         const prayersText = parts[1] || "";
 
