@@ -6,7 +6,6 @@ export interface SyhConfig {
         AUTO_HEAL_POLLING: number;
         FILTER_DEBOUNCE: number;
         STATS_TRACKING_INTERVAL: number;
-        REMINDER_DELAY: number;
     };
     LIMITS: {
         TEXT_TRUNCATION_LENGTH: number;
@@ -48,11 +47,7 @@ export const SYH_CONFIG: SyhConfig = {
         // Цей текст має співпадати з тим, що написано на кнопці, коли таймер вимкнено
         get timerOffTextResult(): string {
             return (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('timerOff')) || 'Timer off';
-        },
-        
-        // НОВІ СЕЛЕКТОРИ ДЛЯ НАГАДУВАННЯ
-        streamStatusContainer: '[class*="Tags__Wrap"]', // Контейнер, де з'являється "Ended"
-        reminderTargetContainer: '[data-testid="header-title-wrap"]' // Куди вставляти нагадування
+        }
     },
 
     TIMINGS: {
@@ -60,7 +55,6 @@ export const SYH_CONFIG: SyhConfig = {
         AUTO_HEAL_POLLING: 500,          // 500мс — DOM polling для Auto-Heal
         FILTER_DEBOUNCE: 150,            // 150мс — debounce для фільтру пошуку
         STATS_TRACKING_INTERVAL: 60000,  // 60 секунд — інтервал збору статистики
-        REMINDER_DELAY: 2 * 60 * 1000,   // 2 хвилини — затримка нагадування
     },
 
     LIMITS: {

@@ -15,6 +15,8 @@ import { SYH_VIDEO_COPIER } from './modules/video_copier.js';
 import { SYH_STATS_TRACKER } from './modules/stats_tracker.js';
 import { SYH_STATS_EXPORTER } from './modules/stats_exporter.js';
 import { SYH_INFO_MODAL } from './modules/info_modal.js';
+import { SYH_I18N } from './modules/i18n.ts';
+import { SYH_ANTI_AFK } from './modules/anti_afk.ts';
 
 (function(window, $) {
     'use strict';
@@ -34,47 +36,9 @@ import { SYH_INFO_MODAL } from './modules/info_modal.js';
     
     const { SELECTORS, TIMINGS } = SYH_CONFIG;
 
-    let reminderScheduled = false;
-
-    function checkForStreamEnd() {
-        if (reminderScheduled) {
-            return;
-        }
-
-        const $statusContainer = $(SELECTORS.streamStatusContainer);
-
-        const endedText = (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('streamEnded')) || 'Ended';
-
-        if ($statusContainer.length > 0 && ($statusContainer.text().includes(endedText) || $statusContainer.text().includes('Ended'))) {
-            reminderScheduled = true;
-            setTimeout(() => {
-                if(SYH_UI.createTelegramReminder) SYH_UI.createTelegramReminder();
-            }, TIMINGS.REMINDER_DELAY);
-        }
-    }
-
     // --- ANTI-AFK (АВТОМАТИЧНЕ ЗАКРИТТЯ ВІКНА ТАЙМАУТУ) ---
     function startAntiAfk() {
-        console.log("[SYH] Anti-AFK захист активовано.");
-        const antiAfkInterval = setInterval(() => {
-            // KILL SWITCH: Самознищення таймера, якщо розширення було оновлено
-            if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-                clearInterval(antiAfkInterval);
-                return;
-            }
-            
-            // Шукаємо модальне вікно за aria-label (безпечний спосіб без жорстких класів)
-            const modal = document.querySelector('div[role="dialog"][aria-label="Are you still there?"]');
-            if (modal) {
-                const buttons = Array.from(modal.querySelectorAll('button'));
-                const stayText = (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('stayInStudio')) || 'Stay in the studio';
-                const stayBtn = buttons.find(b => b.textContent && (b.textContent.trim() === stayText || b.textContent.trim() === 'Stay in the studio'));
-                if (stayBtn) {
-                    console.log("[SYH] AFK таймаут перехоплено! Натискаю 'Stay in the studio'.");
-                    stayBtn.click();
-                }
-            }
-        }, TIMINGS.ANTI_AFK_INTERVAL);
+        SYH_ANTI_AFK.startAntiAfk(SYH_CONFIG, SYH_STORAGE, SYH_I18N);
     }
 
     // --- OBSERVER ---
@@ -83,7 +47,6 @@ import { SYH_INFO_MODAL } from './modules/info_modal.js';
     let rafScheduled = false;
 
     function processMutations(mutationsList) {
-        checkForStreamEnd();
         let bannerStateChanged = false;
         let commentStateChanged = false;
         
@@ -244,8 +207,6 @@ import { SYH_INFO_MODAL } from './modules/info_modal.js';
         $(SELECTORS.commentBlock).each((i, el) => SYH_UI.addButtonsToComment(el));
         $(SELECTORS.bannerBlock).each((i, el) => SYH_UI.addButtonsToBanner(el));
         $(SELECTORS.bannerHeader).each((i, el) => SYH_UI.addBannerHeaderControls(el));
-
-        checkForStreamEnd();
 
         if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
 

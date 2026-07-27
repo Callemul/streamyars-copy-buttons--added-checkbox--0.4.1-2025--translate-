@@ -11,10 +11,6 @@
     "message": "Залишитися в студії",
     "description": "Anti-AFK button text in StreamYard"
   },
-  "streamEnded": {
-    "message": "Завершено",
-    "description": "Text indicating stream has ended"
-  },
   "timerOff": {
     "message": "Таймер вимкнено",
     "description": "Text indicating timer is disabled"

@@ -78,36 +78,6 @@ export const SYH_UI = {
         }
     },
 
-    createTelegramReminder: function() {
-        const $container = $(this.SELECTORS.reminderTargetContainer);
-        if ($container.length === 0) {
-            console.warn("[SYH] Контейнер для нагадування не знайдено!");
-            return;
-        }
-
-        if ($('.syh-telegram-reminder').length > 0) return;
-
-        const $reminder = $(`
-            <div class="syh-telegram-reminder">
-                <span>Не забудьте опублікувати результати трансляції в Telegram! 🚀</span>
-                <label class="syh-reminder-dismiss-label">
-                    Закрити
-                    <input type="checkbox" class="syh-telegram-reminder-checkbox">
-                </label>
-            </div>
-        `);
-
-        $reminder.find('.syh-telegram-reminder-checkbox').on('change', function() {
-            if ($(this).is(':checked')) {
-                $reminder.fadeOut(300, function() {
-                    $reminder.remove();
-                });
-            }
-        });
-
-        $container.append($reminder);
-    },
-
     restoreDomCheckboxes: function() {
         const selectors = this.SELECTORS || (window.SYH_CONFIG ? window.SYH_CONFIG.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null));
         const itemStates = (SYH_STATE ? SYH_STATE.itemStates : (window.SYH_STATE ? window.SYH_STATE.itemStates : {}));
