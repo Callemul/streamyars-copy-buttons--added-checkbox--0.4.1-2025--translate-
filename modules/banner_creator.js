@@ -21,13 +21,18 @@ export const SYH_BANNER_CREATOR = {
         let bannersToCreate = [];
         let hasStandardFormat = false;
 
-        // 1. Спочатку очищаємо весь текст від таймкодів та ніків Telegram на початку та всередині блоків
+        // 1. Очистка Telegram-заголовків (таймкод + нік відправника):
+        // Примітка для розробників / ШІ: При скопіюванні довгого тексту з Telegram 
+        // таймкоди на кшталт "[10.07.2026 20:44] Віталій . Время перемен:" вставляються на початку
+        // та можуть з'являтися всередині речень при розриві повідомлень.
+        // Очищаємо їх НА САМОМУ ПОЧАТКУ, щоб суцільне питання не розривалося на окремі банери.
         const cleaner = (this.UTILS && this.UTILS.cleanTelegramHeaders) 
             ? this.UTILS.cleanTelegramHeaders 
             : (window.cleanTelegramHeaders || (t => t));
         const cleanedText = cleaner(rawText);
 
-        let messages = cleanedText.split(/(?:^|\r?\n)(?=[❓🙏]|\bВопросы к|\bВопросы на\b|\bПредложения по|\bСаша, привет|\bВиталик, привет)/iu).map(m => m.trim()).filter(Boolean);
+        // 2. Розбиваємо очищений текст на логічні блоки/повідомлення за заголовками секцій
+        let messages = cleanedText.split(/(?:^|\r?\n)(?=[❓🙏]|Вопросы к|Вопросы на|Предложения по|Саша, привет|Виталик, привет)/iu).map(m => m.trim()).filter(Boolean);
         if (messages.length === 0) messages = [cleanedText];
 
         const parseBlock = (text, defaultCat) => {
@@ -110,8 +115,8 @@ export const SYH_BANNER_CREATOR = {
 
                 await this.createSingleBanner(cleanQuestion);
                 
-                // Автоматично проштамповуємо створений банер у правильну категорію
-                await window.SYH_UTILS.saveBannerCategory(cleanQuestion, item.category);
+                const saver = (this.UTILS && this.UTILS.saveBannerCategory) ? this.UTILS.saveBannerCategory : window.SYH_UTILS.saveBannerCategory;
+                await saver(cleanQuestion, item.category);
 
                 createdCount++;
             } catch (error) {

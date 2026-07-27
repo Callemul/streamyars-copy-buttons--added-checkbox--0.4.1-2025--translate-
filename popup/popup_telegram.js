@@ -54,6 +54,8 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
+    // Спочатку очищаємо вхідний текст від Telegram-таймкодів та заголовків [DD.MM.YYYY HH:MM] Нік:
+    // Це забезпечує єдину логіку з banner_creator.js та запобігає розриву питань при копіюванні кількох повідомлень.
     const cleaner = (window.SYH_UTILS && window.SYH_UTILS.cleanTelegramHeaders) 
         ? window.SYH_UTILS.cleanTelegramHeaders 
         : (window.cleanTelegramHeaders || (t => t));

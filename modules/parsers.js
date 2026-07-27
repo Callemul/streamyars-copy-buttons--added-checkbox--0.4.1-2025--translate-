@@ -67,8 +67,8 @@ export const SYH_PARSERS = {
     parseStandardNumberedQuestions: function(rawText) {
         console.log("Parsing as Standard-numbered questions.");
         const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
-        const maxLen = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
-                       (window.SYH_CONFIG && window.SYH_CONFIG.LIMITS && window.SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
+        const maxLen = (typeof SYH_CONFIG !== 'undefined' && SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
+                       (typeof window !== 'undefined' && window.SYH_CONFIG && window.SYH_CONFIG.LIMITS && window.SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
 
         return formattedText.split('\n')
             .map(line => line.trim())
