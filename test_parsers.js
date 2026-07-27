@@ -35,9 +35,9 @@ global.$ = jQueryMock;
 global.jQuery = jQueryMock;
 
 // Динамічний імпорт модулів після виставляння global.window
-const { SYH_PARSERS } = await import('./modules/parsers.js');
+const { SYH_PARSERS } = await import('./modules/parsers.ts');
 const { SYH_CONFIG } = await import('./modules/config.ts');
-const { SYH_BANNER_CREATOR } = await import('./modules/banner_creator.js');
+const { SYH_BANNER_CREATOR } = await import('./modules/banner_creator.ts');
 await import('./popup/popup_telegram.js');
 
 const parsers = SYH_PARSERS;
@@ -128,7 +128,7 @@ try {
 // Тест 5: Автовизначення категорії банерів (Ефір 🎙️ vs Глядачі ❓)
 async function testCategoryDetection() {
     try {
-        const { SYH_UTILS } = await import('./modules/utils.js');
+        const { SYH_UTILS } = await import('./modules/utils.ts');
         const utilsMock = {
             saveBannerCategory: () => Promise.resolve(),
             copyAndShowBanner: () => {},

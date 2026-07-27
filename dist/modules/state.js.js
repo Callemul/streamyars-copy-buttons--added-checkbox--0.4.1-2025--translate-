@@ -1,5 +1,5 @@
 import { SYH_STORAGE } from "/modules/storage.ts.js";
-import { SYH_UTILS } from "/modules/utils.js.js";
+import { SYH_UTILS } from "/modules/utils.ts.js";
 
 export const SYH_STATE = {
     itemStates: {},

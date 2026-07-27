@@ -10,5 +10,5 @@
     "rootDir": "./",
     "types": ["chrome", "jquery"]
   },
-  "include": ["modules/**/*", "main.js", "main.ts", "popup/**/*"]
+  "include": ["modules/**/*", "main.ts", "popup/**/*"]
 }

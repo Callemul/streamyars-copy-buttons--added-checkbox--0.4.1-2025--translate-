@@ -21,7 +21,7 @@
       "js": [
         "assets/jquery-3.7.1.js-T69IKIHc.js",
         "assets/chart.js-CegLu_W4.js",
-        "assets/main.js-loader-N14woj_u.js"
+        "assets/main.ts-loader-Ci5Fmyoa.js"
       ],
       "matches": [
         "https://streamyard.com/*"
@@ -43,7 +43,7 @@
         "assets/jquery-3.7.1.js-T69IKIHc.js",
         "assets/chart.js-CegLu_W4.js",
         "assets/storage-62pKN20L.js",
-        "assets/main.js-CYxc1JOL.js"
+        "assets/main.ts-ytjXnq4I.js"
       ],
       "use_dynamic_url": false
     }

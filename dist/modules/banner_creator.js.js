@@ -1,6 +1,6 @@
 import { SYH_CONFIG } from "/modules/config.ts.js";
-import { SYH_UTILS } from "/modules/utils.js.js";
-import { SYH_PARSERS } from "/modules/parsers.js.js";
+import { SYH_UTILS } from "/modules/utils.ts.js";
+import { SYH_PARSERS } from "/modules/parsers.ts.js";
 
 export const SYH_BANNER_CREATOR = {
     SELECTORS: null,

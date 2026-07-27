@@ -50,7 +50,7 @@ global.chrome = {
 global.SYH_STORAGE = mockStorageAdapter;
 global.window.SYH_STORAGE = mockStorageAdapter;
 
-const { SYH_STATE } = await import('../modules/state.js');
+const { SYH_STATE } = await import('../modules/state.ts');
 const { SYH_UTILS } = await import('../modules/utils.js');
 
 describe('SYH_STATE tests', () => {

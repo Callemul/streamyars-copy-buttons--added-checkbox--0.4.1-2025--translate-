@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "test": "node --experimental-strip-types --test tests/utils.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js test_parsers.js",
-    "lint": "eslint modules/ main.js popup/"
+    "lint": "eslint modules/ main.ts popup/"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.28",
