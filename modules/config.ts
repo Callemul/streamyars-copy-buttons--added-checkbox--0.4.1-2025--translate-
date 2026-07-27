@@ -10,6 +10,7 @@ export interface SyhConfig {
     LIMITS: {
         TEXT_TRUNCATION_LENGTH: number;
     };
+    TRIGGER_WORDS: string[];
 }
 
 export const SYH_CONFIG: SyhConfig = {
@@ -59,7 +60,9 @@ export const SYH_CONFIG: SyhConfig = {
 
     LIMITS: {
         TEXT_TRUNCATION_LENGTH: 195,     // Максимальна довжина тексту перед обрізанням
-    }
+    },
+
+    TRIGGER_WORDS: ['вопрос']            // Список тригерних слів для Помічника коментарів
 };
 
 if (typeof window !== 'undefined') {
