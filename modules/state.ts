@@ -1,5 +1,11 @@
 import { SYH_STORAGE } from './storage.ts';
-import { SYH_UTILS } from './utils.ts';
+
+function getTodayDateString(): string {
+    if (typeof window !== 'undefined' && (window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.getTodayDateString === 'function') {
+        return (window as any).SYH_UTILS.getTodayDateString();
+    }
+    return new Date().toLocaleDateString('sv-SE');
+}
 
 export interface SyhState {
     itemStates: Record<string, boolean>;
@@ -22,12 +28,10 @@ export const SYH_STATE: SyhState = {
 
     init: function(callback?: () => void): void {
         const self = this;
-        const today = (SYH_UTILS && typeof SYH_UTILS.getTodayDateString === 'function')
-            ? SYH_UTILS.getTodayDateString()
-            : new Date().toLocaleDateString('sv-SE');
+        const today = getTodayDateString();
 
         // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE || ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage));
+        const storage = SYH_STORAGE || (typeof window !== 'undefined' ? ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage)) : null);
 
         if (!storage) {
             console.error("SYH_STATE: Не знайдено адаптер сховища!");
@@ -97,16 +101,14 @@ export const SYH_STATE: SyhState = {
             clearTimeout(this._saveTimer);
             this._saveTimer = null;
         }
-        const today = (SYH_UTILS && typeof SYH_UTILS.getTodayDateString === 'function')
-            ? SYH_UTILS.getTodayDateString()
-            : new Date().toLocaleDateString('sv-SE');
+        const today = getTodayDateString();
         const stateToSave = {
             date: today,
             data: this.itemStates
         };
 
         // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE || ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage));
+        const storage = SYH_STORAGE || (typeof window !== 'undefined' ? ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage)) : null);
 
         if (storage) {
             storage.set({ 'syh_checkbox_state': stateToSave }, function() {

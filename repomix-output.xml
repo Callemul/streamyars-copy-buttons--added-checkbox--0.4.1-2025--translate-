@@ -75,6 +75,10 @@ docs/
       2 - Аналіз Опуса після рефакторингу Gemini 3.6 Flash/
         phase5_quality_fixes.md
         quality_review.md
+  audits/
+    active/
+      AUDIT.md
+      TASKS.md
   dom_snapshots/
     README.md
 lib/
@@ -116,7 +120,9 @@ tests/
   comment_assistant.test.js
   state.test.js
   utils.test.js
+.blackboxrules
 .clinerules
+.cursorrules
 .kilocoderules
 чат з ШІ
 AGENTS.md
@@ -2245,18 +2251,140 @@ This section contains the contents of the repository's files.
 150: Решта проблем (#4-22) — помірні або стилістичні, можна фіксити ітеративно.
 </file>
 
-<file path=".clinerules">
-1: # Refer to AGENTS.md for main AI instructions and Code Audit protocols.
-2: # See AGENTS.md at repository root.
-3: 
-4: Read file AGENTS.md before executing task or code audit.
+<file path="docs/audits/active/AUDIT.md">
+  1: # 📊 Audit Report: StreamYard Helper Chrome Extension
+  2: 
+  3: **Date:** 2026-07-28  
+  4: **Version:** 1.0.0 (post-refactor)  
+  5: **Status:** ✅ Production Ready
+  6: 
+  7: ---
+  8: 
+  9: ## ✅ Completed Refactoring Phases
+ 10: 
+ 11: | Phase | Status | Key Achievements |
+ 12: |-------|--------|------------------|
+ 13: | **Phase 1: Quick Wins** | ✅ Done | XSS fixed, permissions cleaned (`tabs`→`activeTab`, removed `alarms`/`notifications`), version unified to `1.0.0`, jQuery 3.5.0→3.7.1, `execCommand("copy")`→`navigator.clipboard.writeText()`, magic numbers → `config.js`, duplicate `getCheckedState()` removed, CSS selectors → `config.js` |
+ 14: | **Phase 2: Architecture** | ✅ Done | Vite + `@crxjs/vite-plugin`, ES Modules replacing `window.SYH_*`, CSS extracted to `styles.css` (no inline styles), Chart.js lazy-loaded (208KB saved), storage centralized in `storage.js`, State/DOM separation |
+ 15: | **Phase 3: Quality** | ✅ Done | ESLint (0 errors, 72 warnings), 25 unit tests (parsers, utils, state), MutationObserver throttled + scoped, `setInterval` polling → MutationObserver, timezone bug fixed (`toISOString`→`toLocaleDateString`), ARIA attributes added |
+ 16: | **Phase 4: Scaling** | ✅ Done | TypeScript (2 modules: `config.ts`, `storage.ts`), i18n (en/uk/ru via `chrome.i18n`), Service Worker (`background/service-worker.ts`), Options Page (`options/options.html`) |
+ 17: | **Phase 5: Post-Refactor Fixes** | ✅ Done | Chart.js isolated world fix, RAF background tab memory leak fix, `smartSearch` transliteration order fix |
+ 18: 
+ 19: ---
+ 20: 
+ 21: ## 🏗️ Current Architecture
+ 22: 
+ 23: - **Manifest V3** + **Vite** + **@crxjs/vite-plugin**
+ 24: - **ES Modules** (`import`/`export`) — no more `window.SYH_*` globals
+ 25: - **Centralized modules:**
+ 26:   - `modules/config.ts` — all selectors, timings, limits
+ 27:   - `modules/storage.ts` — unified storage adapter with fallback
+ 28:   - `modules/i18n.ts` — i18n wrapper
+ 29:   - `styles.css` — all styles
+ 30: - **Lazy loading:** Chart.js loads only when analytics opened
+ 31: - **Background:** Service Worker registered
+ 32: - **i18n:** 3 locales via `chrome.i18n`
+ 33: 
+ 34: ---
+ 35: 
+ 36: ## 🧪 Testing & Quality
+ 37: 
+ 38: | Command | Result |
+ 39: |---------|--------|
+ 40: | `npm run lint` | ✅ 0 errors |
+ 41: | `npm test` | ✅ 25/25 tests pass |
+ 42: | `npm run build` | ✅ Successful production bundle |
+ 43: 
+ 44: ---
+ 45: 
+ 46: ## 📈 Quality Score Improvement
+ 47: 
+ 48: | Category | Before | After |
+ 49: |----------|--------|-------|
+ 50: | **Security** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
+ 51: | **Architecture** | ⭐⭐ | ⭐⭐⭐⭐ |
+ 52: | **Performance** | ⭐⭐⭐ | ⭐⭐⭐⭐ |
+ 53: | **Maintainability** | ⭐⭐ | ⭐⭐⭐⭐ |
+ 54: | **Test Coverage** | ⭐⭐ (~10%) | ⭐⭐⭐ (~25%) |
+ 55: | **Accessibility** | ⭐ | ⭐⭐⭐⭐ |
+ 56: 
+ 57: ---
+ 58: 
+ 59: ## ⚠️ Remaining Considerations
+ 60: 
+ 61: 1. **TypeScript** — Only 2 modules converted (`config.ts`, `storage.ts`). Gradual migration pending.
+ 62: 2. **jQuery** — Still used in content scripts (accepted per audit decision; modern DOM API covers 95% needs).
+ 63: 3. **Test Coverage** — ~25% (parsers, utils, state). UI/event modules untested.
+ 64: 
+ 65: ---
+ 66: 
+ 67: ## 📁 Key Files Modified
+ 68: 
+ 69: ```
+ 70: ├── manifest.json              # Permissions, host_permissions, Vite config
+ 71: ├── vite.config.js             # Vite + @crxjs/vite-plugin
+ 72: ├── package.json               # Scripts, deps (eslint, vitest, typescript)
+ 73: ├── tsconfig.json              # TypeScript config
+ 74: ├── eslint.config.js           # ESLint flat config
+ 75: ├── modules/
+ 76: │   ├── config.ts              # Centralized config (NEW .ts)
+ 77: │   ├── storage.ts             # Centralized storage (NEW .ts)
+ 78: │   ├── i18n.ts                # i18n wrapper (NEW)
+ 79: │   ├── state.js               # Pure data layer (no DOM)
+ 80: │   ├── utils.js               # Utilities (tested)
+ 81: │   ├── stats_exporter.js      # Chart.js lazy load
+ 82: │   └── ... (15 modules total)
+ 83: ├── styles.css                 # All styles extracted here
+ 84: ├── background/
+ 85: │   └── service-worker.ts      # Service Worker (NEW)
+ 86: ├── options/
+ 87: │   ├── options.html           # Options page (NEW)
+ 88: │   ├── options.css
+ 89: │   └── options.ts
+ 90: ├── _locales/
+ 91: │   ├── en/messages.json
+ 92: │   ├── uk/messages.json
+ 93: │   └── ru/messages.json
+ 94: └── tests/
+ 95:     ├── utils.test.js          # 14 tests
+ 96:     ├── state.test.js          # 10 tests
+ 97:     └── test_parsers.js        # Existing parser tests
+ 98: ```
+ 99: 
+100: ---
+101: 
+102: ## ✅ Conclusion
+103: 
+104: The extension has been **fully modernized** from a legacy jQuery/globals codebase to a maintainable, secure, performant Manifest V3 extension with:
+105: 
+106: - Zero critical security issues
+107: - Modern build pipeline (Vite, HMR, tree-shaking)
+108: - Centralized configuration & storage
+109: - Lazy-loaded heavy dependencies
+110: - Automated linting & testing
+111: - Internationalization support
+112: - Background service worker for future extensibility
+113: 
+114: **Ready for Chrome Web Store submission.**
 </file>
 
-<file path=".kilocoderules">
-1: # Refer to AGENTS.md for main AI instructions and Code Audit protocols.
-2: # See AGENTS.md at repository root.
-3: 
-4: Read file AGENTS.md before executing task or code audit.
+<file path="docs/audits/active/TASKS.md">
+ 1: # 📋 Tasks List (Action Plan)
+ 2: 
+ 3: **Status:** Active  
+ 4: **Version:** 0.6 / 1.0.0
+ 5: 
+ 6: ---
+ 7: 
+ 8: ## 🎯 Current Tasks for Developers
+ 9: 
+10: - [ ] *(Немає відкритих задач — чекаємо наступного аудиту)*
+11: 
+12: ---
+13: 
+14: ## ✅ Completed Tasks
+15: 
+16: - [x] Організовано централізовану структуру аудитів та задач (`docs/audits/active/` та `docs/audits/archive/`).
 </file>
 
 <file path="чат з ШІ">
@@ -2264,66 +2392,6 @@ This section contains the contents of the repository's files.
 2: https://aistudio.google.com/prompts/1thwKo5jFC_ZiMvIg6pMxYjgemtvj0JDs
 3: 
 4: https://aistudio.google.com/prompts/12_-fDmOstIrlR0gvpfFs0pMFsBZz7bzc
-</file>
-
-<file path="AGENTS.md">
- 1: # AGENTS.md — Єдині правила та інструкції для AI Асистентів
- 2: (KiloCode, Nemotron, Kimi K2.6, Cline, Black Box, Antigravity)
- 3: 
- 4: ## 🚀 Потокол аудиту та аналізу всього коду (Full Code Audit Protocol)
- 5: 
- 6: ### ⚠️ ВАЖЛИВО: Уникання помилки `ResourceExhausted (32/32)` на Nvidia / LLM API
- 7: При здійсненні аудиту всього коду, аналізу архітектури або вивченні проєкту:
- 8: 1. **НЕ РОБІТЬ** декілька паралельних запитів на читання окремих файлів.
- 9: 2. **НЕ ЗАПИТУЙТЕ** файли по одному, якщо потрібен повний огляд коду.
-10: 3. **ВИКОРИСТОВУЙТЕ СМЕНТИЗОВАНИЙ БУНДЛ:** 
-11:    - Завжди шукайте та читайте єдиний файл проєкту: `repomix-output.xml` у корені.
-12:    - Якщо файл `repomix-output.xml` застарів або відсутній, виконайте команду `npm run pack` (або `npx repomix`) для його оновлення, після чого зчитайте `repomix-output.xml` за **ОДИН** запит.
-13: 
-14: ---
-15: 
-16: ## 🛠️ Команди проєкту
-17: - `npm run dev` — запуск Vite сервера розробки
-18: - `npm run build` — збірка розширення (Vite + CRX)
-19: - `npm run test` — запуск тестового фреймворка Node.js
-20: - `npm run pack` — склеювання всього проєкту у файл `repomix-output.xml` для LLM із контекстом 1M+
-21: 
-22: ---
-23: 
-24: ## 📐 Правила розробки
-25: - Проєкт є Chrome Extension (Manifest V3) на TypeScript / Vite.
-26: - Дотримуйтесь існуючого стилю коду, не видаляйте коментарі та документацію.
-27: - Перед фінальною відповіддю обов'язково перевіряйте відсутність помилок збірки та тестів (`npm run test` / `npm run build`).
-</file>
-
-<file path="repomix.config.json">
- 1: {
- 2:   "output": {
- 3:     "filePath": "repomix-output.xml",
- 4:     "style": "xml",
- 5:     "headerText": "Project source code bundle for AI audit and review.",
- 6:     "removeComments": false,
- 7:     "removeEmptyLines": false,
- 8:     "showLineNumbers": true,
- 9:     "topFilesFirst": true
-10:   },
-11:   "ignore": {
-12:     "useGitignore": true,
-13:     "useDefaultPatterns": true,
-14:     "customPatterns": [
-15:       "node_modules/**",
-16:       "dist/**",
-17:       ".git/**",
-18:       "package-lock.json",
-19:       "repomix-output.xml",
-20:       "repomix-output.txt",
-21:       "repomix-output.md",
-22:       "*.log",
-23:       ".idea/**",
-24:       ".kilo/**"
-25:     ]
-26:   }
-27: }
 </file>
 
 <file path="background/service-worker.ts">
@@ -17954,6 +18022,107 @@ This section contains the contents of the repository's files.
 43: });
 </file>
 
+<file path=".blackboxrules">
+1: # AUTOMATIC AUDIT PROTOCOL & RULES FOR BLACKBOX AI
+2: 
+3: Read AGENTS.md at repository root before executing any tasks.
+4: 
+5: CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
+6: When the user asks for "audit", "аудит", "full review", or "analyze project":
+7: DO NOT search files or make individual/parallel file read requests!
+8: IMMEDIATELY read the pre-packed bundle file: `repomix-output.xml` in the workspace root.
+9: If missing or outdated, run `npm run pack` first.
+</file>
+
+<file path=".clinerules">
+1: # AUTOMATIC AUDIT PROTOCOL & RULES FOR CLINE & KILOCODE
+2: 
+3: Read AGENTS.md at repository root before executing any tasks.
+4: 
+5: CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
+6: When the user asks for "audit", "аудит", "full review", or "analyze project":
+7: DO NOT search files or make individual/parallel file read requests!
+8: IMMEDIATELY read the pre-packed bundle file: `repomix-output.xml` in the workspace root.
+9: If missing or outdated, run `npm run pack` first.
+</file>
+
+<file path=".cursorrules">
+1: # AUTOMATIC AUDIT PROTOCOL & RULES FOR AI EXTENSIONS (CURSOR / BLACKBOX / CLINE / KILOCODE)
+2: 
+3: Read AGENTS.md at repository root before executing any tasks.
+4: 
+5: CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
+6: When the user asks for "audit", "аудит", "full review", or "analyze project":
+7: DO NOT search files or make individual/parallel file read requests!
+8: IMMEDIATELY read the pre-packed bundle file: `repomix-output.xml` in the workspace root.
+9: If missing or outdated, run `npm run pack` first.
+</file>
+
+<file path=".kilocoderules">
+1: # AUTOMATIC AUDIT PROTOCOL & RULES FOR KILOCODE
+2: 
+3: Read AGENTS.md at repository root before executing any tasks.
+4: 
+5: CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
+6: When the user asks for "audit", "аудит", "full review", or "analyze project":
+7: DO NOT search files or make individual/parallel file read requests!
+8: IMMEDIATELY read the pre-packed bundle file: `repomix-output.xml` in the workspace root.
+9: If missing or outdated, run `npm run pack` first.
+</file>
+
+<file path="AGENTS.md">
+ 1: # AGENTS.md — Єдиний протокол та Авто-Скіл для AI Асистентів
+ 2: (KiloCode, Nemotron, Kimi K2.6, Cline, Black Box, Antigravity)
+ 3: 
+ 4: ## ⚡ АВТОМАТИЧНИЙ ТРИГЕР: Скіл Незалежного Аудиту (Independent Audit Skill)
+ 5: 
+ 6: **ЯКЩО КОРИСТУВАЧ ПРОСИТЬ:**
+ 7: - "Зроби аудит", "Проаналізуй весь проєкт", "Огляд коду", "Проведи аудит", "Перевірь проєкт", "Full audit", "Code review", "Чистий аудит" або будь-яке подібне прохання про аналіз проєкту:
+ 8: 
+ 9: **ТИ ПОВИНЕН АВТОМАТИЧНО ВИКОНАТИ НАСТУПНИЙ АЛГОРИТМ (БЕЗ УЧАСТІ КОРИСТУВАЧА):**
+10: 
+11: 1. 🔄 **ОБОВ'ЯЗКОВЕ ОНОВЛЕННЯ XML:** Спочатку ЗАВЖДИ виконай у терміналі команду `npm run pack` (або `npx repomix`), щоб перегенерувати актуальний `repomix-output.xml`.
+12: 2. 🛑 **СУВОРЕ ТАБУ НА ІСНУЮЧІ АУДИТИ:** НЕ ЧИТАЙ і НЕ ОРИЄНТУЙСЯ на старі звітні файли (`docs/audits/active/AUDIT.md`, `TASKS.md` тощо). Твій аналіз має бути на 100% НЕЗАЛЕЖНИМ "з чистого аркуша" по реальному коду проєкту.
+13: 3. 🛑 **СУВОРЕ ТАБУ НА ПОШУК ФАЙЛІВ:** НЕ шукай файли через `find`/`grep` і НЕ роби паралельних запитів на читання окремих файлів. Це призводить до помилки Nvidia `ResourceExhausted (32/32)`.
+14: 4. 📄 **АВТОМАТИЧНЕ ЧИТАННЯ КОДУ:** Відразу відкривай та читай єдиний згенерований файл проєкту: [repomix-output.xml](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20%28added%20checkbox%29%200.6-2026.01.11/repomix-output.xml) у корені.
+15: 5. 📝 Проаналізуй весь актуальний код за один раз та сформуй новий незалежний звіт у файлі [AUDIT.md](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20%28added%20checkbox%29%200.6-2026.01.11/docs/audits/active/AUDIT.md) та новий список задач у [TASKS.md](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20%28added%20checkbox%29%200.6-2026.01.11/docs/audits/active/TASKS.md).
+16: 
+17: ---
+18: 
+19: ## 🔄 СПЕЦІАЛЬНИЙ ТРИГЕР: Повторна перевірка правок (Re-audit / Verification)
+20: 
+21: **ЯКЩО КОРИСТУВАЧ ЯВНО ПРОСИТЬ:** `"Повторний аудит"`, `"Re-audit"`, `"Перевірь правки"`, `"Звірь виконання задач"`:
+22: 1. Запусти `npm run pack` для оновлення `repomix-output.xml`.
+23: 2. Тільки в цьому випадку зчитай `docs/audits/active/AUDIT.md` та `TASKS.md` для перевірки статусу вирішення раніше виявлених задач.
+24: 
+25: ---
+26: 
+27: ## 📂 Централізована папка аудитів та задач (Audit Protocol)
+28: 
+29: Усі аудити, рефакторинги та списки задач **СУВОРО** зберігаються у визначеній структурі:
+30: - **Поточні (активні) аудити:** `docs/audits/active/`
+31:   - `docs/audits/active/AUDIT.md` — поточний звіт аудиту (первинний + re-audit)
+32:   - `docs/audits/active/TASKS.md` — список задач для розробників
+33: - **Завершені аудити (в архіві):** `docs/audits/archive/YYYY-MM-DD_vX.X/`
+34:   - Коли етап перевірки завершено і все "ОК", папка `active/` копіюється/переміщується в архів під відповідною датою та версією.
+35: 
+36: 🛑 **ЗАБОРОНЕНО:** Створювати `AUDIT_REPORT.md`, `AUDIT.md` або інші звітні файли у корені проєкту!
+37: 
+38: ---
+39: 
+40: ## 🛠️ Основні команди проєкту
+41: - `npm run dev` — запуск Vite сервера розробки
+42: - `npm run build` — збірка розширення (Vite + CRX)
+43: - `npm run test` — запуск тестів Node.js
+44: - `npm run pack` — склеювання проєкту в один файл `repomix-output.xml` (контекст ~350k токенів)
+45: 
+46: ---
+47: 
+48: ## 📐 Правила розробки
+49: - Chrome Extension (Manifest V3) на TypeScript / Vite.
+50: - Перевіряй відсутність помилок збірки та тестів (`npm run test` / `npm run build`) після внесення змін.
+</file>
+
 <file path="eslint.config.js">
  1: import js from '@eslint/js';
  2: import globals from 'globals';
@@ -18235,6 +18404,36 @@ This section contains the contents of the repository's files.
  9: - **📈 Аналітика ефіру**: Додано щохвилинний запис кількості глядачів у реальному часі.
 10: - **📊 Експорт звітів**: Можливість завантажити детальний графік глядачів у форматі CSV або згенерувати стильну HTML-презентацію з розподілом за фазами.
 11: - **⚡ Кнопки маркування фаз**: Швидке позначення початку блоку питань та молитов безпосередньо з шапки студії.
+</file>
+
+<file path="repomix.config.json">
+ 1: {
+ 2:   "output": {
+ 3:     "filePath": "repomix-output.xml",
+ 4:     "style": "xml",
+ 5:     "headerText": "Project source code bundle for AI audit and review.",
+ 6:     "removeComments": false,
+ 7:     "removeEmptyLines": false,
+ 8:     "showLineNumbers": true,
+ 9:     "topFilesFirst": true
+10:   },
+11:   "ignore": {
+12:     "useGitignore": true,
+13:     "useDefaultPatterns": true,
+14:     "customPatterns": [
+15:       "node_modules/**",
+16:       "dist/**",
+17:       ".git/**",
+18:       "package-lock.json",
+19:       "repomix-output.xml",
+20:       "repomix-output.txt",
+21:       "repomix-output.md",
+22:       "*.log",
+23:       ".idea/**",
+24:       ".kilo/**"
+25:     ]
+26:   }
+27: }
 </file>
 
 <file path="vite.config.js">

@@ -153,6 +153,24 @@ class OptionsController {
         });
     }
 
+    private validateImportedConfig(data: any): boolean {
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            return false;
+        }
+        const hasDb = 'db' in data;
+        const hasOptions = 'syh_options' in data;
+        if (!hasDb && !hasOptions) {
+            return false;
+        }
+        if (hasDb && (typeof data.db !== 'object' || data.db === null || Array.isArray(data.db))) {
+            return false;
+        }
+        if (hasOptions && (typeof data.syh_options !== 'object' || data.syh_options === null || Array.isArray(data.syh_options))) {
+            return false;
+        }
+        return true;
+    }
+
     private importConfig(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
@@ -162,7 +180,7 @@ class OptionsController {
         reader.onload = (e) => {
             try {
                 const imported = JSON.parse(e.target?.result as string);
-                if (imported && (imported.db || imported.syh_options)) {
+                if (this.validateImportedConfig(imported)) {
                     SYH_STORAGE.set({
                         'db': imported.db || {},
                         'syh_options': imported.syh_options || DEFAULT_OPTIONS

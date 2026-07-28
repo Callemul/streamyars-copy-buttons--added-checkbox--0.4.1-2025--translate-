@@ -84,7 +84,13 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         }
         
         if (rawText.includes('🔹') && filterIds) {
-            const subIndexesToRemove = filterIds.filter(fid => Math.floor(fid) === id && fid % 1 !== 0).map(fid => Math.round((fid % 1) * 10));
+            const subIndexesToRemove = filterIds
+                .filter(fid => Math.floor(fid) === id)
+                .map(fid => {
+                    const parts = fid.toString().split('.');
+                    return parts[1] ? parseInt(parts[1], 10) : 0;
+                })
+                .filter(subIdx => subIdx > 0);
 
             if (subIndexesToRemove.length > 0) {
                 let subQuestions = rawText.split('🔹').map(t => t.trim()).filter(Boolean);

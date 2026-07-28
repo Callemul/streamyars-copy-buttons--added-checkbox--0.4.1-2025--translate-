@@ -68,16 +68,36 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
+        const closeModal = () => {
+            const modal = document.getElementById('syh-chart-modal');
+            if (modal) modal.remove();
+            if (this.chartInstance) {
+                this.chartInstance.destroy();
+                this.chartInstance = null;
+            }
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        const modalElement = document.getElementById('syh-chart-modal');
+        if (modalElement) {
+            modalElement.addEventListener('click', (e: MouseEvent) => {
+                if (e.target === modalElement) {
+                    closeModal();
+                }
+            });
+        }
+
         const closeBtn = document.getElementById('syh-close-chart');
         if (closeBtn) {
-            closeBtn.onclick = () => {
-                const modal = document.getElementById('syh-chart-modal');
-                if (modal) modal.remove();
-                if (this.chartInstance) {
-                    this.chartInstance.destroy();
-                    this.chartInstance = null;
-                }
-            };
+            closeBtn.onclick = () => closeModal();
         }
 
         this.loadChartData(currentBrand);

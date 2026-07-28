@@ -28,17 +28,17 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
     switch (message.type) {
       case 'PING':
         sendResponse({ status: 'ok', response: 'PONG', timestamp: Date.now() });
-        return true;
+        return false;
 
       case 'GET_VERSION':
         const manifest = chrome.runtime.getManifest();
         sendResponse({ version: manifest.version, name: manifest.name });
-        return true;
+        return false;
 
       case 'BACKGROUND_LOG':
         console.log(`[Content/Popup Log]:`, message.data);
         sendResponse({ status: 'logged' });
-        return true;
+        return false;
 
       default:
         // Якщо тип повідомлення не розпізнано фоновим скриптом

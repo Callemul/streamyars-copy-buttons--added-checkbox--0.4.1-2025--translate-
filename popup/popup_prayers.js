@@ -35,6 +35,18 @@ window.renderPrayers = function(prayersList) {
         return;
     }
 
+    // 0. ENSURE UNIQUE IDs FOR PRAYERS
+    let needsSaveId = false;
+    prayersList.forEach((p, idx) => {
+        if (!p.id) {
+            p.id = 'p_' + (p.timestamp || Date.now()) + '_' + idx + '_' + Math.random().toString(36).substring(2, 7);
+            needsSaveId = true;
+        }
+    });
+    if (needsSaveId) {
+        chrome.storage.local.set({ 'syh_prayers': prayersList });
+    }
+
     // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
     const now = Date.now();
     const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
@@ -80,14 +92,14 @@ window.renderPrayers = function(prayersList) {
 
     const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
 
-    onlyPrayers.forEach((p, originalIndex) => {
+    onlyPrayers.forEach((p) => {
         const cleanAuthor = p.author.replace(/^@+/, '');
         if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
         
         grouped[cleanAuthor].push({ 
             text: p.text, 
             icon: p.icon || '🙏🙏🙏',
-            originalIndex: prayersList.indexOf(p) 
+            id: p.id 
         });
         totalRequests++;
     });
@@ -183,14 +195,14 @@ window.renderPrayers = function(prayersList) {
             const textSpan = $('<span>')
                 .addClass('editable-prayer')
                 .attr('contenteditable', 'true')
-                .attr('data-index', item.originalIndex)
+                .attr('data-id', item.id)
                 .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
                 .text(item.text);
             
             const delBtn = $('<button>')
                 .text('❌')
                 .attr('title', 'Видалити прохання')
-                .attr('data-index', item.originalIndex)
+                .attr('data-id', item.id)
                 .addClass('del-prayer-btn')
                 .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
@@ -207,14 +219,14 @@ window.renderPrayers = function(prayersList) {
                 const textSpan = $('<span>')
                     .addClass('editable-prayer')
                     .attr('contenteditable', 'true')
-                    .attr('data-index', item.originalIndex)
+                    .attr('data-id', item.id)
                     .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
                     .text(item.text);
                 
                 const delBtn = $('<button>')
                     .text('❌')
                     .attr('title', 'Видалити прохання')
-                    .attr('data-index', item.originalIndex)
+                    .attr('data-id', item.id)
                     .addClass('del-prayer-btn')
                     .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
@@ -235,13 +247,14 @@ $(document).ready(function() {
     }).on('blur', '.editable-prayer', function() {
         $(this).css('border-bottom', '1px dashed transparent');
         
-        const index = $(this).data('index');
+        const id = $(this).attr('data-id');
         const newText = $(this).text().trim();
         
         chrome.storage.local.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
-            if (list[index] && list[index].text !== newText) {
-                list[index].text = newText;
+            const targetItem = list.find(item => item.id === id);
+            if (targetItem && targetItem.text !== newText) {
+                targetItem.text = newText;
                 chrome.storage.local.set({ 'syh_prayers': list });
             }
         });
@@ -340,14 +353,14 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.del-prayer-btn', function() {
-        const index = $(this).data('index');
+        const id = $(this).attr('data-id');
         chrome.storage.local.get(['syh_prayers'], function(result) {
             let list = result.syh_prayers || [];
-            const targetItem = list[index];
+            const targetItem = list.find(item => item.id === id);
             if (targetItem) {
                 sendUnstarMessage(targetItem.text);
             }
-            list.splice(index, 1);
+            list = list.filter(item => item.id !== id);
             chrome.storage.local.set({ 'syh_prayers': list }, function() {
                 if (window.renderPrayers) window.renderPrayers(list);
             });
@@ -430,6 +443,7 @@ $(document).ready(function() {
                             
                             if (text) {
                                 newPrayers.push({
+                                    id: 'p_' + now + '_' + Math.random().toString(36).substring(2, 9),
                                     author: author,
                                     text: text,
                                     type: "prayer",
