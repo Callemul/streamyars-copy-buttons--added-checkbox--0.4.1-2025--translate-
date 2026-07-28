@@ -1,0 +1,27 @@
+{
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "headerText": "Project source code bundle for AI audit and review.",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": true,
+    "topFilesFirst": true
+  },
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "node_modules/**",
+      "dist/**",
+      ".git/**",
+      "package-lock.json",
+      "repomix-output.xml",
+      "repomix-output.txt",
+      "repomix-output.md",
+      "*.log",
+      ".idea/**",
+      ".kilo/**"
+    ]
+  }
+}

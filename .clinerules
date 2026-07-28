@@ -1,0 +1,9 @@
+# AUTOMATIC AUDIT PROTOCOL & RULES FOR CLINE & KILOCODE
+
+Read AGENTS.md at repository root before executing any tasks.
+
+CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
+When the user asks for "audit", "аудит", "full review", or "analyze project":
+DO NOT search files or make individual/parallel file read requests!
+IMMEDIATELY read the pre-packed bundle file: `repomix-output.xml` in the workspace root.
+If missing or outdated, run `npm run pack` first.
