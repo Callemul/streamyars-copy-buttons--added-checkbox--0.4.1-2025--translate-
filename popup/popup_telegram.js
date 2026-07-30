@@ -124,8 +124,10 @@ window.updateCombinedCounters = function() {
         let rightStr = '🎬 YouTube: ' + rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
         if (rightStats.prayers > 0) rightStr += ' | Молитви: ' + rightStats.prayers;
         $('#tgTotalCountRight').text(rightStr).show();
+        $('#ytHeaderCount').text(rightStats.people + ' люд. - ' + rightStats.questions + ' пит.').show();
     } else {
         $('#tgTotalCountRight').text('').hide();
+        $('#ytHeaderCount').text('').hide();
     }
 
     const totalPeople = leftPeople + rightStats.people;
@@ -452,7 +454,7 @@ window.processTelegramData = function() {
     newQuestions.forEach(q => newLeftQuestionsTotal += window.countQuestionsInText(q.text));
     const newLeftPrayersTotal = newPrayers.length;
     
-    const newYTPeople = newYTQuestions.length;
+    const newYTPeople = ytItems.length;
     let newYTQuestionsTotal = 0;
     newYTQuestions.forEach(q => newYTQuestionsTotal += window.countQuestionsInText(q.text));
     const newYTPrayersTotal = newYTPrayers.length;
@@ -484,6 +486,10 @@ window.processTelegramData = function() {
     $('#countTotal').text(totalText);
     
     $('#statsBar').show();
+
+    if (typeof window.updateCombinedCounters === 'function') {
+        window.updateCombinedCounters();
+    }
     
     const outputDiv = $('#finalResultDiv');
     outputDiv.empty();

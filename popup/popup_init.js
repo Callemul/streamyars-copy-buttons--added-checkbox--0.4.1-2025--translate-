@@ -124,6 +124,9 @@ $(document).ready(function() {
             $('#step3Left').css('flex', pos);
             $('#step3Right').css('flex', 100 - pos);
         }
+        if (result.syh_yt_collected) {
+            window.syh_yt_collected = result.syh_yt_collected;
+        }
         if (typeof window.loadYTCollected === 'function') {
             window.loadYTCollected();
         }
