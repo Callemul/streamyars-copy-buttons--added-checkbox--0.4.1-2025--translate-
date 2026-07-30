@@ -1,0 +1,8 @@
+# Ignore large repomix bundle for KiloCode to prevent 404 API Payload errors
+repomix-output.xml
+
+# Ignore built assets and dependencies to speed up search and prevent token bloat
+dist/
+node_modules/
+.git/
+.idea/
