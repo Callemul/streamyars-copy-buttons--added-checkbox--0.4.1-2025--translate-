@@ -539,6 +539,28 @@ hryvach
     process.exit(1);
 }
 
+// Тест 12: Очищення YouTube міток часу з імені автора (наприклад, • 4 часа назад)
+try {
+    const rawInput = `❓❓❓ВОПРОСЫ
+1️⃣
+Artem • 4 часа назад
+Здравствуйте.
+2️⃣
+hryvach • 1 день назад (изменено)
+Вы говорите.`;
+
+    const parsed = global.window.parseAndFilterOldList(rawInput, []);
+    
+    assert.strictEqual(parsed.questions.length, 2);
+    assert.strictEqual(parsed.questions[0].author, "Artem");
+    assert.strictEqual(parsed.questions[1].author, "hryvach");
+
+    console.log("✅ Тест 12 пройдено: YouTube мітки часу успішно видаляються з імені автора.");
+} catch (e) {
+    console.error("❌ Тест 12 провалено:", e);
+    process.exit(1);
+}
+
 // Запускаємо асинхронні тести
 testCategoryDetection().then(() => {
     console.log("\n🎉 Усі тести успішно пройдено!");

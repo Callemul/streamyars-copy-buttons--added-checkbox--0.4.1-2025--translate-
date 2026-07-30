@@ -48,6 +48,7 @@ window.numberToEmoji = function(num) {
 window.cleanAuthorName = function(rawName) {
     let name = rawName.trim();
     if (name.startsWith('@')) name = name.substring(1);
+    name = name.replace(/\s*•.*$/, '');
     name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
     name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2');
     return name.trim();
@@ -71,6 +72,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         if (lines.length === 0) return;
 
         let author = lines[0].trim();
+        author = author.replace(/\s*•.*$/, '').trim();
         let rawText = lines.slice(1).map(l => l.trimEnd()).join('\n').trim();
         if (!author) author = "Анонім";
 
