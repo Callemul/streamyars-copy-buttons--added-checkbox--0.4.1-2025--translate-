@@ -147,8 +147,11 @@ $(document).ready(function() {
     if ($('#tgTotalCount').length === 0) { 
         $('label:contains("3. Нові питання з Telegram")').append(' <span id="tgTotalCount" style="color: #2b7de9; font-weight: bold; font-size: 12px;"></span>'); 
     }
-    if ($('.stat-item.total').length === 0) { 
-        $('#statsBar').append('<span class="stat-item total" style="background:#e3f2fd; border:1px solid #2196f3; font-weight:bold;">Разом: <b id="countTotal">0</b></span>'); 
+    if ($('#countNewYT').length === 0 && $('#statsBar').length > 0) {
+        $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>').insertBefore('#statsBar .stat-item.total');
+    }
+    if ($('.stat-item.total').length === 0 && $('#statsBar').length > 0) { 
+        $('#statsBar').append('<span class="stat-item total">Разом: <b id="countTotal">0</b></span>'); 
     }
 
     // 4. Слухачі введення даних у поля для синхронізації зі сховищем

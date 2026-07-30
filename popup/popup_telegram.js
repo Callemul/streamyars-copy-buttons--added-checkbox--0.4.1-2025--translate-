@@ -477,6 +477,10 @@ window.processTelegramData = function() {
     if (newLeftPrayersTotal > 0) newLeftText += ' | Молитви: ' + newLeftPrayersTotal;
     $('#countNewLeft').html(newLeftText);
     
+    if ($('#countNewYT').length === 0 && $('#statsBar').length > 0) {
+        $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>').insertBefore('#statsBar .stat-item.total');
+    }
+
     let newYTText = newYTPeople + ' люд. - ' + newYTQuestionsTotal + ' пит.';
     if (newYTPrayersTotal > 0) newYTText += ' | Молитви: ' + newYTPrayersTotal;
     $('#countNewYT').html(newYTText);
