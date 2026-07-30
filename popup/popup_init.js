@@ -107,6 +107,10 @@ $(document).ready(function() {
                 if (scrolls.prayersResultDiv !== undefined) $('#prayersResultDiv').scrollTop(scrolls.prayersResultDiv);
                 if (scrolls.finalResultDiv !== undefined) $('#finalResultDiv').scrollTop(scrolls.finalResultDiv);
                 if (scrolls.deletedLog !== undefined) $('#deletedLog').scrollTop(scrolls.deletedLog);
+                if (scrolls.oldList !== undefined) $('#oldList').scrollTop(scrolls.oldList);
+                if (scrolls.newTelegram !== undefined) $('#newTelegram').scrollTop(scrolls.newTelegram);
+                if (scrolls.textArea1_oldText !== undefined) $('#textArea1_oldText').scrollTop(scrolls.textArea1_oldText);
+                if (scrolls.textArea2_generatedRuText !== undefined) $('#textArea2_generatedRuText').scrollTop(scrolls.textArea2_generatedRuText);
             }, 100);
         }
 
@@ -249,12 +253,16 @@ $(document).ready(function() {
                 window: window.scrollY || document.documentElement.scrollTop,
                 prayersResultDiv: $('#prayersResultDiv').scrollTop() || 0,
                 finalResultDiv: $('#finalResultDiv').scrollTop() || 0,
-                deletedLog: $('#deletedLog').scrollTop() || 0
+                deletedLog: $('#deletedLog').scrollTop() || 0,
+                oldList: $('#oldList').scrollTop() || 0,
+                newTelegram: $('#newTelegram').scrollTop() || 0,
+                textArea1_oldText: $('#textArea1_oldText').scrollTop() || 0,
+                textArea2_generatedRuText: $('#textArea2_generatedRuText').scrollTop() || 0
             };
             chrome.storage.local.set({ 'tg_scroll_positions': scrolls });
         }, 150);
     }
 
     $(window).on('scroll', saveScrollPositions);
-    $('#prayersResultDiv, #finalResultDiv, #deletedLog').on('scroll', saveScrollPositions);
+    $('#prayersResultDiv, #finalResultDiv, #deletedLog, #oldList, #newTelegram, #textArea1_oldText, #textArea2_generatedRuText').on('scroll', saveScrollPositions);
 });
