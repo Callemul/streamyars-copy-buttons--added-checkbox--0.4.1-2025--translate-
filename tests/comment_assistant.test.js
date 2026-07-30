@@ -1,4 +1,4 @@
-import test from 'node.test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant.ts';
 

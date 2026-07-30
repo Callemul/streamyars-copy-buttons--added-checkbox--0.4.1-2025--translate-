@@ -18,7 +18,134 @@ window.updateOldInputStats = function() {
     $('#oldTotalCount').css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 };
 
+window.syh_yt_collected = [];
+
+window.loadYTCollected = function() {
+    chrome.storage.local.get(['syh_yt_collected'], function(result) {
+        const items = result.syh_yt_collected || [];
+        window.syh_yt_collected = items;
+        const $list = $('#ytCollectedList');
+        $list.empty();
+        if (items.length === 0) {
+            $list.append('<div class="yt-empty-msg">Зібраних коментарів з YouTube немає</div>');
+        } else {
+            items.forEach((item) => {
+                const $card = $('<div>')
+                    .addClass('yt-collected-item')
+                    .addClass(item.type === 'question' ? 'is-question' : 'is-prayer')
+                    .attr('data-id', item.id);
+
+                const typeLabel = item.type === 'question' ? '❓ Питання' : '🙏 Молитва';
+
+                const $header = $('<div>').addClass('yt-item-header');
+                const $author = $('<span>').addClass('yt-item-author').text(item.author || 'Анонім');
+                const $badge = $('<span>').addClass('yt-item-type-badge').text(typeLabel);
+                const $delBtn = $('<button>').addClass('yt-item-del-btn').text('✕').attr('title', 'Видалити');
+
+                $delBtn.click(function(e) {
+                    e.stopPropagation();
+                    window.deleteYTCollectedItem(item.id);
+                });
+
+                $header.append($author, $badge, $delBtn);
+                const $text = $('<div>').addClass('yt-item-text').text(item.text);
+                $card.append($header, $text);
+                $list.append($card);
+            });
+        }
+        window.updateCombinedCounters();
+    });
+};
+
+window.deleteYTCollectedItem = function(commentId) {
+    chrome.storage.local.get(['syh_yt_collected'], function(result) {
+        let items = result.syh_yt_collected || [];
+        items = items.filter(item => item.id !== commentId);
+        chrome.storage.local.set({ syh_yt_collected: items }, function() {
+            window.loadYTCollected();
+        });
+    });
+};
+
+window.clearAllYTCollected = function() {
+    if (confirm("Очистити всі зібрані коментарі з YouTube?")) {
+        chrome.storage.local.set({ syh_yt_collected: [] }, function() {
+            window.loadYTCollected();
+        });
+    }
+};
+
+window.updateRightColumnStats = function() {
+    const items = window.syh_yt_collected || [];
+    let qCount = 0;
+    let pCount = 0;
+    items.forEach(item => {
+        if (item.type === 'question') {
+            qCount += window.countQuestionsInText(item.text);
+        } else if (item.type === 'prayer') {
+            pCount += 1;
+        }
+    });
+    return { people: items.length, questions: qCount, prayers: pCount };
+};
+
+window.updateCombinedCounters = function() {
+    // 1. Left column stats (Telegram)
+    const text = $('#newTelegram').val() || '';
+    let leftPeople = 0;
+    let leftQuestions = 0;
+    let leftPrayers = 0;
+    if (text.trim()) {
+        if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
+            const parsed = window.parseAndFilterOldList(text, []);
+            leftPeople = parsed.questions.length;
+            parsed.questions.forEach(q => leftQuestions += window.countQuestionsInText(q.text));
+            leftPrayers = parsed.prayers.length;
+        } else {
+            const items = window.parseTelegramExportLineByLine(text);
+            leftPeople = items.length;
+            items.forEach(q => leftQuestions += window.countQuestionsInText(q.text));
+        }
+    }
+
+    // 2. Right column stats (YouTube)
+    const rightStats = window.updateRightColumnStats();
+
+    // 3. Render Badges
+    if (leftPeople > 0) {
+        let leftStr = '📝 Telegram: ' + leftPeople + ' люд. - ' + leftQuestions + ' пит.';
+        if (leftPrayers > 0) leftStr += ' | Молитви: ' + leftPrayers;
+        $('#tgTotalCountLeft').text(leftStr).show();
+    } else {
+        $('#tgTotalCountLeft').text('').hide();
+    }
+
+    if (rightStats.people > 0) {
+        let rightStr = '🎬 YouTube: ' + rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
+        if (rightStats.prayers > 0) rightStr += ' | Молитви: ' + rightStats.prayers;
+        $('#tgTotalCountRight').text(rightStr).show();
+    } else {
+        $('#tgTotalCountRight').text('').hide();
+    }
+
+    const totalPeople = leftPeople + rightStats.people;
+    const totalQuestions = leftQuestions + rightStats.questions;
+    const totalPrayers = leftPrayers + rightStats.prayers;
+
+    if (totalPeople > 0) {
+        let allStr = 'Разом: ' + totalPeople + ' люд. - ' + totalQuestions + ' пит.';
+        if (totalPrayers > 0) allStr += ' | Молитви: ' + totalPrayers;
+        $('#tgTotalCountAll').text('(' + allStr + ')').show();
+    } else {
+        $('#tgTotalCountAll').text('').hide();
+    }
+};
+
 window.updateNewInputStats = function() {
+    window.updateCombinedCounters();
+    return;
+    // legacy code fallback below
+
     const text = $('#newTelegram').val();
     if (!text) { $('#tgTotalCount').text(''); return; }
     let peopleCount;
@@ -322,19 +449,36 @@ window.processTelegramData = function() {
         newQuestions = window.parseTelegramExportLineByLine(telegramText);
     }
     
-    const combinedQuestions = [...preservedData.questions, ...newQuestions];
-    const combinedPrayers = [...preservedData.prayers, ...newPrayers];
+    // YouTube new items
+    const ytItems = window.syh_yt_collected || [];
+    const newYTQuestions = [];
+    const newYTPrayers = [];
+
+    ytItems.forEach(item => {
+        if (item.type === 'question') {
+            newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
+        } else if (item.type === 'prayer') {
+            newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
+        }
+    });
+
+    const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
+    const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
     
     let oldPeople = preservedData.questions.length;
     let oldQuestionsTotal = 0;
     preservedData.questions.forEach(q => oldQuestionsTotal += window.countQuestionsInText(q.text));
     
-    let newPeople = newQuestions.length;
-    let newQuestionsTotal = 0;
-    newQuestions.forEach(q => newQuestionsTotal += window.countQuestionsInText(q.text));
+    let newLeftPeople = newQuestions.length;
+    let newLeftQuestionsTotal = 0;
+    newQuestions.forEach(q => newLeftQuestionsTotal += window.countQuestionsInText(q.text));
+    let newLeftPrayersTotal = newPrayers.length;
     
-    let newPrayersTotal = newPrayers.length;
-    
+    let newYTPeople = newYTQuestions.length;
+    let newYTQuestionsTotal = 0;
+    newYTQuestions.forEach(q => newYTQuestionsTotal += window.countQuestionsInText(q.text));
+    let newYTPrayersTotal = newYTPrayers.length;
+
     let delPeople = 0;
     let delQuestionsTotal = 0;
     preservedData.deleted.forEach(d => {
@@ -342,19 +486,23 @@ window.processTelegramData = function() {
         else if (d.type === 'sub') { delQuestionsTotal += d.count; }
     });
     
-    let totalPeople = oldPeople + newPeople;
-    let totalQuestions = oldQuestionsTotal + newQuestionsTotal;
+    let totalPeople = oldPeople + newLeftPeople + newYTPeople;
+    let totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
     let totalPrayers = combinedPrayers.length;
     
-    $('.stat-item.old').html(`Залишилось старих: <b>${oldPeople} люд. - ${oldQuestionsTotal} пит.</b>`);
-    $('#countDel').text(`${delPeople} люд. - ${delQuestionsTotal} пит.`);
+    $('.stat-item.old').html('Залишилось старих: <b>' + oldPeople + ' люд. - ' + oldQuestionsTotal + ' пит.</b>');
+    $('#countDel').text(delPeople + ' люд. - ' + delQuestionsTotal + ' пит.');
     
-    let newText = `${newPeople} люд. - ${newQuestionsTotal} пит.`;
-    if (newPrayersTotal > 0) newText += ` | Молитви: ${newPrayersTotal}`;
-    $('#countNew').html(newText);
+    let newLeftText = newLeftPeople + ' люд. - ' + newLeftQuestionsTotal + ' пит.';
+    if (newLeftPrayersTotal > 0) newLeftText += ' | Молитви: ' + newLeftPrayersTotal;
+    $('#countNewLeft').html(newLeftText);
     
-    let totalText = `${totalPeople} люд. - ${totalQuestions} пит.`;
-    if (totalPrayers > 0) totalText += ` | Молитви: ${totalPrayers}`;
+    let newYTText = newYTPeople + ' люд. - ' + newYTQuestionsTotal + ' пит.';
+    if (newYTPrayersTotal > 0) newYTText += ' | Молитви: ' + newYTPrayersTotal;
+    $('#countNewYT').html(newYTText);
+
+    let totalText = totalPeople + ' люд. - ' + totalQuestions + ' пит.';
+    if (totalPrayers > 0) totalText += ' | Молитви: ' + totalPrayers;
     $('#countTotal').text(totalText);
     
     $('#statsBar').show();
@@ -364,9 +512,9 @@ window.processTelegramData = function() {
     let fullText = "❓❓❓ВОПРОСЫ 🔹\n";
     combinedQuestions.forEach((item, index) => {
         const emojiNum = window.numberToEmoji(index + 1);
-        const textBlock = `${emojiNum}\n${item.author}\n${item.text}\n\n`;
+        const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
         fullText += textBlock;
-        const block = $('<div>').addClass('q-block').addClass(`q-${item.source}`);
+        const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
         block.text(textBlock);
         outputDiv.append(block);
     });
@@ -376,7 +524,7 @@ window.processTelegramData = function() {
         outputDiv.append(header);
         combinedPrayers.forEach((item, index) => {
             const emojiNum = window.numberToEmoji(index + 1);
-            const textBlock = `${emojiNum}\n${item.author}\n${item.text}\n\n`;
+            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
             fullText += textBlock;
             const block = $('<div>').addClass('q-block').addClass('q-pray');
             block.text(textBlock);
@@ -387,15 +535,34 @@ window.processTelegramData = function() {
     deletedLog.empty();
     if (preservedData.deleted.length > 0) {
         preservedData.deleted.forEach(d => {
-            let msg = `№${d.originalId} (${d.author}): `;
-            if (d.type === 'block') msg += `Видалено повністю (${d.count} пит.)`;
-            else msg += `Видалено підпункт`;
+            let msg = '№' + d.originalId + ' (' + d.author + '): ';
+            if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
+            else msg += 'Видалено підпункт';
             deletedLog.append($('<div>').addClass('del-row').text(msg));
         });
         $('#deletedLogDetails').show();
     } else {
         $('#deletedLogDetails').hide();
     }
+
+    // 30-денне очищення чекбоксів YouTube
+    chrome.storage.local.get(['syh_yt_checkbox_state'], function(res) {
+        const states = res.syh_yt_checkbox_state;
+        if (states && typeof states === 'object') {
+            const now = Date.now();
+            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+            let modified = false;
+            for (const id in states) {
+                if (states[id] && states[id].timestamp && (now - states[id].timestamp > thirtyDaysMs)) {
+                    delete states[id];
+                    modified = true;
+                }
+            }
+            if (modified) {
+                chrome.storage.local.set({ syh_yt_checkbox_state: states });
+            }
+        }
+    });
 
     // Збереження результатів процесингу Telegram в сховище
     chrome.storage.local.set({
@@ -409,6 +576,17 @@ window.processTelegramData = function() {
 };
 
 $(document).ready(function() {
+    // Реактивне оновлення правої колонки при зміні зібраних коментарів YouTube
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.addListener(function(changes, areaName) {
+            if (areaName === 'local' && changes.syh_yt_collected) {
+                if (typeof window.loadYTCollected === 'function') {
+                    window.loadYTCollected();
+                }
+            }
+        });
+    }
+
     // Обробники кліку для генерації та копіювання списку питань
     $('#processTelegramBtn').click(function() { 
         try { 

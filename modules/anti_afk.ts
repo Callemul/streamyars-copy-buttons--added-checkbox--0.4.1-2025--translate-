@@ -180,7 +180,7 @@ export function startAntiAfk(
         const rootNode = customTargetNode || (typeof document !== 'undefined' ? document.body || document.documentElement : null);
 
         // 1. Початкова перевірка
-        checkAndClickAntiAfk(typeof document !== 'undefined' ? document : null, i18n);
+        checkAndClickAntiAfk(rootNode, i18n);
 
         // 2. Превентивна імітація активності кожні 2.5 хвилини (150,000 мс)
         simulateUserActivity();
@@ -192,7 +192,7 @@ export function startAntiAfk(
                 activeAfkObserver = new MutationObserver((mutations) => {
                     for (const mutation of mutations) {
                         if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                            const clicked = checkAndClickAntiAfk(typeof document !== 'undefined' ? document : null, i18n);
+                            const clicked = checkAndClickAntiAfk(rootNode, i18n);
                             if (clicked) break;
                         }
                     }
@@ -215,7 +215,7 @@ export function startAntiAfk(
                 return;
             }
 
-            checkAndClickAntiAfk(typeof document !== 'undefined' ? document : null, i18n);
+            checkAndClickAntiAfk(rootNode, i18n);
         }, intervalMs);
     };
 

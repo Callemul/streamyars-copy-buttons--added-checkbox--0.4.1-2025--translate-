@@ -1,0 +1,141 @@
+/* youtube/youtube_styles.css */
+
+/* Контейнер кнопок розширення в коментарі YouTube */
+.syh-yt-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+/* Базові стилі для кнопок дій */
+.syh-yt-btn {
+    font-family: Roboto, Noto, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+    user-select: none;
+}
+
+/* Кнопка "Додати до питань" */
+.syh-yt-btn-question {
+    background-color: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+    border-color: rgba(39, 174, 96, 0.35);
+}
+
+.syh-yt-btn-question:hover {
+    background-color: rgba(39, 174, 96, 0.25);
+    border-color: #27ae60;
+    transform: translateY(-1px);
+}
+
+/* Кнопка "Додати до молитов" */
+.syh-yt-btn-prayer {
+    background-color: rgba(155, 89, 182, 0.12);
+    color: #9b59b6;
+    border-color: rgba(155, 89, 182, 0.35);
+}
+
+.syh-yt-btn-prayer:hover {
+    background-color: rgba(155, 89, 182, 0.25);
+    border-color: #9b59b6;
+    transform: translateY(-1px);
+}
+
+/* Перманентні стани додатків [data-state="added"] */
+.syh-yt-btn-question[data-state="added"] {
+    background-color: #27ae60 !important;
+    color: #ffffff !important;
+    border-color: #27ae60 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(39, 174, 96, 0.4);
+}
+
+.syh-yt-btn-prayer[data-state="added"] {
+    background-color: #9b59b6 !important;
+    color: #ffffff !important;
+    border-color: #9b59b6 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(155, 89, 182, 0.4);
+}
+
+/* Плаваюча кнопка 📄 копіювання */
+.syh-yt-btn-copy {
+    background: transparent;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    color: inherit;
+}
+
+.syh-yt-btn-copy:hover {
+    background-color: rgba(128, 128, 128, 0.2);
+    border-color: rgba(128, 128, 128, 0.6);
+    transform: scale(1.08);
+}
+
+.syh-yt-btn-copy.syh-copied-flash {
+    background-color: rgba(39, 174, 96, 0.2);
+    border-color: #27ae60;
+    color: #27ae60;
+}
+
+/* Чекбокс 24×24 */
+.syh-yt-checkbox-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.syh-yt-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #9b59b6;
+    margin: 0;
+    border-radius: 4px;
+}
+
+/* Хайлайт тригерних слів (жовтий, як у Streamyard) */
+mark.syh-trigger-highlight {
+    background-color: #ffe066 !important;
+    color: #111111 !important;
+    padding: 1px 4px !important;
+    border-radius: 3px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Блокування виділення тексту для ПКМ-тогла */
+.syh-yt-comment-body {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Стиль для відміченого/прочитаного коментаря */
+.syh-yt-comment-checked {
+    opacity: 0.55;
+    filter: grayscale(40%);
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}

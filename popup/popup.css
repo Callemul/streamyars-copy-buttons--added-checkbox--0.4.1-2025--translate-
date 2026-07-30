@@ -50,6 +50,14 @@
     --pray-border: hsl(var(--pray-h), var(--pray-s), 50%);
     --pray-text: hsl(var(--pray-h), var(--pray-s), 20%);
 
+    /* YouTube / Right Column (Purple status) */
+    --yt-h: 271;
+    --yt-s: 76%;
+    --yt-l: 95%;
+    --yt-color: hsl(var(--yt-h), var(--yt-s), var(--yt-l));
+    --yt-border: hsl(var(--yt-h), var(--yt-s), 45%);    /* #9b59b6 */
+    --yt-text: hsl(var(--yt-h), var(--yt-s), 15%);
+
     /* Borders & Shadow System */
     --radius-sm: 6px;
     --radius: 10px;
@@ -61,7 +69,7 @@
 }
 
 body {
-    width: 750px;
+    width: 820px;
     max-width: 100%;
     min-height: 400px;
     padding: 20px;
@@ -439,6 +447,16 @@ textarea {
     color: var(--pray-text) !important;
 }
 
+.q-yt {
+    background-color: var(--yt-color) !important;
+    border-left: 5px solid var(--yt-border) !important;
+    color: var(--yt-text) !important;
+}
+    background-color: var(--pray-color) !important;
+    border-left: 5px solid var(--pray-border) !important;
+    color: var(--pray-text) !important;
+}
+
 /* Custom Overrides for Prayers List elements rendered from JS */
 .editable-author {
     font-size: 14.5px;
@@ -516,6 +534,12 @@ textarea {
     background: var(--new-color);
     border-color: var(--new-border);
     color: var(--new-text);
+}
+
+.stat-item.new-yt {
+    background: var(--yt-color);
+    border-color: var(--yt-border);
+    color: var(--yt-text);
 }
 
 .stat-item.del {
@@ -671,4 +695,206 @@ textarea {
 
 #syh-wipe-prayers:active {
     transform: scale(0.96);
+}
+/* Counter Badges in Step 3 Header */
+.counter-badge {
+    margin-left: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 2px 8px;
+    display: inline-block;
+}
+
+.counter-total {
+    background: hsl(var(--primary-h), 90%, 95%);
+    border: 1px solid var(--primary);
+    color: hsl(var(--primary-h), 90%, 30%);
+}
+
+.counter-left {
+    background: var(--new-color);
+    border: 1px solid var(--new-border);
+    color: var(--new-text);
+}
+
+.counter-right {
+    background: var(--yt-color);
+    border: 1px solid var(--yt-border);
+    color: var(--yt-text);
+}
+
+/* Two Columns & Resizer Layout for Step 3 */
+.step3-columns {
+    display: flex;
+    height: 220px;
+    gap: 0;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.step3-col {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.step3-col-left {
+    flex: 1;
+}
+
+.step3-col-right {
+    flex: 1;
+}
+
+.step3-col textarea {
+    flex: 1;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    resize: none;
+}
+
+.col-header {
+    background: var(--border);
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.col-header-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.col-header-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: scale(1.1);
+}
+
+.step3-divider {
+    width: 8px;
+    cursor: col-resize;
+    background: var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin: 0 4px;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.step3-divider:hover, .step3-divider.is-dragging {
+    background: var(--primary);
+}
+
+/* YouTube Collected List in Right Column */
+.yt-collected-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.yt-empty-msg {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 8px;
+    font-style: italic;
+}
+
+.yt-collected-item {
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.yt-collected-item.is-question {
+    background-color: var(--new-color);
+    border-left: 5px solid var(--new-border);
+}
+
+.yt-collected-item.is-prayer {
+    background-color: var(--yt-color);
+    border-left: 5px solid var(--yt-border);
+}
+
+.yt-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.yt-item-author {
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.yt-item-type-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+
+.is-question .yt-item-type-badge {
+    background: hsla(var(--new-h), var(--new-s), 35%, 0.15);
+    color: var(--new-text);
+}
+
+.is-prayer .yt-item-type-badge {
+    background: hsla(var(--yt-h), var(--yt-s), 45%, 0.15);
+    color: var(--yt-text);
+}
+
+.yt-item-del-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+.yt-item-del-btn:hover {
+    color: hsl(var(--del-h), var(--del-s), 45%);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.yt-item-text {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
 }

@@ -10,6 +10,7 @@ interface OptionsState {
     auto_heal_enabled: boolean;
     text_truncation_length: number;
     show_copy_buttons: boolean;
+    youtube_enabled: boolean;
 }
 
 const DEFAULT_OPTIONS: OptionsState = {
@@ -20,7 +21,8 @@ const DEFAULT_OPTIONS: OptionsState = {
     anti_afk_interval_sec: SYH_CONFIG.TIMINGS.ANTI_AFK_INTERVAL / 1000,
     auto_heal_enabled: true,
     text_truncation_length: SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH,
-    show_copy_buttons: true
+    show_copy_buttons: true,
+    youtube_enabled: true
 };
 
 class OptionsController {
@@ -93,6 +95,9 @@ class OptionsController {
 
             const showCopy = document.getElementById('optShowCopyButtons') as HTMLInputElement;
             if (showCopy) showCopy.checked = opts.show_copy_buttons !== undefined ? opts.show_copy_buttons : DEFAULT_OPTIONS.show_copy_buttons;
+
+            const ytToggle = document.getElementById('optYouTubeEnabled') as HTMLInputElement;
+            if (ytToggle) ytToggle.checked = opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled;
         });
     }
 
@@ -105,6 +110,7 @@ class OptionsController {
         const autoHealVal = (document.getElementById('optAutoHealEnabled') as HTMLInputElement)?.checked;
         const truncVal = parseInt((document.getElementById('optTruncationLength') as HTMLInputElement)?.value || '195', 10);
         const showCopyVal = (document.getElementById('optShowCopyButtons') as HTMLInputElement)?.checked;
+        const youtubeEnabledVal = (document.getElementById('optYouTubeEnabled') as HTMLInputElement)?.checked;
 
         SYH_STORAGE.get(['db'], (result) => {
             const currentDb = result.db || {};
@@ -119,7 +125,8 @@ class OptionsController {
                 anti_afk_interval_sec: antiAfkIntervalVal,
                 auto_heal_enabled: autoHealVal,
                 text_truncation_length: truncVal,
-                show_copy_buttons: showCopyVal
+                show_copy_buttons: showCopyVal,
+                youtube_enabled: youtubeEnabledVal
             };
 
             SYH_STORAGE.set({

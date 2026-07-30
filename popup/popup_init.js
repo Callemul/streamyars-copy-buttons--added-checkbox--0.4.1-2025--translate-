@@ -25,7 +25,9 @@ $(document).ready(function() {
         'tg_deletedLogHtml',
         'tg_deletedLogDetailsVisible',
         'tg_deletedLogDetailsOpen',
-        'tg_scroll_positions'
+        'tg_scroll_positions',
+        'syh_popup_divider_pos',
+        'syh_yt_collected'
     ], function(result) {
         if (result.tg_oldList) { 
             $('#oldList').val(result.tg_oldList); 
@@ -116,6 +118,17 @@ $(document).ready(function() {
 
         // Ініціалізація ResizeObserver після застосування розмірів
         setTimeout(initResizeObserver, 300);
+        // Відновлення позиції ресайзера кроку 3 та зібраних коментарів YouTube
+        if (result.syh_popup_divider_pos) {
+            const pos = result.syh_popup_divider_pos;
+            $('#step3Left').css('flex', pos);
+            $('#step3Right').css('flex', 100 - pos);
+        }
+        if (typeof window.loadYTCollected === 'function') {
+            window.loadYTCollected();
+        }
+        initStep3Resizer();
+
     });
 
     // 2. Логіка навігації між вкладками попапу
@@ -266,3 +279,58 @@ $(document).ready(function() {
     $(window).on('scroll', saveScrollPositions);
     $('#prayersResultDiv, #finalResultDiv, #deletedLog, #oldList, #newTelegram, #textArea1_oldText, #textArea2_generatedRuText').on('scroll', saveScrollPositions);
 });
+
+    // 9. Логіка ресайзера кроку 3 (дві колонки Telegram / YouTube)
+    function initStep3Resizer() {
+        const $divider = $('#step3Divider');
+        const $container = $('#step3Columns');
+        const $left = $('#step3Left');
+        const $right = $('#step3Right');
+
+        if (!$divider.length || !$container.length) return;
+
+        let isDragging = false;
+
+        $divider.on('mousedown', function(e) {
+            e.preventDefault();
+            isDragging = true;
+            $divider.addClass('is-dragging');
+            $('body').css('user-select', 'none');
+        });
+
+        $(document).on('mousemove', function(e) {
+            if (!isDragging) return;
+            const containerOffset = $container.offset();
+            const containerWidth = $container.width();
+            if (!containerOffset || containerWidth <= 0) return;
+
+            let leftWidth = e.pageX - containerOffset.left;
+            let percent = (leftWidth / containerWidth) * 100;
+            if (percent < 15) percent = 15;
+            if (percent > 85) percent = 85;
+
+            $left.css('flex', percent);
+            $right.css('flex', 100 - percent);
+        });
+
+        $(document).on('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                $divider.removeClass('is-dragging');
+                $('body').css('user-select', '');
+
+                const flexLeft = parseFloat($left.css('flex-grow')) || 1;
+                const flexRight = parseFloat($right.css('flex-grow')) || 1;
+                const total = flexLeft + flexRight;
+                const posPercent = (flexLeft / total) * 100;
+
+                chrome.storage.local.set({ 'syh_popup_divider_pos': posPercent });
+            }
+        });
+    }
+
+    $('#clearYTCollected').click(function() {
+        if (typeof window.clearAllYTCollected === 'function') {
+            window.clearAllYTCollected();
+        }
+    });

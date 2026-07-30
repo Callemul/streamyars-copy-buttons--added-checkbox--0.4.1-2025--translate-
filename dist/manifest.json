@@ -14,12 +14,13 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://streamyard.com/*"
+    "https://streamyard.com/*",
+    "*://*.youtube.com/*"
   ],
   "content_scripts": [
     {
       "js": [
-        "assets/main.ts-loader-B_8e7qdB.js"
+        "assets/main.ts-loader-BZOWI2QI.js"
       ],
       "matches": [
         "https://streamyard.com/*"
@@ -27,20 +28,52 @@
       "css": [
         "styles.css"
       ]
+    },
+    {
+      "js": [
+        "assets/youtube_content.ts-loader-CFnnSVOh.js"
+      ],
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "css": [
+        "youtube/youtube_styles.css"
+      ]
     }
   ],
   "web_accessible_resources": [
     {
       "matches": [
+        "*://*.youtube.com/*",
         "https://streamyard.com/*"
       ],
       "resources": [
         "Release_notes.md",
         "Daily_tips.md",
-        "lib/chart.js",
+        "lib/chart.js"
+      ],
+      "use_dynamic_url": false
+    },
+    {
+      "matches": [
+        "https://streamyard.com/*"
+      ],
+      "resources": [
         "assets/jquery-3.7.1-DG3BT4aw.js",
         "assets/storage-CZ2Ik9o9.js",
-        "assets/main.ts-DtA3HJVn.js"
+        "assets/comment_assistant-BhIKJCLm.js",
+        "assets/main.ts-DT-o5fC8.js"
+      ],
+      "use_dynamic_url": false
+    },
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "resources": [
+        "assets/storage-CZ2Ik9o9.js",
+        "assets/comment_assistant-BhIKJCLm.js",
+        "assets/youtube_content.ts-BwsmDwzt.js"
       ],
       "use_dynamic_url": false
     }

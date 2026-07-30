@@ -48,6 +48,9 @@ function createMockNode(tagName, attrs = {}, children = [], textContent = '') {
 }
 
 function matches(el, selector) {
+    if (selector.includes('button')) {
+        if (el.tagName === 'BUTTON' || el.getAttribute('role') === 'button') return true;
+    }
     if (selector === 'button') {
         return el.tagName === 'BUTTON';
     }
