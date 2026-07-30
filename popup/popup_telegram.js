@@ -421,7 +421,7 @@ window.ensureStatsBarRows = function() {
         const $total = $bar.find('.stat-item.total').detach();
 
         if ($newYT.length === 0) {
-            $newYT = $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>');
+            $newYT = $('<div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></div>');
         }
 
         $bar.empty().append(

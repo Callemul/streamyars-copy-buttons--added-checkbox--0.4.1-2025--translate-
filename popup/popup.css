@@ -498,69 +498,85 @@ textarea {
     transform: scale(1.15);
 }
 
-/* Stats Bar Styling */
+/* Modern Dashboard Grid Stats Bar Styling */
 .stats-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin: 16px 0;
-    font-size: 13px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
 }
 
 .stats-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.stats-row:last-child {
-    margin-bottom: 0;
+.stats-row.total-row {
+    grid-template-columns: 1fr;
 }
 
 .stat-item {
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: var(--border);
-    border: 1px solid transparent;
-    font-weight: 500;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 4px;
-    box-shadow: var(--shadow-sm);
-    width: fit-content;
-    flex: 0 0 auto;
-    white-space: nowrap;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+    transition: var(--transition);
 }
 
-.stat-item b {
+.stat-item b, 
+.stat-item .stat-value,
+.stat-item span {
     font-weight: 700;
+    margin-left: 6px;
+    white-space: nowrap;
 }
 
 .stat-item.old {
     background: var(--old-color);
-    border-color: var(--old-border);
+    border: 1px solid var(--old-border);
+    border-left: 4px solid var(--old-border);
     color: var(--old-text);
+}
+
+.stat-item.del {
+    background: var(--del-color);
+    border: 1px solid var(--del-border);
+    border-left: 4px solid var(--del-border);
+    color: var(--del-text);
 }
 
 .stat-item.new {
     background: var(--new-color);
-    border-color: var(--new-border);
+    border: 1px solid var(--new-border);
+    border-left: 4px solid var(--new-border);
     color: var(--new-text);
 }
 
 .stat-item.new-yt {
     background: var(--yt-color);
-    border-color: var(--yt-border);
+    border: 1px solid var(--yt-border);
+    border-left: 4px solid var(--yt-border);
     color: var(--yt-text);
-}
-
-.stat-item.del {
-    background: var(--del-color);
-    border-color: var(--del-border);
-    color: var(--del-text);
 }
 
 .stat-item.total {
     background: var(--pray-color) !important;
-    border-color: var(--pray-border) !important;
+    border: 1px solid var(--pray-border) !important;
+    border-left: 4px solid var(--pray-border) !important;
     color: var(--pray-text) !important;
 }
 
