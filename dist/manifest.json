@@ -19,9 +19,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/jquery-3.7.1.js-T69IKIHc.js",
-        "assets/chart.js-CegLu_W4.js",
-        "assets/main.ts-loader-CYdBpELn.js"
+        "assets/main.ts-loader-B551oRmL.js"
       ],
       "matches": [
         "https://streamyard.com/*"
@@ -40,10 +38,9 @@
         "Release_notes.md",
         "Daily_tips.md",
         "lib/chart.js",
-        "assets/jquery-3.7.1.js-T69IKIHc.js",
-        "assets/chart.js-CegLu_W4.js",
+        "assets/jquery-3.7.1-T69IKIHc.js",
         "assets/storage-62pKN20L.js",
-        "assets/main.ts-D2xOZOfd.js"
+        "assets/main.ts-DB7fR84D.js"
       ],
       "use_dynamic_url": false
     }

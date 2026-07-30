@@ -1,3 +1,5 @@
+import './lib/jquery-3.7.1.js';
+
 import { SYH_CONFIG } from './modules/config.ts';
 import { SYH_STORAGE } from './modules/storage.ts';
 import { SYH_STATE } from './modules/state.ts';
