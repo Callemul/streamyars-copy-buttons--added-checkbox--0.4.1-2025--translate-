@@ -452,10 +452,6 @@ textarea {
     border-left: 5px solid var(--yt-border) !important;
     color: var(--yt-text) !important;
 }
-    background-color: var(--pray-color) !important;
-    border-left: 5px solid var(--pray-border) !important;
-    color: var(--pray-text) !important;
-}
 
 /* Custom Overrides for Prayers List elements rendered from JS */
 .editable-author {

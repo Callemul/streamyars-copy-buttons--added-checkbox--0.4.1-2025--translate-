@@ -128,7 +128,6 @@ $(document).ready(function() {
             window.loadYTCollected();
         }
         initStep3Resizer();
-
     });
 
     // 2. Логіка навігації між вкладками попапу
@@ -275,10 +274,8 @@ $(document).ready(function() {
             chrome.storage.local.set({ 'tg_scroll_positions': scrolls });
         }, 150);
     }
-
     $(window).on('scroll', saveScrollPositions);
     $('#prayersResultDiv, #finalResultDiv, #deletedLog, #oldList, #newTelegram, #textArea1_oldText, #textArea2_generatedRuText').on('scroll', saveScrollPositions);
-});
 
     // 9. Логіка ресайзера кроку 3 (дві колонки Telegram / YouTube)
     function initStep3Resizer() {
@@ -329,8 +326,12 @@ $(document).ready(function() {
         });
     }
 
+    initStep3Resizer();
+
+    // 10. Обробник очищення зібраних коментарів YouTube
     $('#clearYTCollected').click(function() {
         if (typeof window.clearAllYTCollected === 'function') {
             window.clearAllYTCollected();
         }
     });
+});
