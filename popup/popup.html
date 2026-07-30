@@ -49,13 +49,14 @@
             <label class="section-title">
                 3. Новий список:
                 <span id="tgTotalCountAll" class="counter-badge counter-total"></span>
-                <span id="tgTotalCountLeft" class="counter-badge counter-left"></span>
-                <span id="tgTotalCountRight" class="counter-badge counter-right"></span>
             </label>
             <div class="step3-columns" id="step3Columns">
                 <!-- ЛІВА КОЛОНКА: Ручний ввід (Telegram) -->
                 <div class="step3-col step3-col-left" id="step3Left">
-                    <div class="col-header">📝 Telegram (ручний ввід)</div>
+                    <div class="col-header">
+                        📝 Telegram (ручний ввід)
+                        <span id="tgTotalCountLeft" class="counter-badge counter-left" style="display:none;"></span>
+                    </div>
                     <textarea id="newTelegram" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
                 </div>
 
@@ -65,7 +66,8 @@
                 <!-- ПРАВА КОЛОНКА: YouTube коментарі -->
                 <div class="step3-col step3-col-right" id="step3Right">
                     <div class="col-header">
-                        🎬 YouTube <span id="ytHeaderCount" class="counter-badge counter-right" style="display:none;"></span>
+                        🎬 YouTube
+                        <span id="tgTotalCountRight" class="counter-badge counter-right" style="display:none;"></span>
                         <button id="clearYTCollected" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
                     </div>
                     <div id="ytCollectedList" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>

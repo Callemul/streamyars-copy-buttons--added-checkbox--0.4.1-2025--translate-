@@ -113,7 +113,7 @@ window.updateCombinedCounters = function() {
 
     // 3. Render Badges
     if (leftPeople > 0) {
-        let leftStr = '📝 Telegram: ' + leftPeople + ' люд. - ' + leftQuestions + ' пит.';
+        let leftStr = leftPeople + ' люд. - ' + leftQuestions + ' пит.';
         if (leftPrayers > 0) leftStr += ' | Молитви: ' + leftPrayers;
         $('#tgTotalCountLeft').text(leftStr).show();
     } else {
@@ -121,13 +121,11 @@ window.updateCombinedCounters = function() {
     }
 
     if (rightStats.people > 0) {
-        let rightStr = '🎬 YouTube: ' + rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
+        let rightStr = rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
         if (rightStats.prayers > 0) rightStr += ' | Молитви: ' + rightStats.prayers;
         $('#tgTotalCountRight').text(rightStr).show();
-        $('#ytHeaderCount').text(rightStats.people + ' люд. - ' + rightStats.questions + ' пит.').show();
     } else {
         $('#tgTotalCountRight').text('').hide();
-        $('#ytHeaderCount').text('').hide();
     }
 
     const totalPeople = leftPeople + rightStats.people;

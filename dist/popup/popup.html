@@ -6,10 +6,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/popup.html-aRuYvHea.js"></script>
+  <script type="module" crossorigin src="/assets/popup.html-CuCD3mFw.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
   <link rel="modulepreload" crossorigin href="/assets/jquery-3.7.1-DG3BT4aw.js">
-  <link rel="stylesheet" crossorigin href="/assets/popup-Cf5eia7Q.css">
+  <link rel="stylesheet" crossorigin href="/assets/popup-DUe7dxWr.css">
 </head>
 <body>
 
@@ -52,13 +52,14 @@
             <label class="section-title">
                 3. Новий список:
                 <span id="tgTotalCountAll" class="counter-badge counter-total"></span>
-                <span id="tgTotalCountLeft" class="counter-badge counter-left"></span>
-                <span id="tgTotalCountRight" class="counter-badge counter-right"></span>
             </label>
             <div class="step3-columns" id="step3Columns">
                 <!-- ЛІВА КОЛОНКА: Ручний ввід (Telegram) -->
                 <div class="step3-col step3-col-left" id="step3Left">
-                    <div class="col-header">📝 Telegram (ручний ввід)</div>
+                    <div class="col-header">
+                        📝 Telegram (ручний ввід)
+                        <span id="tgTotalCountLeft" class="counter-badge counter-left" style="display:none;"></span>
+                    </div>
                     <textarea id="newTelegram" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
                 </div>
 
@@ -68,7 +69,8 @@
                 <!-- ПРАВА КОЛОНКА: YouTube коментарі -->
                 <div class="step3-col step3-col-right" id="step3Right">
                     <div class="col-header">
-                        🎬 YouTube <span id="ytHeaderCount" class="counter-badge counter-right" style="display:none;"></span>
+                        🎬 YouTube
+                        <span id="tgTotalCountRight" class="counter-badge counter-right" style="display:none;"></span>
                         <button id="clearYTCollected" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
                     </div>
                     <div id="ytCollectedList" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
