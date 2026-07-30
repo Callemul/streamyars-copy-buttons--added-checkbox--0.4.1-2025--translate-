@@ -410,7 +410,30 @@ window.parseTelegramExportLineByLine = function(text) {
     return groupedItems;
 };
 
+window.ensureStatsBarRows = function() {
+    const $bar = $('#statsBar');
+    if ($bar.length === 0) return;
+    if ($bar.find('.stats-row').length === 0) {
+        const $old = $bar.find('.stat-item.old').detach();
+        const $del = $bar.find('.stat-item.del').detach();
+        const $newLeft = $bar.find('.stat-item.new').detach();
+        let $newYT = $bar.find('.stat-item.new-yt').detach();
+        const $total = $bar.find('.stat-item.total').detach();
+
+        if ($newYT.length === 0) {
+            $newYT = $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>');
+        }
+
+        $bar.empty().append(
+            $('<div class="stats-row"></div>').append($old, $del),
+            $('<div class="stats-row new-row"></div>').append($newLeft, $newYT),
+            $('<div class="stats-row total-row"></div>').append($total)
+        );
+    }
+};
+
 window.processTelegramData = function() {
+    window.ensureStatsBarRows();
     const oldListText = $('#oldList').val();
     const answeredInput = $('#answeredIds').val();
     const telegramText = $('#newTelegram').val();

@@ -84,6 +84,7 @@ $(document).ready(function() {
         }
         if (result.tg_statsVisible) {
             if (result.tg_statsHtml) $('#statsBar').html(result.tg_statsHtml);
+            if (typeof window.ensureStatsBarRows === 'function') window.ensureStatsBarRows();
             $('#statsBar').show();
         }
         if (result.tg_deletedLogDetailsVisible) {
