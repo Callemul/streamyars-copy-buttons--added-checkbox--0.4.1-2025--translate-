@@ -501,11 +501,32 @@ textarea {
 /* Stats Bar Styling */
 .stats-bar {
     display: flex;
-    gap: 8px 10px;
-    margin: 16px 0;
+    flex-direction: column;
+    gap: 6px;
+    margin: 14px 0;
     font-size: 13px;
-    flex-wrap: wrap;
+}
+
+.stats-row {
+    display: flex;
     align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.stats-row.new-row {
+    flex-wrap: nowrap;
+}
+
+.stats-row.new-row .stat-item {
+    flex: 1 1 0px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    justify-content: center;
+    font-size: 12px;
+    padding: 6px 8px;
 }
 
 .stat-item {
@@ -518,7 +539,7 @@ textarea {
     align-items: center;
     gap: 4px;
     box-shadow: var(--shadow-sm);
-    margin: 2px 0;
+    width: fit-content;
 }
 
 .stat-item b {
@@ -529,18 +550,6 @@ textarea {
     background: var(--old-color);
     border-color: var(--old-border);
     color: var(--old-text);
-}
-
-.stat-item.new,
-.stat-item.new-yt {
-    flex: 1 1 0px;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    justify-content: center;
-    font-size: 12px;
-    padding: 6px 8px;
 }
 
 .stat-item.new {
@@ -562,11 +571,6 @@ textarea {
 }
 
 .stat-item.total {
-    flex-basis: 100%;
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: center;
-    margin-top: 4px;
     background: var(--pray-color) !important;
     border-color: var(--pray-border) !important;
     color: var(--pray-text) !important;

@@ -476,7 +476,11 @@ window.processTelegramData = function() {
     $('#countNewLeft').html(newLeftText);
     
     if ($('#countNewYT').length === 0 && $('#statsBar').length > 0) {
-        $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>').insertBefore('#statsBar .stat-item.total');
+        if ($('.stats-row.new-row').length > 0) {
+            $('.stats-row.new-row').append('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>');
+        } else {
+            $('<div class="stats-row new-row"><span class="stat-item new">Нові з лівої: <b id="countNewLeft">0</b></span><span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span></div>').insertBefore('#statsBar .total-row');
+        }
     }
 
     let newYTText = newYTPeople + ' люд. - ' + newYTQuestionsTotal + ' пит.';

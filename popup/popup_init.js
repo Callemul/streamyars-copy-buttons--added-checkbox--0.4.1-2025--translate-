@@ -148,7 +148,11 @@ $(document).ready(function() {
         $('label:contains("3. Нові питання з Telegram")').append(' <span id="tgTotalCount" style="color: #2b7de9; font-weight: bold; font-size: 12px;"></span>'); 
     }
     if ($('#countNewYT').length === 0 && $('#statsBar').length > 0) {
-        $('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>').insertBefore('#statsBar .stat-item.total');
+        if ($('.stats-row.new-row').length > 0) {
+            $('.stats-row.new-row').append('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>');
+        } else {
+            $('<div class="stats-row new-row"><span class="stat-item new">Нові з лівої: <b id="countNewLeft">0</b></span><span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span></div>').insertBefore('#statsBar .total-row');
+        }
     }
     if ($('.stat-item.total').length === 0 && $('#statsBar').length > 0) { 
         $('#statsBar').append('<span class="stat-item total">Разом: <b id="countTotal">0</b></span>'); 
