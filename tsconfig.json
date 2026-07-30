@@ -10,5 +10,12 @@
     "rootDir": "./",
     "types": ["chrome", "jquery"]
   },
-  "include": ["modules/**/*", "main.ts", "popup/**/*"]
+  "include": [
+    "modules/**/*",
+    "main.ts",
+    "popup/**/*",
+    "youtube/**/*",
+    "options/**/*",
+    "background/**/*"
+  ]
 }

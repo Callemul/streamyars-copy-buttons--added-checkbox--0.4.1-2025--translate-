@@ -50,7 +50,7 @@ window.renderPrayers = function(prayersList) {
     // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
     const now = Date.now();
     const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-    let cleanedList = prayersList.filter(item => {
+    const cleanedList = prayersList.filter(item => {
         if (!item.timestamp) return true;
         return (now - item.timestamp) < twoDaysMs;
     });
@@ -251,7 +251,7 @@ $(document).ready(function() {
         const newText = $(this).text().trim();
         
         chrome.storage.local.get(['syh_prayers'], function(result) {
-            let list = result.syh_prayers || [];
+            const list = result.syh_prayers || [];
             const targetItem = list.find(item => item.id === id);
             if (targetItem && targetItem.text !== newText) {
                 targetItem.text = newText;
@@ -271,7 +271,7 @@ $(document).ready(function() {
         
         if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
             chrome.storage.local.get(['syh_prayers'], function(result) {
-                let list = result.syh_prayers || [];
+                const list = result.syh_prayers || [];
                 let updated = false;
                 list.forEach(item => {
                     if (item.author === oldAuthor) {
@@ -337,7 +337,7 @@ $(document).ready(function() {
                 const currentRoomId = url.pathname.replace(/\//g, '');
                 
                 chrome.storage.local.get(['syh_prayers'], function(result) {
-                    let list = result.syh_prayers || [];
+                    const list = result.syh_prayers || [];
                     list.forEach(item => {
                         if (item.type === 'prayer') {
                             item.roomId = currentRoomId;
@@ -348,7 +348,9 @@ $(document).ready(function() {
                         if (window.renderPrayers) window.renderPrayers(list);
                     });
                 });
-            } catch(e) {}
+            } catch {
+                /* ignore URL parse error */
+            }
         });
     });
 
@@ -429,7 +431,7 @@ $(document).ready(function() {
                     const currentRoomId = window.location.pathname.replace(/\//g, '');
                     // ФІКС: Шукаємо ТІЛЬКИ ті коментарі, які промарковані як "prayer" (🙏)
                     const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
-                    let newPrayers = [];
+                    const newPrayers = [];
                     const now = Date.now();
                     
                     comments.forEach(block => {
@@ -461,7 +463,7 @@ $(document).ready(function() {
                     const fetched = results[0].result;
                     
                     chrome.storage.local.get(['syh_prayers'], function(res) {
-                        let list = res.syh_prayers || [];
+                        const list = res.syh_prayers || [];
                         let addedCount = 0;
                         
                         // Додаємо тільки ті, яких ще немає в базі

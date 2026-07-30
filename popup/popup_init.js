@@ -237,7 +237,7 @@ $(document).ready(function() {
             chrome.storage.local.get(['tg_textarea_sizes'], function(res) {
                 const sizes = res.tg_textarea_sizes || {};
                 let updated = false;
-                for (let entry of entries) {
+                for (const entry of entries) {
                     const id = entry.target.id;
                     const width = entry.target.style.width;
                     const height = entry.target.style.height;
@@ -301,7 +301,7 @@ $(document).ready(function() {
             const containerWidth = $container.width();
             if (!containerOffset || containerWidth <= 0) return;
 
-            let leftWidth = e.pageX - containerOffset.left;
+            const leftWidth = e.pageX - containerOffset.left;
             let percent = (leftWidth / containerWidth) * 100;
             if (percent < 15) percent = 15;
             if (percent > 85) percent = 85;

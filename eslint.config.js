@@ -3,12 +3,14 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['lib/**', 'libs/**', 'dist/**', 'node_modules/**']
+    ignores: ['lib/**', 'libs/**', 'dist/**', 'node_modules/**', '**/*.ts']
   },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
         ...globals.browser,
         ...globals.webextensions,

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tooling & AI configs / outputs
+.kilo/
+litellm-config.yaml
+repomix-output.xml
+repomix-output.txt
+repomix-output.md
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Temp & Coverage
+*.tmp
+coverage/

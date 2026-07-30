@@ -143,29 +143,7 @@ window.updateCombinedCounters = function() {
 
 window.updateNewInputStats = function() {
     window.updateCombinedCounters();
-    return;
-    // legacy code fallback below
-
-    const text = $('#newTelegram').val();
-    if (!text) { $('#tgTotalCount').text(''); return; }
-    let peopleCount;
-    let questionsCount = 0;
-    let prayersCount;
-    if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
-        const parsed = window.parseAndFilterOldList(text, []);
-        peopleCount = parsed.questions.length;
-        parsed.questions.forEach(q => questionsCount += window.countQuestionsInText(q.text));
-        prayersCount = parsed.prayers.length;
-        $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит. | Молитви: ${prayersCount})`);
-    } else {
-        const items = window.parseTelegramExportLineByLine(text);
-        peopleCount = items.length;
-        items.forEach(q => questionsCount += window.countQuestionsInText(q.text));
-        $('#tgTotalCount').text(`(${peopleCount} люд. - ${questionsCount} пит.)`);
-    }
-    $('#tgTotalCount').css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 };
-
 window.numberToEmoji = function(num) {
     const emojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
     if (num <= 10) return emojis[num];
@@ -187,14 +165,14 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         ? window.SYH_UTILS.cleanTelegramHeaders 
         : (window.cleanTelegramHeaders || (t => t));
 
-    let messages = [text];
+    const messages = [text];
 
     let allQuestions = [];
     let allPrayers = [];
     const deletedItems = [];
 
     const processOldItem = (itemsArray, itemObj, filterIds, id, deletedArr, src) => {
-        let lines = itemObj.rawLines;
+        const lines = itemObj.rawLines;
         while (lines.length > 0 && lines[0].trim() === "") lines.shift();
         if (lines.length === 0) return;
 
@@ -223,12 +201,12 @@ window.parseAndFilterOldList = function(text, answeredIds) {
                 .filter(subIdx => subIdx > 0);
 
             if (subIndexesToRemove.length > 0) {
-                let subQuestions = rawText.split('🔹').map(t => t.trim()).filter(Boolean);
+                const subQuestions = rawText.split('🔹').map(t => t.trim()).filter(Boolean);
                 subIndexesToRemove.forEach(idx => {
                     if (subQuestions[idx-1]) deletedArr.push({ originalId: `${id}.${idx}`, author: author, type: 'sub', count: 1 });
                 });
 
-                let filteredSubQuestions = subQuestions.filter((_, idx) => !subIndexesToRemove.includes(idx + 1));
+                const filteredSubQuestions = subQuestions.filter((_, idx) => !subIndexesToRemove.includes(idx + 1));
 
                 if (filteredSubQuestions.length === 0) {
                     deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
@@ -266,7 +244,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         const finalizeCurrentItem = () => {
             if (currentItem) {
                 if (currentItem.type === 'telegram') {
-                    let bodyLines = currentItem.bodyLines;
+                    const bodyLines = currentItem.bodyLines;
                     if (currentItem.author === null) {
                         let firstNonEmptyIdx = -1;
                         for (let i = 0; i < bodyLines.length; i++) {
@@ -315,7 +293,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
                 currentCounter++;
 
                 let author = null;
-                let bodyLines = [];
+                const bodyLines = [];
 
                 if (isHeaderB) {
                     const match = trimmedLine.match(tgHeaderBRegex);
@@ -383,7 +361,7 @@ window.parseTelegramExportLineByLine = function(text) {
                 rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); 
             }
             let author = null;
-            let textLines = [];
+            const textLines = [];
             if (headerBRegex.test(trimmed)) {
                 const match = trimmed.match(tgHeaderBRegex);
                 if (match) {
@@ -437,12 +415,12 @@ window.processTelegramData = function() {
     const answeredInput = $('#answeredIds').val();
     const telegramText = $('#newTelegram').val();
     const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-    let preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
+    const preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
     
     let newQuestions;
     let newPrayers = [];
     if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
-        let parsedNew = window.parseAndFilterOldList(telegramText, []);
+        const parsedNew = window.parseAndFilterOldList(telegramText, []);
         newQuestions = parsedNew.questions.map(q => ({ ...q, source: 'new' }));
         newPrayers = parsedNew.prayers.map(p => ({ ...p, source: 'pray' }));
     } else {
@@ -465,19 +443,19 @@ window.processTelegramData = function() {
     const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
     const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
     
-    let oldPeople = preservedData.questions.length;
+    const oldPeople = preservedData.questions.length;
     let oldQuestionsTotal = 0;
     preservedData.questions.forEach(q => oldQuestionsTotal += window.countQuestionsInText(q.text));
     
-    let newLeftPeople = newQuestions.length;
+    const newLeftPeople = newQuestions.length;
     let newLeftQuestionsTotal = 0;
     newQuestions.forEach(q => newLeftQuestionsTotal += window.countQuestionsInText(q.text));
-    let newLeftPrayersTotal = newPrayers.length;
+    const newLeftPrayersTotal = newPrayers.length;
     
-    let newYTPeople = newYTQuestions.length;
+    const newYTPeople = newYTQuestions.length;
     let newYTQuestionsTotal = 0;
     newYTQuestions.forEach(q => newYTQuestionsTotal += window.countQuestionsInText(q.text));
-    let newYTPrayersTotal = newYTPrayers.length;
+    const newYTPrayersTotal = newYTPrayers.length;
 
     let delPeople = 0;
     let delQuestionsTotal = 0;
@@ -486,9 +464,9 @@ window.processTelegramData = function() {
         else if (d.type === 'sub') { delQuestionsTotal += d.count; }
     });
     
-    let totalPeople = oldPeople + newLeftPeople + newYTPeople;
-    let totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
-    let totalPrayers = combinedPrayers.length;
+    const totalPeople = oldPeople + newLeftPeople + newYTPeople;
+    const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
+    const totalPrayers = combinedPrayers.length;
     
     $('.stat-item.old').html('Залишилось старих: <b>' + oldPeople + ' люд. - ' + oldQuestionsTotal + ' пит.</b>');
     $('#countDel').text(delPeople + ' люд. - ' + delQuestionsTotal + ' пит.');
@@ -509,23 +487,19 @@ window.processTelegramData = function() {
     
     const outputDiv = $('#finalResultDiv');
     outputDiv.empty();
-    let fullText = "❓❓❓ВОПРОСЫ 🔹\n";
     combinedQuestions.forEach((item, index) => {
         const emojiNum = window.numberToEmoji(index + 1);
         const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
-        fullText += textBlock;
         const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
         block.text(textBlock);
         outputDiv.append(block);
     });
     if (combinedPrayers.length > 0) {
-        fullText += "\n\n🙏🙏🙏МОЛИТВЫ\n";
         const header = $('<div>').text("\n\n🙏🙏🙏МОЛИТВЫ\n");
         outputDiv.append(header);
         combinedPrayers.forEach((item, index) => {
             const emojiNum = window.numberToEmoji(index + 1);
             const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
-            fullText += textBlock;
             const block = $('<div>').addClass('q-block').addClass('q-pray');
             block.text(textBlock);
             outputDiv.append(block);
