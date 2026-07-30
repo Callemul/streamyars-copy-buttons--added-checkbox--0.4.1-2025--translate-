@@ -394,6 +394,16 @@ window.processTelegramData = function() {
     } else {
         $('#deletedLogDetails').hide();
     }
+
+    // Збереження результатів процесингу Telegram в сховище
+    chrome.storage.local.set({
+        'tg_finalResultHtml': outputDiv.html(),
+        'tg_statsHtml': $('#statsBar').html(),
+        'tg_statsVisible': $('#statsBar').is(':visible'),
+        'tg_deletedLogHtml': deletedLog.html(),
+        'tg_deletedLogDetailsVisible': $('#deletedLogDetails').is(':visible'),
+        'tg_deletedLogDetailsOpen': $('#deletedLogDetails').attr('open') !== undefined
+    });
 };
 
 $(document).ready(function() {

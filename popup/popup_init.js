@@ -9,7 +9,24 @@ window.saveDataToStorage = function() {
 
 $(document).ready(function() {
     // 1. Первинне завантаження та відновлення налаштувань і стану полів
-    chrome.storage.local.get(['tg_oldList', 'tg_answered', 'tg_newTelegram', 'db', 'syh_prayers'], function(result) {
+    chrome.storage.local.get([
+        'tg_oldList', 
+        'tg_answered', 
+        'tg_newTelegram', 
+        'db', 
+        'syh_prayers',
+        'tg_active_tab',
+        'tg_textarea_sizes',
+        'tg_translit_old',
+        'tg_translit_new',
+        'tg_finalResultHtml',
+        'tg_statsHtml',
+        'tg_statsVisible',
+        'tg_deletedLogHtml',
+        'tg_deletedLogDetailsVisible',
+        'tg_deletedLogDetailsOpen',
+        'tg_scroll_positions'
+    ], function(result) {
         if (result.tg_oldList) { 
             $('#oldList').val(result.tg_oldList); 
             if (typeof window.updateOldInputStats === 'function') {
@@ -31,10 +48,70 @@ $(document).ready(function() {
             if (window.db.newTitlePreach) $("#preachNameInput").val(window.db.newTitlePreach); 
         }
         
+        // Відновлення вкладки
+        if (result.tg_active_tab) {
+            $('.tab-link').removeClass('active').attr('aria-selected', 'false');
+            $('.tab-content').removeClass('active');
+            $(`.tab-link[data-tab="${result.tg_active_tab}"]`).addClass('active').attr('aria-selected', 'true');
+            $('#' + result.tg_active_tab).addClass('active');
+        }
+
+        // Відновлення розмірів textarea
+        if (result.tg_textarea_sizes) {
+            const sizes = result.tg_textarea_sizes;
+            for (const id in sizes) {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (sizes[id].width) el.style.width = sizes[id].width;
+                    if (sizes[id].height) el.style.height = sizes[id].height;
+                }
+            }
+        }
+
+        // Відновлення полів трансліту
+        if (result.tg_translit_old) {
+            $('#textArea1_oldText').val(result.tg_translit_old);
+        }
+        if (result.tg_translit_new) {
+            $('#textArea2_generatedRuText').val(result.tg_translit_new);
+        }
+
+        // Відновлення результатів Telegram
+        if (result.tg_finalResultHtml) {
+            $('#finalResultDiv').html(result.tg_finalResultHtml);
+        }
+        if (result.tg_statsVisible) {
+            if (result.tg_statsHtml) $('#statsBar').html(result.tg_statsHtml);
+            $('#statsBar').show();
+        }
+        if (result.tg_deletedLogDetailsVisible) {
+            if (result.tg_deletedLogHtml) $('#deletedLog').html(result.tg_deletedLogHtml);
+            if (result.tg_deletedLogDetailsOpen) {
+                $('#deletedLogDetails').attr('open', 'open');
+            } else {
+                $('#deletedLogDetails').removeAttr('open');
+            }
+            $('#deletedLogDetails').show();
+        }
+
         // Малюємо список молитов при старті, якщо домен Prayers вже завантажений
         if (typeof window.renderPrayers === 'function') {
             window.renderPrayers(result.syh_prayers || []);
         }
+
+        // Відновлення позицій скролу
+        if (result.tg_scroll_positions) {
+            const scrolls = result.tg_scroll_positions;
+            setTimeout(() => {
+                if (scrolls.window !== undefined) window.scrollTo(0, scrolls.window);
+                if (scrolls.prayersResultDiv !== undefined) $('#prayersResultDiv').scrollTop(scrolls.prayersResultDiv);
+                if (scrolls.finalResultDiv !== undefined) $('#finalResultDiv').scrollTop(scrolls.finalResultDiv);
+                if (scrolls.deletedLog !== undefined) $('#deletedLog').scrollTop(scrolls.deletedLog);
+            }, 100);
+        }
+
+        // Ініціалізація ResizeObserver після застосування розмірів
+        setTimeout(initResizeObserver, 300);
     });
 
     // 2. Логіка навігації між вкладками попапу
@@ -44,6 +121,7 @@ $(document).ready(function() {
         $('.tab-content').removeClass('active'); 
         $(this).addClass('active').attr('aria-selected', 'true'); 
         $('#' + tabId).addClass('active');
+        chrome.storage.local.set({ 'tg_active_tab': tabId });
     });
 
     // 3. Динамічне додавання контейнерів статистики, якщо вони відсутні в HTML
@@ -73,6 +151,24 @@ $(document).ready(function() {
         chrome.storage.local.set({ 'tg_answered': $(this).val() }); 
     });
 
+    // Збереження HTML результату Telegram при зміні вмісту або втраті фокусу
+    $('#finalResultDiv').on('input blur', function() {
+        chrome.storage.local.set({ 'tg_finalResultHtml': $(this).html() });
+    });
+
+    // Збереження стану деталей логу видаленого
+    $('#deletedLogDetails').on('toggle', function() {
+        chrome.storage.local.set({ 'tg_deletedLogDetailsOpen': this.open });
+    });
+
+    // Збереження полів трансліту
+    $('#textArea1_oldText').on('input', function() {
+        chrome.storage.local.set({ 'tg_translit_old': $(this).val() });
+    });
+    $('#textArea2_generatedRuText').on('input', function() {
+        chrome.storage.local.set({ 'tg_translit_new': $(this).val() });
+    });
+
     // 5. Кнопка очищення загального стану текстових полів
     $('#clearStateBtn').click(function() {
         if (confirm("Очистити всі поля введення в цій вкладці?")) {
@@ -82,7 +178,17 @@ $(document).ready(function() {
             $('#deletedLogDetails').hide(); 
             $('#oldTotalCount').text(''); 
             $('#tgTotalCount').text(''); 
-            chrome.storage.local.remove(['tg_oldList', 'tg_answered', 'tg_newTelegram']);
+            chrome.storage.local.remove([
+                'tg_oldList', 
+                'tg_answered', 
+                'tg_newTelegram',
+                'tg_finalResultHtml',
+                'tg_statsHtml',
+                'tg_statsVisible',
+                'tg_deletedLogHtml',
+                'tg_deletedLogDetailsVisible',
+                'tg_deletedLogDetailsOpen'
+            ]);
         }
     });
 
@@ -107,4 +213,48 @@ $(document).ready(function() {
             window.open(chrome.runtime.getURL('options/options.html'));
         }
     });
+
+    // 8. Допоміжні функції ResizeObserver та збереження скролу
+    function initResizeObserver() {
+        const textareas = ['oldList', 'newTelegram', 'textArea1_oldText', 'textArea2_generatedRuText'];
+        const resizeObserver = new ResizeObserver(entries => {
+            chrome.storage.local.get(['tg_textarea_sizes'], function(res) {
+                const sizes = res.tg_textarea_sizes || {};
+                let updated = false;
+                for (let entry of entries) {
+                    const id = entry.target.id;
+                    const width = entry.target.style.width;
+                    const height = entry.target.style.height;
+                    if (width || height) {
+                        sizes[id] = { width, height };
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    chrome.storage.local.set({ 'tg_textarea_sizes': sizes });
+                }
+            });
+        });
+        textareas.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) resizeObserver.observe(el);
+        });
+    }
+
+    let scrollTimeout;
+    function saveScrollPositions() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            const scrolls = {
+                window: window.scrollY || document.documentElement.scrollTop,
+                prayersResultDiv: $('#prayersResultDiv').scrollTop() || 0,
+                finalResultDiv: $('#finalResultDiv').scrollTop() || 0,
+                deletedLog: $('#deletedLog').scrollTop() || 0
+            };
+            chrome.storage.local.set({ 'tg_scroll_positions': scrolls });
+        }, 150);
+    }
+
+    $(window).on('scroll', saveScrollPositions);
+    $('#prayersResultDiv, #finalResultDiv, #deletedLog').on('scroll', saveScrollPositions);
 });

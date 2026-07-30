@@ -28,6 +28,12 @@ window.translitToRussian = function(translitText) {
 $(document).ready(function() {
     // Прив'язка події кліку перекладача
     $("#Translate").click(function() { 
-        $("#textArea2_generatedRuText").val(window.translitToRussian($("#textArea1_oldText").val())); 
+        const oldVal = $("#textArea1_oldText").val();
+        const newVal = window.translitToRussian(oldVal);
+        $("#textArea2_generatedRuText").val(newVal); 
+        chrome.storage.local.set({
+            'tg_translit_old': oldVal,
+            'tg_translit_new': newVal
+        });
     });
 });
