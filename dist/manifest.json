@@ -19,7 +19,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/main.ts-loader-TJgvNmu0.js"
+        "assets/main.ts-loader-Bekq3wYK.js"
       ],
       "matches": [
         "https://streamyard.com/*"
@@ -40,7 +40,7 @@
         "lib/chart.js",
         "assets/jquery-3.7.1-DG3BT4aw.js",
         "assets/storage-62pKN20L.js",
-        "assets/main.ts-BebAmIv4.js"
+        "assets/main.ts-CbuQaMQE.js"
       ],
       "use_dynamic_url": false
     }

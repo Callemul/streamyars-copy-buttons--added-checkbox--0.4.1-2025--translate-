@@ -80,14 +80,16 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
         this.triggerWords.forEach(word => {
             const rx = this.createTriggerRegExp(word);
             safeHTML = safeHTML.replace(rx, (match, p1, p2, p3) => {
-                // Якщо використовувався фолбек-вираз з групами п1/п2/п3
-                const targetWord = p2 || p1 || match;
+                // Визначаємо, чи використовується фолбек-вираз з 3 групами захоплення
+                const isFallback = typeof p2 === 'string';
+                const targetWord = isFallback ? p2 : (p1 || match);
+                
                 if (!matchedWords.includes(word.toLowerCase())) {
                     matchedWords.push(word.toLowerCase());
                 }
                 const replacement = `<mark class="syh-trigger-highlight" data-syh-trigger="${this.escapeHTML(word.toLowerCase())}">${targetWord}</mark>`;
                 
-                if (p2) {
+                if (isFallback) {
                     return `${p1}${replacement}${p3}`;
                 }
                 return replacement;
@@ -123,18 +125,7 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
             textNode.setAttribute('data-syh-original-text', originalText);
         }
 
-        // Перевіряємо стан чекбокса "Опрацьовано"
-        const checkbox = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
-        const isChecked = checkbox ? checkbox.checked : false;
-
-        // Якщо коментар вже опрацьований (галочка стоїть), то прибираємо підсвічування
-        if (isChecked) {
-            textNode.textContent = originalText;
-            commentBlock.removeAttribute('data-syh-triggered');
-            return false;
-        }
-
-        // Якщо галочки немає, перевіряємо на тригерні слова
+        // Перевіряємо на тригерні слова
         if (this.hasTrigger(originalText)) {
             const { highlightedText, matchedWords } = this.highlightTriggers(originalText);
             textNode.innerHTML = highlightedText;
