@@ -54,14 +54,12 @@ window.cleanAuthorName = function(rawName) {
 };
 
 window.parseAndFilterOldList = function(text, answeredIds) {
-    // Спочатку очищаємо вхідний текст від Telegram-таймкодів та заголовків [DD.MM.YYYY HH:MM] Нік:
-    // Це забезпечує єдину логіку з banner_creator.js та запобігає розриву питань при копіюванні кількох повідомлень.
+    // Отримуємо очищувач для очищення вкладених заголовків
     const cleaner = (window.SYH_UTILS && window.SYH_UTILS.cleanTelegramHeaders) 
         ? window.SYH_UTILS.cleanTelegramHeaders 
         : (window.cleanTelegramHeaders || (t => t));
-    const cleanedText = cleaner(text);
 
-    let messages = [cleanedText];
+    let messages = [text];
 
     let allQuestions = [];
     let allPrayers = [];
@@ -75,6 +73,9 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         let author = lines[0].trim();
         let rawText = lines.slice(1).map(l => l.trimEnd()).join('\n').trim();
         if (!author) author = "Анонім";
+
+        // Очищаємо вкладені заголовки всередині блоку тексту питання/молитви
+        rawText = cleaner(rawText);
 
         const totalQuestionsInBlock = window.countQuestionsInText(rawText);
 
@@ -118,24 +119,103 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         const items = [];
         let currentItem = null;
         let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
-        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/; 
 
-        lines.forEach(line => {
+        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/;
+        const tgHeaderARegex = /^.+?,\s*\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*$/;
+        const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
+
+        const hasKeycapInRemainingLines = (lines, currentIndex) => {
+            const regex = /(?:\d+\uFE0F?\u20E3|🔟)/;
+            for (let i = currentIndex; i < lines.length; i++) {
+                if (regex.test(lines[i])) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const finalizeCurrentItem = () => {
+            if (currentItem) {
+                if (currentItem.type === 'telegram') {
+                    let bodyLines = currentItem.bodyLines;
+                    if (currentItem.author === null) {
+                        let firstNonEmptyIdx = -1;
+                        for (let i = 0; i < bodyLines.length; i++) {
+                            if (bodyLines[i].trim() !== "") {
+                                firstNonEmptyIdx = i;
+                                break;
+                            }
+                        }
+                        if (firstNonEmptyIdx !== -1) {
+                            const firstLine = bodyLines[firstNonEmptyIdx].trim();
+                            if (firstLine.startsWith('@')) {
+                                currentItem.author = window.cleanAuthorName(firstLine);
+                                bodyLines.splice(firstNonEmptyIdx, 1);
+                            } else {
+                                currentItem.author = "Питання з чату";
+                            }
+                        } else {
+                            currentItem.author = "Питання з чату";
+                        }
+                    }
+                    currentItem.rawLines = [currentItem.author, ...bodyLines];
+                }
+                processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
+            }
+        };
+
+        lines.forEach((line, idx) => {
             const trimmedLine = line.trim();
             if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
             if (trimmedLine.includes("Віталій Кривко")) return;
 
+            // 1. Перевіряємо, чи це лінія з keycap emoji
             if (emojiNumberRegex.test(trimmedLine)) {
-                if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
+                finalizeCurrentItem();
                 currentCounter++;
-                currentItem = { rawLines: [] };
-            } 
-            else if (currentItem) {
-                currentItem.rawLines.push(line);
+                currentItem = { type: 'keycap', rawLines: [] };
+                return;
+            }
+
+            // 2. Перевіряємо, чи це Telegram-заголовок (Формат A чи B)
+            const isHeaderA = tgHeaderARegex.test(trimmedLine);
+            const isHeaderB = tgHeaderBRegex.test(trimmedLine);
+
+            if ((isHeaderA || isHeaderB) && sourceType === 'old' && !hasKeycapInRemainingLines(lines, idx + 1)) {
+                finalizeCurrentItem();
+                currentCounter++;
+
+                let author = null;
+                let bodyLines = [];
+
+                if (isHeaderB) {
+                    const match = trimmedLine.match(tgHeaderBRegex);
+                    if (match) {
+                        const trailing = match[2] ? match[2].trim() : "";
+                        if (trailing) {
+                            if (trailing.startsWith('@')) {
+                                author = window.cleanAuthorName(trailing);
+                            } else {
+                                bodyLines.push(trailing);
+                            }
+                        }
+                    }
+                }
+                currentItem = { type: 'telegram', author: author, bodyLines: bodyLines };
+                return;
+            }
+
+            // 3. Інакше додаємо до поточного блоку
+            if (currentItem) {
+                if (currentItem.type === 'keycap') {
+                    currentItem.rawLines.push(line);
+                } else if (currentItem.type === 'telegram') {
+                    currentItem.bodyLines.push(line);
+                }
             }
         });
 
-        if (currentItem) processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
+        finalizeCurrentItem();
         return items;
     };
 
@@ -160,24 +240,53 @@ window.parseAndFilterOldList = function(text, answeredIds) {
 window.parseTelegramExportLineByLine = function(text) {
     const rawItems = [];
     const lines = text.split('\n');
-    const headerRegex = /^.+?, \[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]$/;
+    const headerARegex = /^.+?, \[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]$/;
+    const headerBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*.+?$/;
+    const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
     let currentItem = null;
 
     lines.forEach(line => {
         const trimmed = line.trim();
-        if (headerRegex.test(trimmed)) {
-            if (currentItem && currentItem.textLines.length > 0) { rawItems.push({ author: currentItem.author, text: currentItem.textLines.join('\n').trim(), source: 'new' }); }
-            currentItem = { author: null, textLines: [] };
+        const isHeader = headerARegex.test(trimmed) || headerBRegex.test(trimmed);
+        
+        if (isHeader) {
+            if (currentItem && currentItem.textLines.length > 0) { 
+                rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); 
+            }
+            let author = null;
+            let textLines = [];
+            if (headerBRegex.test(trimmed)) {
+                const match = trimmed.match(tgHeaderBRegex);
+                if (match) {
+                    const trailing = match[2] ? match[2].trim() : "";
+                    if (trailing) {
+                        if (trailing.startsWith('@')) {
+                            author = window.cleanAuthorName(trailing);
+                        } else {
+                            textLines.push(trailing);
+                        }
+                    }
+                }
+            }
+            currentItem = { author: author, textLines: textLines };
         } else if (currentItem) {
             if (trimmed === "") return;
             if (currentItem.author === null) {
-                if (trimmed.startsWith('@')) { currentItem.author = window.cleanAuthorName(trimmed); } 
-                else { currentItem.author = "Питання з чату"; currentItem.textLines.push(trimmed); }
-            } else { currentItem.textLines.push(trimmed); }
+                if (trimmed.startsWith('@')) { 
+                    currentItem.author = window.cleanAuthorName(trimmed); 
+                } else { 
+                    currentItem.author = "Питання з чату"; 
+                    currentItem.textLines.push(trimmed); 
+                }
+            } else { 
+                currentItem.textLines.push(trimmed); 
+            }
         }
     });
 
-    if (currentItem && currentItem.textLines.length > 0) { rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); }
+    if (currentItem && currentItem.textLines.length > 0) { 
+        rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); 
+    }
 
     const groupedItems = [];
     rawItems.forEach(item => {
@@ -198,7 +307,7 @@ window.processTelegramData = function() {
     const oldListText = $('#oldList').val();
     const answeredInput = $('#answeredIds').val();
     const telegramText = $('#newTelegram').val();
-    const answeredIds = answeredInput.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+    const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     let preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
     
     let newQuestions;

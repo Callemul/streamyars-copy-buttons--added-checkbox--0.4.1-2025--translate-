@@ -475,6 +475,70 @@ try {
     process.exit(1);
 }
 
+// Тест 10: Змішаний список (keycap + Telegram format B)
+try {
+    const rawInput = `❓❓❓ВОПРОСЫ
+1️⃣
+Artem
+Здравствуйте. Почему церковь не обсуждает эту тему?
+2️⃣
+hryvach
+Вы говорите «Саятых в церкви нет».
+
+[25.07.2026 20:02] Олександр: @rusl
+
+Дорогие братья. Подскажите как следует понимать в Откровение 13.16-18 начертание уже потихоньку ставится?
+[25.07.2026 20:15] Олександр: @Сел
+
+Объясните, пожалуйста, Ин.16:10`;
+
+    const parsed = global.window.parseAndFilterOldList(rawInput, []);
+    
+    assert.strictEqual(parsed.questions.length, 4);
+    assert.strictEqual(parsed.questions[0].author, "Artem");
+    assert.strictEqual(parsed.questions[1].author, "hryvach");
+    assert.strictEqual(parsed.questions[2].author, "rusl");
+    assert.strictEqual(parsed.questions[2].text, "Дорогие братья. Подскажите как следует понимать в Откровение 13.16-18 начертание уже потихоньку ставится?");
+    assert.strictEqual(parsed.questions[3].author, "Сел");
+    assert.strictEqual(parsed.questions[3].text, "Объясните, пожалуйста, Ин.16:10");
+
+    console.log("✅ Тест 10 пройдено: Змішаний список (keycap + Telegram format B) успішно розпарсено.");
+} catch (e) {
+    console.error("❌ Тест 10 провалено:", e);
+    process.exit(1);
+}
+
+// Тест 11: Фільтрація за допомогою ID, переданих через пробіли або коми
+try {
+    const rawInput = `❓❓❓ВОПРОСЫ
+1️⃣
+Artem
+Здравствуйте.
+2️⃣
+hryvach
+Вы говорите.
+3️⃣
+Надежда
+Спасибо.
+4️⃣
+Геннадий
+Братья дорогие.`;
+
+    const parsed = global.window.parseAndFilterOldList(rawInput, [1, 3]);
+    
+    assert.strictEqual(parsed.questions.length, 2);
+    assert.strictEqual(parsed.questions[0].author, "hryvach");
+    assert.strictEqual(parsed.questions[1].author, "Геннадий");
+    assert.strictEqual(parsed.deleted.length, 2);
+    assert.strictEqual(parsed.deleted[0].originalId, 1);
+    assert.strictEqual(parsed.deleted[1].originalId, 3);
+
+    console.log("✅ Тест 11 пройдено: Фільтрація за допомогою ID успішно працює.");
+} catch (e) {
+    console.error("❌ Тест 11 провалено:", e);
+    process.exit(1);
+}
+
 // Запускаємо асинхронні тести
 testCategoryDetection().then(() => {
     console.log("\n🎉 Усі тести успішно пройдено!");
