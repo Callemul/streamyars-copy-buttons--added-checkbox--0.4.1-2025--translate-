@@ -27,3 +27,12 @@ repomix-output.md
 # Temp & Coverage
 *.tmp
 coverage/
+
+# Extension builds / archives
+*.crx
+*.zip
+
+# Agent / AI local workspace metadata
+.gemini/
+.codegraph/
+

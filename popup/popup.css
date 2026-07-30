@@ -188,8 +188,8 @@ textarea {
     flex-wrap: wrap;
     align-items: center;
     gap: 6px 8px;
-    margin-top: 16px;
-    margin-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 8px;
     color: var(--text);
     font-size: 13.5px;
 }
@@ -386,7 +386,8 @@ textarea {
 #tab-telegram .btn-row {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 16px;
+    margin-bottom: 24px;
 }
 
 #processTelegramBtn {
