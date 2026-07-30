@@ -6,8 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "pack": "npx repomix",
-    "test": "node --experimental-strip-types --test tests/utils.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js test_parsers.js",
-    "lint": "eslint modules/ main.ts popup/"
+    "test": "node --experimental-strip-types --test tests/utils.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js test_parsers.js",
+    "lint": "eslint \"modules/**/*.ts\" main.ts \"popup/**/*.js\" \"options/**/*.ts\" \"youtube/**/*.ts\""
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.28",

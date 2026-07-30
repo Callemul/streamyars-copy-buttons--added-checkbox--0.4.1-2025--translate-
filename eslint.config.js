@@ -3,10 +3,11 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['libs/**', 'dist/**', 'node_modules/**']
+    ignores: ['lib/**', 'libs/**', 'dist/**', 'node_modules/**']
   },
   js.configs.recommended,
   {
+    files: ['**/*.js'],
     languageOptions: {
       globals: {
         ...globals.browser,

@@ -40,11 +40,15 @@
 ## 🛠️ Основні команди проєкту
 - `npm run dev` — запуск Vite сервера розробки
 - `npm run build` — збірка розширення (Vite + CRX)
-- `npm run test` — запуск тестів Node.js
+- `npm run test` — запуск тестів Node.js (включаючи CSS-лінтинг та DOM smoke-тести)
+- `npm run lint` — запуск ESLint для всіх TS/JS модулів
 - `npm run pack` — склеювання проєкту в один файл `repomix-output.xml` (контекст ~350k токенів)
 
 ---
 
 ## 📐 Правила розробки
 - Chrome Extension (Manifest V3) на TypeScript / Vite.
-- Перевіряй відсутність помилок збірки та тестів (`npm run test` / `npm run build`) після внесення змін.
+- Перевіряй відсутність помилок збірки, лінтера та тестів (`npm run lint` && `npm run test` && `npm run build`) після внесення змін.
+- **Scoping & CSS Rules**:
+  - Усі DOM event listeners у скриптах попапу/опцій повинні бути строго розташовані всередині `$(document).ready(...)` або `DOMContentLoaded`.
+  - Усі CSS правила повинні перевірятися на відсутність висячих атрибутів та синтаксичних дужок (`npm run test` включає `css_lint.test.js`).
