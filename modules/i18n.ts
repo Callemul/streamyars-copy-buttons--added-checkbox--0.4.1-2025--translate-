@@ -9,8 +9,12 @@ export interface I18nAdapter {
 export const SYH_I18N: I18nAdapter = {
     getMessage(key: string, fallback: string = ''): string {
         if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
-            const msg = chrome.i18n.getMessage(key);
-            if (msg) return msg;
+            try {
+                const msg = chrome.i18n.getMessage(key);
+                if (msg) return msg;
+            } catch (e) {
+                // Extension context invalidated
+            }
         }
         return fallback;
     }

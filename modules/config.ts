@@ -47,7 +47,14 @@ export const SYH_CONFIG: SyhConfig = {
         timerOptionOffId: '#banner-timer-dropdown-option-null', 
         // Цей текст має співпадати з тим, що написано на кнопці, коли таймер вимкнено
         get timerOffTextResult(): string {
-            return (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage('timerOff')) || 'Timer off';
+            if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
+                try {
+                    return chrome.i18n.getMessage('timerOff') || 'Timer off';
+                } catch {
+                    // ignore
+                }
+            }
+            return 'Timer off';
         }
     },
 
