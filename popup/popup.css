@@ -148,13 +148,22 @@ body {
 
 /* Subtab Navigation (4 Pill Buttons inside Telegram/YouTube Tab) */
 .subtabs {
+    position: sticky;
+    top: -16px;
+    z-index: 100;
+    background-color: var(--bg);
+    margin: -16px -20px 16px -20px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.08);
+}
+
+.subtabs-track {
     display: flex;
     background-color: var(--border);
-    padding: 3px;
+    padding: 4px;
     border-radius: var(--radius);
-    margin-bottom: 16px;
     gap: 4px;
-    box-shadow: var(--shadow-sm);
 }
 
 .subtab-button {
@@ -183,6 +192,7 @@ body {
     color: hsl(var(--primary-h), var(--primary-s), 20%);
     background-color: var(--card-bg);
     box-shadow: var(--shadow-sm);
+    font-weight: 700;
 }
 
 .sheet-content {
