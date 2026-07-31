@@ -23,7 +23,9 @@ test('Popup DOM Smoke Test: popup.html contains all critical IDs for 4 sheets', 
         'countDel',
         'countNewLeft',
         'countNewYT',
-        'countTotal'
+        'countTotal',
+        'deletedLogCount',
+        'cleanedLogCount'
     ];
 
     const sheets = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];

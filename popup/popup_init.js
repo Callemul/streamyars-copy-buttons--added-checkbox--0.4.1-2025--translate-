@@ -32,9 +32,11 @@ $(document).ready(function() {
             `tg_statsHtml__${sId}`,
             `tg_statsVisible__${sId}`,
             `tg_deletedLogHtml__${sId}`,
+            `tg_deletedLogCount__${sId}`,
             `tg_deletedLogDetailsVisible__${sId}`,
             `tg_deletedLogDetailsOpen__${sId}`,
             `tg_cleanedLogHtml__${sId}`,
+            `tg_cleanedLogCount__${sId}`,
             `tg_cleanedLogDetailsVisible__${sId}`,
             `tg_cleanedLogDetailsOpen__${sId}`,
             `syh_popup_divider_pos__${sId}`,
@@ -92,23 +94,41 @@ $(document).ready(function() {
             if (result[`tg_deletedLogDetailsVisible__${sId}`]) {
                 const delHtml = result[`tg_deletedLogHtml__${sId}`];
                 if (delHtml) $(`#deletedLog__${sId}`).html(delHtml);
+                let delCount = result[`tg_deletedLogCount__${sId}`];
+                if (delCount === undefined && delHtml) {
+                    delCount = $(`#deletedLog__${sId}`).find('.del-row').length;
+                }
+                if (delCount) {
+                    $(`#deletedLogCount__${sId}`).text(`(${delCount})`);
+                }
                 if (result[`tg_deletedLogDetailsOpen__${sId}`]) {
                     $(`#deletedLogDetails__${sId}`).attr('open', 'open');
                 } else {
                     $(`#deletedLogDetails__${sId}`).removeAttr('open');
                 }
                 $(`#deletedLogDetails__${sId}`).show();
+            } else {
+                $(`#deletedLogCount__${sId}`).text('');
             }
 
             if (result[`tg_cleanedLogDetailsVisible__${sId}`]) {
                 const cleanHtml = result[`tg_cleanedLogHtml__${sId}`];
                 if (cleanHtml) $(`#cleanedLog__${sId}`).html(cleanHtml);
+                let cleanCount = result[`tg_cleanedLogCount__${sId}`];
+                if (cleanCount === undefined && cleanHtml) {
+                    cleanCount = $(`#cleanedLog__${sId}`).find('.clean-table tr').length - 1;
+                }
+                if (cleanCount && cleanCount > 0) {
+                    $(`#cleanedLogCount__${sId}`).text(`(${cleanCount})`);
+                }
                 if (result[`tg_cleanedLogDetailsOpen__${sId}`]) {
                     $(`#cleanedLogDetails__${sId}`).attr('open', 'open');
                 } else {
                     $(`#cleanedLogDetails__${sId}`).removeAttr('open');
                 }
                 $(`#cleanedLogDetails__${sId}`).show();
+            } else {
+                $(`#cleanedLogCount__${sId}`).text('');
             }
 
             // Відновлення ресайзера per-sheet
@@ -245,8 +265,10 @@ $(document).ready(function() {
                 $(`#finalResultDiv__${sId}`).empty(); 
                 $(`#statsBar__${sId}`).hide(); 
                 $(`#deletedLog__${sId}`).empty();
+                $(`#deletedLogCount__${sId}`).text('');
                 $(`#deletedLogDetails__${sId}`).hide(); 
                 $(`#cleanedLog__${sId}`).empty();
+                $(`#cleanedLogCount__${sId}`).text('');
                 $(`#cleanedLogDetails__${sId}`).hide(); 
                 $(`#oldTotalCount__${sId}`).text(''); 
                 $(`#tgTotalCountAll__${sId}`).text(''); 
@@ -258,9 +280,11 @@ $(document).ready(function() {
                     `tg_statsHtml__${sId}`,
                     `tg_statsVisible__${sId}`,
                     `tg_deletedLogHtml__${sId}`,
+                    `tg_deletedLogCount__${sId}`,
                     `tg_deletedLogDetailsVisible__${sId}`,
                     `tg_deletedLogDetailsOpen__${sId}`,
                     `tg_cleanedLogHtml__${sId}`,
+                    `tg_cleanedLogCount__${sId}`,
                     `tg_cleanedLogDetailsVisible__${sId}`,
                     `tg_cleanedLogDetailsOpen__${sId}`
                 ]);

@@ -629,7 +629,7 @@ textarea {
 }
 
 /* Deleted log container & Details */
-#deletedLogDetails {
+details[id^="deletedLogDetails"] {
     margin-top: 16px;
     border: 1px solid #ef4444;
     border-radius: var(--radius);
@@ -638,7 +638,7 @@ textarea {
     box-shadow: var(--shadow-sm);
 }
 
-#deletedLogDetails summary {
+details[id^="deletedLogDetails"] summary {
     padding: 12px 16px;
     font-weight: 600;
     cursor: pointer;
@@ -652,14 +652,14 @@ textarea {
 }
 
 @media (prefers-color-scheme: dark) {
-    #deletedLogDetails summary {
+    details[id^="deletedLogDetails"] summary {
         color: #f87171;
         background: hsla(0, 84%, 60%, 0.18);
     }
 }
 
-#deletedLogDetails summary:hover {
-    background: var(--border);
+details[id^="deletedLogDetails"] summary:hover {
+    background: hsla(0, 84%, 60%, 0.22);
 }
 
 .deleted-log {
@@ -747,17 +747,13 @@ textarea {
 
 .clean-before {
     width: 34%;
-    font-family: monospace;
     font-size: 11px;
-    opacity: 0.8;
-    text-decoration: line-through;
-    text-decoration-color: hsla(0, 70%, 45%, 0.5);
+    opacity: 0.9;
     white-space: pre-line;
 }
 
 .clean-after {
     width: 34%;
-    font-family: monospace;
     font-size: 11px;
     font-weight: 600;
     white-space: pre-line;
@@ -765,6 +761,7 @@ textarea {
 
 .clean-diff {
     width: 32%;
+    font-size: 11px;
     font-weight: 600;
     background: hsla(45, 100%, 50%, 0.12);
 }
@@ -1074,7 +1071,7 @@ textarea {
 
 
 /* Cleaned log container & Details */
-#cleanedLogDetails {
+details[id^="cleanedLogDetails"] {
     margin-top: 10px;
     border: 1px solid #f59e0b;
     border-radius: var(--radius);
@@ -1083,7 +1080,7 @@ textarea {
     box-shadow: var(--shadow-sm);
 }
 
-#cleanedLogDetails summary {
+details[id^="cleanedLogDetails"] summary {
     padding: 12px 16px;
     font-weight: 600;
     cursor: pointer;
@@ -1097,14 +1094,21 @@ textarea {
 }
 
 @media (prefers-color-scheme: dark) {
-    #cleanedLogDetails summary {
+    details[id^="cleanedLogDetails"] summary {
         color: #fbbf24;
         background: hsla(45, 100%, 50%, 0.18);
     }
 }
 
-#cleanedLogDetails summary:hover {
+details[id^="cleanedLogDetails"] summary:hover {
     background: hsla(45, 100%, 50%, 0.22);
+}
+
+.log-count {
+    font-weight: 700;
+    font-size: 12.5px;
+    margin-left: 6px;
+    opacity: 0.9;
 }
 
 .cleaned-log {

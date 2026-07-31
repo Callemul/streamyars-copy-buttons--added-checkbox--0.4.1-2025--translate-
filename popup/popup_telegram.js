@@ -668,10 +668,12 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
             else msg += 'Видалено підпункт';
             deletedLog.append($('<div>').addClass('del-row').text(msg));
         });
-        $(`#deletedLogDetails__${sheetId}`).show();
+        $(`#deletedLogCount__${sheetId}`).text(`(${preservedData.deleted.length})`);
     } else {
-        $(`#deletedLogDetails__${sheetId}`).hide();
+        deletedLog.append($('<div>').addClass('del-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Видалень немає'));
+        $(`#deletedLogCount__${sheetId}`).text('(0)');
     }
+    $(`#deletedLogDetails__${sheetId}`).show();
 
     const cleanedLog = $(`#cleanedLog__${sheetId}`);
     cleanedLog.empty();
@@ -694,10 +696,12 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
             );
         });
         cleanedLog.append(table);
-        $(`#cleanedLogDetails__${sheetId}`).show();
+        $(`#cleanedLogCount__${sheetId}`).text(`(${cleaningLog.length})`);
     } else {
-        $(`#cleanedLogDetails__${sheetId}`).hide();
+        cleanedLog.append($('<div>').addClass('clean-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Очищених фраз чи нікнеймів немає'));
+        $(`#cleanedLogCount__${sheetId}`).text('(0)');
     }
+    $(`#cleanedLogDetails__${sheetId}`).show();
 
     // 30-денне очищення чекбоксів YouTube
     chrome.storage.local.get(['syh_yt_checkbox_state'], function(res) {
@@ -724,9 +728,11 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
         [`tg_statsHtml__${sheetId}`]: $(`#statsBar__${sheetId}`).html(),
         [`tg_statsVisible__${sheetId}`]: $(`#statsBar__${sheetId}`).is(':visible'),
         [`tg_deletedLogHtml__${sheetId}`]: deletedLog.html(),
+        [`tg_deletedLogCount__${sheetId}`]: preservedData.deleted.length,
         [`tg_deletedLogDetailsVisible__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).is(':visible'),
         [`tg_deletedLogDetailsOpen__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).attr('open') !== undefined,
         [`tg_cleanedLogHtml__${sheetId}`]: cleanedLog.html(),
+        [`tg_cleanedLogCount__${sheetId}`]: cleaningLog.length,
         [`tg_cleanedLogDetailsVisible__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
         [`tg_cleanedLogDetailsOpen__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined
     });
