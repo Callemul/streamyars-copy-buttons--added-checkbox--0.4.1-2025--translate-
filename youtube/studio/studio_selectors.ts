@@ -1,4 +1,29 @@
 // youtube/studio/studio_selectors.ts
+//
+// ПРИЗНАЧЕННЯ: Селектори DOM та утиліти для зчитування даних з ytcp-comment.
+//
+// СТРУКТУРА DOM YouTube Studio (для розуміння селекторів):
+//   ytcp-comment-thread                         ← один тред (батько з відповідями)
+//     ├─ ytcp-comment[id="comment"]            ← БАТЬКІВСЬКИЙ коментар
+//     │     ├─ #metadata #name .author-text     ← ім'я автора
+//     │     ├─ #content-text                    ← текст коментаря
+//     │     ├─ ytcp-comment-action-buttons
+//     │     │     └─ #toolbar                    ← тут ін'єкціюємо 📋❓🙏
+//     │     └─ ytcp-comment-video-thumbnail
+//     │           ├─ #video-title               ← назва відео (getVideoTitleText)
+//     │           ├─ a#body                     ← посилання на відео (getVideoLinkHref)
+//     │           └─ .syh-studio-video-meta     ← наш ін'єкція (badge + checkbox)
+//     └─ ytcp-comment-replies
+//           └─ ytcp-comment[is-reply]             ← ВКЛАДЕНА відповідь
+//                 └─ те ж саме, але #video-title = порожній!
+//                   videoKey успадковується в studio_events.ts (REPLY INHERITANCE)
+//
+// ФУНКЦІЇ:
+//   getCommentThreads()    — всі ytcp-comment (і батьківські, і reply) — викор.з studio_content.ts
+//   getVideoTitleText()    — fallback через closest('.ytcp-comment-thread') для reply
+//   getVideoLinkHref()     — аналогічно
+//   getToolbarElement()    — повертає #toolbar для ін'єкції кнопок (studio_ui.ts)
+//   getVideoThumbnailElement() — ytcp-comment-video-thumbnail для badge+checkbox
 
 export const STUDIO_SELECTORS = {
     CHANNEL_NAME: '#entity-label-container #entity-name, ytcp-navigation-drawer #entity-name, #entity-name',
@@ -8,6 +33,7 @@ export const STUDIO_SELECTORS = {
     CONTENT_TEXT: '#content-text',
     AUTHOR_NAME: '#metadata #name .author-text, #metadata #name, #name .author-text, #name',
     ACTION_TOOLBAR: 'ytcp-comment-action-buttons #toolbar, #action-buttons #toolbar',
+    METADATA: '#metadata',
     VIDEO_THUMBNAIL: 'ytcp-comment-video-thumbnail',
     VIDEO_TITLE: '#video-title',
     VIDEO_LINK: 'ytcp-comment-video-thumbnail a#body, #video-title a',
@@ -24,6 +50,10 @@ export function getCommentThreads(doc: Document | HTMLElement = document): HTMLE
 
 export function getToolbarElement(thread: HTMLElement): HTMLElement | null {
     return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.ACTION_TOOLBAR);
+}
+
+export function getMetadataElement(thread: HTMLElement): HTMLElement | null {
+    return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.METADATA);
 }
 
 export function getVideoThumbnailElement(thread: HTMLElement): HTMLElement | null {

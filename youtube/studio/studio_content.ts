@@ -1,4 +1,28 @@
 // youtube/studio/studio_content.ts
+//
+// ПРИЗНАЧЕННЯ: Головний контролер Studio-модуля. Ініціалізація, MutationObserver,
+//              обхід коментарів, SPA-навігація.
+//
+// ТОЧКА ВХОДУ: StudioModuleController.init() — автозапуск при завантаженні сторінки.
+//
+// ПОТІК РОБОТИ:
+//   1. init()                  — завантаження storage, підписка на зміни, запуск спостерігача
+//   2. handleStateChange()     — перевірка чи ми на /comments/ і чи модуль увімкнено
+//   3. startModule()           — початкова обробка + MutationObserver для нових коментарів
+//   4. scheduleProcessComments() → processVisibleComments()
+//      → сортує ytcp-comment (БАТЬКІВСЬКІ ПЕРШИМИ, потім is-reply)
+//      → для кожного викликає bindStudioCommentEvents() (studio_events.ts)
+//
+// ВАЖЛИВО — ПОРЯДОК ОБРОБКИ:
+//   Батьківські ytcp-comment обробляються ПЕРШИМИ (sort за is-reply),
+//   щоб reply-коментарі могли успадкувати videoKey через data-syh-video-key.
+//   Логіка спадкування — REPLY INHERITANCE у studio_events.ts (~ряд 88).
+//
+// ЗАЛЕЖНОСТІ:
+//   studio_events.ts  — bindStudioCommentEvents() (вся логіка одного коментаря)
+//   studio_selectors.ts — getCommentThreads()
+//   studio_comment_key.ts — cleanupStudioState() (30-денне очищення)
+//   studio_video_map.ts — VIDEO_MAP_STORAGE_KEY
 import { SYH_STORAGE } from '../../modules/storage.ts';
 import { getStudioChannelInfo, StudioChannelInfo } from './studio_channel.ts';
 import { getCommentThreads } from './studio_selectors.ts';

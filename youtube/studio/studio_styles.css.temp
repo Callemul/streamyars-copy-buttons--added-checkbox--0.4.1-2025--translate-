@@ -1,4 +1,4 @@
-/* youtube/studio/studio_styles.css */
+﻿/* youtube/studio/studio_styles.css */
 
 /* --- Action Buttons in Toolbar --- */
 .syh-studio-btn {
@@ -114,7 +114,6 @@ ytcp-comment.syh-dropdown-active {
 #header {
     display: flex !important;
     align-items: center !important;
-    flex-wrap: nowrap !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
 }
@@ -129,12 +128,12 @@ ytcp-comment.syh-dropdown-active {
     min-width: 0 !important;
 }
 
-/* Badge wrapper & dropdown */
+/* Badge wrapper & dropdown in #metadata */
 .syh-studio-badge-wrapper {
     position: relative;
     display: inline-flex;
     align-items: center;
-    margin-left: auto !important;
+    margin-left: auto !important; /* Pushes to the right edge */
     margin-right: 2px;
     z-index: 101;
 }
@@ -344,3 +343,4 @@ html[dark="true"] .syh-studio-dropdown-reset:hover {
     opacity: 1 !important;
     filter: none !important;
 }
+

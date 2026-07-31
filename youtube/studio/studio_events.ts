@@ -1,4 +1,30 @@
 // youtube/studio/studio_events.ts
+//
+// ПРИЗНАЧЕННЯ: Прив'язка подій та оновлення UI для кожного ytcp-comment у YouTube Studio.
+//
+// ТОЧКИ ВХОДУ (де шукати основну логіку):
+//   bindStudioCommentEvents()  — головна функція, що обробляє один коментар:
+//     • Рядки ~83-104  : зчитування videoTitle/videoHref + REPLY INHERITANCE (спадкування від батьківського коментаря)
+//     • Рядки ~122-136 : визначення категорії, оновлення badge/кнопок/checkbox
+//     • Рядки ~154+    : обробники подій (Copy / ❓ / 🙏 / Badge-dropdown / Checkbox / ПКМ)
+//   retroactiveUpdateVideoComments() — масове оновлення Badge після зміни категорії вручну
+//   saveStudioCollectedItem()        — збереження питань/молитов до storage за sheetId
+//
+// СТРУКТУРА DOM (YouTube Studio):
+//   ytcp-comment-thread
+//     └── ytcp-comment[id="comment"]            ← батьківський коментар (має videoTitle, video href)
+//     └── ytcp-comment-replies
+//           └── ytcp-comment[is-reply]           ← вкладені відповіді (НЕ мають videoTitle!)
+//                                                  videoKey успадковується від батьківського коментаря
+//                                                  через блок REPLY INHERITANCE (~ряд 88)
+//
+// ПОШУК ПО ОЗНАКАХ:
+//   Бейдж категорії відео    → updateStudioBadgeUI()  у studio_ui.ts
+//   Визначення категорії     → resolveCategoryForVideo() у studio_category_matcher.ts
+//   Збереження відеокарти    → setStudioVideoSheetOverride() у studio_video_map.ts
+//   Ключі коментаря          → generateCommentKey() у studio_comment_key.ts
+//   Селектори DOM            → studio_selectors.ts
+
 import { SYH_STORAGE } from '../../modules/storage.ts';
 import { SheetId, SHEET_LABELS } from '../../modules/sheets.ts';
 import { ChannelKey } from '../../modules/channel_config.ts';
@@ -68,7 +94,25 @@ export function saveStudioCollectedItem(
 }
 
 /**
- * Binds all event listeners and restores current UI states for a single comment thread
+ * Прив'язує всі обробники подій і відновлює поточний UI-стан для одного ytcp-comment.
+ *
+ * Викликається з processVisibleComments() (studio_content.ts) для КОЖНОГО коментаря на сторінці.
+ * Також викликається з retroactiveUpdateVideoComments() після ручної зміни категорії.
+ *
+ * @param threadEl   - елемент ytcp-comment (може бути батьківський АБО is-reply відповідь)
+ * @param channelKey - ключ поточного каналу (визначається getStudioChannelInfo())
+ * @param caches     - in-memory кеші: { videoSheetMap, buttonStates, checkboxStates }
+ * @param forceUpdate - true → ігнорувати прапор isAlreadyBound і оновити примусово
+ *
+ * Потік обробки:
+ *   1. Зчитати author / text / videoTitle / videoHref з DOM
+ *   2. [REPLY INHERITANCE] якщо is-reply і videoTitle порожній — взяти від батьківського ytcp-comment
+ *   3. Згенерувати videoKey + commentKey
+ *   4. Перевірити isAlreadyBound (early-return якщо нічого не змінилось)
+ *   5. injectStudioCommentUI() → отримати/створити кнопки + badge + checkbox
+ *   6. resolveCategoryForVideo() → визначити sheetId (авто або ручна)
+ *   7. Оновити Badge, кнопки ❓🙏, checkbox
+ *   8. Прив'язати обробники (кожен лише раз, через data-syh-bound='true')
  */
 export function bindStudioCommentEvents(
     threadEl: HTMLElement,
@@ -85,17 +129,21 @@ export function bindStudioCommentEvents(
     let videoTitle = getVideoTitleText(threadEl);
     let videoHref = getVideoLinkHref(threadEl);
 
-    // --- REPLY INHERITANCE: inherit video data from parent comment if this is a reply ---
+    // --- REPLY INHERITANCE ---
+    // Вкладені відповіді (ytcp-comment[is-reply]) НЕ мають власного #video-title.
+    // Тому підтягуємо videoTitle/videoHref від батьківського ytcp-comment (без is-reply)
+    // у тому ж ytcp-comment-thread. Порядок обробки гарантовано правильний: спочатку
+    // батьківський коментар (він записує data-syh-video-key у dataset), потім reply.
+    // Сортування забезпечується в processVisibleComments() (studio_content.ts).
     const isReply = threadEl.hasAttribute('is-reply');
     if (isReply && !videoTitle) {
-        // Walk up to find the parent ytcp-comment-thread, then find the root comment (without is-reply)
         const parentThread = threadEl.closest('ytcp-comment-thread');
         if (parentThread) {
             const parentComment = parentThread.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
             if (parentComment) {
                 if (!videoTitle) videoTitle = getVideoTitleText(parentComment);
                 if (!videoHref)  videoHref  = getVideoLinkHref(parentComment);
-                // Also try to directly inherit videoKey from parent's dataset
+                // Fallback: якщо текст/href не знайдено — беремо готовий videoKey з dataset батька
                 if (!videoTitle && !videoHref && parentComment.dataset.syhVideoKey) {
                     videoHref = parentComment.dataset.syhVideoKey;
                 }
@@ -126,10 +174,14 @@ export function bindStudioCommentEvents(
     const buttonState = caches.buttonStates[commentKey] || null;
     const checkboxState = caches.checkboxStates[commentKey]?.checked || false;
 
-    updateStudioBadgeUI(ui.badgeEl, resolvedSheetId, categoryResult.source);
     updateStudioButtonsUI(ui, resolvedSheetId, buttonState);
-    ui.checkboxEl.checked = checkboxState;
-    updateStudioCheckedClass(threadEl, checkboxState);
+    if (ui.badgeEl) updateStudioBadgeUI(ui.badgeEl, resolvedSheetId, categoryResult.source);
+    if (ui.checkboxEl) {
+        ui.checkboxEl.checked = checkboxState;
+        updateStudioCheckedClass(threadEl, checkboxState);
+    } else {
+        updateStudioCheckedClass(threadEl, checkboxState);
+    }
 
     // Store attributes on element for fast lookup during retroactive updates
     threadEl.dataset.syhVideoKey = videoKey;
@@ -142,7 +194,9 @@ export function bindStudioCommentEvents(
 
     // Helper: auto-check comment when added to questions/prayers
     const autoCheck = () => {
-        ui.checkboxEl.checked = true;
+        if (ui.checkboxEl) {
+            ui.checkboxEl.checked = true;
+        }
         updateStudioCheckedClass(threadEl, true);
         caches.checkboxStates[commentKey] = {
             checked: true,
@@ -224,7 +278,12 @@ export function bindStudioCommentEvents(
         });
         ui.prayerBtn.dataset.syhBound = 'true';
     }
-    if (!ui.dropdownEl) return;
+    if (!ui.dropdownEl || !ui.badgeEl || !ui.metaContainer) {
+        // #metadata not yet in DOM (e.g. reply rendered with delay) — skip badge/checkbox binding.
+        // Buttons are already bound above; full binding will happen on next processVisibleComments cycle.
+        threadEl.dataset.syhStudioEventsBound = 'true';
+        return;
+    }
 
     // 4. Badge click -> toggle dropdown
     if (ui.badgeEl.dataset.syhBound !== 'true') {
@@ -268,13 +327,13 @@ export function bindStudioCommentEvents(
 
     // Close dropdown on click outside
     document.addEventListener('click', (e) => {
-        if (!ui.metaContainer.contains(e.target as Node)) {
-            setStudioDropdownVisible(ui.dropdownEl, false);
+        if (ui.metaContainer && !ui.metaContainer.contains(e.target as Node)) {
+            if (ui.dropdownEl) setStudioDropdownVisible(ui.dropdownEl, false);
         }
     });
 
     // 5. Checkbox change handler
-    if (ui.checkboxEl.dataset.syhBound !== 'true') {
+    if (ui.checkboxEl && ui.checkboxEl.dataset.syhBound !== 'true') {
         ui.checkboxEl.addEventListener('change', (e) => {
             e.stopPropagation();
             const isChecked = ui.checkboxEl.checked;
@@ -301,8 +360,10 @@ export function bindStudioCommentEvents(
 
             e.preventDefault();
             e.stopPropagation();
-            ui.checkboxEl.checked = !ui.checkboxEl.checked;
-            ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+            if (ui.checkboxEl) {
+                ui.checkboxEl.checked = !ui.checkboxEl.checked;
+                ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         };
 
         threadEl.addEventListener('contextmenu', handleContextMenu, { capture: true });

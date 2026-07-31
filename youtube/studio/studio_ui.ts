@@ -1,15 +1,15 @@
 // youtube/studio/studio_ui.ts
 import { SHEET_IDS, SHEET_LABELS, SheetId } from '../../modules/sheets.ts';
-import { getToolbarElement, getVideoThumbnailElement } from './studio_selectors.ts';
+import { getToolbarElement, getMetadataElement } from './studio_selectors.ts';
 
 export interface StudioCommentUIElements {
     copyBtn: HTMLButtonElement;
     questionBtn: HTMLButtonElement;
     prayerBtn: HTMLButtonElement;
-    badgeEl: HTMLElement;
-    dropdownEl: HTMLElement;
-    checkboxEl: HTMLInputElement;
-    metaContainer: HTMLElement;
+    badgeEl: HTMLElement | null;
+    dropdownEl: HTMLElement | null;
+    checkboxEl: HTMLInputElement | null;
+    metaContainer: HTMLElement | null;
 }
 
 /**
@@ -17,9 +17,10 @@ export interface StudioCommentUIElements {
  */
 export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIElements | null {
     const toolbar = getToolbarElement(threadEl);
-    const videoThumb = getVideoThumbnailElement(threadEl);
 
-    if (!toolbar || !videoThumb) {
+    // Return null only if there is no toolbar — buttons are the minimum requirement.
+    // Missing #metadata (common for replies rendered with delay) must NOT block button injection.
+    if (!toolbar) {
         return null;
     }
 
@@ -29,43 +30,43 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
     let prayerBtn = toolbar.querySelector<HTMLButtonElement>('.syh-studio-btn-prayer');
 
     if (!copyBtn || !questionBtn || !prayerBtn) {
-        // Remove existing partial buttons if any
         toolbar.querySelectorAll('.syh-studio-btn').forEach(el => el.remove());
 
         copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'syh-studio-btn syh-studio-btn-copy';
-        copyBtn.innerHTML = '<span class="syh-icon">📋</span>';
+        copyBtn.innerHTML = '<span class="syh-icon">\uD83D\uDCCB</span>';
         copyBtn.title = 'Скопіювати автора та текст коментаря в буфер';
 
         questionBtn = document.createElement('button');
         questionBtn.type = 'button';
         questionBtn.className = 'syh-studio-btn syh-studio-btn-question';
-        questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
+        questionBtn.innerHTML = '<span class="syh-icon">\u2753</span>';
 
         prayerBtn = document.createElement('button');
         prayerBtn.type = 'button';
         prayerBtn.className = 'syh-studio-btn syh-studio-btn-prayer';
-        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
+        prayerBtn.innerHTML = '<span class="syh-icon">\uD83D\uDE4F</span>';
 
-        // Append to toolbar
         toolbar.appendChild(copyBtn);
         toolbar.appendChild(questionBtn);
         toolbar.appendChild(prayerBtn);
     }
 
-    // 2. Inject / retrieve Video Meta (Badge + Checkbox) under #video-title in ytcp-comment-video-thumbnail
-    let metaContainer = videoThumb.querySelector<HTMLElement>('.syh-studio-video-meta');
-    let badgeEl: HTMLElement | null = null;
-    let dropdownEl: HTMLElement | null = null;
-    let checkboxEl: HTMLInputElement | null = null;
+    // 2. Right-aligned Meta Container (Badge + Checkbox) — injected into #metadata if present.
+    // For replies that render #metadata with a delay, we skip badge injection gracefully
+    // and return a partial UI (buttons only). The caller can handle missing badge/checkbox.
+    const metadata = getMetadataElement(threadEl);
 
-    if (!metaContainer) {
-        metaContainer = document.createElement('div');
-        metaContainer.className = 'syh-studio-video-meta';
+    let checkboxEl = metadata?.querySelector<HTMLInputElement>('.syh-studio-checkbox') ?? null;
+    let badgeEl = metadata?.querySelector<HTMLElement>('.syh-studio-badge') ?? null;
+    let dropdownEl = metadata?.querySelector<HTMLElement>('.syh-studio-dropdown') ?? null;
+    let badgeWrapper = metadata?.querySelector<HTMLElement>('.syh-studio-badge-wrapper') ?? null;
 
-        // Badge wrapper
-        const badgeWrapper = document.createElement('div');
+    if (metadata && (!badgeEl || !dropdownEl || !checkboxEl || !badgeWrapper)) {
+        metadata.querySelectorAll('.syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper').forEach(el => el.remove());
+
+        badgeWrapper = document.createElement('div');
         badgeWrapper.className = 'syh-studio-badge-wrapper';
 
         badgeEl = document.createElement('button');
@@ -76,7 +77,6 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         dropdownEl.className = 'syh-studio-dropdown';
         dropdownEl.style.display = 'none';
 
-        // Populate dropdown options
         const optionKeys: (SheetId | 'auto_reset')[] = [
             SHEET_IDS.VP_SS,
             SHEET_IDS.OPARIN,
@@ -90,7 +90,7 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
             item.className = 'syh-studio-dropdown-item';
             item.dataset.sheetId = key;
             if (key === 'auto_reset') {
-                item.textContent = '🔄 Скинути до авто';
+                item.textContent = '\uD83D\uDD04 Скинути до авто';
                 item.classList.add('syh-studio-dropdown-reset');
             } else {
                 item.textContent = SHEET_LABELS[key];
@@ -101,32 +101,23 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         badgeWrapper.appendChild(badgeEl);
         badgeWrapper.appendChild(dropdownEl);
 
-        // Checkbox wrapper
         const checkboxWrapper = document.createElement('label');
         checkboxWrapper.className = 'syh-studio-checkbox-wrapper';
-        checkboxWrapper.title = 'Позначити коментар як прочитаний (ПКМ по тексту коментаря або клік по чекбоксу)';
+        checkboxWrapper.title = 'Прочитано (ПКМ по тексту коментаря або клік по чекбоксу)';
 
         checkboxEl = document.createElement('input');
         checkboxEl.type = 'checkbox';
         checkboxEl.className = 'syh-studio-checkbox';
-
-        const checkboxLabel = document.createElement('span');
-        checkboxLabel.className = 'syh-studio-checkbox-text';
-        checkboxLabel.textContent = 'Прочитано';
+        checkboxEl.title = 'Прочитано (ПКМ по тексту коментаря або клік по чекбоксу)';
 
         checkboxWrapper.appendChild(checkboxEl);
-        checkboxWrapper.appendChild(checkboxLabel);
 
-        metaContainer.appendChild(badgeWrapper);
-        metaContainer.appendChild(checkboxWrapper);
-
-        videoThumb.appendChild(metaContainer);
-    } else {
-        badgeEl = metaContainer.querySelector<HTMLElement>('.syh-studio-badge')!;
-        dropdownEl = metaContainer.querySelector<HTMLElement>('.syh-studio-dropdown')!;
-        checkboxEl = metaContainer.querySelector<HTMLInputElement>('.syh-studio-checkbox')!;
+        metadata.appendChild(badgeWrapper);
+        metadata.appendChild(checkboxWrapper);
     }
 
+    // Always return a valid UI object as long as toolbar exists.
+    // badgeEl / dropdownEl / checkboxEl / metaContainer may be null if metadata not yet in DOM.
     return {
         copyBtn,
         questionBtn,
@@ -134,7 +125,7 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         badgeEl,
         dropdownEl,
         checkboxEl,
-        metaContainer
+        metaContainer: badgeWrapper
     };
 }
 
@@ -150,7 +141,7 @@ export function updateStudioButtonsUI(
     const sheetLabel = resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null;
 
     // Question button
-    questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
+    questionBtn.innerHTML = '<span class="syh-icon">\u2753</span>';
     if (buttonState === 'question') {
         questionBtn.classList.add('syh-btn-active');
         questionBtn.title = sheetLabel
@@ -164,7 +155,7 @@ export function updateStudioButtonsUI(
     }
 
     // Prayer button
-    prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
+    prayerBtn.innerHTML = '<span class="syh-icon">\uD83D\uDE4F</span>';
     if (buttonState === 'prayer') {
         prayerBtn.classList.add('syh-btn-active');
         prayerBtn.title = sheetLabel
@@ -182,10 +173,11 @@ export function updateStudioButtonsUI(
  * Updates Badge text and style based on resolved sheet category and source ('auto' | 'manual' | 'unresolved')
  */
 export function updateStudioBadgeUI(
-    badgeEl: HTMLElement,
+    badgeEl: HTMLElement | null,
     resolvedSheetId: SheetId | null,
     source: 'auto' | 'manual' | 'unresolved'
 ) {
+    if (!badgeEl) return;
     badgeEl.classList.remove('syh-badge-manual', 'syh-badge-unresolved', 'syh-badge-auto');
 
     if (resolvedSheetId && SHEET_LABELS[resolvedSheetId]) {
