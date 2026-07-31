@@ -4,7 +4,7 @@ export const STUDIO_SELECTORS = {
     CHANNEL_NAME: '#entity-label-container #entity-name, ytcp-navigation-drawer #entity-name, #entity-name',
     COMMENT_THREAD: '.ytcp-comment-thread',
     COMMENT: 'ytcp-comment#comment, ytcp-comment',
-    COMMENT_TEXT_AREA: '#expander-container, #content-text',
+    COMMENT_TEXT_AREA: '#expander-container, #content-text, #content, #expander',
     CONTENT_TEXT: '#content-text',
     AUTHOR_NAME: '#metadata #name .author-text, #metadata #name, #name .author-text, #name',
     ACTION_TOOLBAR: 'ytcp-comment-action-buttons #toolbar, #action-buttons #toolbar',

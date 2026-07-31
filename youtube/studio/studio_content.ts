@@ -14,6 +14,7 @@ class StudioModuleController {
     private observer: MutationObserver | null = null;
     private channelInfo: StudioChannelInfo | null = null;
     private lastPath: string = '';
+    private frameId: number | null = null;
     private caches: StudioEventCaches = {
         videoSheetMap: {},
         buttonStates: {},
@@ -38,7 +39,7 @@ class StudioModuleController {
             }
             if (changes[VIDEO_MAP_STORAGE_KEY]) {
                 this.caches.videoSheetMap = changes[VIDEO_MAP_STORAGE_KEY].newValue || {};
-                this.processVisibleComments();
+                this.scheduleProcessComments(true);
             }
         });
 
@@ -78,7 +79,7 @@ class StudioModuleController {
 
     private startModule(): void {
         if (this.isInitialized) {
-            this.processVisibleComments();
+            this.scheduleProcessComments(false);
             return;
         }
 
@@ -87,15 +88,35 @@ class StudioModuleController {
         this.channelInfo = getStudioChannelInfo();
 
         // Initial process
-        this.processVisibleComments();
+        this.scheduleProcessComments(false);
 
         // Observer for dynamic virtualized comment lists
         if (!this.observer) {
-            this.observer = new MutationObserver(() => {
-                if (this.enabled && this.isCommentsPage()) {
-                    this.processVisibleComments();
+            this.observer = new MutationObserver((mutations) => {
+                if (!this.enabled || !this.isCommentsPage()) return;
+
+                let hasCommentNodes = false;
+                for (const mutation of mutations) {
+                    for (const node of Array.from(mutation.addedNodes)) {
+                        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+                        const el = node as Element;
+
+                        if (
+                            (el.matches && (el.matches('.ytcp-comment-thread') || el.matches('#comments-content') || el.matches('#items'))) ||
+                            (el.querySelector && el.querySelector('.ytcp-comment-thread'))
+                        ) {
+                            hasCommentNodes = true;
+                            break;
+                        }
+                    }
+                    if (hasCommentNodes) break;
+                }
+
+                if (hasCommentNodes) {
+                    this.scheduleProcessComments(false);
                 }
             });
+
             this.observer.observe(document.body, {
                 childList: true,
                 subtree: true
@@ -108,6 +129,11 @@ class StudioModuleController {
         console.log('[SYH Studio] Stopping Studio module (disabled or left /comments/)...');
         this.isInitialized = false;
 
+        if (this.frameId !== null) {
+            cancelAnimationFrame(this.frameId);
+            this.frameId = null;
+        }
+
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
@@ -118,7 +144,16 @@ class StudioModuleController {
         document.querySelectorAll('.syh-studio-comment-checked').forEach((el) => el.classList.remove('syh-studio-comment-checked'));
     }
 
-    private processVisibleComments(): void {
+    private scheduleProcessComments(forceUpdate: boolean = false): void {
+        if (this.frameId !== null) return;
+
+        this.frameId = requestAnimationFrame(() => {
+            this.frameId = null;
+            this.processVisibleComments(forceUpdate);
+        });
+    }
+
+    private processVisibleComments(forceUpdate: boolean = false): void {
         if (!this.enabled || !this.isCommentsPage()) return;
 
         // Re-check channel info if unknown
@@ -131,7 +166,7 @@ class StudioModuleController {
 
         const threads = getCommentThreads();
         threads.forEach((threadEl) => {
-            bindStudioCommentEvents(threadEl, channelKey, channelLabel, this.caches);
+            bindStudioCommentEvents(threadEl, channelKey, channelLabel, this.caches, forceUpdate);
         });
     }
 

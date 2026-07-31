@@ -70,13 +70,22 @@
 }
 
 /* --- Video Meta Container (Badge + Checkbox under #video-title) --- */
+ytcp-comment-video-thumbnail {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+}
+
 .syh-studio-video-meta {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     margin-top: 6px;
     margin-bottom: 4px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
 /* Badge wrapper & dropdown */

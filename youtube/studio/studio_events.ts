@@ -43,8 +43,14 @@ export function bindStudioCommentEvents(
     threadEl: HTMLElement,
     channelKey: ChannelKey,
     channelLabel: string,
-    caches: StudioEventCaches
+    caches: StudioEventCaches,
+    forceUpdate: boolean = false
 ): void {
+    const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
+    if (isAlreadyBound && !forceUpdate) {
+        return;
+    }
+
     const ui = injectStudioCommentUI(threadEl);
     if (!ui) return;
 
@@ -74,7 +80,7 @@ export function bindStudioCommentEvents(
     threadEl.dataset.syhCommentKey = commentKey;
 
     // If events already bound on this specific element instance, stop after state update
-    if (threadEl.dataset.syhStudioEventsBound === 'true') {
+    if (isAlreadyBound) {
         return;
     }
     threadEl.dataset.syhStudioEventsBound = 'true';
@@ -207,15 +213,24 @@ export function bindStudioCommentEvents(
         SYH_STORAGE.set({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
     });
 
-    // 6. Contextmenu (RMB / ПКМ) on comment text area (#expander-container / #content-text)
-    const textAreaEl = getCommentTextAreaElement(threadEl);
-    if (textAreaEl) {
-        textAreaEl.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            ui.checkboxEl.checked = !ui.checkboxEl.checked;
-            ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
-        });
+    // 6. Contextmenu (RMB / ПКМ) on comment text area
+    const handleContextMenu = (e: MouseEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('button, a, input, label, .syh-studio-btn, .syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper')) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        ui.checkboxEl.checked = !ui.checkboxEl.checked;
+        ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const textTargets = threadEl.querySelectorAll<HTMLElement>('#content-text, #expander-container, #expander, #content');
+    if (textTargets.length > 0) {
+        textTargets.forEach((el) => el.addEventListener('contextmenu', handleContextMenu));
+    } else {
+        threadEl.addEventListener('contextmenu', handleContextMenu);
     }
 }
 
