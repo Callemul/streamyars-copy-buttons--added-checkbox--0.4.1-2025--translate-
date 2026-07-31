@@ -109,41 +109,60 @@ ytcp-comment.syh-dropdown-active {
     z-index: 99999 !important;
 }
 
-/* --- Author Metadata Header Layout (Badge + Checkbox inline after timestamp) --- */
-#header.style-scope.ytcp-comment,
-#header {
+/* --- Author Metadata Header Layout (Badge + Checkbox inline after timestamp) ---
+ *
+ * IMPORTANT: All selectors below are scoped to ytcp-comment to avoid
+ * breaking YouTube Studio's own layout on other elements.
+ * flex: 1 1 auto is intentionally NOT set on #metadata — letting YouTube
+ * control the column width prevents overflow into the video thumbnail.
+ */
+
+/* The header row that contains avatar + body-column */
+ytcp-comment #header {
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     flex-wrap: nowrap !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
+    overflow: visible !important; /* needed for dropdown to escape */
 }
 
-#metadata.style-scope.ytcp-comment,
-#metadata {
+/* #metadata is the author-name / timestamp row.
+ * We turn it into a flex row so margin-left: auto works on badge-wrapper,
+ * but we do NOT override its width/flex-basis so YouTube keeps control. */
+ytcp-comment #metadata {
     display: flex !important;
     align-items: center !important;
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     gap: 4px !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
+    min-width: 0 !important;       /* allow shrinking on zoom */
+    max-width: 100% !important;    /* never wider than its column */
+    overflow: visible !important;  /* dropdown must escape clipping */
+    padding-right: 40px !important;   /* 40px gap from the thumbnail border */
+    box-sizing: border-box !important; /* padding doesn't expand the element */
 }
 
-/* Badge wrapper & dropdown */
+/* Badge wrapper: pushed right via margin-left:auto, never shrinks.
+ * overflow:visible is critical — the dropdown absolutely-positioned child
+ * must escape the #metadata clipping context. */
 .syh-studio-badge-wrapper {
     position: relative;
     display: inline-flex;
     align-items: center;
-    margin-left: auto !important;
+    flex-shrink: 0 !important;     /* keep badge full-size on zoom */
+    margin-left: auto !important;  /* push to right edge of #metadata */
     margin-right: 2px;
     z-index: 101;
+    overflow: visible !important;  /* dropdown must not be clipped */
 }
 
+/* Video thumbnail: never shrinks — it has a fixed width in YouTube Studio.
+ * Without flex-shrink: 0, the thumbnail could compress and push our elements. */
 ytcp-comment-video-thumbnail {
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     justify-content: flex-start !important;
+    flex-shrink: 0 !important;     /* ← KEY: thumbnail stays fixed width */
 }
 
 .syh-studio-video-meta {
@@ -159,11 +178,7 @@ ytcp-comment-video-thumbnail {
     z-index: 100;
 }
 
-.syh-studio-badge-wrapper {
-    position: relative;
-    display: inline-block;
-    z-index: 101;
-}
+
 
 .syh-studio-badge {
     font-family: Roboto, Noto, Arial, sans-serif;
