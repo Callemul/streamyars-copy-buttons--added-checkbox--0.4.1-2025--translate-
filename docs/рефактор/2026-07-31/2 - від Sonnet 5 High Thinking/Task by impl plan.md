@@ -1,14 +1,12 @@
 # Чекліст задач — YouTube Studio + 4 аркуші
 
-## Phase 0 — Prereq
-- [ ] Отримати handle `@...` каналу "Время перемен"
-- [ ] Отримати handle `@...` каналу "Слово живое"
-- [ ] Вписати їх у `modules/channel_config.ts`
+## Phase 0 — Налаштування розпізнавання каналів
+- [x] Реалізувати автоматичне розпізнавання за назвою каналу ("Время перемен" / "Слово живое") у `modules/channel_config.ts` з підтримкою handles як додаткового критерію.
 
 ## Phase 1 — Спільні модулі
 - [ ] Створити `modules/sheets.ts` (SHEET_IDS, SHEET_LABELS, тип SheetId)
 - [ ] Створити `modules/fuzzy_match.ts` (levenshtein, normalize, fuzzyIncludes) + unit-тест на кілька опечаток ("суботня школа", "СУБОТНЯЯ ШКОЛА", "опарін")
-- [ ] Створити `modules/channel_config.ts` (whitelist handle'ів + канал→ключ мапа для Studio)
+- [ ] Створити `modules/channel_config.ts` (розпізнавання за назвою "время перемен" / "слово живое" + handles + канал→ключ мапа для Studio)
 
 ## Phase 2 — Channel gate (старий модуль)
 - [ ] Створити `youtube/yt_channel_gate.ts` з `isAllowedChannel()`
@@ -18,8 +16,8 @@
 
 ## Phase 3 — Popup: 4 аркуші
 - [ ] Оновити `popup/popup.html`: під-вкладки (4 pill-кнопки) всередині `#tab-telegram`, перейменувати лейбл вкладки на "Telegram/YouTube Питання 🚀"
-- [ ] Клонувати структуру блоку (oldList/answered/newTelegram+YouTube колонка/process/stats/result/logs) x4, id з суфіксом `__{sheetId}`
-- [ ] Рефакторити `popup_telegram.js`: усі функції приймають `sheetId` (або `$scope`), event-биндинги через делегування/`data-sheet`
+- [ ] Клонувати структуру блоку (oldList/answered/newTelegram+YouTube колонка/process/stats/result/logs) x4 безпосередньо в `popup.html`, id з суфіксом `__{sheetId}`
+- [ ] Рефакторити `popup_telegram.js`: усі функції приймають `sheetId = 'vp_ss'` за замовчуванням (для збереження сумісності з `npm test`), event-биндинги прив'язуються до суфіксів `__{sheetId}`
 - [ ] Рефакторити `popup_init.js`: завантаження/збереження всіх 4 sheetId в циклі, збереження/відновлення активної під-вкладки (`tg_active_subtab`)
 - [ ] Стилі для під-вкладок у `popup.css` (клон `.tabs`, менший розмір/відступи)
 - [ ] Переконатись, що ResizeObserver/scroll-save/divider-resizer коректно працюють по кожному з 4 аркушів окремо (`syh_popup_divider_pos__{sheetId}`)
