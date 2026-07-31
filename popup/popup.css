@@ -146,6 +146,53 @@ body {
     display: block;
 }
 
+/* Subtab Navigation (4 Pill Buttons inside Telegram/YouTube Tab) */
+.subtabs {
+    display: flex;
+    background-color: var(--border);
+    padding: 3px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    gap: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.subtab-button {
+    flex: 1;
+    padding: 7px 10px;
+    background: none;
+    border: none;
+    border-radius: calc(var(--radius) - 2px);
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: inherit;
+    transition: var(--transition);
+    text-align: center;
+    white-space: nowrap;
+    outline: none;
+}
+
+.subtab-button:hover {
+    color: var(--text);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.subtab-button.active {
+    color: hsl(var(--primary-h), var(--primary-s), 20%);
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+}
+
+.sheet-content {
+    display: none;
+}
+
+.sheet-content.active {
+    display: block;
+}
+
 /* Inputs, Textareas, Text Fields */
 textarea, input[type="text"], input[type="date"] {
     width: 100%;

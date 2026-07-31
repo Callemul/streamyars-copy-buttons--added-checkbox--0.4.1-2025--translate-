@@ -133,9 +133,53 @@
                             <label class="switch-label">
                                 <input type="checkbox" id="optYouTubeEnabled" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">YouTube коментарі (кнопки, хайлайт, чекбокси)</span>
+                                <span class="label-text">Увімкнути старий YouTube-модуль (2 канали)</span>
                             </label>
-                            <small class="help-text">Вмикає функціональність розширення на YouTube</small>
+                            <small class="help-text">Вмикає новий інжекцій кнопок на звичайному веб-сайті YouTube.</small>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 16px;">
+                        <h3>🎬 YouTube Studio</h3>
+                        <div class="form-group checkbox-group">
+                            <label class="switch-label">
+                                <input type="checkbox" id="optStudioEnabled" checked>
+                                <span class="slider"></span>
+                                <span class="label-text">Увімкнути YouTube Studio модуль</span>
+                            </label>
+                            <small class="help-text">Вмикає авто-маршрутизацію, Badge та чекбокси у творчій студії YouTube Studio (studio.youtube.com)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Дозволені канали YouTube Studio (Read-only)</label>
+                            <ul class="allowed-channels-list" style="margin: 6px 0 12px 20px; padding: 0; font-size: 13px; color: var(--text-muted);">
+                                <li><b>Время перемен</b> (handles: @vperemen, @vperementv, @vremyaperemen)</li>
+                                <li><b>Слово живое</b> (handles: @slovozhivoe, @slovo_zhivoe)</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Лог ручних корекцій категорій (YouTube Studio)</label>
+                            <div class="actions-row" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                                <button id="copyStudioLogBtn" class="btn secondary-btn" type="button">📋 Скопіювати лог</button>
+                                <button id="clearStudioLogBtn" class="btn danger-btn" type="button">🗑 Очистити лог</button>
+                            </div>
+                            <div class="log-table-wrapper" style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                                <table id="studioLogTable" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    <thead>
+                                        <tr style="background: var(--border); text-align: left;">
+                                            <th style="padding: 6px 8px;">Час</th>
+                                            <th style="padding: 6px 8px;">Канал</th>
+                                            <th style="padding: 6px 8px;">Відео</th>
+                                            <th style="padding: 6px 8px;">Авто-категорія</th>
+                                            <th style="padding: 6px 8px;">Назначено</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studioLogBody">
+                                        <tr><td colspan="5" style="padding: 12px; text-align: center; color: var(--text-muted);">Записи у лозі відсутні</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </section>

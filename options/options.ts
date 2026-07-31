@@ -1,5 +1,15 @@
 import { SYH_STORAGE } from '../modules/storage';
 import { SYH_CONFIG } from '../modules/config';
+import { SHEET_LABELS, SheetId } from '../modules/sheets';
+
+export interface StudioOverrideLogEntry {
+    timestamp: string;
+    channelKey: 'vp' | 'slovo' | 'unknown';
+    channelLabel: string;
+    videoTitle: string;
+    autoDetectedSheet: SheetId | null;
+    assignedSheet: SheetId;
+}
 
 interface OptionsState {
     newTitleSS: string;
@@ -11,6 +21,7 @@ interface OptionsState {
     text_truncation_length: number;
     show_copy_buttons: boolean;
     youtube_enabled: boolean;
+    studio_enabled: boolean;
 }
 
 const DEFAULT_OPTIONS: OptionsState = {
@@ -22,7 +33,8 @@ const DEFAULT_OPTIONS: OptionsState = {
     auto_heal_enabled: true,
     text_truncation_length: SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH,
     show_copy_buttons: true,
-    youtube_enabled: true
+    youtube_enabled: true,
+    studio_enabled: true
 };
 
 class OptionsController {
@@ -65,10 +77,16 @@ class OptionsController {
 
         const resetBtn = document.getElementById('resetDefaultsBtn');
         if (resetBtn) resetBtn.addEventListener('click', () => this.resetDefaults());
+
+        const copyLogBtn = document.getElementById('copyStudioLogBtn');
+        if (copyLogBtn) copyLogBtn.addEventListener('click', () => this.copyStudioLog());
+
+        const clearLogBtn = document.getElementById('clearStudioLogBtn');
+        if (clearLogBtn) clearLogBtn.addEventListener('click', () => this.clearStudioLog());
     }
 
     private loadSettings(): void {
-        SYH_STORAGE.get(['db', 'syh_options'], (result) => {
+        SYH_STORAGE.get(['db', 'syh_options', 'syh_studio_enabled'], (result) => {
             const db = result.db || {};
             const opts: Partial<OptionsState> = result.syh_options || {};
 
@@ -98,6 +116,14 @@ class OptionsController {
 
             const ytToggle = document.getElementById('optYouTubeEnabled') as HTMLInputElement;
             if (ytToggle) ytToggle.checked = opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled;
+
+            const studioToggle = document.getElementById('optStudioEnabled') as HTMLInputElement;
+            if (studioToggle) {
+                const isStudioEnabled = result.syh_studio_enabled !== undefined ? result.syh_studio_enabled : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
+                studioToggle.checked = isStudioEnabled;
+            }
+
+            this.loadStudioLog();
         });
     }
 
@@ -111,6 +137,7 @@ class OptionsController {
         const truncVal = parseInt((document.getElementById('optTruncationLength') as HTMLInputElement)?.value || '195', 10);
         const showCopyVal = (document.getElementById('optShowCopyButtons') as HTMLInputElement)?.checked;
         const youtubeEnabledVal = (document.getElementById('optYouTubeEnabled') as HTMLInputElement)?.checked;
+        const studioEnabledVal = (document.getElementById('optStudioEnabled') as HTMLInputElement)?.checked;
 
         SYH_STORAGE.get(['db'], (result) => {
             const currentDb = result.db || {};
@@ -126,16 +153,110 @@ class OptionsController {
                 auto_heal_enabled: autoHealVal,
                 text_truncation_length: truncVal,
                 show_copy_buttons: showCopyVal,
-                youtube_enabled: youtubeEnabledVal
+                youtube_enabled: youtubeEnabledVal,
+                studio_enabled: studioEnabledVal
             };
 
             SYH_STORAGE.set({
                 'db': currentDb,
-                'syh_options': newOptions
+                'syh_options': newOptions,
+                'syh_studio_enabled': studioEnabledVal
             }, () => {
                 this.showToast('✅ Налаштування успішно збережено!');
             });
         });
+    }
+
+    private loadStudioLog(): void {
+        SYH_STORAGE.get(['syh_studio_manual_override_log'], (res) => {
+            const logs: StudioOverrideLogEntry[] = res.syh_studio_manual_override_log || [];
+            const tbody = document.getElementById('studioLogBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 12px; text-align: center; color: var(--text-muted);">Записи у лозі відсутні</td></tr>';
+                return;
+            }
+
+            logs.slice().reverse().forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+
+                const timeTd = document.createElement('td');
+                timeTd.style.padding = '6px 8px';
+                timeTd.textContent = entry.timestamp ? new Date(entry.timestamp).toLocaleString('uk-UA') : '—';
+
+                const chanTd = document.createElement('td');
+                chanTd.style.padding = '6px 8px';
+                chanTd.textContent = entry.channelLabel || entry.channelKey || '—';
+
+                const videoTd = document.createElement('td');
+                videoTd.style.padding = '6px 8px';
+                videoTd.textContent = entry.videoTitle || '—';
+
+                const autoTd = document.createElement('td');
+                autoTd.style.padding = '6px 8px';
+                autoTd.textContent = entry.autoDetectedSheet ? (SHEET_LABELS[entry.autoDetectedSheet] || entry.autoDetectedSheet) : 'Не визначено';
+
+                const assignedTd = document.createElement('td');
+                assignedTd.style.padding = '6px 8px';
+                assignedTd.style.fontWeight = 'bold';
+                assignedTd.textContent = SHEET_LABELS[entry.assignedSheet] || entry.assignedSheet;
+
+                tr.appendChild(timeTd);
+                tr.appendChild(chanTd);
+                tr.appendChild(videoTd);
+                tr.appendChild(autoTd);
+                tr.appendChild(assignedTd);
+                tbody.appendChild(tr);
+            });
+        });
+    }
+
+    private copyStudioLog(): void {
+        SYH_STORAGE.get(['syh_studio_manual_override_log'], async (res) => {
+            const logs: StudioOverrideLogEntry[] = res.syh_studio_manual_override_log || [];
+            if (logs.length === 0) {
+                this.showToast('ℹ️ Лог порожній, нічого копіювати');
+                return;
+            }
+
+            const lines = logs.map(entry => {
+                const time = entry.timestamp ? new Date(entry.timestamp).toLocaleString('uk-UA') : '—';
+                const channel = entry.channelLabel || entry.channelKey || '—';
+                const auto = entry.autoDetectedSheet ? (SHEET_LABELS[entry.autoDetectedSheet] || entry.autoDetectedSheet) : 'Не визначено';
+                const assigned = SHEET_LABELS[entry.assignedSheet] || entry.assignedSheet;
+                return `[${time}] Канал: ${channel} | Відео: "${entry.videoTitle}" | Авто: ${auto} => Ручний вибір: ${assigned}`;
+            });
+
+            const textToCopy = `=== YouTube Studio Manual Override Log (${logs.length} записів) ===\n\n` + lines.join('\n');
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    const temp = document.createElement('textarea');
+                    document.body.appendChild(temp);
+                    temp.value = textToCopy;
+                    temp.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(temp);
+                }
+                this.showToast('📋 Лог корекцій YouTube Studio скопійовано!');
+            } catch (err) {
+                alert('Не вдалося скопіювати лог в буфер обміну');
+            }
+        });
+    }
+
+    private clearStudioLog(): void {
+        if (confirm('Очистити лог ручних корекцій категорій YouTube Studio?')) {
+            SYH_STORAGE.set({ syh_studio_manual_override_log: [] }, () => {
+                this.loadStudioLog();
+                this.showToast('🗑 Лог Studio успішно очищено');
+            });
+        }
     }
 
     private exportConfig(): void {

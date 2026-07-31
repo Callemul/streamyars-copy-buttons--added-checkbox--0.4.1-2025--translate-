@@ -1,0 +1,222 @@
+/* youtube/studio/studio_styles.css */
+
+/* --- Action Buttons in Toolbar --- */
+.syh-studio-btn {
+    font-family: Roboto, Noto, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 4px 10px;
+    margin-left: 6px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    outline: none;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--ytcp-primary-text, #333333);
+}
+
+.syh-studio-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Copy button */
+.syh-studio-btn-copy {
+    border-color: rgba(128, 128, 128, 0.3);
+}
+
+.syh-studio-btn-copy:hover {
+    background-color: rgba(128, 128, 128, 0.25);
+    border-color: rgba(128, 128, 128, 0.6);
+}
+
+/* Question button */
+.syh-studio-btn-question {
+    background-color: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+    border-color: rgba(39, 174, 96, 0.35);
+}
+
+.syh-studio-btn-question:hover {
+    background-color: rgba(39, 174, 96, 0.25);
+    border-color: #27ae60;
+}
+
+/* Prayer button */
+.syh-studio-btn-prayer {
+    background-color: rgba(155, 89, 182, 0.12);
+    color: #9b59b6;
+    border-color: rgba(155, 89, 182, 0.35);
+}
+
+.syh-studio-btn-prayer:hover {
+    background-color: rgba(155, 89, 182, 0.25);
+    border-color: #9b59b6;
+}
+
+/* Active / Sent button state (Green checkmark) */
+.syh-studio-btn.syh-btn-active {
+    background-color: #27ae60 !important;
+    color: #ffffff !important;
+    border-color: #27ae60 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(39, 174, 96, 0.4);
+}
+
+/* --- Video Meta Container (Badge + Checkbox under #video-title) --- */
+.syh-studio-video-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+}
+
+/* Badge wrapper & dropdown */
+.syh-studio-badge-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.syh-studio-badge {
+    font-family: Roboto, Noto, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #065fd4;
+    color: #ffffff;
+}
+
+.syh-studio-badge:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.syh-badge-auto {
+    background-color: rgba(6, 95, 212, 0.15);
+    color: #065fd4;
+    border-color: rgba(6, 95, 212, 0.4);
+}
+
+.syh-badge-manual {
+    background-color: rgba(230, 126, 34, 0.18);
+    color: #d35400;
+    border-color: rgba(230, 126, 34, 0.5);
+}
+
+.syh-badge-unresolved {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #c0392b;
+    border-color: rgba(231, 76, 60, 0.4);
+}
+
+.syh-badge-highlight {
+    animation: syhPulseWarning 0.6s infinite alternate;
+}
+
+@keyframes syhPulseWarning {
+    from {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+        transform: scale(1);
+    }
+    to {
+        box-shadow: 0 0 8px 4px rgba(231, 76, 60, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+/* Dropdown menu */
+.syh-studio-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    z-index: 9999;
+    min-width: 170px;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+/* Dark mode fallback support */
+@media (prefers-color-scheme: dark) {
+    .syh-studio-dropdown {
+        background-color: #282828;
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+    }
+}
+
+.syh-studio-dropdown-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    color: inherit;
+    user-select: none;
+}
+
+.syh-studio-dropdown-item:hover {
+    background-color: rgba(6, 95, 212, 0.1);
+    color: #065fd4;
+}
+
+.syh-studio-dropdown-reset {
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    font-style: italic;
+    color: #888888;
+}
+
+.syh-studio-dropdown-reset:hover {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+}
+
+/* --- Checkbox Wrapper --- */
+.syh-studio-checkbox-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    user-select: none;
+    color: var(--ytcp-secondary-text, #606060);
+}
+
+.syh-studio-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #9b59b6;
+    margin: 0;
+    border-radius: 3px;
+}
+
+.syh-studio-checkbox-text {
+    font-size: 11px;
+}
+
+/* --- Checked Comment Thread Styling --- */
+.syh-studio-comment-checked {
+    opacity: 0.55;
+    filter: grayscale(40%);
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}

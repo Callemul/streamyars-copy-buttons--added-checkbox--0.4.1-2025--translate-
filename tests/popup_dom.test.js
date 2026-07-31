@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test('Popup DOM Smoke Test: popup.html contains all critical IDs', () => {
+test('Popup DOM Smoke Test: popup.html contains all critical IDs for 4 sheets', () => {
     const htmlPath = path.resolve(process.cwd(), 'popup/popup.html');
     assert.ok(fs.existsSync(htmlPath), 'popup.html exists');
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
 
-    const requiredIds = [
+    const baseRequiredIds = [
         'step3Columns',
         'step3Left',
         'step3Divider',
@@ -26,11 +26,16 @@ test('Popup DOM Smoke Test: popup.html contains all critical IDs', () => {
         'countTotal'
     ];
 
-    for (const id of requiredIds) {
-        assert.ok(
-            htmlContent.includes(`id="${id}"`),
-            `popup.html missing required element ID: #${id}`
-        );
+    const sheets = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
+
+    for (const sheetId of sheets) {
+        for (const baseId of baseRequiredIds) {
+            const suffixedId = `${baseId}__${sheetId}`;
+            assert.ok(
+                htmlContent.includes(`id="${suffixedId}"`),
+                `popup.html missing required element ID: #${suffixedId}`
+            );
+        }
     }
 });
 
@@ -39,7 +44,6 @@ test('Popup Init Script Test: Root-level event listeners are properly scoped ins
     assert.ok(fs.existsSync(initPath), 'popup_init.js exists');
     const initContent = fs.readFileSync(initPath, 'utf8');
 
-    // Check that event listeners like $('#clearYTCollected').click or $(...).on are inside functions or document.ready
     const lines = initContent.split('\n');
     let scopeDepth = 0;
 
@@ -47,13 +51,11 @@ test('Popup Init Script Test: Root-level event listeners are properly scoped ins
         const line = lines[i].trim();
         if (!line || line.startsWith('//')) continue;
 
-        // Track block depth
         for (let char of line) {
             if (char === '{' || char === '(') scopeDepth++;
             if (char === '}' || char === ')') scopeDepth--;
         }
 
-        // Check if root level contains direct event bindings outside functions
         if (scopeDepth === 0) {
             const isDirectBinding = /^\$\(['"][^'"]+['"]\)\.(click|on|change|submit|bind)\(/.test(line);
             assert.ok(

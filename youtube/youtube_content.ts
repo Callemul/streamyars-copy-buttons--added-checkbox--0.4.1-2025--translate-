@@ -5,6 +5,7 @@ import { bindYTEvents, YTCollectedItem } from './yt_events.ts';
 import { SYH_STORAGE } from '../modules/storage.ts';
 import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant.ts';
 import { SYH_CONFIG } from '../modules/config.ts';
+import { isAllowedChannel } from './yt_channel_gate.ts';
 
 console.log('[SYH] YouTube content script initializing...');
 
@@ -99,6 +100,16 @@ function startObserver() {
  * Ініціалізація модуля
  */
 function initYouTubeModule() {
+    if (!isAllowedChannel()) {
+        console.log('[SYH YT] YouTube module skipped: Channel is not in allowed list');
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
+        document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
+        return;
+    }
+
     SYH_STORAGE.get(
         ['syh_options', 'syh_yt_button_states', 'syh_yt_checkbox_state', 'syh_yt_collected'],
         (res) => {
@@ -158,9 +169,15 @@ SYH_STORAGE.onChanged((changes) => {
     }
 });
 
+// Реагування на SPA-навігацію в YouTube
+window.addEventListener('yt-navigate-finish', () => {
+    initYouTubeModule();
+});
+
 // Запуск після завантаження DOM
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initYouTubeModule);
 } else {
     initYouTubeModule();
 }
+

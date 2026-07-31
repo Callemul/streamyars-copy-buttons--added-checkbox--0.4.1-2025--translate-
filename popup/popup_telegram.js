@@ -1,30 +1,50 @@
 // popup_telegram.js
 // Допоміжні утиліти парсингу та розрахунку статистики питань Telegram
+const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
+
 window.countQuestionsInText = function(text) {
     if (!text) return 0;
     const bullets = (text.match(/🔹/g) || []).length;
     return bullets > 0 ? bullets : 1;
 };
 
-window.updateOldInputStats = function() {
-    const text = $('#oldList').val();
-    if (!text) { $('#oldTotalCount').text(''); return; }
+window.updateOldInputStats = function(sheetId = 'vp_ss') {
+    const text = $(`#oldList__${sheetId}`).val();
+    if (!text) { $(`#oldTotalCount__${sheetId}`).text(''); return; }
     const parsed = window.parseAndFilterOldList(text, []); 
     const qPeople = parsed.questions.length;
     let qQuestions = 0;
     parsed.questions.forEach(q => qQuestions += window.countQuestionsInText(q.text));
     const pCount = parsed.prayers.length;
-    $('#oldTotalCount').text(`(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`);
-    $('#oldTotalCount').css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
+    $(`#oldTotalCount__${sheetId}`).text(`(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`);
+    $(`#oldTotalCount__${sheetId}`).css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 };
 
 window.syh_yt_collected = [];
+window.syh_collected_by_sheet = {
+    vp_ss: [],
+    oparin: [],
+    molchanov_ss: [],
+    molchanov_preach: []
+};
 
-window.loadYTCollected = function() {
-    chrome.storage.local.get(['syh_yt_collected'], function(result) {
-        const items = result.syh_yt_collected || [];
-        window.syh_yt_collected = items;
-        const $list = $('#ytCollectedList');
+window.loadYTCollected = function(sheetId = 'vp_ss') {
+    const keysToGet = [`syh_collected__${sheetId}`];
+    if (sheetId === 'vp_ss') {
+        keysToGet.push('syh_yt_collected');
+    }
+
+    chrome.storage.local.get(keysToGet, function(result) {
+        let items = result[`syh_collected__${sheetId}`] || [];
+        if (sheetId === 'vp_ss') {
+            const oldItems = result.syh_yt_collected || [];
+            window.syh_yt_collected = oldItems;
+            // Тимчасове рішення (TODO п.1): Для vp_ss об'єднуємо старий модуль + новий Studio-модуль
+            items = [...oldItems, ...items];
+        }
+        window.syh_collected_by_sheet[sheetId] = items;
+
+        const $list = $(`#ytCollectedList__${sheetId}`);
         $list.empty();
         if (items.length === 0) {
             $list.append('<div class="yt-empty-msg">Зібраних коментарів з YouTube немає</div>');
@@ -44,7 +64,7 @@ window.loadYTCollected = function() {
 
                 $delBtn.click(function(e) {
                     e.stopPropagation();
-                    window.deleteYTCollectedItem(item.id);
+                    window.deleteYTCollectedItem(item.id, sheetId);
                 });
 
                 $header.append($author, $badge, $delBtn);
@@ -53,30 +73,49 @@ window.loadYTCollected = function() {
                 $list.append($card);
             });
         }
-        window.updateCombinedCounters();
+        window.updateCombinedCounters(sheetId);
     });
 };
 
-window.deleteYTCollectedItem = function(commentId) {
-    chrome.storage.local.get(['syh_yt_collected'], function(result) {
-        let items = result.syh_yt_collected || [];
-        items = items.filter(item => item.id !== commentId);
-        chrome.storage.local.set({ syh_yt_collected: items }, function() {
-            window.loadYTCollected();
-        });
+window.deleteYTCollectedItem = function(commentId, sheetId = 'vp_ss') {
+    const keysToGet = [`syh_collected__${sheetId}`];
+    if (sheetId === 'vp_ss') {
+        keysToGet.push('syh_yt_collected');
+    }
+
+    chrome.storage.local.get(keysToGet, function(result) {
+        let sheetItems = result[`syh_collected__${sheetId}`] || [];
+        const foundInSheet = sheetItems.some(item => item.id === commentId);
+
+        if (foundInSheet) {
+            sheetItems = sheetItems.filter(item => item.id !== commentId);
+            chrome.storage.local.set({ [`syh_collected__${sheetId}`]: sheetItems }, function() {
+                window.loadYTCollected(sheetId);
+            });
+        } else if (sheetId === 'vp_ss') {
+            let oldItems = result.syh_yt_collected || [];
+            oldItems = oldItems.filter(item => item.id !== commentId);
+            chrome.storage.local.set({ syh_yt_collected: oldItems }, function() {
+                window.loadYTCollected(sheetId);
+            });
+        }
     });
 };
 
-window.clearAllYTCollected = function() {
-    if (confirm("Очистити всі зібрані коментарі з YouTube?")) {
-        chrome.storage.local.set({ syh_yt_collected: [] }, function() {
-            window.loadYTCollected();
+window.clearAllYTCollected = function(sheetId = 'vp_ss') {
+    if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
+        const updateObj = { [`syh_collected__${sheetId}`]: [] };
+        if (sheetId === 'vp_ss') {
+            updateObj.syh_yt_collected = [];
+        }
+        chrome.storage.local.set(updateObj, function() {
+            window.loadYTCollected(sheetId);
         });
     }
 };
 
-window.updateRightColumnStats = function() {
-    const items = window.syh_yt_collected || [];
+window.updateRightColumnStats = function(sheetId = 'vp_ss') {
+    const items = window.syh_collected_by_sheet[sheetId] || [];
     let qCount = 0;
     let pCount = 0;
     items.forEach(item => {
@@ -89,9 +128,9 @@ window.updateRightColumnStats = function() {
     return { people: items.length, questions: qCount, prayers: pCount };
 };
 
-window.updateCombinedCounters = function() {
+window.updateCombinedCounters = function(sheetId = 'vp_ss') {
     // 1. Left column stats (Telegram)
-    const text = $('#newTelegram').val() || '';
+    const text = $(`#newTelegram__${sheetId}`).val() || '';
     let leftPeople = 0;
     let leftQuestions = 0;
     let leftPrayers = 0;
@@ -109,23 +148,23 @@ window.updateCombinedCounters = function() {
     }
 
     // 2. Right column stats (YouTube)
-    const rightStats = window.updateRightColumnStats();
+    const rightStats = window.updateRightColumnStats(sheetId);
 
     // 3. Render Badges
     if (leftPeople > 0) {
         let leftStr = leftPeople + ' люд. - ' + leftQuestions + ' пит.';
         if (leftPrayers > 0) leftStr += ' | Молитви: ' + leftPrayers;
-        $('#tgTotalCountLeft').text(leftStr).show();
+        $(`#tgTotalCountLeft__${sheetId}`).text(leftStr).show();
     } else {
-        $('#tgTotalCountLeft').text('').hide();
+        $(`#tgTotalCountLeft__${sheetId}`).text('').hide();
     }
 
     if (rightStats.people > 0) {
         let rightStr = rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
         if (rightStats.prayers > 0) rightStr += ' | Молитви: ' + rightStats.prayers;
-        $('#tgTotalCountRight').text(rightStr).show();
+        $(`#tgTotalCountRight__${sheetId}`).text(rightStr).show();
     } else {
-        $('#tgTotalCountRight').text('').hide();
+        $(`#tgTotalCountRight__${sheetId}`).text('').hide();
     }
 
     const totalPeople = leftPeople + rightStats.people;
@@ -135,24 +174,22 @@ window.updateCombinedCounters = function() {
     if (totalPeople > 0) {
         let allStr = 'Разом: ' + totalPeople + ' люд. - ' + totalQuestions + ' пит.';
         if (totalPrayers > 0) allStr += ' | Молитви: ' + totalPrayers;
-        $('#tgTotalCountAll').text('(' + allStr + ')').show();
+        $(`#tgTotalCountAll__${sheetId}`).text('(' + allStr + ')').show();
     } else {
-        $('#tgTotalCountAll').text('').hide();
+        $(`#tgTotalCountAll__${sheetId}`).text('').hide();
     }
 };
 
-window.updateNewInputStats = function() {
-    window.updateCombinedCounters();
+window.updateNewInputStats = function(sheetId = 'vp_ss') {
+    window.updateCombinedCounters(sheetId);
 };
+
 window.numberToEmoji = function(num) {
     const emojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
     if (num <= 10) return emojis[num];
     return num.toString().split('').map(d => emojis[parseInt(d)]).join('');
 };
 
-// Розпізнає окремий рядок службової відносної мітки часу без прив'язки до конкретної дати
-// (напр. "4 часа", "2 хв тому", "щойно", "5 minutes ago") — такі рядки Telegram іноді додає
-// окремим рядком між іменем автора і текстом повідомлення при копіюванні з мобільного клієнта.
 window.RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
 
 window.cleanAuthorName = function(rawName, cleaningLog) {
@@ -191,8 +228,6 @@ window.cleanAuthorName = function(rawName, cleaningLog) {
     return name;
 };
 
-// Очищає вкладені у текст мітки часу Telegram (напр. "[14.07.2024 16:32] Ім'я:") і, якщо переданий
-// масив cleaningLog, записує туди кожен факт очищення для відображення у "Лог чистки тексту"
 window.cleanTelegramHeadersLogged = function(text, cleaningLog) {
     if (!text) return "";
     const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
@@ -239,7 +274,6 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
             });
         }
 
-        // Прибираємо окрему службову мітку часу одразу після імені автора (напр. "4 часа", "2 хв тому")
         let contentLines = lines.slice(1);
         while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
         if (contentLines.length > 0 && window.RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
@@ -257,7 +291,6 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
         let rawText = contentLines.map(l => l.trimEnd()).join('\n').trim();
         if (!author) author = "Анонім";
 
-        // Очищаємо вкладені заголовки всередині блоку тексту питання/молитви
         rawText = window.cleanTelegramHeadersLogged(rawText, cleaningLog);
 
         const totalQuestionsInBlock = window.countQuestionsInText(rawText);
@@ -352,7 +385,6 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
             if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
             if (trimmedLine.includes("Віталій Кривко")) return;
 
-            // 1. Перевіряємо, чи це лінія з keycap emoji
             if (emojiNumberRegex.test(trimmedLine)) {
                 finalizeCurrentItem();
                 currentCounter++;
@@ -360,7 +392,6 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
                 return;
             }
 
-            // 2. Перевіряємо, чи це Telegram-заголовок (Формат A чи B)
             const isHeaderA = tgHeaderARegex.test(trimmedLine);
             const isHeaderB = tgHeaderBRegex.test(trimmedLine);
 
@@ -388,7 +419,6 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
                 return;
             }
 
-            // 3. Інакше додаємо до поточного блоку
             if (currentItem) {
                 if (currentItem.type === 'keycap') {
                     currentItem.rawLines.push(line);
@@ -498,8 +528,8 @@ window.parseTelegramExportLineByLine = function(text, cleaningLog) {
     return groupedItems;
 };
 
-window.ensureStatsBarRows = function() {
-    const $bar = $('#statsBar');
+window.ensureStatsBarRows = function(sheetId = 'vp_ss') {
+    const $bar = $(`#statsBar__${sheetId}`);
     if ($bar.length === 0) return;
     if ($bar.find('.stats-row').length === 0) {
         const $old = $bar.find('.stat-item.old').detach();
@@ -509,7 +539,7 @@ window.ensureStatsBarRows = function() {
         const $total = $bar.find('.stat-item.total').detach();
 
         if ($newYT.length === 0) {
-            $newYT = $('<div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></div>');
+            $newYT = $(`<div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__${sheetId}">0</b></div>`);
         }
 
         $bar.empty().append(
@@ -520,13 +550,13 @@ window.ensureStatsBarRows = function() {
     }
 };
 
-window.processTelegramData = function() {
-    window.ensureStatsBarRows();
-    const oldListText = $('#oldList').val();
-    const answeredInput = $('#answeredIds').val();
-    const telegramText = $('#newTelegram').val();
+window.processTelegramData = function(sheetId = 'vp_ss') {
+    window.ensureStatsBarRows(sheetId);
+    const oldListText = $(`#oldList__${sheetId}`).val();
+    const answeredInput = $(`#answeredIds__${sheetId}`).val();
+    const telegramText = $(`#newTelegram__${sheetId}`).val();
     const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-    const cleaningLog = []; // Збір усіх фактів очищення тексту (нікнейми, вкладені заголовки) для "Лог чистки тексту"
+    const cleaningLog = [];
     const preservedData = window.parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
     
     let newQuestions;
@@ -540,7 +570,7 @@ window.processTelegramData = function() {
     }
     
     // YouTube new items
-    const ytItems = window.syh_yt_collected || [];
+    const ytItems = window.syh_collected_by_sheet[sheetId] || [];
     const newYTQuestions = [];
     const newYTPrayers = [];
 
@@ -580,36 +610,36 @@ window.processTelegramData = function() {
     const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
     const totalPrayers = combinedPrayers.length;
     
-    $('.stat-item.old').html('Залишилось старих: <b>' + oldPeople + ' люд. - ' + oldQuestionsTotal + ' пит.</b>');
-    $('#countDel').text(delPeople + ' люд. - ' + delQuestionsTotal + ' пит.');
+    $(`#statsBar__${sheetId} .stat-item.old`).html('Залишилось старих: <b>' + oldPeople + ' люд. - ' + oldQuestionsTotal + ' пит.</b>');
+    $(`#countDel__${sheetId}`).text(delPeople + ' люд. - ' + delQuestionsTotal + ' пит.');
     
     let newLeftText = newLeftPeople + ' люд. - ' + newLeftQuestionsTotal + ' пит.';
     if (newLeftPrayersTotal > 0) newLeftText += ' | Молитви: ' + newLeftPrayersTotal;
-    $('#countNewLeft').html(newLeftText);
+    $(`#countNewLeft__${sheetId}`).html(newLeftText);
     
-    if ($('#countNewYT').length === 0 && $('#statsBar').length > 0) {
-        if ($('.stats-row.new-row').length > 0) {
-            $('.stats-row.new-row').append('<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span>');
+    if ($(`#countNewYT__${sheetId}`).length === 0 && $(`#statsBar__${sheetId}`).length > 0) {
+        if ($(`#statsBar__${sheetId} .stats-row.new-row`).length > 0) {
+            $(`#statsBar__${sheetId} .stats-row.new-row`).append(`<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__${sheetId}">0</b></span>`);
         } else {
-            $('<div class="stats-row new-row"><span class="stat-item new">Нові з лівої: <b id="countNewLeft">0</b></span><span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT">0</b></span></div>').insertBefore('#statsBar .total-row');
+            $(`<div class="stats-row new-row"><span class="stat-item new">Нові з лівої: <b id="countNewLeft__${sheetId}">0</b></span><span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__${sheetId}">0</b></span></div>`).insertBefore(`#statsBar__${sheetId} .total-row`);
         }
     }
 
     let newYTText = newYTPeople + ' люд. - ' + newYTQuestionsTotal + ' пит.';
     if (newYTPrayersTotal > 0) newYTText += ' | Молитви: ' + newYTPrayersTotal;
-    $('#countNewYT').html(newYTText);
+    $(`#countNewYT__${sheetId}`).html(newYTText);
 
     let totalText = totalPeople + ' люд. - ' + totalQuestions + ' пит.';
     if (totalPrayers > 0) totalText += ' | Молитви: ' + totalPrayers;
-    $('#countTotal').text(totalText);
+    $(`#countTotal__${sheetId}`).text(totalText);
     
-    $('#statsBar').show();
+    $(`#statsBar__${sheetId}`).show();
 
     if (typeof window.updateCombinedCounters === 'function') {
-        window.updateCombinedCounters();
+        window.updateCombinedCounters(sheetId);
     }
     
-    const outputDiv = $('#finalResultDiv');
+    const outputDiv = $(`#finalResultDiv__${sheetId}`);
     outputDiv.empty();
     combinedQuestions.forEach((item, index) => {
         const emojiNum = window.numberToEmoji(index + 1);
@@ -629,7 +659,7 @@ window.processTelegramData = function() {
             outputDiv.append(block);
         });
     }
-    const deletedLog = $('#deletedLog');
+    const deletedLog = $(`#deletedLog__${sheetId}`);
     deletedLog.empty();
     if (preservedData.deleted.length > 0) {
         preservedData.deleted.forEach(d => {
@@ -638,13 +668,12 @@ window.processTelegramData = function() {
             else msg += 'Видалено підпункт';
             deletedLog.append($('<div>').addClass('del-row').text(msg));
         });
-        $('#deletedLogDetails').show();
+        $(`#deletedLogDetails__${sheetId}`).show();
     } else {
-        $('#deletedLogDetails').hide();
+        $(`#deletedLogDetails__${sheetId}`).hide();
     }
 
-    // Лог чистки тексту: таблиця "До очищення / Після очищення / Що прибрано"
-    const cleanedLog = $('#cleanedLog');
+    const cleanedLog = $(`#cleanedLog__${sheetId}`);
     cleanedLog.empty();
     if (cleaningLog.length > 0) {
         const table = $('<table>').addClass('clean-table');
@@ -665,9 +694,9 @@ window.processTelegramData = function() {
             );
         });
         cleanedLog.append(table);
-        $('#cleanedLogDetails').show();
+        $(`#cleanedLogDetails__${sheetId}`).show();
     } else {
-        $('#cleanedLogDetails').hide();
+        $(`#cleanedLogDetails__${sheetId}`).hide();
     }
 
     // 30-денне очищення чекбоксів YouTube
@@ -689,17 +718,17 @@ window.processTelegramData = function() {
         }
     });
 
-    // Збереження результатів процесингу Telegram в сховище
+    // Збереження результатів процесингу Telegram в сховище per sheetId
     chrome.storage.local.set({
-        'tg_finalResultHtml': outputDiv.html(),
-        'tg_statsHtml': $('#statsBar').html(),
-        'tg_statsVisible': $('#statsBar').is(':visible'),
-        'tg_deletedLogHtml': deletedLog.html(),
-        'tg_deletedLogDetailsVisible': $('#deletedLogDetails').is(':visible'),
-        'tg_deletedLogDetailsOpen': $('#deletedLogDetails').attr('open') !== undefined,
-        'tg_cleanedLogHtml': cleanedLog.html(),
-        'tg_cleanedLogDetailsVisible': $('#cleanedLogDetails').is(':visible'),
-        'tg_cleanedLogDetailsOpen': $('#cleanedLogDetails').attr('open') !== undefined
+        [`tg_finalResultHtml__${sheetId}`]: outputDiv.html(),
+        [`tg_statsHtml__${sheetId}`]: $(`#statsBar__${sheetId}`).html(),
+        [`tg_statsVisible__${sheetId}`]: $(`#statsBar__${sheetId}`).is(':visible'),
+        [`tg_deletedLogHtml__${sheetId}`]: deletedLog.html(),
+        [`tg_deletedLogDetailsVisible__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).is(':visible'),
+        [`tg_deletedLogDetailsOpen__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).attr('open') !== undefined,
+        [`tg_cleanedLogHtml__${sheetId}`]: cleanedLog.html(),
+        [`tg_cleanedLogDetailsVisible__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
+        [`tg_cleanedLogDetailsOpen__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined
     });
 };
 
@@ -707,51 +736,62 @@ $(document).ready(function() {
     // Реактивне оновлення правої колонки при зміні зібраних коментарів YouTube
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
         chrome.storage.onChanged.addListener(function(changes, areaName) {
-            if (areaName === 'local' && changes.syh_yt_collected) {
-                if (typeof window.loadYTCollected === 'function') {
-                    window.loadYTCollected();
+            if (areaName === 'local') {
+                if (changes.syh_yt_collected) {
+                    if (typeof window.loadYTCollected === 'function') {
+                        window.loadYTCollected('vp_ss');
+                    }
                 }
+                SHEET_IDS.forEach(sId => {
+                    if (changes[`syh_collected__${sId}`]) {
+                        if (typeof window.loadYTCollected === 'function') {
+                            window.loadYTCollected(sId);
+                        }
+                    }
+                });
             }
         });
     }
 
-    // Обробники кліку для генерації та копіювання списку питань
-    $('#processTelegramBtn').click(function() { 
-        try { 
-            window.processTelegramData(); 
-        } catch (e) { 
-            alert("❌ Помилка:\n" + e.message); 
-            console.error(e); 
-        } 
-    });
-    
-    $('#copyResultBtn').click(async function() {
-        const plainText = $('#finalResultDiv').text(); 
-        if (!plainText) return;
+    // Обробники кліків для всіх 4 аркушів
+    SHEET_IDS.forEach(sId => {
+        $(`#processTelegramBtn__${sId}`).click(function() { 
+            try { 
+                window.processTelegramData(sId); 
+            } catch (e) { 
+                alert("❌ Помилка:\n" + e.message); 
+                console.error(e); 
+            } 
+        });
+        
+        $(`#copyResultBtn__${sId}`).click(async function() {
+            const plainText = $(`#finalResultDiv__${sId}`).text(); 
+            if (!plainText) return;
 
-        const $btn = $(this);
-        const originalText = $btn.text(); 
+            const $btn = $(this);
+            const originalText = $btn.text(); 
 
-        const copyFallback = (txt) => {
-            const $temp = $("<textarea>"); 
-            $("body").append($temp); 
-            $temp.val(txt).select(); 
-            document.execCommand("copy"); 
-            $temp.remove(); 
-        };
+            const copyFallback = (txt) => {
+                const $temp = $("<textarea>"); 
+                $("body").append($temp); 
+                $temp.val(txt).select(); 
+                document.execCommand("copy"); 
+                $temp.remove(); 
+            };
 
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(plainText);
-            } else {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(plainText);
+                } else {
+                    copyFallback(plainText);
+                }
+            } catch (err) {
+                console.warn("Clipboard API failed, using fallback:", err);
                 copyFallback(plainText);
             }
-        } catch (err) {
-            console.warn("Clipboard API failed, using fallback:", err);
-            copyFallback(plainText);
-        }
 
-        $btn.text("Скопійовано! ✅"); 
-        setTimeout(() => $btn.text(originalText), 2000);
+            $btn.text("Скопійовано! ✅"); 
+            setTimeout(() => $btn.text(originalText), 2000);
+        });
     });
 });
