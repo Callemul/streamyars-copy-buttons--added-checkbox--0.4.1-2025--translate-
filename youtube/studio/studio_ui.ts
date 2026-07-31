@@ -35,18 +35,18 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'syh-studio-btn syh-studio-btn-copy';
-        copyBtn.innerHTML = '<span class="syh-icon">📋</span> <span class="syh-label">Копіювати</span>';
+        copyBtn.innerHTML = '<span class="syh-icon">📋</span>';
         copyBtn.title = 'Скопіювати автора та текст коментаря в буфер';
 
         questionBtn = document.createElement('button');
         questionBtn.type = 'button';
         questionBtn.className = 'syh-studio-btn syh-studio-btn-question';
-        questionBtn.innerHTML = '<span class="syh-icon">❓</span> <span class="syh-label">Питання</span>';
+        questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
 
         prayerBtn = document.createElement('button');
         prayerBtn.type = 'button';
         prayerBtn.className = 'syh-studio-btn syh-studio-btn-prayer';
-        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span> <span class="syh-label">Молитва</span>';
+        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
 
         // Append to toolbar
         toolbar.appendChild(copyBtn);
@@ -152,13 +152,13 @@ export function updateStudioButtonsUI(
     // Question button
     if (buttonState === 'question') {
         questionBtn.classList.add('syh-btn-active');
-        questionBtn.innerHTML = '<span class="syh-icon">✓</span> <span class="syh-label">Питання</span>';
+        questionBtn.innerHTML = '<span class="syh-icon">✓</span>';
         questionBtn.title = sheetLabel
             ? `Відправлено до ${sheetLabel} - питань`
             : 'Відправлено до питань';
     } else {
         questionBtn.classList.remove('syh-btn-active');
-        questionBtn.innerHTML = '<span class="syh-icon">❓</span> <span class="syh-label">Питання</span>';
+        questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
         questionBtn.title = sheetLabel
             ? `Додати до ${sheetLabel} - питань`
             : 'Категорію не визначено (натисніть на Badge)';
@@ -167,13 +167,13 @@ export function updateStudioButtonsUI(
     // Prayer button
     if (buttonState === 'prayer') {
         prayerBtn.classList.add('syh-btn-active');
-        prayerBtn.innerHTML = '<span class="syh-icon">✓</span> <span class="syh-label">Молитва</span>';
+        prayerBtn.innerHTML = '<span class="syh-icon">✓</span>';
         prayerBtn.title = sheetLabel
             ? `Відправлено до ${sheetLabel} - молитов`
             : 'Відправлено до молитов';
     } else {
         prayerBtn.classList.remove('syh-btn-active');
-        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span> <span class="syh-label">Молитва</span>';
+        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
         prayerBtn.title = sheetLabel
             ? `Додати до ${sheetLabel} - молитов`
             : 'Категорію не визначено (натисніть на Badge)';

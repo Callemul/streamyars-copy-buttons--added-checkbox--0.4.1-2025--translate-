@@ -7,7 +7,8 @@ const CSS_FILES = [
     'styles.css',
     'popup/popup.css',
     'options/options.css',
-    'youtube/youtube_styles.css'
+    'youtube/youtube_styles.css',
+    'youtube/studio/studio_styles.css'
 ];
 
 function checkCssFile(filePath) {

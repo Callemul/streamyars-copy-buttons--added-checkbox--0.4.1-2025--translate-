@@ -9,6 +9,37 @@ import { generateVideoKey, setStudioVideoSheetOverride, VIDEO_MAP_STORAGE_KEY } 
 import { generateCommentKey, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key.ts';
 import { resolveCategoryForVideo, VideoSheetMapEntry } from './studio_category_matcher.ts';
 
+// Helper to toggle z-index on all relevant ancestor elements up to the scrolling list
+function toggleZIndexStack(startEl: HTMLElement, active: boolean) {
+    let curr: HTMLElement | null = startEl;
+    while (curr && curr.id !== 'items' && curr.tagName !== 'BODY') {
+        if (curr.classList && (curr.classList.contains('ytcp-comment-thread') || curr.tagName.toLowerCase() === 'ytcp-comment')) {
+            if (active) {
+                curr.classList.add('syh-dropdown-active');
+            } else {
+                curr.classList.remove('syh-dropdown-active');
+            }
+        }
+        curr = (curr.parentElement || (curr.getRootNode && (curr.getRootNode() as any).host) || null) as HTMLElement | null;
+    }
+}
+
+export function setStudioDropdownVisible(dropdownEl: HTMLElement, visible: boolean) {
+    if (!dropdownEl) return;
+    if (visible) {
+        // Close all other dropdowns first
+        document.querySelectorAll('.syh-studio-dropdown').forEach(d => {
+            (d as HTMLElement).style.display = 'none';
+            toggleZIndexStack(d as HTMLElement, false);
+        });
+        dropdownEl.style.display = 'block';
+        toggleZIndexStack(dropdownEl, true);
+    } else {
+        dropdownEl.style.display = 'none';
+        toggleZIndexStack(dropdownEl, false);
+    }
+}
+
 export interface StudioEventCaches {
     videoSheetMap: Record<string, VideoSheetMapEntry>;
     buttonStates: Record<string, 'question' | 'prayer'>;
@@ -79,12 +110,6 @@ export function bindStudioCommentEvents(
     threadEl.dataset.syhVideoKey = videoKey;
     threadEl.dataset.syhCommentKey = commentKey;
 
-    // If events already bound on this specific element instance, stop after state update
-    if (isAlreadyBound) {
-        return;
-    }
-    threadEl.dataset.syhStudioEventsBound = 'true';
-
     // Helper: auto-check comment when added to questions/prayers
     const autoCheck = () => {
         ui.checkboxEl.checked = true;
@@ -97,17 +122,23 @@ export function bindStudioCommentEvents(
     };
 
     // 1. Copy button handler
-    ui.copyBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const formatted = author ? `@${author}\n\n${text}` : text;
-        const success = await copyToClipboard(formatted);
+    if (ui.copyBtn.dataset.syhBound !== 'true') {
+        ui.copyBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const formatted = author ? `@${author}\n\n${text}` : text;
+            const success = await copyToClipboard(formatted);
 
-        const origHtml = ui.copyBtn.innerHTML;
-        ui.copyBtn.innerHTML = success ? '<span class="syh-icon">✓</span> <span class="syh-label">Скопійовано</span>' : '<span class="syh-icon">❌</span> <span class="syh-label">Помилка</span>';
-        setTimeout(() => {
-            ui.copyBtn.innerHTML = origHtml;
-        }, 1200);
-    });
+            const origHtml = ui.copyBtn.innerHTML;
+            const origTitle = ui.copyBtn.title;
+            ui.copyBtn.innerHTML = success ? '<span class="syh-icon">✓</span>' : '<span class="syh-icon">❌</span>';
+            ui.copyBtn.title = success ? 'Скопійовано в буфер!' : 'Помилка копіювання';
+            setTimeout(() => {
+                ui.copyBtn.innerHTML = origHtml;
+                ui.copyBtn.title = origTitle;
+            }, 1200);
+        });
+        ui.copyBtn.dataset.syhBound = 'true';
+    }
 
     // Helper for question / prayer click
     const handleAddClick = async (type: 'question' | 'prayer') => {
@@ -117,7 +148,7 @@ export function bindStudioCommentEvents(
 
         if (!targetSheetId) {
             // Unresolved sheet category -> block action & highlight/open badge dropdown
-            ui.dropdownEl.style.display = 'block';
+            setStudioDropdownVisible(ui.dropdownEl, true);
             ui.badgeEl.classList.add('syh-badge-highlight');
             setTimeout(() => ui.badgeEl.classList.remove('syh-badge-highlight'), 2000);
             return;
@@ -147,90 +178,105 @@ export function bindStudioCommentEvents(
     };
 
     // 2. Question button click
-    ui.questionBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleAddClick('question');
-    });
+    if (ui.questionBtn.dataset.syhBound !== 'true') {
+        ui.questionBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleAddClick('question');
+        });
+        ui.questionBtn.dataset.syhBound = 'true';
+    }
 
     // 3. Prayer button click
-    ui.prayerBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleAddClick('prayer');
-    });
+    if (ui.prayerBtn.dataset.syhBound !== 'true') {
+        ui.prayerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleAddClick('prayer');
+        });
+        ui.prayerBtn.dataset.syhBound = 'true';
+    }
+    if (!ui.dropdownEl) return;
 
     // 4. Badge click -> toggle dropdown
-    ui.badgeEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isVisible = ui.dropdownEl.style.display === 'block';
-        // Close all other dropdowns
-        document.querySelectorAll('.syh-studio-dropdown').forEach(d => (d as HTMLElement).style.display = 'none');
-        ui.dropdownEl.style.display = isVisible ? 'none' : 'block';
-    });
+    if (ui.badgeEl.dataset.syhBound !== 'true') {
+        ui.badgeEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isVisible = ui.dropdownEl.style.display === 'block';
+            setStudioDropdownVisible(ui.dropdownEl, !isVisible);
+        });
+        ui.badgeEl.dataset.syhBound = 'true';
+    }
 
     // Dropdown item selection
-    ui.dropdownEl.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const itemEl = (e.target as HTMLElement).closest<HTMLElement>('.syh-studio-dropdown-item');
-        if (!itemEl) return;
+    if (ui.dropdownEl.dataset.syhBound !== 'true') {
+        ui.dropdownEl.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const itemEl = (e.target as HTMLElement).closest<HTMLElement>('.syh-studio-dropdown-item');
+            if (!itemEl) return;
 
-        const selectedVal = itemEl.dataset.sheetId;
-        const newSheetId: SheetId | null = selectedVal === 'auto_reset' ? null : (selectedVal as SheetId);
-        const autoCat = resolveCategoryForVideo(videoTitle, videoKey, channelKey, {}).sheetId;
+            const selectedVal = itemEl.dataset.sheetId;
+            const newSheetId: SheetId | null = selectedVal === 'auto_reset' ? null : (selectedVal as SheetId);
+            const autoCat = resolveCategoryForVideo(videoTitle, videoKey, channelKey, {}).sheetId;
 
-        ui.dropdownEl.style.display = 'none';
+            setStudioDropdownVisible(ui.dropdownEl, false);
 
-        // Update storage and videoSheetMap
-        caches.videoSheetMap = await setStudioVideoSheetOverride(
-            videoKey,
-            newSheetId,
-            channelKey,
-            channelLabel,
-            videoTitle,
-            autoCat
-        );
+            // Update storage and videoSheetMap
+            caches.videoSheetMap = await setStudioVideoSheetOverride(
+                videoKey,
+                newSheetId,
+                channelKey,
+                channelLabel,
+                videoTitle,
+                autoCat
+            );
 
-        // Retroactively update all comments in DOM matching videoKey
-        retroactiveUpdateVideoComments(videoKey, channelKey, caches);
-    });
+            // Retroactively update all comments in DOM matching videoKey
+            retroactiveUpdateVideoComments(videoKey, channelKey, caches);
+        });
+        ui.dropdownEl.dataset.syhBound = 'true';
+    }
 
     // Close dropdown on click outside
     document.addEventListener('click', (e) => {
         if (!ui.metaContainer.contains(e.target as Node)) {
-            ui.dropdownEl.style.display = 'none';
+            setStudioDropdownVisible(ui.dropdownEl, false);
         }
     });
 
     // 5. Checkbox change handler
-    ui.checkboxEl.addEventListener('change', (e) => {
-        e.stopPropagation();
-        const isChecked = ui.checkboxEl.checked;
-        updateStudioCheckedClass(threadEl, isChecked);
+    if (ui.checkboxEl.dataset.syhBound !== 'true') {
+        ui.checkboxEl.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const isChecked = ui.checkboxEl.checked;
+            updateStudioCheckedClass(threadEl, isChecked);
 
-        caches.checkboxStates[commentKey] = {
-            checked: isChecked,
-            timestamp: Date.now()
-        };
-        SYH_STORAGE.set({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
-    });
+            caches.checkboxStates[commentKey] = {
+                checked: isChecked,
+                timestamp: Date.now()
+            };
+            SYH_STORAGE.set({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
+        });
+        ui.checkboxEl.dataset.syhBound = 'true';
+    }
 
     // 6. Contextmenu (RMB / ПКМ) on comment text area
-    const handleContextMenu = (e: MouseEvent) => {
-        const target = e.target as HTMLElement | null;
-        if (target && target.closest('button, a, input, label, .syh-studio-btn, .syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper')) {
-            return;
-        }
+    if (threadEl.dataset.syhStudioEventsBound !== 'true') {
+        const handleContextMenu = (e: MouseEvent) => {
+            const target = e.target as HTMLElement | null;
+            if (!target) return;
 
-        e.preventDefault();
-        e.stopPropagation();
-        ui.checkboxEl.checked = !ui.checkboxEl.checked;
-        ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
-    };
+            if (target.closest('button, a, input, select, label, .syh-studio-btn, .syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper, ytcp-comment-action-buttons, ytcp-comment-video-thumbnail')) {
+                return;
+            }
 
-    const textTargets = threadEl.querySelectorAll<HTMLElement>('#content-text, #expander-container, #expander, #content');
-    if (textTargets.length > 0) {
-        textTargets.forEach((el) => el.addEventListener('contextmenu', handleContextMenu));
-    } else {
-        threadEl.addEventListener('contextmenu', handleContextMenu);
+            e.preventDefault();
+            e.stopPropagation();
+            ui.checkboxEl.checked = !ui.checkboxEl.checked;
+            ui.checkboxEl.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        threadEl.addEventListener('contextmenu', handleContextMenu, { capture: true });
+        threadEl.dataset.syhStudioEventsBound = 'true';
     }
 }
 

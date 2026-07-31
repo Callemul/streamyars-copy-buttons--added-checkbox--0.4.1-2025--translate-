@@ -3,12 +3,14 @@
 /* --- Action Buttons in Toolbar --- */
 .syh-studio-btn {
     font-family: Roboto, Noto, Arial, sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 1.2;
-    padding: 4px 10px;
-    margin-left: 6px;
-    border-radius: 12px;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    margin-left: 4px;
+    border-radius: 50%;
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
@@ -16,14 +18,14 @@
     user-select: none;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
     background-color: rgba(128, 128, 128, 0.1);
     color: var(--ytcp-primary-text, #333333);
 }
 
 .syh-studio-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* Copy button */
@@ -70,6 +72,26 @@
 }
 
 /* --- Video Meta Container (Badge + Checkbox under #video-title) --- */
+ytcp-comment-video-thumbnail,
+ytcp-comment-video-thumbnail #body,
+ytcp-comment-video-thumbnail #video-title,
+.ytcp-comment-thread,
+ytcp-comment {
+    overflow: visible !important;
+}
+
+/* Fix stacking context for dropdowns */
+.ytcp-comment-thread,
+ytcp-comment {
+    position: relative;
+    z-index: 1;
+}
+
+.ytcp-comment-thread.syh-dropdown-active,
+ytcp-comment.syh-dropdown-active {
+    z-index: 99999 !important;
+}
+
 ytcp-comment-video-thumbnail {
     display: flex !important;
     flex-direction: column !important;
@@ -86,12 +108,15 @@ ytcp-comment-video-thumbnail {
     margin-bottom: 4px;
     flex-wrap: nowrap;
     white-space: nowrap;
+    position: relative;
+    z-index: 100;
 }
 
 /* Badge wrapper & dropdown */
 .syh-studio-badge-wrapper {
     position: relative;
     display: inline-block;
+    z-index: 101;
 }
 
 .syh-studio-badge {
@@ -109,6 +134,7 @@ ytcp-comment-video-thumbnail {
     gap: 4px;
     background-color: #065fd4;
     color: #ffffff;
+    pointer-events: auto;
 }
 
 .syh-studio-badge:hover {
@@ -152,26 +178,27 @@ ytcp-comment-video-thumbnail {
 /* Dropdown menu */
 .syh-studio-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 4px);
     left: 0;
-    margin-top: 4px;
-    background-color: #ffffff;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: var(--yt-spec-menu-background, var(--ytcp-menu-background, #ffffff));
+    color: var(--yt-spec-text-primary, var(--ytcp-text-primary, #030303));
+    border: 1px solid var(--yt-spec-10-percent-layer, var(--ytcp-line-divider, rgba(0, 0, 0, 0.1)));
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    z-index: 9999;
-    min-width: 170px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 99999 !important;
+    min-width: 180px;
     overflow: hidden;
     padding: 4px 0;
+    pointer-events: auto;
 }
 
-/* Dark mode fallback support */
-@media (prefers-color-scheme: dark) {
-    .syh-studio-dropdown {
-        background-color: #282828;
-        border-color: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
-    }
+/* Dark mode fallback support based on YouTube Studio html[dark] attribute */
+html[dark] .syh-studio-dropdown,
+html[dark="true"] .syh-studio-dropdown {
+    background-color: var(--yt-spec-menu-background, var(--ytcp-menu-background, #282828));
+    color: var(--yt-spec-text-primary, var(--ytcp-text-primary, #ffffff));
+    border-color: var(--yt-spec-10-percent-layer, var(--ytcp-line-divider, rgba(255, 255, 255, 0.15)));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 .syh-studio-dropdown-item {
@@ -188,6 +215,12 @@ ytcp-comment-video-thumbnail {
     color: #065fd4;
 }
 
+html[dark] .syh-studio-dropdown-item:hover,
+html[dark="true"] .syh-studio-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #6ea8fe;
+}
+
 .syh-studio-dropdown-reset {
     border-top: 1px solid rgba(128, 128, 128, 0.2);
     font-style: italic;
@@ -197,6 +230,18 @@ ytcp-comment-video-thumbnail {
 .syh-studio-dropdown-reset:hover {
     background-color: rgba(231, 76, 60, 0.1);
     color: #c0392b;
+}
+
+html[dark] .syh-studio-dropdown-reset,
+html[dark="true"] .syh-studio-dropdown-reset {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaaaaa;
+}
+
+html[dark] .syh-studio-dropdown-reset:hover,
+html[dark="true"] .syh-studio-dropdown-reset:hover {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #ff6b6b;
 }
 
 /* --- Checkbox Wrapper --- */
