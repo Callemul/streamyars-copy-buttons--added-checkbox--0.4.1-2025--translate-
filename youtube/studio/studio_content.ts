@@ -165,7 +165,13 @@ class StudioModuleController {
         const channelLabel = this.channelInfo?.label || 'Невідомий канал';
 
         const threads = getCommentThreads();
-        threads.forEach((threadEl) => {
+        // Process parent comments first so replies can inherit their videoKey
+        const sortedThreads = threads.slice().sort((a, b) => {
+            const aIsReply = a.hasAttribute('is-reply') ? 1 : 0;
+            const bIsReply = b.hasAttribute('is-reply') ? 1 : 0;
+            return aIsReply - bIsReply;
+        });
+        sortedThreads.forEach((threadEl) => {
             bindStudioCommentEvents(threadEl, channelKey, channelLabel, this.caches, forceUpdate);
         });
     }

@@ -82,8 +82,27 @@ export function bindStudioCommentEvents(
     // If the videoKey changed, the element must be re-processed even if already bound.
     const author = getAuthorNameText(threadEl);
     const text = getCommentText(threadEl);
-    const videoTitle = getVideoTitleText(threadEl);
-    const videoHref = getVideoLinkHref(threadEl);
+    let videoTitle = getVideoTitleText(threadEl);
+    let videoHref = getVideoLinkHref(threadEl);
+
+    // --- REPLY INHERITANCE: inherit video data from parent comment if this is a reply ---
+    const isReply = threadEl.hasAttribute('is-reply');
+    if (isReply && !videoTitle) {
+        // Walk up to find the parent ytcp-comment-thread, then find the root comment (without is-reply)
+        const parentThread = threadEl.closest('ytcp-comment-thread');
+        if (parentThread) {
+            const parentComment = parentThread.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
+            if (parentComment) {
+                if (!videoTitle) videoTitle = getVideoTitleText(parentComment);
+                if (!videoHref)  videoHref  = getVideoLinkHref(parentComment);
+                // Also try to directly inherit videoKey from parent's dataset
+                if (!videoTitle && !videoHref && parentComment.dataset.syhVideoKey) {
+                    videoHref = parentComment.dataset.syhVideoKey;
+                }
+            }
+        }
+    }
+
     const videoKey = generateVideoKey(videoHref, videoTitle);
     const commentKey = generateCommentKey(videoTitle, author, text);
 
