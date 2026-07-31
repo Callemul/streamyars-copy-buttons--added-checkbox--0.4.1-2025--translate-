@@ -1,6 +1,6 @@
 /* Банер підтвердження копіювання */
 .copy-success-banner {
-  position: fixed !important; top: 20px !important; left: 50% !important;
+  position: fixed !important; top: 20px !important; right: 80px !important;
   transform: translateX(-50%) !important; background-color: #28a745 !important;
   color: white !important; padding: 12px 24px !important; border-radius: 8px !important;
   z-index: 2147483647 !important; font-size: 16px !important; font-family: sans-serif !important;
@@ -47,17 +47,19 @@ div[class*="PlatformCommentShell__Wrap"] {
 
 .syh-banner-controls {
   position: absolute !important;
-  top: 4px;
-  right: 80px;
+  top: auto !important;
+  bottom: 4px !important;
+  left: auto !important;
+  right: 8px !important;
+  transform: none !important;
   z-index: 2147483646 !important;
   display: flex !important;
   align-items: center !important;
-  background-color: transparent !important; /* Прибрали сірий фон */
+  background-color: transparent !important;
   padding: 0 !important;
-  border: none !important; /* Прибрали сіру рамку */
-  box-shadow: none !important; /* Прибрали тінь */
+  border: none !important;
+  box-shadow: none !important;
 }
-
 
 /* --- ЗАГАЛЬНІ СТИЛІ ДЛЯ НАШИХ ЕЛЕМЕНТІВ --- */
 .syh-button {
@@ -287,4 +289,4 @@ mark.syh-trigger-highlight {
     font-weight: 700 !important;
     box-shadow: 0 0 4px rgba(255, 224, 102, 0.6) !important;
     display: inline !important;
-}
+}

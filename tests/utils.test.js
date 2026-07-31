@@ -114,5 +114,18 @@ describe('SYH_UTILS tests', () => {
         assert.strictEqual(SYH_UTILS.smartSearch('zaytseva', '@Зайцева'), true);
     });
 
-});
+    test('16. saveBannerCategory - виклик без контексту this (unbound function)', async () => {
+        let savedDb = {};
+        const mockStorage = {
+            get(keys, cb) { cb({ syh_banner_categories: savedDb }); },
+            set(obj, cb) { if (obj.syh_banner_categories) savedDb = obj.syh_banner_categories; if (cb) cb(); }
+        };
+        SYH_UTILS._storage = mockStorage;
 
+        const unboundSaver = SYH_UTILS.saveBannerCategory;
+        await unboundSaver('Что такое дар?', 'stream');
+
+        assert.strictEqual(savedDb['Что такое дар?'], 'stream');
+        delete SYH_UTILS._storage;
+    });
+});

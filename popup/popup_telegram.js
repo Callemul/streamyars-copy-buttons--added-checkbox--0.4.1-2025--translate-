@@ -641,15 +641,19 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
     
     const outputDiv = $(`#finalResultDiv__${sheetId}`);
     outputDiv.empty();
-    combinedQuestions.forEach((item, index) => {
-        const emojiNum = window.numberToEmoji(index + 1);
-        const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
-        const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
-        block.text(textBlock);
-        outputDiv.append(block);
-    });
+    if (combinedQuestions.length > 0) {
+        const header = $('<div>').text("❓❓❓ВОПРОСЫ\n\n");
+        outputDiv.append(header);
+        combinedQuestions.forEach((item, index) => {
+            const emojiNum = window.numberToEmoji(index + 1);
+            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
+            const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
+            block.text(textBlock);
+            outputDiv.append(block);
+        });
+    }
     if (combinedPrayers.length > 0) {
-        const header = $('<div>').text("\n\n🙏🙏🙏МОЛИТВЫ\n");
+        const header = $('<div>').text("🙏🙏🙏МОЛИТВЫ\n\n");
         outputDiv.append(header);
         combinedPrayers.forEach((item, index) => {
             const emojiNum = window.numberToEmoji(index + 1);

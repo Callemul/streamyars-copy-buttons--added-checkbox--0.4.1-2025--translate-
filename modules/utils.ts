@@ -28,7 +28,7 @@ export const SYH_UTILS: SyhUtils = {
 
     // Посилання на централізований адаптер сховища
     get storage(): any {
-        return SYH_STORAGE || (typeof window !== 'undefined' ? (window as any).SYH_STORAGE : undefined);
+        return (this && (this as any)._storage) || SYH_STORAGE || (typeof window !== 'undefined' ? (window as any).SYH_STORAGE : undefined);
     },
 
     getTodayDateString: function(): string {
@@ -268,16 +268,21 @@ export const SYH_UTILS: SyhUtils = {
 
     saveBannerCategory: function(text: string, type: string): Promise<void> {
         return new Promise(resolve => {
-            if (!this.storage) {
+            const utilsObj = (this && this.storage) ? this : (typeof window !== 'undefined' ? (window as any).SYH_UTILS : null);
+            const storageAdapter = (utilsObj && utilsObj.storage) 
+                ? utilsObj.storage 
+                : (SYH_STORAGE || (typeof window !== 'undefined' ? (window as any).SYH_STORAGE : undefined));
+
+            if (!storageAdapter) {
                 console.error("SYH_UTILS: Не знайдено адаптер сховища!");
                 resolve();
                 return;
             }
 
-            this.storage.get(['syh_banner_categories'], (result: Record<string, any>) => {
+            storageAdapter.get(['syh_banner_categories'], (result: Record<string, any>) => {
                 const db = result.syh_banner_categories || {};
                 db[text] = type;
-                this.storage.set({ 'syh_banner_categories': db }, resolve);
+                storageAdapter.set({ 'syh_banner_categories': db }, resolve);
             });
         });
     },

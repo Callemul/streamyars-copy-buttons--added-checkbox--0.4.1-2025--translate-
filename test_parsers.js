@@ -272,6 +272,12 @@ async function testCategoryDetection() {
         await bannerCreator.processAndCreateBanners(multiMessageTelegramInput);
         assert.deepStrictEqual(capturedCategories, ['audience', 'audience', 'prayer', 'stream', 'stream'], "Декілька Telegram повідомлень повинні розділятися на правильні категорії ('audience', 'prayer', 'stream')");
 
+        // Кейс Х: Нумеровані питання про дари (повинні автоматично йти в "stream" / Ефір)
+        const giftsInput = `1. Что такое дар? Чем дар отличается от подарка? Что вы дарите и что Вам дарили? 2. Зачем Бог даёт церкви Свои дары? Какой дар вы считаете самым важным? 3. Почему Бог одним членам церкви лает дары, а каким нет?  Может ли Бог даровать дары не членам церкви? 4. Что такое  дар иных языков? 5. Может ли человек имеющий дары потерять их?`;
+        capturedCategories = [];
+        await bannerCreator.processAndCreateBanners(giftsInput);
+        assert.deepStrictEqual(capturedCategories, ['stream', 'stream', 'stream', 'stream', 'stream'], "Нумеровані питання про дари повинні автоматично відноситися до категорії 'stream' (Ефір)");
+
         console.log("✅ Тест 5 пройдено: Категорії та формати питань (включаючи очищення від заголовків, однорядкові списки, запитання про молитву, емодзі 👋/1⃣, суботні/урокові ключі та декілька повідомлень Telegram) автоматично визначаються правильно.");
     } catch (e) {
         console.error("❌ Тест 5 провалено:", e);

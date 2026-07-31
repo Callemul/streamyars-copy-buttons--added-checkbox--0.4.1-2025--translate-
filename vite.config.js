@@ -4,6 +4,12 @@ import manifest from './manifest.json' with { type: 'json' };
 
 export default defineConfig({
   plugins: [crx({ manifest })],
+  server: {
+    port: 5173,
+    hmr: {
+      port: 5173
+    }
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true

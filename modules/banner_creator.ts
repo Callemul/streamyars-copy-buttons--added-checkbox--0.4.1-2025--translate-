@@ -131,9 +131,9 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
                 await this.createSingleBanner(cleanQuestion);
                 
-                const saver = (this.UTILS && this.UTILS.saveBannerCategory) ? this.UTILS.saveBannerCategory : (window as any).SYH_UTILS?.saveBannerCategory;
-                if (saver) {
-                    await saver(cleanQuestion, item.category);
+                const utils = this.UTILS || (window as any).SYH_UTILS;
+                if (utils && typeof utils.saveBannerCategory === 'function') {
+                    await utils.saveBannerCategory(cleanQuestion, item.category);
                 }
 
                 createdCount++;
@@ -151,6 +151,11 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         }
 
         await this.finalCleanup();
+
+        const ui = this.UI || (window as any).SYH_UI;
+        if (ui && typeof ui.filterBanners === 'function') {
+            ui.filterBanners();
+        }
 
         alert(`Готово! Створено: ${createdCount}.`);
     },
