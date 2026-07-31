@@ -437,19 +437,19 @@ textarea {
     margin-bottom: 24px;
 }
 
-#processTelegramBtn {
+#processTelegramBtn, [id^="processTelegramBtn"] {
     flex: 1;
     margin-top: 0;
 }
 
-#clearStateBtn {
+#clearStateBtn, [id^="clearStateBtn"] {
     flex-shrink: 0;
     width: auto;
     margin-top: 0;
     margin-left: 0; /* clean layout spacing in flex row */
 }
 
-#statsBar {
+#statsBar, [id^="statsBar"] {
     display: none;
 }
 
