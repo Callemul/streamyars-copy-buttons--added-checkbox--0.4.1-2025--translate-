@@ -19,7 +19,7 @@ export function getChannelNameElement(doc: Document | HTMLElement = document): H
 }
 
 export function getCommentThreads(doc: Document | HTMLElement = document): HTMLElement[] {
-    return Array.from(doc.querySelectorAll<HTMLElement>(STUDIO_SELECTORS.COMMENT_THREAD));
+    return Array.from(doc.querySelectorAll<HTMLElement>(STUDIO_SELECTORS.COMMENT));
 }
 
 export function getToolbarElement(thread: HTMLElement): HTMLElement | null {
@@ -31,13 +31,29 @@ export function getVideoThumbnailElement(thread: HTMLElement): HTMLElement | nul
 }
 
 export function getVideoTitleText(thread: HTMLElement): string {
-    const el = thread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_TITLE);
-    return el ? (el.textContent || '').trim() : '';
+    let el = thread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_TITLE);
+    let text = el ? (el.textContent || '').trim() : '';
+    if (!text && thread.closest) {
+        const parentThread = thread.closest('.ytcp-comment-thread');
+        if (parentThread) {
+            el = parentThread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_TITLE);
+            text = el ? (el.textContent || '').trim() : '';
+        }
+    }
+    return text;
 }
 
 export function getVideoLinkHref(thread: HTMLElement): string | null {
-    const a = thread.querySelector<HTMLAnchorElement>(STUDIO_SELECTORS.VIDEO_LINK);
-    return a ? a.getAttribute('href') || a.href : null;
+    let a = thread.querySelector<HTMLAnchorElement>(STUDIO_SELECTORS.VIDEO_LINK);
+    let href = a ? (a.getAttribute('href') || a.href) : null;
+    if (!href && thread.closest) {
+        const parentThread = thread.closest('.ytcp-comment-thread');
+        if (parentThread) {
+            a = parentThread.querySelector<HTMLAnchorElement>(STUDIO_SELECTORS.VIDEO_LINK);
+            href = a ? (a.getAttribute('href') || a.href) : null;
+        }
+    }
+    return href;
 }
 
 export function getAuthorNameText(thread: HTMLElement): string {

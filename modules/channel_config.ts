@@ -1,5 +1,5 @@
 // modules/channel_config.ts
-import { SHEET_IDS, SheetId } from './sheets.ts';
+import { SHEET_IDS, type SheetId } from './sheets.ts';
 import { fuzzyIncludes } from './fuzzy_match.ts';
 
 export type ChannelKey = 'vp' | 'slovo' | 'unknown';
@@ -66,19 +66,23 @@ export function detectChannelKey(channelName: string, channelHandle?: string): C
  */
 export function matchCategory(videoTitle: string, channelKey: ChannelKey): SheetId | null {
     if (!videoTitle || channelKey === 'unknown') return null;
+    const lowerTitle = videoTitle.toLowerCase();
 
     if (channelKey === 'vp') {
-        if (fuzzyIncludes(videoTitle, 'субботняя школа')) {
+        const hasSS = (lowerTitle.includes('субботн') && lowerTitle.includes('школ')) || lowerTitle.includes('сш');
+        const hasOparin = lowerTitle.includes('опарин');
+
+        if (hasSS) {
             return SHEET_IDS.VP_SS;
         }
-        if (fuzzyIncludes(videoTitle, 'опарин')) {
+        if (hasOparin) {
             return SHEET_IDS.OPARIN;
         }
         return null;
     }
 
     if (channelKey === 'slovo') {
-        if (fuzzyIncludes(videoTitle, 'субботняя школа')) {
+        if ((lowerTitle.includes('субботн') && lowerTitle.includes('школ')) || lowerTitle.includes('сш')) {
             return SHEET_IDS.MOLCHANOV_SS;
         }
         return SHEET_IDS.MOLCHANOV_PREACH;

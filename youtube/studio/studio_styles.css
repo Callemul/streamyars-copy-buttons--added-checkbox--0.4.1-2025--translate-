@@ -43,6 +43,8 @@
     background-color: rgba(39, 174, 96, 0.12);
     color: #27ae60;
     border-color: rgba(39, 174, 96, 0.35);
+    font-weight: 800;
+    font-size: 15px;
 }
 
 .syh-studio-btn-question:hover {
@@ -62,13 +64,28 @@
     border-color: #9b59b6;
 }
 
-/* Active / Sent button state (Green checkmark) */
+/* Active / Sent button state (Solid Vibrant Pill + Neon Glow Halo) */
 .syh-studio-btn.syh-btn-active {
+    position: relative;
+    z-index: 10 !important;
+    font-weight: bold;
+    transform: scale(1.15);
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.syh-studio-btn-question.syh-btn-active {
     background-color: #27ae60 !important;
     color: #ffffff !important;
-    border-color: #27ae60 !important;
-    font-weight: 600;
-    box-shadow: 0 1px 4px rgba(39, 174, 96, 0.4);
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 14px #27ae60, 0 0 6px #27ae60 !important;
+}
+
+.syh-studio-btn-prayer.syh-btn-active {
+    background-color: #9b59b6 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 14px #9b59b6, 0 0 6px #9b59b6 !important;
 }
 
 /* --- Video Meta Container (Badge + Checkbox under #video-title) --- */
@@ -269,8 +286,32 @@ html[dark="true"] .syh-studio-dropdown-reset:hover {
 }
 
 /* --- Checked Comment Thread Styling --- */
-.syh-studio-comment-checked {
+/* Target comment body/text elements AND user avatar image so they become grayed out/transparent */
+.syh-studio-comment-checked #content-text,
+.syh-studio-comment-checked #expander-container,
+.syh-studio-comment-checked #metadata,
+.syh-studio-comment-checked #author-text,
+.syh-studio-comment-checked #author-thumbnail,
+.syh-studio-comment-checked #author-thumbnail img,
+.syh-studio-comment-checked #avatar,
+.syh-studio-comment-checked #avatar img,
+.syh-studio-comment-checked yt-img-shadow#author-thumbnail,
+.syh-studio-comment-checked ytcp-comment-action-buttons #toolbar > :not(.syh-studio-btn),
+.syh-studio-comment-checked ytcp-comment-action-buttons > :not(#toolbar),
+.syh-studio-comment-checked #action-menu-button {
     opacity: 0.55;
     filter: grayscale(40%);
     transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* Ensure only 4 key elements (video preview thumbnail, video title, sheet badge, and custom action buttons) stay 100% bright & full color */
+.syh-studio-comment-checked ytcp-comment-video-thumbnail,
+.syh-studio-comment-checked ytcp-comment-video-thumbnail img,
+.syh-studio-comment-checked ytcp-comment-video-thumbnail #video-thumbnail,
+.syh-studio-comment-checked ytcp-comment-video-thumbnail #video-title,
+.syh-studio-comment-checked .syh-studio-badge-wrapper,
+.syh-studio-comment-checked .syh-studio-badge,
+.syh-studio-comment-checked .syh-studio-btn {
+    opacity: 1 !important;
+    filter: none !important;
 }

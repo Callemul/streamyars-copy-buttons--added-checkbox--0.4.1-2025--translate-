@@ -150,30 +150,28 @@ export function updateStudioButtonsUI(
     const sheetLabel = resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null;
 
     // Question button
+    questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
     if (buttonState === 'question') {
         questionBtn.classList.add('syh-btn-active');
-        questionBtn.innerHTML = '<span class="syh-icon">✓</span>';
         questionBtn.title = sheetLabel
             ? `Відправлено до ${sheetLabel} - питань`
             : 'Відправлено до питань';
     } else {
         questionBtn.classList.remove('syh-btn-active');
-        questionBtn.innerHTML = '<span class="syh-icon">❓</span>';
         questionBtn.title = sheetLabel
             ? `Додати до ${sheetLabel} - питань`
             : 'Категорію не визначено (натисніть на Badge)';
     }
 
     // Prayer button
+    prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
     if (buttonState === 'prayer') {
         prayerBtn.classList.add('syh-btn-active');
-        prayerBtn.innerHTML = '<span class="syh-icon">✓</span>';
         prayerBtn.title = sheetLabel
             ? `Відправлено до ${sheetLabel} - молитов`
             : 'Відправлено до молитов';
     } else {
         prayerBtn.classList.remove('syh-btn-active');
-        prayerBtn.innerHTML = '<span class="syh-icon">🙏</span>';
         prayerBtn.title = sheetLabel
             ? `Додати до ${sheetLabel} - молитов`
             : 'Категорію не визначено (натисніть на Badge)';

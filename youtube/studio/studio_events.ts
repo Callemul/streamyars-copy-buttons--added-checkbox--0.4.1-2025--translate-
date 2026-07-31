@@ -77,21 +77,27 @@ export function bindStudioCommentEvents(
     caches: StudioEventCaches,
     forceUpdate: boolean = false
 ): void {
+    // Read current video data BEFORE the isAlreadyBound check,
+    // because YouTube Studio reuses DOM elements for different comments during virtual scroll.
+    // If the videoKey changed, the element must be re-processed even if already bound.
+    const author = getAuthorNameText(threadEl);
+    const text = getCommentText(threadEl);
+    const videoTitle = getVideoTitleText(threadEl);
+    const videoHref = getVideoLinkHref(threadEl);
+    const videoKey = generateVideoKey(videoHref, videoTitle);
+    const commentKey = generateCommentKey(videoTitle, author, text);
+
     const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
-    if (isAlreadyBound && !forceUpdate) {
+    const videoKeyChanged = isAlreadyBound && threadEl.dataset.syhVideoKey !== videoKey;
+
+    // Skip full re-binding only if already bound, video key is the same, and no forceUpdate.
+    // If videoKey changed (virtual DOM reuse) — always refresh UI data.
+    if (isAlreadyBound && !forceUpdate && !videoKeyChanged) {
         return;
     }
 
     const ui = injectStudioCommentUI(threadEl);
     if (!ui) return;
-
-    const author = getAuthorNameText(threadEl);
-    const text = getCommentText(threadEl);
-    const videoTitle = getVideoTitleText(threadEl);
-    const videoHref = getVideoLinkHref(threadEl);
-
-    const videoKey = generateVideoKey(videoHref, videoTitle);
-    const commentKey = generateCommentKey(videoTitle, author, text);
 
     // Resolve category
     const categoryResult = resolveCategoryForVideo(videoTitle, videoKey, channelKey, caches.videoSheetMap);
@@ -109,6 +115,11 @@ export function bindStudioCommentEvents(
     // Store attributes on element for fast lookup during retroactive updates
     threadEl.dataset.syhVideoKey = videoKey;
     threadEl.dataset.syhCommentKey = commentKey;
+
+    // If only data changed (virtual scroll reuse), skip re-attaching event listeners
+    if (videoKeyChanged && !forceUpdate) {
+        return;
+    }
 
     // Helper: auto-check comment when added to questions/prayers
     const autoCheck = () => {
@@ -288,7 +299,7 @@ export function retroactiveUpdateVideoComments(
     channelKey: ChannelKey,
     caches: StudioEventCaches
 ) {
-    const threads = document.querySelectorAll<HTMLElement>('.ytcp-comment-thread');
+    const threads = document.querySelectorAll<HTMLElement>('ytcp-comment');
     threads.forEach((threadEl) => {
         const videoTitle = getVideoTitleText(threadEl);
         const videoHref = getVideoLinkHref(threadEl);
