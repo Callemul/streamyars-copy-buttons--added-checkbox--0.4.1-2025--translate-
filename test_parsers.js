@@ -555,9 +555,33 @@ hryvach • 1 день назад (изменено)
     assert.strictEqual(parsed.questions[0].author, "Artem");
     assert.strictEqual(parsed.questions[1].author, "hryvach");
 
-    console.log("✅ Тест 12 пройдено: YouTube мітки часу успішно видаляються з імені автора.");
+    // Перевірка логування очисток
+    assert.ok(Array.isArray(parsed.cleaned));
+    assert.strictEqual(parsed.cleaned.length, 2);
+    assert.strictEqual(parsed.cleaned[0].cleaned, "• 4 часа назад");
+    assert.strictEqual(parsed.cleaned[0].original, "Artem • 4 часа назад");
+    assert.strictEqual(parsed.cleaned[1].cleaned, "• 1 день назад (изменено)");
+    assert.strictEqual(parsed.cleaned[1].original, "hryvach • 1 день назад (изменено)");
+
+    console.log("✅ Тест 12 пройдено: YouTube мітки часу успішно видаляються з імені автора та логуються в масив cleaned.");
 } catch (e) {
     console.error("❌ Тест 12 провалено:", e);
+    process.exit(1);
+}
+
+// Тест 13: Очищення Telegram-заголовків із збереженням оригінального рядка
+try {
+    const rawInput = `❓❓❓ВОПРОСЫ
+1️⃣
+@JohnDoe-tag • 2 часа назад
+[28.07.2026 14:00] Text inside comment`;
+
+    const parsed = global.window.parseAndFilterOldList(rawInput, []);
+    assert.strictEqual(parsed.questions[0].author, "@JohnDoe-tag");
+    assert.ok(parsed.cleaned.some(item => item.original.includes("JohnDoe-tag") || item.cleaned.includes("@")));
+    console.log("✅ Тест 13 пройдено: Логування очисток нікнеймів та заголовків працює коректно.");
+} catch (e) {
+    console.error("❌ Тест 13 провалено:", e);
     process.exit(1);
 }
 

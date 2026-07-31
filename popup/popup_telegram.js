@@ -150,21 +150,70 @@ window.numberToEmoji = function(num) {
     return num.toString().split('').map(d => emojis[parseInt(d)]).join('');
 };
 
-window.cleanAuthorName = function(rawName) {
-    let name = rawName.trim();
-    if (name.startsWith('@')) name = name.substring(1);
-    name = name.replace(/\s*•.*$/, '');
-    name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
+// Розпізнає окремий рядок службової відносної мітки часу без прив'язки до конкретної дати
+// (напр. "4 часа", "2 хв тому", "щойно", "5 minutes ago") — такі рядки Telegram іноді додає
+// окремим рядком між іменем автора і текстом повідомлення при копіюванні з мобільного клієнта.
+window.RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
+
+window.cleanAuthorName = function(rawName, cleaningLog) {
+    const original = rawName.trim();
+    let name = original;
+    const removedParts = [];
+
+    if (name.startsWith('@')) {
+        removedParts.push('@');
+        name = name.substring(1);
+    }
+
+    const bulletMatch = name.match(/\s*•.*$/);
+    if (bulletMatch) {
+        removedParts.push(bulletMatch[0].trim());
+        name = name.replace(/\s*•.*$/, '');
+    }
+
+    const suffixMatch = name.match(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/);
+    if (suffixMatch) {
+        removedParts.push(suffixMatch[0]);
+        name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
+    }
+
     name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2');
-    return name.trim();
+    name = name.trim();
+
+    if (cleaningLog && name !== original) {
+        cleaningLog.push({
+            before: original,
+            after: name,
+            removed: removedParts.length > 0 ? removedParts.join(' | ') : 'форматування (символи не видалялись)'
+        });
+    }
+
+    return name;
 };
 
-window.parseAndFilterOldList = function(text, answeredIds) {
-    // Отримуємо очищувач для очищення вкладених заголовків
-    const cleaner = (window.SYH_UTILS && window.SYH_UTILS.cleanTelegramHeaders) 
-        ? window.SYH_UTILS.cleanTelegramHeaders 
-        : (window.cleanTelegramHeaders || (t => t));
+// Очищає вкладені у текст мітки часу Telegram (напр. "[14.07.2024 16:32] Ім'я:") і, якщо переданий
+// масив cleaningLog, записує туди кожен факт очищення для відображення у "Лог чистки тексту"
+window.cleanTelegramHeadersLogged = function(text, cleaningLog) {
+    if (!text) return "";
+    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+    const removedMatches = [];
+    const cleaned = text.replace(tgHeaderRegex, (match, offset) => {
+        removedMatches.push(match.trim());
+        return offset === 0 ? "" : "\n";
+    }).trim();
 
+    if (cleaningLog && removedMatches.length > 0) {
+        cleaningLog.push({
+            before: text.trim(),
+            after: cleaned,
+            removed: removedMatches.join(' | ')
+        });
+    }
+    return cleaned;
+};
+
+window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
+    cleaningLog = cleaningLog || [];
     const messages = [text];
 
     let allQuestions = [];
@@ -176,13 +225,40 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         while (lines.length > 0 && lines[0].trim() === "") lines.shift();
         if (lines.length === 0) return;
 
-        let author = lines[0].trim();
+        const rawAuthorLine = lines[0].trim();
+        let author = rawAuthorLine;
+        const authorBulletMatch = author.match(/\s*•.*$/);
         author = author.replace(/\s*•.*$/, '').trim();
-        let rawText = lines.slice(1).map(l => l.trimEnd()).join('\n').trim();
+        if (authorBulletMatch && cleaningLog) {
+            cleaningLog.push({
+                original: rawAuthorLine,
+                cleaned: authorBulletMatch[0].trim(),
+                before: rawAuthorLine,
+                after: author,
+                removed: authorBulletMatch[0].trim()
+            });
+        }
+
+        // Прибираємо окрему службову мітку часу одразу після імені автора (напр. "4 часа", "2 хв тому")
+        let contentLines = lines.slice(1);
+        while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
+        if (contentLines.length > 0 && window.RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
+            const timeLine = contentLines[0].trim();
+            contentLines = contentLines.slice(1);
+            if (cleaningLog) {
+                cleaningLog.push({
+                    before: `${rawAuthorLine}\n${timeLine}`,
+                    after: author,
+                    removed: `${timeLine} (мітка часу)`
+                });
+            }
+        }
+
+        let rawText = contentLines.map(l => l.trimEnd()).join('\n').trim();
         if (!author) author = "Анонім";
 
         // Очищаємо вкладені заголовки всередині блоку тексту питання/молитви
-        rawText = cleaner(rawText);
+        rawText = window.cleanTelegramHeadersLogged(rawText, cleaningLog);
 
         const totalQuestionsInBlock = window.countQuestionsInText(rawText);
 
@@ -256,7 +332,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
                         if (firstNonEmptyIdx !== -1) {
                             const firstLine = bodyLines[firstNonEmptyIdx].trim();
                             if (firstLine.startsWith('@')) {
-                                currentItem.author = window.cleanAuthorName(firstLine);
+                                currentItem.author = window.cleanAuthorName(firstLine, cleaningLog);
                                 bodyLines.splice(firstNonEmptyIdx, 1);
                             } else {
                                 currentItem.author = "Питання з чату";
@@ -301,7 +377,7 @@ window.parseAndFilterOldList = function(text, answeredIds) {
                         const trailing = match[2] ? match[2].trim() : "";
                         if (trailing) {
                             if (trailing.startsWith('@')) {
-                                author = window.cleanAuthorName(trailing);
+                                author = window.cleanAuthorName(trailing, cleaningLog);
                             } else {
                                 bodyLines.push(trailing);
                             }
@@ -341,10 +417,11 @@ window.parseAndFilterOldList = function(text, answeredIds) {
         }
     }
 
-    return { questions: allQuestions, prayers: allPrayers, deleted: deletedItems };
+    return { questions: allQuestions, prayers: allPrayers, deleted: deletedItems, cleaned: cleaningLog };
 };
 
-window.parseTelegramExportLineByLine = function(text) {
+window.parseTelegramExportLineByLine = function(text, cleaningLog) {
+    cleaningLog = cleaningLog || [];
     const rawItems = [];
     const lines = text.split('\n');
     const headerARegex = /^.+?, \[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]$/;
@@ -368,7 +445,7 @@ window.parseTelegramExportLineByLine = function(text) {
                     const trailing = match[2] ? match[2].trim() : "";
                     if (trailing) {
                         if (trailing.startsWith('@')) {
-                            author = window.cleanAuthorName(trailing);
+                            author = window.cleanAuthorName(trailing, cleaningLog);
                         } else {
                             textLines.push(trailing);
                         }
@@ -380,11 +457,21 @@ window.parseTelegramExportLineByLine = function(text) {
             if (trimmed === "") return;
             if (currentItem.author === null) {
                 if (trimmed.startsWith('@')) { 
-                    currentItem.author = window.cleanAuthorName(trimmed); 
-                } else { 
-                    currentItem.author = "Питання з чату"; 
-                    currentItem.textLines.push(trimmed); 
+                    currentItem.author = window.cleanAuthorName(trimmed, cleaningLog); 
+                    return;
                 }
+                if (window.RELATIVE_TIME_LINE_REGEX.test(trimmed)) {
+                    if (cleaningLog) {
+                        cleaningLog.push({
+                            before: trimmed,
+                            after: '',
+                            removed: `${trimmed} (службова мітка часу, рядок прибрано повністю)`
+                        });
+                    }
+                    return;
+                }
+                currentItem.author = "Питання з чату"; 
+                currentItem.textLines.push(trimmed); 
             } else { 
                 currentItem.textLines.push(trimmed); 
             }
@@ -407,6 +494,7 @@ window.parseTelegramExportLineByLine = function(text) {
         }
         groupedItems.push(item);
     });
+    groupedItems.cleaned = cleaningLog;
     return groupedItems;
 };
 
@@ -438,16 +526,17 @@ window.processTelegramData = function() {
     const answeredInput = $('#answeredIds').val();
     const telegramText = $('#newTelegram').val();
     const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-    const preservedData = window.parseAndFilterOldList(oldListText, answeredIds);
+    const cleaningLog = []; // Збір усіх фактів очищення тексту (нікнейми, вкладені заголовки) для "Лог чистки тексту"
+    const preservedData = window.parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
     
     let newQuestions;
     let newPrayers = [];
     if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
-        const parsedNew = window.parseAndFilterOldList(telegramText, []);
+        const parsedNew = window.parseAndFilterOldList(telegramText, [], cleaningLog);
         newQuestions = parsedNew.questions.map(q => ({ ...q, source: 'new' }));
         newPrayers = parsedNew.prayers.map(p => ({ ...p, source: 'pray' }));
     } else {
-        newQuestions = window.parseTelegramExportLineByLine(telegramText);
+        newQuestions = window.parseTelegramExportLineByLine(telegramText, cleaningLog);
     }
     
     // YouTube new items
@@ -554,6 +643,33 @@ window.processTelegramData = function() {
         $('#deletedLogDetails').hide();
     }
 
+    // Лог чистки тексту: таблиця "До очищення / Після очищення / Що прибрано"
+    const cleanedLog = $('#cleanedLog');
+    cleanedLog.empty();
+    if (cleaningLog.length > 0) {
+        const table = $('<table>').addClass('clean-table');
+        table.append(
+            $('<tr>').append(
+                $('<th>').text('До очищення'),
+                $('<th>').text('Після очищення'),
+                $('<th>').text('Що прибрано')
+            )
+        );
+        cleaningLog.forEach(entry => {
+            table.append(
+                $('<tr>').append(
+                    $('<td>').addClass('clean-before').text(entry.before),
+                    $('<td>').addClass('clean-after').text(entry.after),
+                    $('<td>').addClass('clean-diff').text(entry.removed)
+                )
+            );
+        });
+        cleanedLog.append(table);
+        $('#cleanedLogDetails').show();
+    } else {
+        $('#cleanedLogDetails').hide();
+    }
+
     // 30-денне очищення чекбоксів YouTube
     chrome.storage.local.get(['syh_yt_checkbox_state'], function(res) {
         const states = res.syh_yt_checkbox_state;
@@ -580,7 +696,10 @@ window.processTelegramData = function() {
         'tg_statsVisible': $('#statsBar').is(':visible'),
         'tg_deletedLogHtml': deletedLog.html(),
         'tg_deletedLogDetailsVisible': $('#deletedLogDetails').is(':visible'),
-        'tg_deletedLogDetailsOpen': $('#deletedLogDetails').attr('open') !== undefined
+        'tg_deletedLogDetailsOpen': $('#deletedLogDetails').attr('open') !== undefined,
+        'tg_cleanedLogHtml': cleanedLog.html(),
+        'tg_cleanedLogDetailsVisible': $('#cleanedLogDetails').is(':visible'),
+        'tg_cleanedLogDetailsOpen': $('#cleanedLogDetails').attr('open') !== undefined
     });
 };
 

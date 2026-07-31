@@ -25,6 +25,12 @@ $(document).ready(function() {
         'tg_deletedLogHtml',
         'tg_deletedLogDetailsVisible',
         'tg_deletedLogDetailsOpen',
+                'tg_cleanedLogHtml',
+                'tg_cleanedLogDetailsVisible',
+                'tg_cleanedLogDetailsOpen',
+        'tg_cleanedLogHtml',
+        'tg_cleanedLogDetailsVisible',
+        'tg_cleanedLogDetailsOpen',
         'tg_scroll_positions',
         'syh_popup_divider_pos',
         'syh_yt_collected'
@@ -95,6 +101,15 @@ $(document).ready(function() {
                 $('#deletedLogDetails').removeAttr('open');
             }
             $('#deletedLogDetails').show();
+        }
+        if (result.tg_cleanedLogDetailsVisible) {
+            if (result.tg_cleanedLogHtml) $('#cleanedLog').html(result.tg_cleanedLogHtml);
+            if (result.tg_cleanedLogDetailsOpen) {
+                $('#cleanedLogDetails').attr('open', 'open');
+            } else {
+                $('#cleanedLogDetails').removeAttr('open');
+            }
+            $('#cleanedLogDetails').show();
         }
 
         // Малюємо список молитов при старті, якщо домен Prayers вже завантажений
@@ -187,6 +202,9 @@ $(document).ready(function() {
     $('#deletedLogDetails').on('toggle', function() {
         chrome.storage.local.set({ 'tg_deletedLogDetailsOpen': this.open });
     });
+    $('#cleanedLogDetails').on('toggle', function() {
+        chrome.storage.local.set({ 'tg_cleanedLogDetailsOpen': this.open });
+    });
 
     // Збереження полів трансліту
     $('#textArea1_oldText').on('input', function() {
@@ -202,7 +220,10 @@ $(document).ready(function() {
             $('#oldList, #answeredIds, #newTelegram').val(''); 
             $('#finalResultDiv').empty(); 
             $('#statsBar').hide(); 
+            $('#deletedLog').empty();
             $('#deletedLogDetails').hide(); 
+            $('#cleanedLog').empty();
+            $('#cleanedLogDetails').hide(); 
             $('#oldTotalCount').text(''); 
             $('#tgTotalCount').text(''); 
             chrome.storage.local.remove([
@@ -214,7 +235,10 @@ $(document).ready(function() {
                 'tg_statsVisible',
                 'tg_deletedLogHtml',
                 'tg_deletedLogDetailsVisible',
-                'tg_deletedLogDetailsOpen'
+                'tg_deletedLogDetailsOpen',
+                'tg_cleanedLogHtml',
+                'tg_cleanedLogDetailsVisible',
+                'tg_cleanedLogDetailsOpen'
             ]);
         }
     });

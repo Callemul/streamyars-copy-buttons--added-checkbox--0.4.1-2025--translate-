@@ -584,7 +584,7 @@ textarea {
 /* Deleted log container & Details */
 #deletedLogDetails {
     margin-top: 16px;
-    border: 1px solid var(--border);
+    border: 1px solid #ef4444;
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--card-bg);
@@ -595,12 +595,20 @@ textarea {
     padding: 12px 16px;
     font-weight: 600;
     cursor: pointer;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
+    background: hsla(0, 84%, 60%, 0.12);
+    color: #dc2626;
+    border-bottom: 1px solid #ef4444;
     user-select: none;
     font-size: 13.5px;
     transition: var(--transition);
     outline: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    #deletedLogDetails summary {
+        color: #f87171;
+        background: hsla(0, 84%, 60%, 0.18);
+    }
 }
 
 #deletedLogDetails summary:hover {
@@ -624,6 +632,94 @@ textarea {
 
 .del-row:last-child {
     border-bottom: none;
+}
+
+/* Yellow cleaned log table */
+.clean-section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed hsla(45, 100%, 50%, 0.4);
+}
+
+.clean-header {
+    font-weight: 600;
+    color: #d97706;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .clean-header {
+        color: #fbbf24;
+    }
+}
+
+.clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    background: hsla(45, 100%, 50%, 0.08);
+    border: 1px solid hsla(45, 100%, 50%, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    table-layout: fixed;
+}
+
+.clean-table th {
+    background: hsla(45, 100%, 50%, 0.2);
+    color: #d97706;
+    padding: 5px 8px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid hsla(45, 100%, 50%, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+    .clean-table th {
+        color: #fbbf24;
+    }
+}
+
+.clean-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid hsla(45, 100%, 50%, 0.15);
+    color: #d97706;
+    vertical-align: top;
+    word-break: break-word;
+}
+
+@media (prefers-color-scheme: dark) {
+    .clean-table td {
+        color: #fef08a;
+    }
+}
+
+.clean-table tr:last-child td {
+    border-bottom: none;
+}
+
+.clean-before {
+    width: 34%;
+    font-family: monospace;
+    font-size: 11px;
+    opacity: 0.8;
+    text-decoration: line-through;
+    text-decoration-color: hsla(0, 70%, 45%, 0.5);
+    white-space: pre-line;
+}
+
+.clean-after {
+    width: 34%;
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: pre-line;
+}
+
+.clean-diff {
+    width: 32%;
+    font-weight: 600;
+    background: hsla(45, 100%, 50%, 0.12);
 }
 
 /* Settings boxes styling */
@@ -927,4 +1023,48 @@ textarea {
     color: var(--text);
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+
+/* Cleaned log container & Details */
+#cleanedLogDetails {
+    margin-top: 10px;
+    border: 1px solid #f59e0b;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-sm);
+}
+
+#cleanedLogDetails summary {
+    padding: 12px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background: hsla(45, 100%, 50%, 0.12);
+    color: #d97706;
+    border-bottom: 1px solid #f59e0b;
+    user-select: none;
+    font-size: 13.5px;
+    transition: var(--transition);
+    outline: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    #cleanedLogDetails summary {
+        color: #fbbf24;
+        background: hsla(45, 100%, 50%, 0.18);
+    }
+}
+
+#cleanedLogDetails summary:hover {
+    background: hsla(45, 100%, 50%, 0.22);
+}
+
+.cleaned-log {
+    max-height: 140px;
+    overflow-y: auto;
+    background: hsla(45, 100%, 50%, 0.05);
+    padding: 10px 12px;
+    font-size: 12px;
+    border: none !important;
 }
