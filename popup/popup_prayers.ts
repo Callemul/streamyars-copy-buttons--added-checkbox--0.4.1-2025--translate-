@@ -1,6 +1,17 @@
-// popup_prayers.js
+import { SYH_STORAGE } from '../modules/storage.ts';
+
+export interface PrayerItem {
+    id?: string;
+    author: string;
+    text: string;
+    type?: string;
+    icon?: string;
+    roomId?: string;
+    timestamp?: number;
+}
+
 // Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі
-function sendUnstarMessage(text) {
+export function sendUnstarMessage(text: string): void {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         if (tabs[0] && tabs[0].id) {
             chrome.tabs.sendMessage(tabs[0].id, { action: 'unstar_comment', text: text });
@@ -9,7 +20,7 @@ function sendUnstarMessage(text) {
 }
 
 // Хелпер відправки сигналів для списку коментарів
-function sendUnstarMessagesForList(prayersList) {
+export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         if (tabs[0] && tabs[0].id) {
             prayersList.forEach(item => {
@@ -20,7 +31,7 @@ function sendUnstarMessagesForList(prayersList) {
 }
 
 // Рендеринг та менеджмент молитовних прохань
-window.renderPrayers = function(prayersList) {
+export function renderPrayers(prayersList: PrayerItem[]): void {
     const outputDiv = $('#prayersResultDiv');
     outputDiv.empty();
     
@@ -44,7 +55,7 @@ window.renderPrayers = function(prayersList) {
         }
     });
     if (needsSaveId) {
-        chrome.storage.local.set({ 'syh_prayers': prayersList });
+        SYH_STORAGE.set({ 'syh_prayers': prayersList });
     }
 
     // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
@@ -56,7 +67,7 @@ window.renderPrayers = function(prayersList) {
     });
 
     if (cleanedList.length !== prayersList.length) {
-        chrome.storage.local.set({ 'syh_prayers': cleanedList });
+        SYH_STORAGE.set({ 'syh_prayers': cleanedList });
         prayersList = cleanedList;
     }
 
@@ -87,7 +98,7 @@ window.renderPrayers = function(prayersList) {
         } catch(e) { console.error("[SYH] Room check error", e); }
     });
 
-    const grouped = {};
+    const grouped: Record<string, { text: string; icon: string; id: string }[]> = {};
     let totalRequests = 0;
 
     const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
@@ -99,7 +110,7 @@ window.renderPrayers = function(prayersList) {
         grouped[cleanAuthor].push({ 
             text: p.text, 
             icon: p.icon || '🙏🙏🙏',
-            id: p.id 
+            id: p.id! 
         });
         totalRequests++;
     });
@@ -199,14 +210,14 @@ window.renderPrayers = function(prayersList) {
                 .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
                 .text(item.text);
             
-            const delBtn = $('<button>')
+            const delBtnSingle = $('<button>')
                 .text('❌')
                 .attr('title', 'Видалити прохання')
                 .attr('data-id', item.id)
                 .addClass('del-prayer-btn')
                 .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
-            textContainer.append(textSpan).append(delBtn);
+            textContainer.append(textSpan).append(delBtnSingle);
             block.append(textContainer);
         } else {
             grouped[author].forEach((item, idx) => {
@@ -223,14 +234,14 @@ window.renderPrayers = function(prayersList) {
                     .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
                     .text(item.text);
                 
-                const delBtn = $('<button>')
+                const delBtnItem = $('<button>')
                     .text('❌')
                     .attr('title', 'Видалити прохання')
                     .attr('data-id', item.id)
                     .addClass('del-prayer-btn')
                     .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
-                textContainer.append(indexSpan).append(textSpan).append(delBtn);
+                textContainer.append(indexSpan).append(textSpan).append(delBtnItem);
                 block.append(textContainer);
             });
             fullTextForCopy += `\n`;
@@ -239,7 +250,8 @@ window.renderPrayers = function(prayersList) {
     }
 
     outputDiv.data('raw-text', fullTextForCopy.trim());
-};
+}
+(window as any).renderPrayers = renderPrayers;
 
 $(document).ready(function() {
     $(document).on('focus', '.editable-prayer', function() {
@@ -250,12 +262,12 @@ $(document).ready(function() {
         const id = $(this).attr('data-id');
         const newText = $(this).text().trim();
         
-        chrome.storage.local.get(['syh_prayers'], function(result) {
-            const list = result.syh_prayers || [];
+        SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+            const list: PrayerItem[] = result.syh_prayers || [];
             const targetItem = list.find(item => item.id === id);
             if (targetItem && targetItem.text !== newText) {
                 targetItem.text = newText;
-                chrome.storage.local.set({ 'syh_prayers': list });
+                SYH_STORAGE.set({ 'syh_prayers': list });
             }
         });
     });
@@ -270,8 +282,8 @@ $(document).ready(function() {
         const newAuthor = $(this).text().trim();
         
         if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
-            chrome.storage.local.get(['syh_prayers'], function(result) {
-                const list = result.syh_prayers || [];
+            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+                const list: PrayerItem[] = result.syh_prayers || [];
                 let updated = false;
                 list.forEach(item => {
                     if (item.author === oldAuthor) {
@@ -280,7 +292,7 @@ $(document).ready(function() {
                     }
                 });
                 if (updated) {
-                    chrome.storage.local.set({ 'syh_prayers': list });
+                    SYH_STORAGE.set({ 'syh_prayers': list });
                 }
             });
         }
@@ -295,25 +307,27 @@ $(document).ready(function() {
         if (el) {
             const range = document.createRange();
             const sel = window.getSelection();
-            range.selectNodeContents(el);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
+            if (sel) {
+                range.selectNodeContents(el);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
         }
     });
 
     $(document).on('click', '.del-author-btn', function() {
         const authorToDelete = $(this).data('author');
         if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
-            chrome.storage.local.get(['syh_prayers'], function(result) {
-                let list = result.syh_prayers || [];
+            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+                let list: PrayerItem[] = result.syh_prayers || [];
                 const authorPrayers = list.filter(item => item.author === authorToDelete);
                 
                 sendUnstarMessagesForList(authorPrayers);
                 
                 list = list.filter(item => item.author !== authorToDelete);
-                chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                    if (window.renderPrayers) window.renderPrayers(list);
+                SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                    renderPrayers(list);
                 });
             });
         }
@@ -322,8 +336,8 @@ $(document).ready(function() {
     // Примусово очистити ВСЮ базу молитов без зняття зірок
     $(document).on('click', '#syh-wipe-prayers', function() {
         if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
-            chrome.storage.local.set({ 'syh_prayers': [] }, function() {
-                if (window.renderPrayers) window.renderPrayers([]);
+            SYH_STORAGE.set({ 'syh_prayers': [] }, function() {
+                renderPrayers([]);
             });
         }
     });
@@ -336,16 +350,16 @@ $(document).ready(function() {
                 const url = new URL(tabs[0].url);
                 const currentRoomId = url.pathname.replace(/\//g, '');
                 
-                chrome.storage.local.get(['syh_prayers'], function(result) {
-                    const list = result.syh_prayers || [];
+                SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+                    const list: PrayerItem[] = result.syh_prayers || [];
                     list.forEach(item => {
                         if (item.type === 'prayer') {
                             item.roomId = currentRoomId;
                             item.timestamp = Date.now(); 
                         }
                     });
-                    chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                        if (window.renderPrayers) window.renderPrayers(list);
+                    SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                        renderPrayers(list);
                     });
                 });
             } catch {
@@ -356,15 +370,15 @@ $(document).ready(function() {
 
     $(document).on('click', '.del-prayer-btn', function() {
         const id = $(this).attr('data-id');
-        chrome.storage.local.get(['syh_prayers'], function(result) {
-            let list = result.syh_prayers || [];
+        SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+            let list: PrayerItem[] = result.syh_prayers || [];
             const targetItem = list.find(item => item.id === id);
             if (targetItem) {
                 sendUnstarMessage(targetItem.text);
             }
             list = list.filter(item => item.id !== id);
-            chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                if (window.renderPrayers) window.renderPrayers(list);
+            SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                renderPrayers(list);
             });
         });
     });
@@ -376,7 +390,7 @@ $(document).ready(function() {
         const $btn = $(this);
         const originalText = $btn.text();
 
-        const copyFallback = (txt) => {
+        const copyFallback = (txt: string) => {
             const $temp = $("<textarea>");
             $("body").append($temp);
             $temp.val(txt).select();
@@ -402,11 +416,11 @@ $(document).ready(function() {
     // Очищення через червону кнопку корзини
     $('#clearPrayersBtn').click(function() {
         if (confirm("Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.")) {
-            chrome.storage.local.get(['syh_prayers'], function(result) {
-                let list = result.syh_prayers || [];
+            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
+                let list: PrayerItem[] = result.syh_prayers || [];
                 list = list.filter(item => item.type !== 'prayer');
-                chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                    if (window.renderPrayers) window.renderPrayers(list);
+                SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                    renderPrayers(list);
                 });
             });
         }
@@ -431,14 +445,14 @@ $(document).ready(function() {
                     const currentRoomId = window.location.pathname.replace(/\//g, '');
                     // ФІКС: Шукаємо ТІЛЬКИ ті коментарі, які промарковані як "prayer" (🙏)
                     const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
-                    const newPrayers = [];
+                    const newPrayers: PrayerItem[] = [];
                     const now = Date.now();
                     
                     comments.forEach(block => {
                         const starBtn = block.querySelector('[class*="PlatformComment__StarButton"]');
                         // Перевіряємо, чи цей молитовний коментар має активну зірочку
                         if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
-                            let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent.trim() || "Глядач";
+                            let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent?.trim() || "Глядач";
                             while (author.startsWith('@')) author = author.substring(1);
                             
                             const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
@@ -460,10 +474,10 @@ $(document).ready(function() {
                 }
             }, (results) => {
                 if (results && results[0] && results[0].result) {
-                    const fetched = results[0].result;
+                    const fetched = results[0].result as PrayerItem[];
                     
-                    chrome.storage.local.get(['syh_prayers'], function(res) {
-                        const list = res.syh_prayers || [];
+                    SYH_STORAGE.get(['syh_prayers'], function(res: Record<string, any>) {
+                        const list: PrayerItem[] = res.syh_prayers || [];
                         let addedCount = 0;
                         
                         // Додаємо тільки ті, яких ще немає в базі
@@ -474,8 +488,8 @@ $(document).ready(function() {
                             }
                         });
                         
-                        chrome.storage.local.set({ 'syh_prayers': list }, function() {
-                            if (window.renderPrayers) window.renderPrayers(list);
+                        SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                            renderPrayers(list);
                             $('#fetchPrayersBtn').text(originalText);
                             if (addedCount > 0) {
                                 alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
