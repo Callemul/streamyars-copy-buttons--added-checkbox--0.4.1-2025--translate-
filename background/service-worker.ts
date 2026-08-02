@@ -3,7 +3,7 @@
  * Обробка фонових задач, подій встановлення/оновлення та комунікації між компонентами.
  */
 
-import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage.ts';
+import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage';
 
 // Подія встановлення або оновлення розширення
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalled) {

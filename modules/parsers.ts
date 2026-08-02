@@ -1,4 +1,4 @@
-import { SYH_CONFIG } from './config.ts';
+import { SYH_CONFIG } from './config';
 
 export interface GroupedQuestion {
     number: string;

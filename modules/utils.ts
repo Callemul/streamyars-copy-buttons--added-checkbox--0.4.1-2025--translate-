@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string> | null;
@@ -172,7 +172,7 @@ export const SYH_UTILS: SyhUtils = {
             'a': 'а', 'e': 'е', 'o': 'о', 'i': 'і', 'c': 'с', 'p': 'р', 'x': 'х', 'y': 'у', 't': 'т', 'h': 'н'
         };
         for (const char in replacementMap) {
-            normalized = normalized.replaceAll(char, replacementMap[char]);
+            normalized = normalized.split(char).join(replacementMap[char]);
         }
         return normalized;
     },
@@ -229,7 +229,7 @@ export const SYH_UTILS: SyhUtils = {
         ];
 
         for (const [pattern, replacement] of multiMap) {
-            s = s.replaceAll(pattern, replacement);
+            s = s.split(pattern).join(replacement);
         }
 
         const singleMap: Record<string, string> = {

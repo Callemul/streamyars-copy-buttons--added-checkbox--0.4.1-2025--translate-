@@ -1,5 +1,5 @@
 // modules/anti_afk.ts
-import { STORAGE_KEYS } from './storage.ts';
+import { STORAGE_KEYS } from './storage';
 
 /**
  * ============================================================================

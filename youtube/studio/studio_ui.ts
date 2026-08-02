@@ -1,6 +1,6 @@
 // youtube/studio/studio_ui.ts
-import { SHEET_IDS, SHEET_LABELS, SheetId } from '../../modules/sheets.ts';
-import { getToolbarElement, getMetadataElement } from './studio_selectors.ts';
+import { SHEET_IDS, SHEET_LABELS, SheetId } from '../../modules/sheets';
+import { getToolbarElement, getMetadataElement } from './studio_selectors';
 
 export interface StudioCommentUIElements {
     copyBtn: HTMLButtonElement;
@@ -70,7 +70,7 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         badgeWrapper.className = 'syh-studio-badge-wrapper';
 
         badgeEl = document.createElement('button');
-        badgeEl.type = 'button';
+        (badgeEl as HTMLButtonElement).type = 'button';
         badgeEl.className = 'syh-studio-badge';
 
         dropdownEl = document.createElement('div');

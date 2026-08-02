@@ -1,6 +1,6 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
-import { SYH_STATE } from './state.ts';
-import { SYH_CONFIG } from './config.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_STATE } from './state';
+import { SYH_CONFIG } from './config';
 import { 
     addButtonsToComment, 
     updateCommentVisuals, 
@@ -9,7 +9,7 @@ import {
     bindStarredControls, 
     filterStarredComments, 
     scrollToActiveComment 
-} from './ui_comments.ts';
+} from './ui_comments';
 import { 
     addButtonsToBanner, 
     updateBannerVisuals, 
@@ -18,7 +18,7 @@ import {
     updateMasterCheckboxState, 
     filterBanners, 
     scrollToActiveBanner 
-} from './ui_banners.ts';
+} from './ui_banners';
 
 export interface PrayerItem {
     text: string;
@@ -45,19 +45,19 @@ export interface SyhUi extends SYH_UI_Core {
     restoreDomCheckboxes(): void;
 
     // Comments UI methods
-    addButtonsToComment(commentNode: Element | JQuery): void;
-    updateCommentVisuals($commentWrap: JQuery, type: string): void;
-    applySavedLabels(commentNode: Element | JQuery, text: string): void;
-    addStarredTabControls(starredHeaderNode: Element | JQuery): void;
+    addButtonsToComment(commentNode: Element): void;
+    updateCommentVisuals(commentWrap: Element, type: string): void;
+    applySavedLabels(commentNode: Element, text: string): void;
+    addStarredTabControls(starredHeaderNode: Element): void;
     bindStarredControls(): void;
     filterStarredComments(): void;
     scrollToActiveComment(): void;
 
     // Banner UI methods
-    addButtonsToBanner(bannerNode: Element | JQuery): void;
-    updateBannerVisuals($bannerBlock: JQuery, type: string): void;
-    applySavedBannerLabels(bannerNode: Element | JQuery, text: string): void;
-    addBannerHeaderControls(headerNode: Element | JQuery): void;
+    addButtonsToBanner(bannerNode: Element): void;
+    updateBannerVisuals(bannerBlock: Element, type: string): void;
+    applySavedBannerLabels(bannerNode: Element, text: string): void;
+    addBannerHeaderControls(headerNode: Element): void;
     updateMasterCheckboxState(): void;
     filterBanners(): void;
     scrollToActiveBanner(): void;
@@ -135,21 +135,20 @@ export function restoreDomCheckboxes(): void {
 
     console.log("[SYH_UI] Примусове відновлення стану чекбоксів у DOM для вирішення Race Condition.");
     
-    $('.syh-checkbox').each(function() {
-        const $checkbox = $(this);
-        const type = $checkbox.data('type');
+    document.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach((checkbox) => {
+        const type = checkbox.dataset.type;
         let textKey = "";
 
         if (type === 'comment') {
-            const $commentBlock = $checkbox.closest(selectors.commentBlock || '[class*="PlatformComment__Wrap"]');
-            textKey = $commentBlock.find(selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]').text();
+            const commentBlock = checkbox.closest(selectors.commentBlock || '[class*="PlatformComment__Wrap"]');
+            textKey = commentBlock?.querySelector(selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
         } else if (type === 'banner') {
-            const $bannerBlock = $checkbox.closest(selectors.bannerBlock || '[class*="Banner__LiWrap"]');
-            textKey = $bannerBlock.find(selectors.bannerText || '[class*="Banner__BannerText"]').text();
+            const bannerBlock = checkbox.closest(selectors.bannerBlock || '[class*="Banner__LiWrap"]');
+            textKey = bannerBlock?.querySelector(selectors.bannerText || '[class*="Banner__BannerText"]')?.textContent || "";
         }
 
         if (textKey) {
-            $checkbox.prop('checked', !!itemStates[textKey]);
+            checkbox.checked = !!itemStates[textKey];
         }
     });
 }

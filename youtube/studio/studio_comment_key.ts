@@ -1,5 +1,5 @@
 // youtube/studio/studio_comment_key.ts
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 
 export const STUDIO_BUTTON_STATE_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
 export const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;

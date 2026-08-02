@@ -4,6 +4,8 @@
  * ВАЖЛИВО: localStorage fallback видалено навмисно — він ламає синхронізацію між контент-скриптом і попапом.
  */
 
+declare var module: any;
+
 export const STORAGE_SCHEMA_VERSION = 2;
 
 export const STORAGE_KEYS = {

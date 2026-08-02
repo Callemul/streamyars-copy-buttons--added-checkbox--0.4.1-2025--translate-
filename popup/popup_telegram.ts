@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../modules/storage.ts';
+import { SYH_STORAGE } from '../modules/storage';
 
 const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 

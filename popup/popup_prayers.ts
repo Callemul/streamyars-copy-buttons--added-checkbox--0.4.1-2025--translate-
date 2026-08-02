@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
 export interface PrayerItem {
     id?: string;
@@ -13,8 +13,9 @@ export interface PrayerItem {
 // Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі
 export function sendUnstarMessage(text: string): void {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].id) {
-            chrome.tabs.sendMessage(tabs[0].id, { action: 'unstar_comment', text: text });
+        const tabId = tabs[0]?.id;
+        if (tabId !== undefined) {
+            chrome.tabs.sendMessage(tabId, { action: 'unstar_comment', text: text });
         }
     });
 }
@@ -22,9 +23,10 @@ export function sendUnstarMessage(text: string): void {
 // Хелпер відправки сигналів для списку коментарів
 export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0] && tabs[0].id) {
+        const tabId = tabs[0]?.id;
+        if (tabId !== undefined) {
             prayersList.forEach(item => {
-                chrome.tabs.sendMessage(tabs[0].id, { action: 'unstar_comment', text: item.text });
+                chrome.tabs.sendMessage(tabId, { action: 'unstar_comment', text: item.text });
             });
         }
     });
@@ -432,15 +434,16 @@ $(document).ready(function() {
         $(this).text("⌛...");
         
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (!tabs[0] || !tabs[0].url) {
+            if (!tabs[0] || !tabs[0].url || tabs[0].id === undefined) {
                 alert("Не знайдено активну вкладку StreamYard.");
                 $('#fetchPrayersBtn').text(originalText);
                 return;
             }
+            const tabId = tabs[0].id;
             
             // Запускаємо скан прямо на сторінці StreamYard
             chrome.scripting.executeScript({
-                target: { tabId: tabs[0].id },
+                target: { tabId: tabId },
                 func: () => {
                     const currentRoomId = window.location.pathname.replace(/\//g, '');
                     // ФІКС: Шукаємо ТІЛЬКИ ті коментарі, які промарковані як "prayer" (🙏)

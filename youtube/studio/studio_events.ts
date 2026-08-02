@@ -25,15 +25,15 @@
 //   Ключі коментаря          → generateCommentKey() у studio_comment_key.ts
 //   Селектори DOM            → studio_selectors.ts
 
-import { SYH_STORAGE } from '../../modules/storage.ts';
-import { SheetId, SHEET_LABELS } from '../../modules/sheets.ts';
-import { ChannelKey } from '../../modules/channel_config.ts';
-import { copyToClipboard } from '../yt_events.ts';
-import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref, getCommentTextAreaElement } from './studio_selectors.ts';
-import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui.ts';
-import { generateVideoKey, setStudioVideoSheetOverride, VIDEO_MAP_STORAGE_KEY } from './studio_video_map.ts';
-import { generateCommentKey, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key.ts';
-import { resolveCategoryForVideo, VideoSheetMapEntry } from './studio_category_matcher.ts';
+import { SYH_STORAGE } from '../../modules/storage';
+import { SheetId, SHEET_LABELS } from '../../modules/sheets';
+import { ChannelKey } from '../../modules/channel_config';
+import { copyToClipboard } from '../yt_events';
+import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref, getCommentTextAreaElement } from './studio_selectors';
+import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
+import { generateVideoKey, setStudioVideoSheetOverride, VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
+import { generateCommentKey, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
+import { resolveCategoryForVideo, VideoSheetMapEntry } from './studio_category_matcher';
 
 // Helper to toggle z-index on all relevant ancestor elements up to the scrolling list
 function toggleZIndexStack(startEl: HTMLElement, active: boolean) {
@@ -270,10 +270,17 @@ export function bindStudioCommentEvents(
 
         if (!targetSheetId) {
             // Unresolved sheet category -> block action & highlight/open badge dropdown
-            setStudioDropdownVisible(ui.dropdownEl, true);
-            if (ui.metaContainer) activeStudioDropdownInfo = { dropdown: ui.dropdownEl, metaContainer: ui.metaContainer };
-            ui.badgeEl.classList.add('syh-badge-highlight');
-            setTimeout(() => ui.badgeEl.classList.remove('syh-badge-highlight'), 2000);
+            if (ui.dropdownEl) {
+                setStudioDropdownVisible(ui.dropdownEl, true);
+                if (ui.metaContainer) {
+                    activeStudioDropdownInfo = { dropdown: ui.dropdownEl, metaContainer: ui.metaContainer };
+                }
+            }
+            if (ui.badgeEl) {
+                ui.badgeEl.classList.add('syh-badge-highlight');
+                const badge = ui.badgeEl;
+                setTimeout(() => badge.classList.remove('syh-badge-highlight'), 2000);
+            }
             return;
         }
 
@@ -329,6 +336,7 @@ export function bindStudioCommentEvents(
         ui.badgeEl.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (!ui.dropdownEl) return;
             const isVisible = ui.dropdownEl.style.display === 'block';
             setStudioDropdownVisible(ui.dropdownEl, !isVisible);
             if (!isVisible && ui.metaContainer) {
@@ -353,7 +361,9 @@ export function bindStudioCommentEvents(
             const ctx = getFreshContext();
             const autoCat = resolveCategoryForVideo(ctx.freshVideoTitle, ctx.freshVideoKey, channelKey, {}).sheetId;
 
-            setStudioDropdownVisible(ui.dropdownEl, false);
+            if (ui.dropdownEl) {
+                setStudioDropdownVisible(ui.dropdownEl, false);
+            }
             activeStudioDropdownInfo = null;
 
             // Update storage and videoSheetMap
@@ -376,6 +386,7 @@ export function bindStudioCommentEvents(
     if (ui.checkboxEl && ui.checkboxEl.dataset.syhBound !== 'true') {
         ui.checkboxEl.addEventListener('change', (e) => {
             e.stopPropagation();
+            if (!ui.checkboxEl) return;
             const isChecked = ui.checkboxEl.checked;
             updateStudioCheckedClass(threadEl, isChecked);
 

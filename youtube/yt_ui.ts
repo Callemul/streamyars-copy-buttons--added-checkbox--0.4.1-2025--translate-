@@ -1,5 +1,5 @@
 // youtube/yt_ui.ts
-import { YT_SELECTORS } from './yt_selectors.ts';
+import { YT_SELECTORS } from './yt_selectors';
 
 export interface CommentData {
     id: string;

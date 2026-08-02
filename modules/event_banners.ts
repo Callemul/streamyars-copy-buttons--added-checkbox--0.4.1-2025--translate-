@@ -1,8 +1,8 @@
-import { SYH_CONFIG } from './config.ts';
-import { SYH_STATE } from './state.ts';
-import { SYH_UTILS } from './utils.ts';
-import { SYH_UI } from './ui_core.ts';
-import { SYH_BANNER_CREATOR } from './banner_creator.ts';
+import { SYH_CONFIG } from './config';
+import { SYH_STATE } from './state';
+import { SYH_UTILS } from './utils';
+import { SYH_UI } from './ui_core';
+import { SYH_BANNER_CREATOR } from './banner_creator';
 
 export interface SyhEventBanners {
     SELECTORS: Record<string, string> | null;
@@ -53,32 +53,27 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
                 const checkbox = bannerBlock.querySelector('.syh-checkbox[data-type="banner"]') as HTMLInputElement | null;
                 if (checkbox) {
                     checkbox.checked = !checkbox.checked;
-                    const textKey = bannerBlock.querySelector(self.SELECTORS.bannerText || '')?.textContent;
-                    if (self.STATE && textKey) {
-                        self.STATE.updateState(textKey, checkbox.checked);
-                        if (self.UI) {
-                            self.UI.updateMasterCheckboxState();
-                        }
-                    }
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
         }, true);
 
-        // Блокуємо стандартні дії для коліщатка миші на кнопках банерів
-        $(document).on('mousedown', '.syh-button[data-type="banner"], .syh-button[data-action="create-from-text"], .syh-button[data-action="delete-selected-banners"]', function(e: JQuery.TriggeredEvent) {
-            const mouseEvent = e.originalEvent as MouseEvent;
-            if (mouseEvent && mouseEvent.button === 1) e.preventDefault(); 
+        document.addEventListener('mousedown', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            if (target?.closest('.syh-button[data-type="banner"], .syh-button[data-action="create-from-text"], .syh-button[data-action="delete-selected-banners"]') && e.button === 1) {
+                e.preventDefault();
+            }
         });
 
-        // Обробка натискання ЛКМ на кнопки керування банерами (Оновлено під 3 кнопки маркування)
-        $(document).on('mouseup', '.syh-button', function(this: HTMLElement, e: JQuery.TriggeredEvent) {
-            const $button = $(this);
-            const action = $button.data('action');
-            const type = $button.data('type');
-            const mouseEvent = e.originalEvent as MouseEvent;
-            const buttonNum = mouseEvent ? mouseEvent.button : 0;
+        document.addEventListener('mouseup', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            const button = target?.closest('.syh-button') as HTMLElement | null;
+            if (!button) return;
 
-            // Якщо подія не пов'язана з банерами, негайно завершуємо
+            const action = button.dataset.action;
+            const type = button.dataset.type;
+            const buttonNum = e.button;
+
             if (type !== 'banner' && action !== 'create-from-text' && action !== 'delete-selected-banners' && action !== 'mark-stream' && action !== 'mark-audience' && action !== 'mark-prayer') return;
 
             e.preventDefault();
@@ -86,17 +81,15 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
             if (buttonNum !== 0) return;
 
-            // Створення банерів з введеного тексту
             if (action === 'create-from-text') {
                 const text = prompt("Вставте список питань для створення банерів:", "");
                 if (text && self.BANNER_CREATOR) self.BANNER_CREATOR.processAndCreateBanners(text);
                 return;
             }
             
-            // Масове видалення відмічених банерів
             if (action === 'delete-selected-banners') {
-                const $checkedBanners = $('.syh-checkbox[data-type="banner"]:checked');
-                if ($checkedBanners.length === 0) return;
+                const checkedBanners = document.querySelectorAll<HTMLInputElement>('.syh-checkbox[data-type="banner"]:checked');
+                if (checkedBanners.length === 0) return;
 
                 const activeFilter = self.UI ? self.UI.bannerActiveFilter : 'all';
                 let proceed: boolean;
@@ -111,15 +104,15 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
                     let currentTabCount = 0;
                     const counts = {
-                        all: $checkedBanners.length,
+                        all: checkedBanners.length,
                         stream: 0,
                         audience: 0,
                         prayer: 0
                     };
 
-                    $checkedBanners.each(function(this: HTMLElement) {
-                        const bannerBlock = $(this).closest(self.SELECTORS?.bannerBlock || '');
-                        const textKey = bannerBlock.find(self.SELECTORS?.bannerText || '').text();
+                    checkedBanners.forEach((checkbox) => {
+                        const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
+                        const textKey = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
                         const commentType = (self.UI && self.UI.bannerCategoriesCache) ? (self.UI.bannerCategoriesCache[textKey] || 'none') : 'none';
                         
                         if (commentType === activeFilter) {
@@ -156,73 +149,41 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
                     proceed = confirm(confirmMessage);
                 } else {
-                    proceed = confirm(`Ви впевнені, що хочете видалити ${$checkedBanners.length} банер(ів)?`);
+                    proceed = confirm(`Ви впевнені, що хочете видалити ${checkedBanners.length} банер(ів)?`);
                 }
 
                 if (proceed) {
-                    $checkedBanners.each(function(this: HTMLElement) {
-                        const deleteButton = $(this).closest(self.SELECTORS?.bannerBlock || '').find(self.SELECTORS?.bannerDeleteButton || '')[0] as HTMLElement | undefined;
+                    checkedBanners.forEach((checkbox) => {
+                        const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
+                        const deleteButton = bannerBlock?.querySelector(self.SELECTORS?.bannerDeleteButton || '') as HTMLElement | null;
                         if (deleteButton) deleteButton.click();
                     });
                 }
                 return;
             }
 
-            // Копіювання тексту конкретного банера в буфер
             if (type === 'banner' && action === 'copy-banner') {
-                const $bannerBlock = $button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = $bannerBlock.find(self.SELECTORS?.bannerText || '').text();
+                const bannerBlock = button.closest(self.SELECTORS?.bannerBlock || '');
+                const bannerText = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
                 if (self.UTILS) {
                     self.UTILS.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
                 } else if ((window as any).SYH_UTILS) {
                     (window as any).SYH_UTILS.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
                 }
-                $bannerBlock.find('.syh-checkbox').prop('checked', true).trigger('change');
-                return;
-            }
-
-            // Ручне маркування банера як "Питання ефіру" (📺)
-            if (action === 'mark-stream') {
-                const $bannerBlock = $button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = $bannerBlock.find(self.SELECTORS?.bannerText || '').text();
-                
-                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'stream') ? 'none' : 'stream';
-                const saver = (self.UTILS && self.UTILS.saveBannerCategory) ? self.UTILS.saveBannerCategory : (window as any).SYH_UTILS?.saveBannerCategory;
-                if (saver) {
-                    saver.call(self.UTILS || (window as any).SYH_UTILS, bannerText, currentType).then(() => {
-                        if (self.UI) {
-                            self.UI.bannerCategoriesCache[bannerText] = currentType;
-                            self.UI.filterBanners();
-                        }
-                    });
+                const checkbox = bannerBlock?.querySelector<HTMLInputElement>('.syh-checkbox');
+                if (checkbox) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
                 return;
             }
 
-            // Ручне маркування банера як "Питання глядачів" (❓)
-            if (action === 'mark-audience') {
-                const $bannerBlock = $button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = $bannerBlock.find(self.SELECTORS?.bannerText || '').text();
+            if (action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
+                const bannerBlock = button.closest(self.SELECTORS?.bannerBlock || '');
+                const bannerText = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                const targetType = action.replace('mark-', '');
                 
-                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'audience') ? 'none' : 'audience';
-                const saver = (self.UTILS && self.UTILS.saveBannerCategory) ? self.UTILS.saveBannerCategory : (window as any).SYH_UTILS?.saveBannerCategory;
-                if (saver) {
-                    saver.call(self.UTILS || (window as any).SYH_UTILS, bannerText, currentType).then(() => {
-                        if (self.UI) {
-                            self.UI.bannerCategoriesCache[bannerText] = currentType;
-                            self.UI.filterBanners();
-                        }
-                    });
-                }
-                return;
-            }
-
-            // Ручне маркування банера як "Молитовне" (🙏)
-            if (action === 'mark-prayer') {
-                const $bannerBlock = $button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = $bannerBlock.find(self.SELECTORS?.bannerText || '').text();
-                
-                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === 'prayer') ? 'none' : 'prayer';
+                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
                 const saver = (self.UTILS && self.UTILS.saveBannerCategory) ? self.UTILS.saveBannerCategory : (window as any).SYH_UTILS?.saveBannerCategory;
                 if (saver) {
                     saver.call(self.UTILS || (window as any).SYH_UTILS, bannerText, currentType).then(() => {
@@ -236,84 +197,110 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             }
         });
 
-        // Слухач зміни стану чекбоксу окремого банера
-        $(document).on('change', '.syh-checkbox[data-type="banner"]', function(this: HTMLElement) {
-            const $checkbox = $(this);
-            const textKey = $checkbox.closest(self.SELECTORS?.bannerBlock || '').find(self.SELECTORS?.bannerText || '').text();
-            
-            if (self.STATE) {
-                self.STATE.updateState(textKey, $checkbox.is(':checked'));
+        document.addEventListener('change', function(e: Event) {
+            const target = e.target as Element | null;
+            const checkbox = target?.closest('.syh-checkbox[data-type="banner"]') as HTMLInputElement | null;
+            if (checkbox) {
+                const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
+                const textKey = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                if (self.STATE) {
+                    self.STATE.updateState(textKey, checkbox.checked);
+                }
+                if (self.UI) self.UI.updateMasterCheckboxState();
+                return;
             }
-            if (self.UI) self.UI.updateMasterCheckboxState();
-        });
 
-        // Клік по головному (майстер) чекбоксу у списку банерів
-        $(document).on('change', '.syh-master-checkbox', function(this: HTMLElement) {
-            const isChecked = $(this).is(':checked');
-            $(this).prop('indeterminate', false);
-            $(self.SELECTORS?.bannerBlock || '').find('.syh-checkbox[data-type="banner"]').prop('checked', isChecked).trigger('change');
+            const masterCheckbox = target?.closest('.syh-master-checkbox') as HTMLInputElement | null;
+            if (masterCheckbox) {
+                const isChecked = masterCheckbox.checked;
+                masterCheckbox.indeterminate = false;
+                const bannerBlocks = document.querySelectorAll(self.SELECTORS?.bannerBlock || '');
+                bannerBlocks.forEach(block => {
+                    const cb = block.querySelector('.syh-checkbox[data-type="banner"]') as HTMLInputElement | null;
+                    if (cb) {
+                        cb.checked = isChecked;
+                        cb.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
         });
     },
 
-    // Зв'язування подій текстового пошуку та кнопок фільтрації банерів
     bindBannersFilterControls: function(): void {
         const self = this;
-        const $searchInput = $('#syh-banner-search');
-        const $clearBtn = $('#syh-clear-banner-search-btn');
+        const searchInput = document.querySelector<HTMLInputElement>('#syh-banner-search');
+        const clearBtn = document.querySelector<HTMLElement>('#syh-clear-banner-search-btn');
 
-        $searchInput.off('input').on('input', function(this: HTMLElement) { 
-            if (self.UI) {
-                self.UI.bannerSearchQuery = $(this).val() as string ? ($(this).val() as string).toLowerCase() : '';
-                $clearBtn.css('display', self.UI.bannerSearchQuery ? 'flex' : 'none');
-                self.UI.filterBanners();
-            }
-        });
-
-        $clearBtn.off('click').on('click', function() {
-            $searchInput.val('');
-            if (self.UI) {
-                self.UI.bannerSearchQuery = '';
-                $(this).hide();
-                self.UI.filterBanners();
-            }
-        });
-
-        $('#syh-scroll-to-active-banner-btn').off('click').on('click', function(e: JQuery.TriggeredEvent) {
-            e.preventDefault();
-            if (self.UI) self.UI.scrollToActiveBanner();
-        });
-
-        $(document).off('click', '#syh-banner-empty-clear-link').on('click', '#syh-banner-empty-clear-link', function(e: JQuery.TriggeredEvent) {
-            e.preventDefault();
-            $searchInput.val('');
-            if (self.UI) {
-                self.UI.bannerSearchQuery = '';
-                $clearBtn.hide();
-                self.UI.filterBanners();
-            }
-        });
-
-        $('.syh-banner-filter-btn').off('click').on('click', function(this: HTMLElement) {
-            $('.syh-banner-filter-btn')
-                .css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'})
-                .removeClass('active')
-                .attr('aria-selected', 'false');
-            $(this)
-                .css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'})
-                .addClass('active')
-                .attr('aria-selected', 'true');
-            
-            if (self.UI) {
-                self.UI.bannerActiveFilter = $(this).data('filter');
-                self.UI.filterBanners();
-            }
-
-            if (self.UI && self.UI.bannerSearchQuery) {
-                $searchInput.removeClass('syh-banner-search-pulse');
-                if ($searchInput[0]) {
-                    void $searchInput[0].offsetWidth; 
+        if (searchInput) {
+            searchInput.oninput = function() {
+                if (self.UI) {
+                    self.UI.bannerSearchQuery = searchInput.value ? searchInput.value.toLowerCase() : '';
+                    if (clearBtn) clearBtn.style.display = self.UI.bannerSearchQuery ? 'flex' : 'none';
+                    self.UI.filterBanners();
                 }
-                $searchInput.addClass('syh-banner-search-pulse');
+            };
+        }
+
+        if (clearBtn) {
+            clearBtn.onclick = function() {
+                if (searchInput) searchInput.value = '';
+                if (self.UI) {
+                    self.UI.bannerSearchQuery = '';
+                    clearBtn.style.display = 'none';
+                    self.UI.filterBanners();
+                }
+            };
+        }
+
+        const scrollBtn = document.querySelector('#syh-scroll-to-active-banner-btn');
+        if (scrollBtn) {
+            scrollBtn.onclick = function(e) {
+                e.preventDefault();
+                if (self.UI) self.UI.scrollToActiveBanner();
+            };
+        }
+
+        document.addEventListener('click', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            if (target?.closest('#syh-banner-empty-clear-link')) {
+                e.preventDefault();
+                if (searchInput) searchInput.value = '';
+                if (self.UI) {
+                    self.UI.bannerSearchQuery = '';
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    self.UI.filterBanners();
+                }
+                return;
+            }
+
+            const filterBtn = target?.closest('.syh-banner-filter-btn') as HTMLElement | null;
+            if (filterBtn) {
+                document.querySelectorAll<HTMLElement>('.syh-banner-filter-btn').forEach(btn => {
+                    btn.style.background = 'transparent';
+                    btn.style.fontWeight = 'normal';
+                    btn.style.boxShadow = 'none';
+                    btn.style.color = '#666';
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+
+                filterBtn.style.background = '#fff';
+                filterBtn.style.fontWeight = 'bold';
+                filterBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                filterBtn.style.color = '#000';
+                filterBtn.classList.add('active');
+                filterBtn.setAttribute('aria-selected', 'true');
+
+                if (self.UI) {
+                    self.UI.bannerActiveFilter = filterBtn.dataset.filter || 'all';
+                    self.UI.filterBanners();
+                }
+
+                if (self.UI && self.UI.bannerSearchQuery && searchInput) {
+                    searchInput.classList.remove('syh-banner-search-pulse');
+                    void searchInput.offsetWidth;
+                    searchInput.classList.add('syh-banner-search-pulse');
+                }
             }
         });
     }

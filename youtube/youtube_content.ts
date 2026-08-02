@@ -1,11 +1,11 @@
 // youtube/youtube_content.ts
-import { YT_SELECTORS } from './yt_selectors.ts';
-import { addButtonsToYTComment, extractCommentId, restoreButtonState, restoreCheckboxState } from './yt_ui.ts';
-import { bindYTEvents, YTCollectedItem } from './yt_events.ts';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage.ts';
-import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant.ts';
-import { SYH_CONFIG } from '../modules/config.ts';
-import { isAllowedChannel } from './yt_channel_gate.ts';
+import { YT_SELECTORS } from './yt_selectors';
+import { addButtonsToYTComment, extractCommentId, restoreButtonState, restoreCheckboxState } from './yt_ui';
+import { bindYTEvents, YTCollectedItem } from './yt_events';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant';
+import { SYH_CONFIG } from '../modules/config';
+import { isAllowedChannel } from './yt_channel_gate';
 
 console.log('[SYH] YouTube content script initializing...');
 

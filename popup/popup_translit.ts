@@ -4,9 +4,9 @@ import { SYH_STORAGE } from '../modules/storage';
 
 export function translitToRussian(translitText: string): string {
     const translitMap: Record<string, string> = { "A": "А", "B": "Б", "V": "В", "G": "Г", "D": "Д", "E": "Е", "YO": "Ё", "J": "Ж", "ZH": "Ж", "Z": "З", "I": "И", "Y": "Й", "K": "К", "L": "Л", "M": "М", "N": "Н", "O": "О", "P": "П", "R": "Р", "S": "С", "T": "Т", "U": "У", "F": "Ф", "H": "Х", "C": "Ц", "CH": "Ч", "SH": "Ш", "SHCH": "Щ", "YU": "Ю", "YA": "Я", "'": "ь", "Y'": "Ы", "X": "Х", "\"": "\"", ":": ":", ";": ";", ".": ".", ",": ",", "!": "!", "?": "?", "%": "%", "*": "*", "(": "(", ")": ")", "-": "-", "_": "_", "@": "@", "~": "~", "a": "а", "b": "б", "v": "в", "g": "г", "d": "д", "e": "е", "yo": "ё", "j": "ж", "zh": "ж", "z": "з", "i": "и", "y": "ы", "k": "к", "l": "л", "m": "м", "n": "н", "o": "о", "p": "п", "r": "р", "s": "с", "t": "т", "u": "у", "f": "ф", "h": "х", "c": "ц", "ch": "ч", "sh": "ш", "shch": "щ", "Yu": "Ю", "yu": "ю", "Ya": "Я", "ya": "я", "y'": "ы", "x": "х" };
-    translitText = translitText.replaceAll('BLAGODARU', 'БЛАГОДАРЮ').replaceAll('BLAGODARNOST', 'БЛАГОДАРНОСТЬ').replaceAll('SINOVIAX', 'СЫНОВЬЯХ').replaceAll('moiu', 'мою').replaceAll('bratia', 'братья');
-    translitText = translitText.replaceAll('ts', 'ц').replaceAll('ei', 'ей').replaceAll('shch', 'щ').replaceAll('sh', 'ш').replaceAll('ch', 'ч').replaceAll('ya', 'я').replaceAll('yu', 'ю').replaceAll('yo', 'ё').replaceAll('zh', 'ж');
-    translitText = translitText.replaceAll('TS', 'Ц').replaceAll('EI', 'ЕЙ').replaceAll('SHCH', 'Щ').replaceAll('SH', 'Ш').replaceAll('CH', 'Ч').replaceAll('YA', 'Я').replaceAll('YU', 'Ю').replaceAll('YO', 'Ё').replaceAll('ZH', 'Ж');
+    translitText = translitText.split('BLAGODARU').join('БЛАГОДАРЮ').split('BLAGODARNOST').join('БЛАГОДАРНОСТЬ').split('SINOVIAX').join('СЫНОВЬЯХ').split('moiu').join('мою').split('bratia').join('братья');
+    translitText = translitText.split('ts').join('ц').split('ei').join('ей').split('shch').join('щ').split('sh').join('ш').split('ch').join('ч').split('ya').join('я').split('yu').join('ю').split('yo').join('ё').split('zh').join('ж');
+    translitText = translitText.split('TS').join('Ц').split('EI').join('ЕЙ').split('SHCH').join('Щ').split('SH').join('Ш').split('CH').join('Ч').split('YA').join('Я').split('YU').join('Ю').split('YO').join('Ё').split('ZH').join('Ж');
     
     const words = translitText.split(' ');
     const russianWords = words.map(word => {

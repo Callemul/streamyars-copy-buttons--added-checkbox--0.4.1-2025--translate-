@@ -1,8 +1,8 @@
-import { SYH_CONFIG } from './config.ts';
-import { SYH_STATE } from './state.ts';
-import { SYH_UTILS } from './utils.ts';
-import { SYH_UI } from './ui_core.ts';
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
+import { SYH_CONFIG } from './config';
+import { SYH_STATE } from './state';
+import { SYH_UTILS } from './utils';
+import { SYH_UI } from './ui_core';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export interface PrayerRecord {
     author: string;
@@ -96,7 +96,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                             console.log("[SYH] Auto-Heal: Виявлено коментар без зірки. Очищую з бази.");
                             self.removeFromDatabase(text);
                             if (self.UI) {
-                                self.UI.updateCommentVisuals($(commentBlock), 'none');
+                                self.UI.updateCommentVisuals(commentBlock, 'none');
                                 if (typeof self.UI.filterStarredComments === 'function') {
                                     setTimeout(() => self.UI.filterStarredComments(), 100);
                                 }
@@ -116,7 +116,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     console.log("[SYH] Чат-контейнер знайдено. Перепідключаю autoHeal MutationObserver з body до конкретного контейнера.");
                     if (self.autoHealObserver) self.autoHealObserver.disconnect();
                     self.autoHealContainer = specificContainer;
-                    self.autoHealObserver.observe(self.autoHealContainer, {
+                    self.autoHealObserver?.observe(self.autoHealContainer, {
                         childList: true,
                         subtree: true,
                         attributes: true,
@@ -146,7 +146,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             || document.querySelector('.chat-container')
             || document.body;
 
-        self.autoHealObserver.observe(self.autoHealContainer, {
+        self.autoHealObserver?.observe(self.autoHealContainer, {
             childList: true,
             subtree: true,
             attributes: true,
@@ -170,8 +170,12 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                             self.removeFromDatabase(text);
                         }
                         if (self.UI) {
-                            self.UI.updateCommentVisuals($(commentBlock), 'none');
-                            $(commentBlock).closest('li').attr('data-syh-deleted', 'true').hide();
+                            self.UI.updateCommentVisuals(commentBlock, 'none');
+                            const li = commentBlock.closest('li');
+                            if (li) {
+                                li.setAttribute('data-syh-deleted', 'true');
+                                li.style.display = 'none';
+                            }
                             
                             if (typeof self.UI.filterStarredComments === 'function') {
                                 setTimeout(() => self.UI.filterStarredComments(), 50);
@@ -233,37 +237,46 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             }
         }, true);
 
-        $(document).on('contextmenu', '.syh-button[data-action="copy-prayer"]', function(e: JQuery.TriggeredEvent) {
-            e.preventDefault();
+        document.addEventListener('contextmenu', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            if (target?.closest('.syh-button[data-action="copy-prayer"]')) {
+                e.preventDefault();
+            }
         });
 
-        $(document).on('mousedown', '.syh-button[data-type="comment"]', function(e: JQuery.TriggeredEvent) {
-            const mouseEvent = e.originalEvent as MouseEvent;
-            if (mouseEvent && mouseEvent.button === 1) e.preventDefault(); 
+        document.addEventListener('mousedown', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            if (target?.closest('.syh-button[data-type="comment"]') && e.button === 1) {
+                e.preventDefault();
+            }
         });
 
-        $(document).on('mouseup', '.syh-button[data-type="comment"]', function(e: JQuery.TriggeredEvent) {
+        document.addEventListener('mouseup', function(e: MouseEvent) {
+            const target = e.target as Element | null;
+            const button = target?.closest('.syh-button[data-type="comment"]') as HTMLElement | null;
+            if (!button) return;
+
             e.preventDefault();
             e.stopPropagation();
 
-            const $button = $(this);
-            const action = $button.data('action');
-            const mouseEvent = e.originalEvent as MouseEvent;
-            const buttonNum = mouseEvent ? mouseEvent.button : 0;
+            const action = button.dataset.action;
+            const buttonNum = e.button;
 
             if (buttonNum !== 0 && action !== 'copy-prayer') return;
 
-            const $commentBlock = $button.closest(self.SELECTORS?.commentBlock || '');
-            let author = $commentBlock.find(self.SELECTORS?.commentAuthor || '').text().trim();
+            const commentBlock = button.closest(self.SELECTORS?.commentBlock || '');
+            if (!commentBlock) return;
+
+            let author = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent?.trim() || '';
             while (author.startsWith('@')) author = author.substring(1);
 
-            const commentText = $commentBlock.find(self.SELECTORS?.commentText || '').text();
+            const commentText = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
             let textToCopy = '', header = '';
             
             // Встановлюємо таймер-запобіжник для Auto-Heal сканера
             if (action === 'copy-author-comment' || action === 'copy-prayer') {
-                $commentBlock[0]?.setAttribute('data-syh-just-added', 'true');
-                setTimeout(() => { $commentBlock[0]?.removeAttribute('data-syh-just-added'); }, 2000);
+                commentBlock.setAttribute('data-syh-just-added', 'true');
+                setTimeout(() => { commentBlock.removeAttribute('data-syh-just-added'); }, 2000);
             }
 
             if (action === 'copy-comment') { 
@@ -275,7 +288,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 textToCopy = `@${author}\n\n${commentText}`; 
                 
                 self.saveToDatabase(author, commentText, "question", "❓");
-                if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'question');
+                if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'question');
             }
             else if (action === 'copy-prayer') { 
                 let prayerIcon = "🙏🙏🙏";
@@ -286,7 +299,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 textToCopy = `\n\n\n${prayerIcon} @${author}\n\n${commentText}`; 
                 
                 self.saveToDatabase(author, commentText, "prayer", prayerIcon);
-                if (self.UI) self.UI.updateCommentVisuals($commentBlock, 'prayer');
+                if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
 
                 if ((window as any).SYH_STATS_TRACKER && typeof (window as any).SYH_STATS_TRACKER.registerPrayerMarker === 'function') {
                     (window as any).SYH_STATS_TRACKER.registerPrayerMarker();
@@ -300,7 +313,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     (window as any).SYH_UTILS.copyAndShowBanner(textToCopy, header);
                 }
 
-                const checkboxNode = $commentBlock.find('.syh-checkbox[data-type="comment"]')[0] as HTMLInputElement | undefined;
+                const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
                 if (checkboxNode) {
                     checkboxNode.checked = true;
                     checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
@@ -309,25 +322,29 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     }
                 }
 
-                $commentBlock.find('.syh-checkbox').prop('checked', true);
+                commentBlock.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach(cb => cb.checked = true);
                 
-                const starBtnNode = $commentBlock.find(self.SELECTORS?.starButton || '')[0] as HTMLElement | undefined;
+                const starBtnNode = commentBlock.querySelector(self.SELECTORS?.starButton || '') as HTMLElement | null;
                 if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
                     starBtnNode.click();
                 }
             }
         });
 
-        $(document).on('change', '.syh-checkbox[data-type="comment"]', function(this: HTMLElement) {
-            const $checkbox = $(this);
-            const $commentBlock = $checkbox.closest(self.SELECTORS?.commentBlock || '');
-            const textKey = $commentBlock.find(self.SELECTORS?.commentText || '').text();
+        document.addEventListener('change', function(e: Event) {
+            const target = e.target as Element | null;
+            const checkbox = target?.closest('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
+            if (!checkbox) return;
+
+            const commentBlock = checkbox.closest(self.SELECTORS?.commentBlock || '');
+            if (!commentBlock) return;
+            const textKey = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
             
             if (self.STATE) {
-                self.STATE.updateState(textKey, $checkbox.is(':checked'));
+                self.STATE.updateState(textKey, checkbox.checked);
             }
-            if ((window as any).SYH_COMMENT_ASSISTANT && $commentBlock.length) {
-                (window as any).SYH_COMMENT_ASSISTANT.processComment($commentBlock[0]);
+            if ((window as any).SYH_COMMENT_ASSISTANT) {
+                (window as any).SYH_COMMENT_ASSISTANT.processComment(commentBlock);
             }
         });
     },

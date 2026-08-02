@@ -23,12 +23,12 @@
 //   studio_selectors.ts — getCommentThreads()
 //   studio_comment_key.ts — cleanupStudioState() (30-денне очищення)
 //   studio_video_map.ts — VIDEO_MAP_STORAGE_KEY
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage.ts';
-import { getStudioChannelInfo, StudioChannelInfo } from './studio_channel.ts';
-import { getCommentThreads } from './studio_selectors.ts';
-import { bindStudioCommentEvents, StudioEventCaches } from './studio_events.ts';
-import { getStudioVideoSheetMap, VIDEO_MAP_STORAGE_KEY } from './studio_video_map.ts';
-import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { getStudioChannelInfo, StudioChannelInfo } from './studio_channel';
+import { getCommentThreads } from './studio_selectors';
+import { bindStudioCommentEvents, StudioEventCaches } from './studio_events';
+import { getStudioVideoSheetMap, VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
+import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 
 const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
 

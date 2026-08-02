@@ -1,6 +1,6 @@
-import { SYH_CONFIG } from './config.ts';
-import { SYH_UTILS } from './utils.ts';
-import { SYH_PARSERS } from './parsers.ts';
+import { SYH_CONFIG } from './config';
+import { SYH_UTILS } from './utils';
+import { SYH_PARSERS } from './parsers';
 
 export interface BannerItem {
     text: string;
@@ -12,6 +12,7 @@ export interface SyhBannerCreator {
     SELECTORS: Record<string, string> | null;
     UTILS: any;
     PARSERS: any;
+    UI?: any;
 
     init(config?: any, utils?: any, parsers?: any): void;
     log(msg: string): void;

@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 function getTodayDateString(): string {
     if (typeof window !== 'undefined' && (window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.getTodayDateString === 'function') {

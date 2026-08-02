@@ -1,5 +1,5 @@
 // modules/comment_assistant.ts
-import { SYH_CONFIG } from './config.ts';
+import { SYH_CONFIG } from './config';
 
 export interface CommentAssistantInterface {
     triggerWords: string[];

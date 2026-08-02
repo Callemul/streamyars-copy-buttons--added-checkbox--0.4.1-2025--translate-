@@ -1,11 +1,11 @@
-import { SYH_UI, PrayerItem } from './ui_core.ts';
-import { SYH_CONFIG } from './config.ts';
-import { SYH_UTILS } from './utils.ts';
+import { SYH_UI, PrayerItem } from './ui_core';
+import { SYH_CONFIG } from './config';
+import { SYH_UTILS } from './utils';
 
-export function addButtonsToComment(commentNode: Element | JQuery): void {
+export function addButtonsToComment(commentNode: Element): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const $targetContainer = $(commentNode).find(selectors.commentButtonContainer);
-    if ($targetContainer.length > 0 && !$targetContainer.find('.syh-custom-buttons-comment').length) {
+    const targetContainer = commentNode.querySelector(selectors.commentButtonContainer);
+    if (targetContainer && !targetContainer.querySelector('.syh-custom-buttons-comment')) {
         const buttonsHTML = `
             <div class="syh-custom-buttons-comment">
                 <button class="syh-button" data-type="comment" data-action="copy-comment" title="Копіювати тільки коментар" aria-label="Копіювати тільки коментар">📄</button>
@@ -15,39 +15,39 @@ export function addButtonsToComment(commentNode: Element | JQuery): void {
                     <input type="checkbox" class="syh-checkbox" data-type="comment" title="Відмітити як опрацьоване" aria-label="Відмітити коментар як опрацьований">
                 </div>
             </div>`;
-        $targetContainer.append(buttonsHTML);
+        targetContainer.insertAdjacentHTML('beforeend', buttonsHTML);
         
-        const commentText = $(commentNode).find(selectors.commentText).text();
+        const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
         const state = SYH_UI.STATE || (window as any).SYH_STATE;
         
         if (state && typeof state.getState === 'function' && state.getState(commentText)) {
-            $targetContainer.find('.syh-checkbox').prop('checked', true);
+            const checkbox = targetContainer.querySelector<HTMLInputElement>('.syh-checkbox');
+            if (checkbox) checkbox.checked = true;
         }
         applySavedLabels(commentNode, commentText);
     }
 }
 
-export function updateCommentVisuals($commentWrap: JQuery, type: string): void {
+export function updateCommentVisuals(commentWrap: Element, type: string): void {
     if (type === 'prayer') {
-        $commentWrap.attr('data-syh-type', 'prayer');
+        commentWrap.setAttribute('data-syh-type', 'prayer');
     } else if (type === 'question') {
-        $commentWrap.attr('data-syh-type', 'question');
+        commentWrap.setAttribute('data-syh-type', 'question');
     } else {
-        $commentWrap.removeAttr('data-syh-type');
+        commentWrap.removeAttribute('data-syh-type');
     }
 }
 
-export function applySavedLabels(commentNode: Element | JQuery, text: string): void {
+export function applySavedLabels(commentNode: Element, text: string): void {
     if (!text || !text.trim()) return; 
     
     const found = SYH_UI.prayersCache.find((item: PrayerItem) => item.text === text);
     const type = found ? found.type : 'none';
-    updateCommentVisuals($(commentNode), type);
+    updateCommentVisuals(commentNode, type);
 }
 
-export function addStarredTabControls(starredHeaderNode: Element | JQuery): void {
-    const $headerWrap = $(starredHeaderNode);
-    if ($headerWrap.length > 0 && !$headerWrap.find('.syh-starred-controls').length) {
+export function addStarredTabControls(starredHeaderNode: Element): void {
+    if (starredHeaderNode && !starredHeaderNode.querySelector('.syh-starred-controls')) {
         const controlsHTML = `
             <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                 <div class="syh-search-wrapper">
@@ -73,17 +73,20 @@ export function addStarredTabControls(starredHeaderNode: Element | JQuery): void
             </div>
         `;
         
-        $headerWrap.empty().append(controlsHTML);
+        starredHeaderNode.innerHTML = controlsHTML;
 
         const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
 
-        if (!$('#syh-empty-state-msg').length) {
-            $(selectors.starredList).after(`
-                <div id="syh-empty-state-msg" class="syh-empty-state">
-                    <div id="syh-empty-query"></div>
-                    <div id="syh-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
-                </div>
-            `);
+        if (!document.querySelector('#syh-empty-state-msg')) {
+            const starredList = document.querySelector(selectors.starredList);
+            if (starredList) {
+                starredList.insertAdjacentHTML('afterend', `
+                    <div id="syh-empty-state-msg" class="syh-empty-state">
+                        <div id="syh-empty-query"></div>
+                        <div id="syh-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
+                    </div>
+                `);
+            }
         }
 
         bindStarredControls();
@@ -92,70 +95,89 @@ export function addStarredTabControls(starredHeaderNode: Element | JQuery): void
 }
 
 export function bindStarredControls(): void {
-    const $searchInput = $('#syh-starred-search');
-    const $clearBtn = $('#syh-clear-search-btn');
+    const searchInput = document.querySelector<HTMLInputElement>('#syh-starred-search');
+    const clearBtn = document.querySelector<HTMLElement>('#syh-clear-search-btn');
 
-    $searchInput.off('input').on('input', function() { 
-        SYH_UI.searchQuery = ($(this).val() as string).toLowerCase();
-        $clearBtn.css('display', SYH_UI.searchQuery ? 'flex' : 'none');
-        filterStarredComments(); 
-    });
+    if (searchInput) {
+        searchInput.oninput = function() {
+            SYH_UI.searchQuery = searchInput.value.toLowerCase();
+            if (clearBtn) clearBtn.style.display = SYH_UI.searchQuery ? 'flex' : 'none';
+            filterStarredComments();
+        };
+    }
 
-    $clearBtn.off('click').on('click', function() {
-        $searchInput.val('');
-        SYH_UI.searchQuery = '';
-        $(this).hide();
-        filterStarredComments();
-    });
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            if (searchInput) searchInput.value = '';
+            SYH_UI.searchQuery = '';
+            clearBtn.style.display = 'none';
+            filterStarredComments();
+        };
+    }
 
-    $('#syh-scroll-to-active-btn').off('click').on('click', function(e) {
-        e.preventDefault();
-        scrollToActiveComment();
-    });
+    const scrollBtn = document.querySelector('#syh-scroll-to-active-btn');
+    if (scrollBtn) {
+        scrollBtn.onclick = function(e) {
+            e.preventDefault();
+            scrollToActiveComment();
+        };
+    }
 
-    $(document).off('click', '#syh-empty-clear-link').on('click', '#syh-empty-clear-link', function(e) {
-        e.preventDefault();
-        $searchInput.val('');
-        SYH_UI.searchQuery = '';
-        $clearBtn.hide();
-        filterStarredComments();
-    });
+    document.addEventListener('click', function(e: MouseEvent) {
+        const target = e.target as Element | null;
+        if (target?.closest('#syh-empty-clear-link')) {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+            SYH_UI.searchQuery = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            filterStarredComments();
+            return;
+        }
 
-    $('.syh-filter-btn').off('click').on('click', function() {
-        $('.syh-filter-btn')
-            .css({'background': 'transparent', 'font-weight': 'normal', 'box-shadow': 'none', 'color': '#666'})
-            .removeClass('active')
-            .attr('aria-selected', 'false');
-        $(this)
-            .css({'background': '#fff', 'font-weight': 'bold', 'box-shadow': '0 1px 3px rgba(0,0,0,0.1)', 'color': '#000'})
-            .addClass('active')
-            .attr('aria-selected', 'true');
-        
-        SYH_UI.activeFilter = $(this).data('filter');
-        filterStarredComments();
+        const filterBtn = target?.closest('.syh-filter-btn') as HTMLElement | null;
+        if (filterBtn) {
+            document.querySelectorAll<HTMLElement>('.syh-filter-btn').forEach(btn => {
+                btn.style.background = 'transparent';
+                btn.style.fontWeight = 'normal';
+                btn.style.boxShadow = 'none';
+                btn.style.color = '#666';
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
 
-        if (SYH_UI.searchQuery) {
-            $searchInput.removeClass('syh-search-pulse');
-            void $searchInput[0].offsetWidth; 
-            $searchInput.addClass('syh-search-pulse');
+            filterBtn.style.background = '#fff';
+            filterBtn.style.fontWeight = 'bold';
+            filterBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            filterBtn.style.color = '#000';
+            filterBtn.classList.add('active');
+            filterBtn.setAttribute('aria-selected', 'true');
+            
+            SYH_UI.activeFilter = filterBtn.dataset.filter || 'all';
+            filterStarredComments();
+
+            if (SYH_UI.searchQuery && searchInput) {
+                searchInput.classList.remove('syh-search-pulse');
+                void searchInput.offsetWidth;
+                searchInput.classList.add('syh-search-pulse');
+            }
         }
     });
 }
 
 export function filterStarredComments(): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const $commentList = $(selectors.starredList);
-    if (!$commentList.length) return;
+    const commentList = document.querySelector<HTMLElement>(selectors.starredList);
+    if (!commentList) return;
 
     const activeFilter = SYH_UI.activeFilter;
     const searchQuery = SYH_UI.searchQuery;
 
-    const safeHtmlUpdate = (jqEl: JQuery, newHtml: string) => {
-        if (jqEl.length && jqEl.html() !== newHtml) jqEl.html(newHtml);
+    const safeHtmlUpdate = (el: Element | null, newHtml: string) => {
+        if (el && el.innerHTML !== newHtml) el.innerHTML = newHtml;
     };
     const safeTextUpdate = (selector: string, newText: string) => {
-        const el = $(selector);
-        if (el.length && el.text() !== newText) el.text(newText);
+        const el = document.querySelector(selector);
+        if (el && el.textContent !== newText) el.textContent = newText;
     };
 
     let sortedTexts: string[] = [];
@@ -175,27 +197,29 @@ export function filterStarredComments(): void {
         sortedTexts = sortedTexts.concat(grouped[author]);
     }
 
-    if ($commentList.css('display') !== 'flex') $commentList.css({ 'display': 'flex', 'flex-direction': 'column' });
+    if (commentList.style.display !== 'flex') {
+        commentList.style.display = 'flex';
+        commentList.style.flexDirection = 'column';
+    }
 
     let visibleCount = 0;
     let countAbsolute = { all: 0, question: 0, prayer: 0, other: 0 };
     let countSearch = { all: 0, question: 0, prayer: 0, other: 0 };
 
-    $commentList.find('> li').each(function() {
-        const $li = $(this);
-        
-        if ($li.attr('data-syh-deleted') === 'true') return;
+    Array.from(commentList.children).forEach((liChild) => {
+        const li = liChild as HTMLElement;
+        if (li.getAttribute('data-syh-deleted') === 'true') return;
 
-        const $commentWrap = $li.find(selectors.commentBlock);
-        if (!$commentWrap.length) return;
+        const commentWrap = li.querySelector(selectors.commentBlock);
+        if (!commentWrap) return;
 
-        const originalText = $commentWrap.find(selectors.commentText).text();
-        const authorText = $commentWrap.find(selectors.commentAuthor).text();
+        const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
+        const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
         
         const foundInCache = SYH_UI.prayersCache.find((item: PrayerItem) => item.text === originalText);
         const commentType = foundInCache ? foundInCache.type : 'none';
         
-        updateCommentVisuals($commentWrap, commentType);
+        updateCommentVisuals(commentWrap, commentType);
         
         countAbsolute.all++;
         if (commentType === 'question') countAbsolute.question++;
@@ -226,29 +250,29 @@ export function filterStarredComments(): void {
         if (activeFilter === 'other' && commentType !== 'none') isVisible = false;
 
         if (isVisible) {
-            if ($li.css('display') === 'none') $li.show();
+            if (li.style.display === 'none') li.style.display = '';
             const exactOrder = sortedTexts.indexOf(originalText);
             const targetOrder = exactOrder !== -1 ? exactOrder : 9999;
-            if (parseInt($li.css('order')) !== targetOrder) $li.css('order', targetOrder);
+            if (parseInt(li.style.order || '0') !== targetOrder) li.style.order = String(targetOrder);
             visibleCount++;
         } else {
-            if ($li.css('display') !== 'none') $li.hide();
-            if (parseInt($li.css('order')) !== 9999) $li.css('order', 9999); 
+            if (li.style.display !== 'none') li.style.display = 'none';
+            if (parseInt(li.style.order || '0') !== 9999) li.style.order = '9999'; 
         }
     });
 
-    const $otherTabBtn = $('#syh-comment-filter-other');
+    const otherTabBtn = document.querySelector<HTMLElement>('#syh-comment-filter-other');
     if (countAbsolute.other === 0) {
-        if ($otherTabBtn.css('display') !== 'none') $otherTabBtn.hide();
+        if (otherTabBtn && otherTabBtn.style.display !== 'none') otherTabBtn.style.display = 'none';
         
         if (SYH_UI.activeFilter === 'other') {
             SYH_UI.activeFilter = 'all';
-            $('.syh-filter-btn').removeClass('active');
-            $('#syh-comment-filter-all').addClass('active');
+            document.querySelectorAll('.syh-filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('#syh-comment-filter-all')?.classList.add('active');
             return filterStarredComments(); 
         }
     } else {
-        if ($otherTabBtn.css('display') === 'none') $otherTabBtn.css('display', 'inline-flex');
+        if (otherTabBtn && otherTabBtn.style.display === 'none') otherTabBtn.style.display = 'inline-flex';
     }
 
     safeTextUpdate('#syh-comment-filter-all .tab-count', ` (${countAbsolute.all})`);
@@ -256,9 +280,9 @@ export function filterStarredComments(): void {
     safeTextUpdate('#syh-comment-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
     safeTextUpdate('#syh-comment-filter-other .tab-count', ` (${countAbsolute.other})`);
 
-    const $emptyState = $('#syh-empty-state-msg');
-    const $emptyQuery = $('#syh-empty-query');
-    const $emptySuggestion = $('#syh-empty-suggestion');
+    const emptyState = document.querySelector<HTMLElement>('#syh-empty-state-msg');
+    const emptyQuery = document.querySelector('#syh-empty-query');
+    const emptySuggestion = document.querySelector<HTMLElement>('#syh-empty-suggestion');
 
     if (visibleCount === 0) {
         let messageHTML: string;
@@ -275,19 +299,22 @@ export function filterStarredComments(): void {
             }
             
             if (suggestions.length > 0) {
-                safeHtmlUpdate($emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
-                if ($emptySuggestion.css('display') === 'none') $emptySuggestion.show();
+                safeHtmlUpdate(emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
+                if (emptySuggestion && emptySuggestion.style.display === 'none') emptySuggestion.style.display = 'block';
                 
-                $('.syh-switch-tab').off('click').on('click', function(e) {
-                    e.preventDefault();
-                    const filter = $(this).data('filter');
-                    $(`.syh-filter-btn[data-filter="${filter}"]`).click();
+                document.querySelectorAll('.syh-switch-tab').forEach(el => {
+                    (el as HTMLElement).onclick = function(e) {
+                        e.preventDefault();
+                        const filter = (this as HTMLElement).dataset.filter;
+                        const btn = document.querySelector<HTMLElement>(`.syh-filter-btn[data-filter="${filter}"]`);
+                        if (btn) btn.click();
+                    };
                 });
             } else {
-                if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+                if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
             }
         } else {
-            if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+            if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
             const filterNames: Record<string, string> = { 
                 'all': 'списку коментарів', 
                 'question': 'категорії "❓ Питання"', 
@@ -297,31 +324,30 @@ export function filterStarredComments(): void {
             messageHTML = `<span style="color: #777;">Тут ще немає коментарів для ${filterNames[activeFilter] || 'списку'}</span>`;
         }
 
-        safeHtmlUpdate($emptyQuery, messageHTML);
-        if ($emptyState.css('display') === 'none') $emptyState.show();
+        safeHtmlUpdate(emptyQuery, messageHTML);
+        if (emptyState && emptyState.style.display === 'none') emptyState.style.display = 'block';
     } else {
-        if ($emptyState.css('display') !== 'none') $emptyState.hide();
-        if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+        if (emptyState && emptyState.style.display !== 'none') emptyState.style.display = 'none';
+        if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
     }
 }
 
 export function scrollToActiveComment(): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const $commentList = $(selectors.starredList);
-    if ($commentList.length) {
-        const $activeLi = $commentList.find('> li:has(.lucide-circle-minus)');
-        if ($activeLi.length) {
-            const el = $activeLi[0];
-            const rect = el.getBoundingClientRect();
-            const scrollParent = el.closest('div[class*="Scroll"]');
+    const commentList = document.querySelector(selectors.starredList);
+    if (commentList) {
+        const activeLi = Array.from(commentList.children).find(child => child.querySelector('.lucide-circle-minus')) as HTMLElement | undefined;
+        if (activeLi) {
+            const rect = activeLi.getBoundingClientRect();
+            const scrollParent = activeLi.closest('div[class*="Scroll"]');
             if (scrollParent) {
                 const parentRect = scrollParent.getBoundingClientRect();
                 const isVisible = (rect.top >= parentRect.top && rect.bottom <= parentRect.bottom);
                 if (!isVisible) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             } else {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
     }

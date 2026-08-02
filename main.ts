@@ -1,25 +1,23 @@
-import './lib/jquery-3.7.1.js';
+import { SYH_CONFIG } from './modules/config';
+import { SYH_STORAGE } from './modules/storage';
+import { SYH_STATE } from './modules/state';
+import { SYH_UTILS } from './modules/utils';
+import { SYH_UI } from './modules/ui_core';
+import './modules/ui_comments';
+import './modules/ui_banners';
+import { SYH_PARSERS } from './modules/parsers';
+import { SYH_BANNER_CREATOR } from './modules/banner_creator';
+import { SYH_EVENT_COMMENTS } from './modules/event_comments';
+import { SYH_EVENT_BANNERS } from './modules/event_banners';
+import { SYH_VIDEO_COPIER } from './modules/video_copier';
+import { SYH_STATS_TRACKER } from './modules/stats_tracker';
+import { SYH_STATS_EXPORTER } from './modules/stats_exporter';
+import { SYH_INFO_MODAL } from './modules/info_modal';
+import { SYH_I18N } from './modules/i18n';
+import { SYH_ANTI_AFK } from './modules/anti_afk';
+import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 
-import { SYH_CONFIG } from './modules/config.ts';
-import { SYH_STORAGE } from './modules/storage.ts';
-import { SYH_STATE } from './modules/state.ts';
-import { SYH_UTILS } from './modules/utils.ts';
-import { SYH_UI } from './modules/ui_core.ts';
-import './modules/ui_comments.ts';
-import './modules/ui_banners.ts';
-import { SYH_PARSERS } from './modules/parsers.ts';
-import { SYH_BANNER_CREATOR } from './modules/banner_creator.ts';
-import { SYH_EVENT_COMMENTS } from './modules/event_comments.ts';
-import { SYH_EVENT_BANNERS } from './modules/event_banners.ts';
-import { SYH_VIDEO_COPIER } from './modules/video_copier.ts';
-import { SYH_STATS_TRACKER } from './modules/stats_tracker.ts';
-import { SYH_STATS_EXPORTER } from './modules/stats_exporter.ts';
-import { SYH_INFO_MODAL } from './modules/info_modal.ts';
-import { SYH_I18N } from './modules/i18n.ts';
-import { SYH_ANTI_AFK } from './modules/anti_afk.ts';
-import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant.ts';
-
-(function(window: any, $: any) {
+(function(window: any) {
     'use strict';
 
     // ЗАПОБІЖНИК ПОДВІЙНОЇ ІН'ЄКЦІЇ (DOUBLE-INJECTION PREVENTION)
@@ -217,9 +215,9 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant.ts';
         // Запуск захисту від AFK
         startAntiAfk();
 
-        $(SELECTORS.commentBlock).each((_i: number, el: HTMLElement) => SYH_UI.addButtonsToComment(el));
-        $(SELECTORS.bannerBlock).each((_i: number, el: HTMLElement) => SYH_UI.addButtonsToBanner(el));
-        $(SELECTORS.bannerHeader).each((_i: number, el: HTMLElement) => SYH_UI.addBannerHeaderControls(el));
+        document.querySelectorAll(SELECTORS.commentBlock).forEach((el) => SYH_UI.addButtonsToComment(el as HTMLElement));
+        document.querySelectorAll(SELECTORS.bannerBlock).forEach((el) => SYH_UI.addButtonsToBanner(el as HTMLElement));
+        document.querySelectorAll(SELECTORS.bannerHeader).forEach((el) => SYH_UI.addBannerHeaderControls(el as HTMLElement));
 
         if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
 
@@ -236,4 +234,4 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant.ts';
 
     init();
 
-})(window, (window as any).jQuery || (window as any).$);
+})(window);

@@ -1,6 +1,6 @@
 // youtube/studio/studio_channel.ts
-import { detectChannelKey, ChannelKey, ALLOWED_CHANNELS } from '../../modules/channel_config.ts';
-import { getChannelNameElement } from './studio_selectors.ts';
+import { detectChannelKey, ChannelKey, ALLOWED_CHANNELS } from '../../modules/channel_config';
+import { getChannelNameElement } from './studio_selectors';
 
 export interface StudioChannelInfo {
     key: ChannelKey;

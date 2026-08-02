@@ -1,5 +1,5 @@
 // youtube/yt_channel_gate.ts
-import { detectChannelKey } from '../modules/channel_config.ts';
+import { detectChannelKey } from '../modules/channel_config';
 
 /**
  * Перевіряє, чи поточна сторінка YouTube належить до дозволених каналів (VP / Slovo).

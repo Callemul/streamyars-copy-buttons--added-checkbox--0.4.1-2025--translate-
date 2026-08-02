@@ -1,11 +1,11 @@
-import { SYH_UI } from './ui_core.ts';
-import { SYH_CONFIG } from './config.ts';
-import { SYH_UTILS } from './utils.ts';
+import { SYH_UI } from './ui_core';
+import { SYH_CONFIG } from './config';
+import { SYH_UTILS } from './utils';
 
-export function addButtonsToBanner(bannerNode: Element | JQuery): void {
+export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const $bannerWrap = $(bannerNode).find(selectors.bannerWrap);
-    if ($bannerWrap.length > 0 && !$bannerWrap.find('.syh-banner-controls').length) {
+    const bannerWrap = bannerNode.querySelector(selectors.bannerWrap);
+    if (bannerWrap && !bannerWrap.querySelector('.syh-banner-controls')) {
         const buttonsHTML = `
             <div class="syh-banner-controls">
                 <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати текст банера" aria-label="Копіювати текст банера">📋</button>
@@ -16,38 +16,38 @@ export function addButtonsToBanner(bannerNode: Element | JQuery): void {
                     <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване" aria-label="Відмітити банер як опрацьований">
                 </div>
             </div>`;
-        $bannerWrap.append(buttonsHTML);
-        const bannerText = $(bannerNode).find(selectors.bannerText).text();
+        bannerWrap.insertAdjacentHTML('beforeend', buttonsHTML);
+        const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
         
         const state = SYH_UI.STATE || (window as any).SYH_STATE;
         if (state && typeof state.getState === 'function' && state.getState(bannerText)) {
-            $bannerWrap.find('.syh-checkbox').prop('checked', true);
+            const checkbox = bannerWrap.querySelector<HTMLInputElement>('.syh-checkbox');
+            if (checkbox) checkbox.checked = true;
         }
 
-        applySavedBannerLabels($bannerWrap[0], bannerText);
+        applySavedBannerLabels(bannerWrap, bannerText);
     }
 }
 
-export function updateBannerVisuals($bannerBlock: JQuery, type: string): void {
+export function updateBannerVisuals(bannerBlock: Element, type: string): void {
     if (type === 'stream' || type === 'audience' || type === 'prayer') {
-        $bannerBlock.attr('data-syh-banner-type', type);
+        bannerBlock.setAttribute('data-syh-banner-type', type);
     } else {
-        $bannerBlock.removeAttr('data-syh-banner-type');
+        bannerBlock.removeAttribute('data-syh-banner-type');
     }
 }
 
-export function applySavedBannerLabels(bannerNode: Element | JQuery, text: string): void {
+export function applySavedBannerLabels(bannerNode: Element, text: string): void {
     if (!text || !text.trim()) return;
     const type = SYH_UI.bannerCategoriesCache[text] || 'none';
-    updateBannerVisuals($(bannerNode), type);
+    updateBannerVisuals(bannerNode, type);
 }
 
-export function addBannerHeaderControls(headerNode: Element | JQuery): void {
-    const $header = $(headerNode);
+export function addBannerHeaderControls(headerNode: Element): void {
     const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
-    const $bannerList = $(bannerListSelector);
+    const bannerList = document.querySelector(bannerListSelector);
 
-    if ($header.length > 0 && !$header.find('.syh-banner-header-controls').length) {
+    if (headerNode && !headerNode.querySelector('.syh-banner-header-controls')) {
         const controlsHTML = `
             <div class="syh-banner-header-controls" style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
                 <button class="syh-button" data-action="create-from-text" title="Створити банери з тексту" aria-label="Створити банери з тексту" style="font-size: 13px; height: 26px;">📝</button>
@@ -57,11 +57,11 @@ export function addBannerHeaderControls(headerNode: Element | JQuery): void {
                 <button class="syh-button syh-delete-selected-banners" data-action="delete-selected-banners" title="Видалити вибрані" aria-label="Видалити вибрані банери" style="font-size: 13px; height: 26px;">🗑️</button>
             </div>
         `;
-        $header.append(controlsHTML);
+        headerNode.insertAdjacentHTML('beforeend', controlsHTML);
         updateMasterCheckboxState();
     }
 
-    if ($bannerList.length > 0 && !document.getElementById('syh-banner-search-container')) {
+    if (bannerList && !document.getElementById('syh-banner-search-container')) {
         const searchContainerHTML = `
             <div id="syh-banner-search-container" style="padding: 10px 15px 5px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eee; background: #fff; width: 100%; box-sizing: border-box;">
                 <div class="syh-banner-search-wrapper">
@@ -87,10 +87,10 @@ export function addBannerHeaderControls(headerNode: Element | JQuery): void {
             </div>
         `;
         
-        $bannerList.before(searchContainerHTML);
+        bannerList.insertAdjacentHTML('beforebegin', searchContainerHTML);
 
-        if (!$('#syh-banner-empty-state-msg').length) {
-            $bannerList.after(`
+        if (!document.getElementById('syh-banner-empty-state-msg')) {
+            bannerList.insertAdjacentHTML('afterend', `
                 <div id="syh-banner-empty-state-msg" class="syh-banner-empty-state">
                     <div id="syh-banner-empty-query"></div>
                     <div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
@@ -107,54 +107,66 @@ export function addBannerHeaderControls(headerNode: Element | JQuery): void {
 
 export function updateMasterCheckboxState(): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const $masterCheckbox = $('.syh-master-checkbox');
-    if (!$masterCheckbox.length) return;
-    const $allBannerCheckboxes = $(selectors.bannerBlock).find('.syh-checkbox[data-type="banner"]');
-    const total = $allBannerCheckboxes.length;
+    const masterCheckbox = document.querySelector<HTMLInputElement>('.syh-master-checkbox');
+    if (!masterCheckbox) return;
+
+    const bannerBlocks = document.querySelectorAll(selectors.bannerBlock);
+    const allBannerCheckboxes: HTMLInputElement[] = [];
+    bannerBlocks.forEach(block => {
+        const cb = block.querySelector<HTMLInputElement>('.syh-checkbox[data-type="banner"]');
+        if (cb) allBannerCheckboxes.push(cb);
+    });
+
+    const total = allBannerCheckboxes.length;
     if (total === 0) {
-        $masterCheckbox.prop({ 'checked': false, 'indeterminate': false });
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
         return;
     }
-    const checkedCount = $allBannerCheckboxes.filter(':checked').length;
+
+    const checkedCount = allBannerCheckboxes.filter(cb => cb.checked).length;
     if (checkedCount === 0) {
-        $masterCheckbox.prop({ 'checked': false, 'indeterminate': false });
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
     } else if (checkedCount === total) {
-        $masterCheckbox.prop({ 'checked': true, 'indeterminate': false });
+        masterCheckbox.checked = true;
+        masterCheckbox.indeterminate = false;
     } else {
-        $masterCheckbox.prop({ 'checked': false, 'indeterminate': true });
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = true;
     }
 }
 
 export function filterBanners(): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
     const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
-    const $bannerList = $(bannerListSelector);
-    if (!$bannerList.length) return;
+    const bannerList = document.querySelector<HTMLElement>(bannerListSelector);
+    if (!bannerList) return;
 
     const activeFilter = SYH_UI.bannerActiveFilter || 'all';
     const searchQuery = SYH_UI.bannerSearchQuery || '';
 
     const safeTextUpdate = (selector: string, newText: string) => {
-        const el = $(selector);
-        if (el.length && el.text() !== newText) el.text(newText);
+        const el = document.querySelector(selector);
+        if (el && el.textContent !== newText) el.textContent = newText;
     };
-    const safeHtmlUpdate = (jqEl: JQuery, newHtml: string) => {
-        if (jqEl.length && jqEl.html() !== newHtml) jqEl.html(newHtml);
+    const safeHtmlUpdate = (el: Element | null, newHtml: string) => {
+        if (el && el.innerHTML !== newHtml) el.innerHTML = newHtml;
     };
 
     let visibleCount = 0;
     let countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
     let countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
 
-    $bannerList.find('> li, > div[class*="Banner__LiWrap"]').each(function() {
-        const $li = $(this);
-        const $bannerWrap = $li.find(selectors.bannerWrap);
-        if (!$bannerWrap.length) return;
+    Array.from(bannerList.children).forEach(liChild => {
+        const li = liChild as HTMLElement;
+        const bannerWrap = li.querySelector(selectors.bannerWrap);
+        if (!bannerWrap) return;
 
-        const originalText = $bannerWrap.find(selectors.bannerText).text();
+        const originalText = bannerWrap.querySelector(selectors.bannerText)?.textContent || '';
         const commentType = SYH_UI.bannerCategoriesCache[originalText] || 'none';
         
-        updateBannerVisuals($bannerWrap, commentType);
+        updateBannerVisuals(bannerWrap, commentType);
         
         countAbsolute.all++;
         if (commentType === 'stream') countAbsolute.stream++;
@@ -184,10 +196,10 @@ export function filterBanners(): void {
         if (activeFilter === 'prayer' && commentType !== 'prayer') isVisible = false;
 
         if (isVisible) {
-            if ($li.css('display') === 'none') $li.show();
+            if (li.style.display === 'none') li.style.display = '';
             visibleCount++;
         } else {
-            if ($li.css('display') !== 'none') $li.hide();
+            if (li.style.display !== 'none') li.style.display = 'none';
         }
     });
 
@@ -196,13 +208,13 @@ export function filterBanners(): void {
     safeTextUpdate('#syh-banner-filter-audience .tab-count', ` (${countAbsolute.audience})`);
     safeTextUpdate('#syh-banner-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
 
-    const $emptyState = $('#syh-banner-empty-state-msg');
-    const $emptyQuery = $('#syh-banner-empty-query');
+    const emptyState = document.querySelector<HTMLElement>('#syh-banner-empty-state-msg');
+    const emptyQuery = document.querySelector('#syh-banner-empty-query');
     
-    let $emptySuggestion = $('#syh-banner-empty-suggestion');
-    if (!$emptySuggestion.length) {
-        $emptyState.append(`<div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>`);
-        $emptySuggestion = $('#syh-banner-empty-suggestion');
+    let emptySuggestion = document.querySelector<HTMLElement>('#syh-banner-empty-suggestion');
+    if (!emptySuggestion && emptyState) {
+        emptyState.insertAdjacentHTML('beforeend', `<div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>`);
+        emptySuggestion = document.querySelector<HTMLElement>('#syh-banner-empty-suggestion');
     }
 
     if (visibleCount === 0) {
@@ -219,19 +231,22 @@ export function filterBanners(): void {
             }
 
             if (suggestions.length > 0) {
-                safeHtmlUpdate($emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
-                if ($emptySuggestion.css('display') === 'none') $emptySuggestion.show();
+                safeHtmlUpdate(emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
+                if (emptySuggestion && emptySuggestion.style.display === 'none') emptySuggestion.style.display = 'block';
                 
-                $('.syh-switch-banner-tab').off('click').on('click', function(e) {
-                    e.preventDefault();
-                    const filter = $(this).data('filter');
-                    $(`.syh-banner-filter-btn[data-filter="${filter}"]`).click();
+                document.querySelectorAll('.syh-switch-banner-tab').forEach(el => {
+                    (el as HTMLElement).onclick = function(e) {
+                        e.preventDefault();
+                        const filter = (this as HTMLElement).dataset.filter;
+                        const btn = document.querySelector<HTMLElement>(`.syh-banner-filter-btn[data-filter="${filter}"]`);
+                        if (btn) btn.click();
+                    };
                 });
             } else {
-                if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+                if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
             }
         } else {
-            if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+            if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
             const filterNames: Record<string, string> = { 
                 'all': 'списку банерів', 
                 'stream': 'категорії "🎙️ Питання ефіру"', 
@@ -241,31 +256,30 @@ export function filterBanners(): void {
             messageHTML = `<span style="color: #777;">Тут ще немає банерів для ${filterNames[activeFilter] || 'списку'}</span>`;
         }
 
-        safeHtmlUpdate($emptyQuery, messageHTML);
-        if ($emptyState.css('display') === 'none') $emptyState.show();
+        safeHtmlUpdate(emptyQuery, messageHTML);
+        if (emptyState && emptyState.style.display === 'none') emptyState.style.display = 'block';
     } else {
-        if ($emptyState.css('display') !== 'none') $emptyState.hide();
-        if ($emptySuggestion.css('display') !== 'none') $emptySuggestion.hide();
+        if (emptyState && emptyState.style.display !== 'none') emptyState.style.display = 'none';
+        if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
     }
 }
 
 export function scrollToActiveBanner(): void {
     const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
-    const $bannerList = $(bannerListSelector);
-    if ($bannerList.length) {
-        const $activeLi = $bannerList.find('> li:has(.lucide-circle-minus), > div[class*="Banner__LiWrap"]:has(.lucide-circle-minus)');
-        if ($activeLi.length) {
-            const el = $activeLi[0];
-            const rect = el.getBoundingClientRect();
-            const scrollParent = el.closest('div[class*="Scroll"]');
+    const bannerList = document.querySelector(bannerListSelector);
+    if (bannerList) {
+        const activeLi = Array.from(bannerList.children).find(child => child.querySelector('.lucide-circle-minus')) as HTMLElement | undefined;
+        if (activeLi) {
+            const rect = activeLi.getBoundingClientRect();
+            const scrollParent = activeLi.closest('div[class*="Scroll"]');
             if (scrollParent) {
                 const parentRect = scrollParent.getBoundingClientRect();
                 const isVisible = (rect.top >= parentRect.top && rect.bottom <= parentRect.bottom);
                 if (!isVisible) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             } else {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
     }

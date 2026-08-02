@@ -1,5 +1,5 @@
-import { SYH_CONFIG } from './config.ts';
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
+import { SYH_CONFIG } from './config';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export interface SyhStatsTracker {
     intervalId: ReturnType<typeof setInterval> | null;
