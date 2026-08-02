@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export interface ViewerDataPoint {
     time: string;
@@ -42,24 +42,24 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         if (document.getElementById('syh-chart-modal')) return;
 
         const modalHtml = `
-            <div id="syh-chart-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999999; display: flex; align-items: center; justify-content: center;">
-                <div style="background: #1B1F29; border-radius: 12px; width: 900px; max-width: 95vw; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white;">
+            <div id="syh-chart-modal" class="syh-chart-modal-overlay">
+                <div class="syh-chart-modal-container">
                     
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h2 style="margin: 0; font-size: 20px;">📈 Аналітика: <span style="color: #005DF7;">${currentBrand}</span></h2>
-                        <button id="syh-close-chart" title="Закрити" aria-label="Закрити вікно аналітики" style="background: none; border: none; color: #aaa; font-size: 24px; cursor: pointer; padding: 0 10px;">&times;</button>
+                    <div class="syh-chart-modal-header">
+                        <h2 class="syh-chart-modal-title">📈 Аналітика: <span class="syh-chart-brand-name">${currentBrand}</span></h2>
+                        <button id="syh-close-chart" title="Закрити" aria-label="Закрити вікно аналітики" class="syh-chart-modal-close">&times;</button>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-                        <label style="font-size: 14px; color: #ccc;" for="syh-compare-select">Порівняти з:</label>
-                        <select id="syh-compare-select" aria-label="Виберіть дату для порівняння аналітики" style="padding: 6px; border-radius: 4px; background: #2A303C; color: white; border: 1px solid #4F5461; outline: none; cursor: pointer;">
+                    <div class="syh-chart-controls-row">
+                        <label class="syh-chart-label" for="syh-compare-select">Порівняти з:</label>
+                        <select id="syh-compare-select" aria-label="Виберіть дату для порівняння аналітики" class="syh-chart-select">
                             <option value="none">--- Ні ---</option>
                         </select>
-                        <button id="syh-dl-csv-btn" aria-label="Завантажити аналітику у форматі CSV" style="background: #4F5461; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold; margin-left: auto;">CSV</button>
-                        <button id="syh-dl-pres-btn" aria-label="Завантажити презентацію аналітики в HTML" style="background: #005DF7; color: white; border: none; border-radius: 4px; padding: 6px 15px; cursor: pointer; font-weight: bold;">📄 Презентація (HTML)</button>
+                        <button id="syh-dl-csv-btn" aria-label="Завантажити аналітику у форматі CSV" class="syh-chart-btn-csv">CSV</button>
+                        <button id="syh-dl-pres-btn" aria-label="Завантажити презентацію аналітики в HTML" class="syh-chart-btn-pres">📄 Презентація (HTML)</button>
                     </div>
 
-                    <div style="position: relative; height: 400px; width: 100%;">
+                    <div class="syh-chart-canvas-wrapper">
                         <canvas id="syhChartCanvas"></canvas>
                     </div>
                 </div>
@@ -181,6 +181,7 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         }
 
         const ctx = canvas.getContext('2d');
+        if (!ctx) return;
         const labels = todayData.data.map(item => item.time);
         const datasets = [{
             label: 'Глядачі',
@@ -219,6 +220,7 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         if (todayData.phase_prayers_start) plugins.push(createLine('Молитви', todayData.phase_prayers_start, '#28a745'));
 
         this.chartInstance = new Chart(ctx, {
+            type: 'line',
             data: { labels: labels, datasets: datasets },
             options: {
                 responsive: true,
