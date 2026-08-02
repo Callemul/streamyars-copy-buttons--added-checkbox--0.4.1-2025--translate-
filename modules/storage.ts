@@ -172,47 +172,13 @@ export const SYH_STORAGE: StorageAdapter = {
         keys: StorageKeyValues | StorageKeyValues[],
         cb: (result: T) => void
     ): void {
-        if (!this.isChromeStorageAvailable()) {
-            if (cb) cb({} as T);
-            return;
-        }
-        try {
-            const keysArray = Array.isArray(keys) ? keys : [keys];
-            chrome.storage.local.get(keysArray, (result) => {
-                if (chrome.runtime.lastError) {
-                    console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
-                    if (cb) cb({} as T);
-                    return;
-                }
-                if (cb) cb((result || {}) as T);
-            });
-        } catch (e: unknown) {
-            const err = e as Error;
-            console.error('[SYH Storage] Context invalidated or API failed:', err?.message || e);
-            if (cb) cb({} as T);
-        }
+        this.getAsync<T>(keys).then(cb);
     },
 
     set: function(items: Record<string, any>, cb?: () => void): void {
-        if (!this.isChromeStorageAvailable()) {
+        this.setAsync(items).then(() => {
             if (cb) cb();
-            return;
-        }
-        try {
-            const migratedItems: Record<string, any> = {};
-            for (const [k, v] of Object.entries(items)) {
-                migratedItems[migrateKey(k)] = v;
-            }
-            chrome.storage.local.set(migratedItems, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
-                }
-                if (cb) cb();
-            });
-        } catch (e: any) {
-            console.error('[SYH Storage] set failed:', e?.message || e);
-            if (cb) cb();
-        }
+        });
     },
 
     remove: function(keys: string | string[], cb?: () => void): void {
@@ -236,13 +202,50 @@ export const SYH_STORAGE: StorageAdapter = {
 
     getAsync: function<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T> {
         return new Promise((resolve) => {
-            this.get(keys as any, (res) => resolve(res as T));
+            if (!this.isChromeStorageAvailable()) {
+                resolve({} as T);
+                return;
+            }
+            try {
+                const keysArray = Array.isArray(keys) ? keys : [keys];
+                chrome.storage.local.get(keysArray, (result) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                        resolve({} as T);
+                        return;
+                    }
+                    resolve((result || {}) as T);
+                });
+            } catch (e: unknown) {
+                const err = e as Error;
+                console.error('[SYH Storage] Context invalidated or API failed:', err?.message || e);
+                resolve({} as T);
+            }
         });
     },
 
     setAsync: function(items: Record<string, any>): Promise<void> {
         return new Promise((resolve) => {
-            this.set(items, resolve);
+            if (!this.isChromeStorageAvailable()) {
+                resolve();
+                return;
+            }
+            try {
+                const migratedItems: Record<string, any> = {};
+                for (const [k, v] of Object.entries(items)) {
+                    migratedItems[migrateKey(k)] = v;
+                }
+                chrome.storage.local.set(migratedItems, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
+                    }
+                    resolve();
+                });
+            } catch (e: unknown) {
+                const err = e as Error;
+                console.error('[SYH Storage] set failed:', err?.message || e);
+                resolve();
+            }
         });
     },
 

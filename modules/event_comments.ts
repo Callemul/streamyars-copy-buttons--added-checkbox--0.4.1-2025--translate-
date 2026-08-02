@@ -383,67 +383,47 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         });
     },
 
-    saveToDatabase: function(author: string, text: string, type: string, icon: string): void {
-        const storage = SYH_STORAGE;
-
-        if (!storage) {
-            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
-            return;
-        }
-
+    saveToDatabase: async function(author: string, text: string, type: string, icon: string): Promise<void> {
         const currentRoomId = window.location.pathname.replace(/\//g, '');
         const now = Date.now();
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-        storage.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-            let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-            
-            list = list.filter(item => {
-                if (!item.timestamp) return true;
-                return (now - item.timestamp) < thirtyDaysMs;
-            });
-
-            list = list.filter(item => item.text !== text);
-            
-            list.push({ 
-                author: author, 
-                text: text, 
-                type: type, 
-                icon: icon,
-                roomId: currentRoomId,
-                timestamp: now
-            });
-            
-            storage.set({ [STORAGE_KEYS.PRAYERS]: list });
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
+        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+        
+        list = list.filter(item => !item.timestamp || (now - item.timestamp) < thirtyDaysMs);
+        list = list.filter(item => item.text !== text);
+        
+        list.push({ 
+            author, 
+            text, 
+            type, 
+            icon,
+            roomId: currentRoomId,
+            timestamp: now
         });
+        
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
     },
 
-    removeFromDatabase: function(text: string): void {
+    removeFromDatabase: async function(text: string): Promise<void> {
         if (this.UI && this.UI.prayersCache) {
             this.UI.prayersCache = this.UI.prayersCache.filter((item: any) => item.text !== text);
-        }
-
-        const storage = SYH_STORAGE;
-
-        if (!storage) {
-            console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
-            return;
         }
 
         const now = Date.now();
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-        storage.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-            let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-            
-            list = list.filter(item => {
-                if (item.text === text) return false;
-                if (item.timestamp && (now - item.timestamp) > thirtyDaysMs) return false;
-                return true;
-            });
-            
-            storage.set({ [STORAGE_KEYS.PRAYERS]: list });
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
+        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+        
+        list = list.filter(item => {
+            if (item.text === text) return false;
+            if (item.timestamp && (now - item.timestamp) > thirtyDaysMs) return false;
+            return true;
         });
+        
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
     }
 };
 

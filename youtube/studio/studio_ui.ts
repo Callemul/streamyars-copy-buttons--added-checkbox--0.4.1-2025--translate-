@@ -1,6 +1,7 @@
 // youtube/studio/studio_ui.ts
 import { SHEET_IDS, SHEET_LABELS, SheetId, getAllSheetIds } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
+import { UiFactory } from '../../modules/ui_factory';
 
 export interface StudioCommentUIElements {
     copyBtn: HTMLButtonElement;
@@ -32,21 +33,26 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
     if (!copyBtn || !questionBtn || !prayerBtn) {
         toolbar.querySelectorAll('.syh-studio-btn').forEach(el => el.remove());
 
-        copyBtn = document.createElement('button');
-        copyBtn.type = 'button';
-        copyBtn.className = 'syh-studio-btn syh-studio-btn-copy';
-        copyBtn.innerHTML = '<span class="syh-icon">\uD83D\uDCCB</span>';
-        copyBtn.title = 'Скопіювати автора та текст коментаря в буфер';
+        copyBtn = UiFactory.createButton({
+            action: 'studio-copy',
+            icon: '📋',
+            title: 'Скопіювати автора та текст коментаря в буфер',
+            className: 'syh-studio-btn syh-studio-btn-copy'
+        });
 
-        questionBtn = document.createElement('button');
-        questionBtn.type = 'button';
-        questionBtn.className = 'syh-studio-btn syh-studio-btn-question';
-        questionBtn.innerHTML = '<span class="syh-icon">\u2753</span>';
+        questionBtn = UiFactory.createButton({
+            action: 'studio-question',
+            icon: '❓',
+            title: 'Додати до питань',
+            className: 'syh-studio-btn syh-studio-btn-question'
+        });
 
-        prayerBtn = document.createElement('button');
-        prayerBtn.type = 'button';
-        prayerBtn.className = 'syh-studio-btn syh-studio-btn-prayer';
-        prayerBtn.innerHTML = '<span class="syh-icon">\uD83D\uDE4F</span>';
+        prayerBtn = UiFactory.createButton({
+            action: 'studio-prayer',
+            icon: '🙏',
+            title: 'Додати до молитов',
+            className: 'syh-studio-btn syh-studio-btn-prayer'
+        });
 
         toolbar.appendChild(copyBtn);
         toolbar.appendChild(questionBtn);

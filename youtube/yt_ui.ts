@@ -1,5 +1,6 @@
 // youtube/yt_ui.ts
 import { YT_SELECTORS } from './yt_selectors';
+import { UiFactory } from '../modules/ui_factory';
 
 export interface CommentData {
     id: string;
@@ -82,34 +83,35 @@ export function addButtonsToYTComment(commentNode: Element): HTMLElement | null 
     container.className = 'syh-yt-buttons';
 
     // Кнопка "Додати до питань"
-    const btnQuestion = document.createElement('button');
-    btnQuestion.type = 'button';
-    btnQuestion.className = 'syh-yt-btn syh-yt-btn-question';
-    btnQuestion.innerText = 'Додати до питань';
+    const btnQuestion = UiFactory.createButton({
+        action: 'add-question',
+        icon: 'Додати до питань',
+        title: 'Додати до питань',
+        className: 'syh-yt-btn syh-yt-btn-question'
+    });
 
     // Кнопка "Додати до молитов"
-    const btnPrayer = document.createElement('button');
-    btnPrayer.type = 'button';
-    btnPrayer.className = 'syh-yt-btn syh-yt-btn-prayer';
-    btnPrayer.innerText = 'Додати до молитов';
+    const btnPrayer = UiFactory.createButton({
+        action: 'add-prayer',
+        icon: 'Додати до молитов',
+        title: 'Додати до молитов',
+        className: 'syh-yt-btn syh-yt-btn-prayer'
+    });
 
     // Плаваюча кнопка копіювання 📄
-    const btnCopy = document.createElement('button');
-    btnCopy.type = 'button';
-    btnCopy.className = 'syh-yt-btn-copy';
-    btnCopy.title = 'Копіювати текст коментаря (@автор\\n\\nтекст)';
-    btnCopy.innerText = '📄';
+    const btnCopy = UiFactory.createButton({
+        action: 'copy-comment',
+        icon: '📄',
+        title: 'Копіювати текст коментаря (@автор\\n\\nтекст)',
+        className: 'syh-yt-btn-copy'
+    });
 
     // Чекбокс
-    const checkboxWrap = document.createElement('label');
+    const { wrapper: checkboxWrap } = UiFactory.createCheckbox(
+        'yt-comment',
+        'Прочитано / Не прочитано'
+    );
     checkboxWrap.className = 'syh-yt-checkbox-wrap';
-    checkboxWrap.title = 'Прочитано / Не прочитано';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'syh-yt-checkbox';
-
-    checkboxWrap.appendChild(checkbox);
 
     container.appendChild(btnQuestion);
     container.appendChild(btnPrayer);

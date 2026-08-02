@@ -2,22 +2,42 @@ import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_STATE } from './state';
+import { UiFactory } from './ui_factory';
 import type { PrayerItem } from './types';
 
 export function addButtonsToComment(commentNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const targetContainer = commentNode.querySelector(selectors.commentButtonContainer);
     if (targetContainer && !targetContainer.querySelector('.syh-custom-buttons-comment')) {
-        const buttonsHTML = `
-            <div class="syh-custom-buttons-comment">
-                <button class="syh-button" data-type="comment" data-action="copy-comment" title="Копіювати тільки коментар" aria-label="Копіювати тільки коментар">📄</button>
-                <button class="syh-button" data-type="comment" data-action="copy-author-comment" title="Відмітити як Питання" aria-label="Відмітити як Питання">❓</button>
-                <button class="syh-button" data-type="comment" data-action="copy-prayer" title="ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️" aria-label="Відмітити як Молитву">🙏</button>
-                <div class="syh-checkbox-container">
-                    <input type="checkbox" class="syh-checkbox" data-type="comment" title="Відмітити як опрацьоване" aria-label="Відмітити коментар як опрацьований">
-                </div>
-            </div>`;
-        targetContainer.insertAdjacentHTML('beforeend', buttonsHTML);
+        const container = document.createElement('div');
+        container.className = 'syh-custom-buttons-comment';
+
+        container.appendChild(UiFactory.createButton({
+            type: 'comment',
+            action: 'copy-comment',
+            icon: '📄',
+            title: 'Копіювати тільки коментар'
+        }));
+        container.appendChild(UiFactory.createButton({
+            type: 'comment',
+            action: 'copy-author-comment',
+            icon: '❓',
+            title: 'Відмітити як Питання'
+        }));
+        container.appendChild(UiFactory.createButton({
+            type: 'comment',
+            action: 'copy-prayer',
+            icon: '🙏',
+            title: 'ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️'
+        }));
+
+        const { wrapper: cbWrap } = UiFactory.createCheckbox(
+            'comment',
+            'Відмітити коментар як опрацьований'
+        );
+        container.appendChild(cbWrap);
+
+        targetContainer.appendChild(container);
         
         const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
         const state = SYH_UI_STATE.STATE || SYH_STATE;

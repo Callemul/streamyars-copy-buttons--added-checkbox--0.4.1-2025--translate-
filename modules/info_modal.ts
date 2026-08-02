@@ -142,7 +142,9 @@ export const SYH_INFO_MODAL: SyhInfoModal = {
         // 1. Спочатку екрануємо теги HTML для безпеки
         let html = md.replace(/&/g, "&amp;")
                      .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;");
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
 
         // 2. Витягуємо блоки коду, щоб вони не оброблялися покроково
         const codeBlocks: CodeBlockPlaceholder[] = [];

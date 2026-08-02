@@ -3,6 +3,7 @@ import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_UTILS } from './utils';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
+import { UiFactory } from './ui_factory';
 
 export interface SyhStatsTracker {
     intervalId: number | null;
@@ -87,19 +88,21 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     btnContainer.id = 'syh-header-controls';
                     btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100; align-items: center;';
 
-                    const btnQ = document.createElement('button');
-                    btnQ.innerText = '❓ Старт: Питання';
-                    btnQ.title = 'Натисни, коли починається блок питань';
-                    btnQ.setAttribute('aria-label', 'Фіксувати старт блоку питань');
+                    const btnQ = UiFactory.createButton({
+                        action: 'phase-questions',
+                        icon: '❓ Старт: Питання',
+                        title: 'Натисни, коли починається блок питань',
+                        onClick: () => self.markPhase('questions', btnQ)
+                    });
                     btnQ.style.cssText = 'background: #f39c12; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-                    btnQ.onclick = () => self.markPhase('questions', btnQ);
 
-                    const btnP = document.createElement('button');
-                    btnP.innerText = '🙏 Старт: Молитви';
-                    btnP.title = 'Натисни, коли починається молитовний блок';
-                    btnP.setAttribute('aria-label', 'Фіксувати старт молитовного блоку');
+                    const btnP = UiFactory.createButton({
+                        action: 'phase-prayers',
+                        icon: '🙏 Старт: Молитви',
+                        title: 'Натисни, коли починається молитовний блок',
+                        onClick: () => self.markPhase('prayers', btnP)
+                    });
                     btnP.style.cssText = 'background: #005DF7; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-                    btnP.onclick = () => self.markPhase('prayers', btnP);
 
                     const btnAnalytics = document.createElement('button');
                     btnAnalytics.id = 'syh-analytics-btn';

@@ -26,41 +26,30 @@ export const SYH_STATE: SyhState = {
     _saveTimer: null,
 
     init: function(callback?: () => void): void {
-        const self = this;
         const today = getTodayDateString();
 
-        // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE;
-
-        if (!storage) {
-            console.error("SYH_STATE: Не знайдено адаптер сховища!");
-            if (callback) callback();
-            return;
-        }
-
-        storage.get([STORAGE_KEYS.CHECKBOX_STATE], function(result: any) {
-            const stored = (result && result[STORAGE_KEYS.CHECKBOX_STATE]) ? result[STORAGE_KEYS.CHECKBOX_STATE] : {};
+        SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.CHECKBOX_STATE]).then((result) => {
+            const stored = result?.[STORAGE_KEYS.CHECKBOX_STATE] || {};
             const savedDate = stored.date;
-            
-            console.log("SYH_STATE: Ініціалізація стану. Збережена дата в кеші:", savedDate, "Поточна дата:", today);
 
-            // Очищення або завантаження стану залежно від поточної дати (Cache Invalidation)
+            console.log("SYH_STATE: Ініціалізація стану. Кеш дата:", savedDate, "Сьогодні:", today);
+
             if (savedDate && savedDate !== today) {
-                console.log("SYH_STATE: Виявлено новий день. Очищення стану збережених чекбоксів.");
-                self.itemStates = {};
-                self.lastDate = today;
-                storage.remove(STORAGE_KEYS.CHECKBOX_STATE, function() {
-                    if (typeof self.onStateLoaded === 'function') {
-                        self.onStateLoaded(self.itemStates);
+                console.log("SYH_STATE: Виявлено новий день. Очищення стану чекбоксів.");
+                this.itemStates = {};
+                this.lastDate = today;
+                SYH_STORAGE.removeAsync(STORAGE_KEYS.CHECKBOX_STATE).then(() => {
+                    if (typeof this.onStateLoaded === 'function') {
+                        this.onStateLoaded(this.itemStates);
                     }
                     if (callback) callback();
                 });
             } else {
-                self.itemStates = stored.data || {};
-                self.lastDate = savedDate || today;
-                console.log("SYH_STATE: Стан успішно завантажено з сховища:", self.itemStates);
-                if (typeof self.onStateLoaded === 'function') {
-                    self.onStateLoaded(self.itemStates);
+                this.itemStates = stored.data || {};
+                this.lastDate = savedDate || today;
+                console.log("SYH_STATE: Стан успішно завантажено:", this.itemStates);
+                if (typeof this.onStateLoaded === 'function') {
+                    this.onStateLoaded(this.itemStates);
                 }
                 if (callback) callback();
             }
@@ -106,16 +95,9 @@ export const SYH_STATE: SyhState = {
             data: this.itemStates
         };
 
-        // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE;
-
-        if (storage) {
-            storage.set({ [STORAGE_KEYS.CHECKBOX_STATE]: stateToSave }, function() {
-                console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
-            });
-        } else {
-            console.error("SYH_STATE: Не вдалося зберегти стан, адаптер сховища відсутній!");
-        }
+        SYH_STORAGE.setAsync({ [STORAGE_KEYS.CHECKBOX_STATE]: stateToSave }).then(() => {
+            console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
+        });
     }
 };
 

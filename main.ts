@@ -89,7 +89,9 @@ import { SYH_PLUGINS } from './modules/plugin_registry';
 
         SYH_PLUGINS.initSupportedPlugins();
 
-        if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
+        if (SYH_STATS_TRACKER && typeof SYH_STATS_TRACKER.init === 'function') {
+            SYH_STATS_TRACKER.init();
+        }
 
         // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів від Попапу в реальному часі через SYH_MESSAGING
         SYH_MESSAGING.onMessage((message, sender, sendResponse) => {

@@ -3,22 +3,35 @@ import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_STATE } from './state';
 import { SYH_EVENT_BANNERS } from './event_banners';
+import { UiFactory } from './ui_factory';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const bannerWrap = bannerNode.querySelector(selectors.bannerWrap);
     if (bannerWrap && !bannerWrap.querySelector('.syh-banner-controls')) {
-        const buttonsHTML = `
-            <div class="syh-banner-controls">
-                <button class="syh-button" data-type="banner" data-action="copy-banner" title="Копіювати текст банера" aria-label="Копіювати текст банера">📋</button>
-                <button class="syh-button" data-type="banner" data-action="mark-stream" title="Відмітити як Питання ефіру" aria-label="Відмітити як Питання ефіру">📺</button>
-                <button class="syh-button" data-type="banner" data-action="mark-audience" title="Відмітити як Питання глядачів" aria-label="Відмітити як Питання глядачів">❓</button>
-                <button class="syh-button" data-type="banner" data-action="mark-prayer" title="Відмітити як Молитовне" aria-label="Відмітити як Молитовне">🙏</button>
-                <div class="syh-checkbox-container">
-                    <input type="checkbox" class="syh-checkbox" data-type="banner" title="Відмітити як опрацьоване" aria-label="Відмітити банер як опрацьований">
-                </div>
-            </div>`;
-        bannerWrap.insertAdjacentHTML('beforeend', buttonsHTML);
+        const container = document.createElement('div');
+        container.className = 'syh-banner-controls';
+
+        container.appendChild(UiFactory.createButton({
+            type: 'banner', action: 'copy-banner', icon: '📋', title: 'Копіювати текст банера'
+        }));
+        container.appendChild(UiFactory.createButton({
+            type: 'banner', action: 'mark-stream', icon: '📺', title: 'Відмітити як Питання ефіру'
+        }));
+        container.appendChild(UiFactory.createButton({
+            type: 'banner', action: 'mark-audience', icon: '❓', title: 'Відмітити як Питання глядачів'
+        }));
+        container.appendChild(UiFactory.createButton({
+            type: 'banner', action: 'mark-prayer', icon: '🙏', title: 'Відмітити як Молитовне'
+        }));
+
+        const { wrapper: cbWrap } = UiFactory.createCheckbox(
+            'banner',
+            'Відмітити банер як опрацьований'
+        );
+        container.appendChild(cbWrap);
+
+        bannerWrap.appendChild(container);
         const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
         
         const state = SYH_UI_STATE.STATE || SYH_STATE;

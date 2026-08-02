@@ -287,13 +287,11 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
             )
         );
         cleaningLog.forEach(entry => {
-            table.append(
-                $('<tr>').append(
-                    $('<td>').addClass('clean-before').text(entry.before),
-                    $('<td>').addClass('clean-after').text(entry.after),
-                    $('<td>').addClass('clean-diff').text(entry.removed)
-                )
-            );
+            const $tr = $('<tr>');
+            $tr.append($('<td>').addClass('clean-before').text(entry.before || ''));
+            $tr.append($('<td>').addClass('clean-after').text(entry.after || ''));
+            $tr.append($('<td>').addClass('clean-diff').text(entry.removed || ''));
+            table.append($tr);
         });
         cleanedLogDiv.append(table);
         $(`#cleanedLogCount__${sheetId}`).text(`(${cleaningLog.length})`);
