@@ -437,6 +437,4 @@ export function retroactiveUpdateVideoComments(
     });
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).bindStudioCommentEvents = bindStudioCommentEvents;
-}
+// Clean ESM module exports without window scope pollution

@@ -1,5 +1,6 @@
 import { SYH_CONFIG } from './config';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_BUS } from './event_bus';
 
 export interface SyhStatsTracker {
     intervalId: number | null;
@@ -29,6 +30,17 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     init: function(): void {
         this.setupObservers();
         this.startTracking();
+        this.bindEvents();
+    },
+
+    bindEvents: function(): void {
+        SYH_BUS.on('PRAYER_MARKED', () => {
+            this.registerPrayerMarker();
+        });
+    },
+
+    registerPrayerMarker: function(): void {
+        console.log('[SYH StatsTracker] Prayer marker registered via EventBus');
     },
 
     setupObservers: function(): void {
@@ -365,6 +377,4 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_STATS_TRACKER = SYH_STATS_TRACKER;
-}
+// Clean ESM export

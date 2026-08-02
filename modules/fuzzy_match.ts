@@ -67,8 +67,4 @@ export function fuzzyIncludes(haystack: string, needle: string, maxErrorRatio = 
     return false;
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).levenshtein = levenshtein;
-    (window as any).normalizeFuzzy = normalize;
-    (window as any).fuzzyIncludes = fuzzyIncludes;
-}
+// Pure ESM exports without window global pollution

@@ -1,13 +1,13 @@
 // modules/sheets.ts
 
 export const SHEET_IDS = {
-    VP_SS: 'vp_ss',                 // "Время перемен СШ"
-    OPARIN: 'oparin',               // "Опарин проповеди"
-    MOLCHANOV_SS: 'molchanov_ss',   // "Молчанов СШ"
-    MOLCHANOV_PREACH: 'molchanov_preach', // "Молчанов проповеди"
+    VP_SS: 'vp_ss',
+    OPARIN: 'oparin',
+    MOLCHANOV_SS: 'molchanov_ss',
+    MOLCHANOV_PREACH: 'molchanov_preach',
 } as const;
 
-export type SheetId = typeof SHEET_IDS[keyof typeof SHEET_IDS];
+export type SheetId = typeof SHEET_IDS[keyof typeof SHEET_IDS] | string;
 
 export interface SheetDefinition {
     id: SheetId;
@@ -16,31 +16,57 @@ export interface SheetDefinition {
     icon?: string;
 }
 
-export const SHEET_DEFINITIONS: Record<SheetId, SheetDefinition> = {
-    [SHEET_IDS.VP_SS]: { id: SHEET_IDS.VP_SS, label: 'Время перемен СШ', description: 'Суботня школа Время Перемен', icon: '📖' },
-    [SHEET_IDS.OPARIN]: { id: SHEET_IDS.OPARIN, label: 'Опарин проповеди', description: 'Проповіді Опаріна', icon: '🎙️' },
-    [SHEET_IDS.MOLCHANOV_SS]: { id: SHEET_IDS.MOLCHANOV_SS, label: 'Молчанов СШ', description: 'Суботня школа Молчанова', icon: '📚' },
-    [SHEET_IDS.MOLCHANOV_PREACH]: { id: SHEET_IDS.MOLCHANOV_PREACH, label: 'Молчанов проповеди', description: 'Проповіді Молчанова', icon: '💬' },
-};
+class DynamicSheetRegistry {
+    private definitions: Map<string, SheetDefinition> = new Map([
+        [SHEET_IDS.VP_SS, { id: SHEET_IDS.VP_SS, label: 'Время перемен СШ', description: 'Суботня школа Время Перемен', icon: '📖' }],
+        [SHEET_IDS.OPARIN, { id: SHEET_IDS.OPARIN, label: 'Опарин проповеди', description: 'Проповіді Опаріна', icon: '🎙️' }],
+        [SHEET_IDS.MOLCHANOV_SS, { id: SHEET_IDS.MOLCHANOV_SS, label: 'Молчанов СШ', description: 'Суботня школа Молчанова', icon: '📚' }],
+        [SHEET_IDS.MOLCHANOV_PREACH, { id: SHEET_IDS.MOLCHANOV_PREACH, label: 'Молчанов проповеди', description: 'Проповіді Молчанова', icon: '💬' }]
+    ]);
 
-export const SHEET_LABELS: Record<SheetId, string> = Object.fromEntries(
-    Object.values(SHEET_DEFINITIONS).map(s => [s.id, s.label])
-) as Record<SheetId, string>;
+    public registerSheet(def: SheetDefinition): void {
+        this.definitions.set(def.id, def);
+    }
+
+    public getDefinition(id: string): SheetDefinition | undefined {
+        return this.definitions.get(id);
+    }
+
+    public getAllDefinitions(): SheetDefinition[] {
+        return Array.from(this.definitions.values());
+    }
+
+    public getAllIds(): SheetId[] {
+        return Array.from(this.definitions.keys());
+    }
+
+    public getLabels(): Record<string, string> {
+        const labels: Record<string, string> = {};
+        this.definitions.forEach((def, id) => {
+            labels[id] = def.label;
+        });
+        return labels;
+    }
+}
+
+export const SHEET_REGISTRY = new DynamicSheetRegistry();
+
+export const SHEET_DEFINITIONS: Record<string, SheetDefinition> = new Proxy({}, {
+    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop)
+});
+
+export const SHEET_LABELS: Record<string, string> = new Proxy({}, {
+    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop)?.label || prop
+});
 
 export function getAllSheetIds(): SheetId[] {
-    return Object.values(SHEET_IDS);
+    return SHEET_REGISTRY.getAllIds();
 }
 
 export function getAllSheetDefinitions(): SheetDefinition[] {
-    return Object.values(SHEET_DEFINITIONS);
+    return SHEET_REGISTRY.getAllDefinitions();
 }
 
-export function isValidSheetId(id: string): id is SheetId {
-    return getAllSheetIds().includes(id as SheetId);
-}
-
-if (typeof window !== 'undefined') {
-    (window as any).SHEET_IDS = SHEET_IDS;
-    (window as any).SHEET_LABELS = SHEET_LABELS;
-    (window as any).getAllSheetIds = getAllSheetIds;
+export function isValidSheetId(id: string): boolean {
+    return SHEET_REGISTRY.getAllIds().includes(id);
 }

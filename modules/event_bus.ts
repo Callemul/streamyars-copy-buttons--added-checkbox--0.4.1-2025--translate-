@@ -6,6 +6,7 @@ export type SyhEventType =
     | 'PHASE_CHANGED'
     | 'SHEET_TAB_CHANGED'
     | 'SHEET_DATA_PROCESSED'
+    | 'PRAYER_MARKED'
     | 'CONTEXT_INVALIDATED';
 
 export interface SyhEventPayloads {
@@ -16,6 +17,7 @@ export interface SyhEventPayloads {
     PHASE_CHANGED: { phase: 'questions' | 'prayers'; timestamp: string };
     SHEET_TAB_CHANGED: { activeSheetId: string };
     SHEET_DATA_PROCESSED: { sheetId: string; totalQuestions: number; totalPrayers: number };
+    PRAYER_MARKED: { author: string; text: string; icon: string };
     CONTEXT_INVALIDATED: void;
 }
 

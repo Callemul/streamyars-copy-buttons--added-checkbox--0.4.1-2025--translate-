@@ -302,9 +302,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 self.saveToDatabase(author, commentText, "prayer", prayerIcon);
                 if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
 
-                if ((window as any).SYH_STATS_TRACKER && typeof (window as any).SYH_STATS_TRACKER.registerPrayerMarker === 'function') {
-                    (window as any).SYH_STATS_TRACKER.registerPrayerMarker();
-                }
+                SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: prayerIcon });
             }
             
             if (textToCopy) {
