@@ -1,8 +1,8 @@
 // youtube/studio/studio_comment_key.ts
-import { SYH_STORAGE } from '../../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage.ts';
 
-export const STUDIO_BUTTON_STATE_KEY = 'syh_studio_button_state';
-export const STUDIO_CHECKBOX_STATE_KEY = 'syh_studio_checkbox_state';
+export const STUDIO_BUTTON_STATE_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
+export const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 

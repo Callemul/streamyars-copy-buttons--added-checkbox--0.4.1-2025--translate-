@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 
 function getTodayDateString(): string {
     if (typeof window !== 'undefined' && (window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.getTodayDateString === 'function') {
@@ -39,8 +39,8 @@ export const SYH_STATE: SyhState = {
             return;
         }
 
-        storage.get(['syh_checkbox_state'], function(result: any) {
-            const stored = (result && result.syh_checkbox_state) ? result.syh_checkbox_state : {};
+        storage.get([STORAGE_KEYS.CHECKBOX_STATE], function(result: any) {
+            const stored = (result && result[STORAGE_KEYS.CHECKBOX_STATE]) ? result[STORAGE_KEYS.CHECKBOX_STATE] : {};
             const savedDate = stored.date;
             
             console.log("SYH_STATE: Ініціалізація стану. Збережена дата в кеші:", savedDate, "Поточна дата:", today);
@@ -50,7 +50,7 @@ export const SYH_STATE: SyhState = {
                 console.log("SYH_STATE: Виявлено новий день. Очищення стану збережених чекбоксів.");
                 self.itemStates = {};
                 self.lastDate = today;
-                storage.remove('syh_checkbox_state', function() {
+                storage.remove(STORAGE_KEYS.CHECKBOX_STATE, function() {
                     if (typeof self.onStateLoaded === 'function') {
                         self.onStateLoaded(self.itemStates);
                     }
@@ -111,7 +111,7 @@ export const SYH_STATE: SyhState = {
         const storage = SYH_STORAGE;
 
         if (storage) {
-            storage.set({ 'syh_checkbox_state': stateToSave }, function() {
+            storage.set({ [STORAGE_KEYS.CHECKBOX_STATE]: stateToSave }, function() {
                 console.log("SYH_STATE: Оновлений стан чекбоксів успішно записано.");
             });
         } else {

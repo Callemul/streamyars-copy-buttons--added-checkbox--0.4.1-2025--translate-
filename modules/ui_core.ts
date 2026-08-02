@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 import { SYH_STATE } from './state.ts';
 import { SYH_CONFIG } from './config.ts';
 import { 
@@ -77,9 +77,9 @@ export function init(config?: any, state?: any): void {
         const storage = SYH_STORAGE || (window as any).SYH_STORAGE;
 
         if (storage) {
-            storage.get(['syh_prayers', 'syh_banner_categories'], function(result: Record<string, any>) {
-                SYH_UI.prayersCache = result.syh_prayers || [];
-                SYH_UI.bannerCategoriesCache = result.syh_banner_categories || {};
+            storage.get([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES], function(result: Record<string, any>) {
+                SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
+                SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
             });
         } else {
             console.warn("[SYH] Сховище недоступне під час первинної ініціалізації кешу UI.");
@@ -88,14 +88,14 @@ export function init(config?: any, state?: any): void {
         if (storage && typeof storage.onChanged === 'function') {
             storage.onChanged(function(changes: Record<string, any>) {
                 try {
-                    if (changes.syh_prayers) {
-                        SYH_UI.prayersCache = changes.syh_prayers.newValue || [];
+                    if (changes[STORAGE_KEYS.PRAYERS]) {
+                        SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
                         if (typeof SYH_UI.filterStarredComments === 'function') {
                             SYH_UI.filterStarredComments(); 
                         }
                     }
-                    if (changes.syh_banner_categories) {
-                        SYH_UI.bannerCategoriesCache = changes.syh_banner_categories.newValue || {};
+                    if (changes[STORAGE_KEYS.CATEGORIES]) {
+                        SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
                         if (typeof SYH_UI.filterBanners === 'function') {
                             SYH_UI.filterBanners();
                         }

@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string> | null;
@@ -279,10 +279,10 @@ export const SYH_UTILS: SyhUtils = {
                 return;
             }
 
-            storageAdapter.get(['syh_banner_categories'], (result: Record<string, any>) => {
-                const db = result.syh_banner_categories || {};
+            storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
+                const db = result[STORAGE_KEYS.CATEGORIES] || {};
                 db[text] = type;
-                storageAdapter.set({ 'syh_banner_categories': db }, resolve);
+                storageAdapter.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
             });
         });
     },

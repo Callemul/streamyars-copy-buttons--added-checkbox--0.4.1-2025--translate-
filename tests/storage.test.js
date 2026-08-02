@@ -15,7 +15,7 @@ global.chrome = {
     }
 };
 
-const { SYH_STORAGE } = await import('../modules/storage.ts');
+const { SYH_STORAGE, STORAGE_KEYS, migrateKey, migrateStorageIfNeeded, STORAGE_SCHEMA_VERSION } = await import('../modules/storage.ts');
 
 describe('SYH_STORAGE tests', () => {
 
@@ -105,6 +105,90 @@ describe('SYH_STORAGE tests', () => {
 
         assert.strictEqual(callbackCalled, true);
         assert.deepStrictEqual(setItem, { 'test_key': 'hello' });
+    });
+
+    test('7: migrateKey() коректно трансформує старі ключі у схему syh:*', () => {
+        assert.strictEqual(migrateKey('syh_yt_collected'), 'syh:popup:yt:collected');
+        assert.strictEqual(migrateKey('syh_options'), 'syh:core:options');
+        assert.strictEqual(migrateKey('db'), 'syh:core:db');
+        assert.strictEqual(migrateKey('syh_prayers'), 'syh:popup:prayers');
+        assert.strictEqual(migrateKey('syh_banner_categories'), 'syh:core:categories');
+        assert.strictEqual(migrateKey('syh_checkbox_state'), 'syh:core:checkbox_state');
+        assert.strictEqual(migrateKey('syh_stream_charts'), 'syh:stats:charts');
+        assert.strictEqual(migrateKey('syh_installed_at'), 'syh:core:installed_at');
+        assert.strictEqual(migrateKey('syh_version'), 'syh:core:version');
+        assert.strictEqual(migrateKey('syh_studio_enabled'), 'syh:core:studio_enabled');
+        assert.strictEqual(migrateKey('syh_studio_button_state'), 'syh:studio:button_state');
+        assert.strictEqual(migrateKey('syh_studio_checkbox_state'), 'syh:studio:checkbox_state');
+        assert.strictEqual(migrateKey('syh_studio_video_sheet_map'), 'syh:studio:video_sheet_map');
+        assert.strictEqual(migrateKey('syh_studio_manual_override_log'), 'syh:studio:override_log');
+        
+        // Префіксні динамічні ключі
+        assert.strictEqual(migrateKey('syh_telegram_data__vp_ss'), 'syh:popup:telegram:data:vp_ss');
+        assert.strictEqual(migrateKey('syh_old_input__vp_ss'), 'syh:popup:telegram:oldInput:vp_ss');
+        assert.strictEqual(migrateKey('studio_comment_state__v123'), 'syh:studio:state:v123');
+        assert.strictEqual(migrateKey('syh_popup_divider_pos__vp_ss'), 'syh:popup:divider_pos:vp_ss');
+        assert.strictEqual(migrateKey('syh_collected__vp_ss'), 'syh:popup:collected:vp_ss');
+    });
+
+    test('8: migrateStorageIfNeeded() переносить старі ключі у нові, видаляє старі та встановлює _schema_version', async () => {
+        let store = {
+            'syh_yt_collected': ['item1'],
+            'syh_options': { youtube_enabled: true },
+            'syh_telegram_data__vp_ss': 'data1',
+            'db': { title: 'test' }
+        };
+
+        global.chrome.storage.local.get = (keys, cb) => cb(store);
+        global.chrome.storage.local.set = (items, cb) => {
+            Object.assign(store, items);
+            if (cb) cb();
+        };
+        global.chrome.storage.local.remove = (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => delete store[k]);
+            if (cb) cb();
+        };
+
+        await migrateStorageIfNeeded();
+
+        // Перевіряємо створення нових ключів
+        assert.deepStrictEqual(store['syh:popup:yt:collected'], ['item1']);
+        assert.deepStrictEqual(store['syh:core:options'], { youtube_enabled: true });
+        assert.strictEqual(store['syh:popup:telegram:data:vp_ss'], 'data1');
+        assert.deepStrictEqual(store['syh:core:db'], { title: 'test' });
+        assert.strictEqual(store['_schema_version'], STORAGE_SCHEMA_VERSION);
+
+        // Перевіряємо видалення старих ключів
+        assert.strictEqual(store['syh_yt_collected'], undefined);
+        assert.strictEqual(store['syh_options'], undefined);
+        assert.strictEqual(store['syh_telegram_data__vp_ss'], undefined);
+        assert.strictEqual(store['db'], undefined);
+    });
+
+    test('9: migrateStorageIfNeeded() є ідемпотентною (повторний запуск — no-op)', async () => {
+        let store = {
+            '_schema_version': STORAGE_SCHEMA_VERSION,
+            'syh:core:options': { youtube_enabled: true }
+        };
+
+        let setCalled = false;
+        let removeCalled = false;
+
+        global.chrome.storage.local.get = (keys, cb) => cb(store);
+        global.chrome.storage.local.set = (items, cb) => {
+            setCalled = true;
+            if (cb) cb();
+        };
+        global.chrome.storage.local.remove = (keys, cb) => {
+            removeCalled = true;
+            if (cb) cb();
+        };
+
+        await migrateStorageIfNeeded();
+
+        assert.strictEqual(setCalled, false);
+        assert.strictEqual(removeCalled, false);
     });
 
 });

@@ -2,7 +2,7 @@ import { SYH_CONFIG } from './config.ts';
 import { SYH_STATE } from './state.ts';
 import { SYH_UTILS } from './utils.ts';
 import { SYH_UI } from './ui_core.ts';
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 
 export interface PrayerRecord {
     author: string;
@@ -344,8 +344,8 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         const now = Date.now();
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-        storage.get(['syh_prayers'], function(result: Record<string, any>) {
-            let list: PrayerRecord[] = result.syh_prayers || [];
+        storage.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+            let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
             
             list = list.filter(item => {
                 if (!item.timestamp) return true;
@@ -363,7 +363,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 timestamp: now
             });
             
-            storage.set({ 'syh_prayers': list });
+            storage.set({ [STORAGE_KEYS.PRAYERS]: list });
         });
     },
 
@@ -382,8 +382,8 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         const now = Date.now();
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-        storage.get(['syh_prayers'], function(result: Record<string, any>) {
-            let list: PrayerRecord[] = result.syh_prayers || [];
+        storage.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+            let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
             
             list = list.filter(item => {
                 if (item.text === text) return false;
@@ -391,7 +391,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 return true;
             });
             
-            storage.set({ 'syh_prayers': list });
+            storage.set({ [STORAGE_KEYS.PRAYERS]: list });
         });
     }
 };

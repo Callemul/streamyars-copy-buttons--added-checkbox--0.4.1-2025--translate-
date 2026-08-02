@@ -2,7 +2,7 @@
 import { YT_SELECTORS } from './yt_selectors.ts';
 import { addButtonsToYTComment, extractCommentId, restoreButtonState, restoreCheckboxState } from './yt_ui.ts';
 import { bindYTEvents, YTCollectedItem } from './yt_events.ts';
-import { SYH_STORAGE } from '../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage.ts';
 import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant.ts';
 import { SYH_CONFIG } from '../modules/config.ts';
 import { isAllowedChannel } from './yt_channel_gate.ts';
@@ -111,9 +111,9 @@ function initYouTubeModule() {
     }
 
     SYH_STORAGE.get(
-        ['syh_options', 'syh_yt_button_states', 'syh_yt_checkbox_state', 'syh_yt_collected'],
+        [STORAGE_KEYS.OPTIONS, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.YT_CHECKBOX_STATE, STORAGE_KEYS.YT_COLLECTED],
         (res) => {
-            const options = res.syh_options || {};
+            const options = res[STORAGE_KEYS.OPTIONS] || {};
             stateCache.youtubeEnabled = options.youtube_enabled !== false;
 
             if (!stateCache.youtubeEnabled) {
@@ -121,9 +121,9 @@ function initYouTubeModule() {
                 return;
             }
 
-            stateCache.buttonStates = res.syh_yt_button_states || {};
-            stateCache.checkboxStates = res.syh_yt_checkbox_state || {};
-            stateCache.collectedList = res.syh_yt_collected || [];
+            stateCache.buttonStates = res[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+            stateCache.checkboxStates = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || {};
+            stateCache.collectedList = res[STORAGE_KEYS.YT_COLLECTED] || [];
 
             // 1. Ініціалізація помічника коментарів з селекторами YouTube
             SYH_COMMENT_ASSISTANT.init({
@@ -144,8 +144,8 @@ function initYouTubeModule() {
 
 // Підписка на зміни у сховищі (реактивне оновлення налаштувань та станів)
 SYH_STORAGE.onChanged((changes) => {
-    if (changes.syh_options) {
-        const newOptions = changes.syh_options.newValue || {};
+    if (changes[STORAGE_KEYS.OPTIONS]) {
+        const newOptions = changes[STORAGE_KEYS.OPTIONS].newValue || {};
         const wasEnabled = stateCache.youtubeEnabled;
         stateCache.youtubeEnabled = newOptions.youtube_enabled !== false;
 
@@ -158,13 +158,13 @@ SYH_STORAGE.onChanged((changes) => {
         }
     }
 
-    if (changes.syh_yt_button_states && changes.syh_yt_button_states.newValue) {
-        stateCache.buttonStates = changes.syh_yt_button_states.newValue;
+    if (changes[STORAGE_KEYS.YT_BUTTON_STATES] && changes[STORAGE_KEYS.YT_BUTTON_STATES].newValue) {
+        stateCache.buttonStates = changes[STORAGE_KEYS.YT_BUTTON_STATES].newValue;
         processAllYTComments();
     }
 
-    if (changes.syh_yt_checkbox_state && changes.syh_yt_checkbox_state.newValue) {
-        stateCache.checkboxStates = changes.syh_yt_checkbox_state.newValue;
+    if (changes[STORAGE_KEYS.YT_CHECKBOX_STATE] && changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue) {
+        stateCache.checkboxStates = changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue;
         processAllYTComments();
     }
 });

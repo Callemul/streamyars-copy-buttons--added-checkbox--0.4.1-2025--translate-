@@ -1,4 +1,5 @@
 // modules/anti_afk.ts
+import { STORAGE_KEYS } from './storage.ts';
 
 /**
  * ============================================================================
@@ -220,14 +221,14 @@ export function startAntiAfk(
     };
 
     if (storage && typeof storage.get === 'function') {
-        storage.get(['syh_options'], (data: any) => {
-            checkOptionsAndRun(data?.syh_options);
+        storage.get([STORAGE_KEYS.OPTIONS], (data: any) => {
+            checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS]);
         });
 
         if (typeof storage.onChanged === 'function') {
             storage.onChanged((changes: any) => {
-                if (changes.syh_options) {
-                    checkOptionsAndRun(changes.syh_options.newValue);
+                if (changes[STORAGE_KEYS.OPTIONS]) {
+                    checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue);
                 }
             });
         }

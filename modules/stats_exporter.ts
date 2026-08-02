@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 
 export interface ViewerDataPoint {
     time: string;
@@ -113,8 +113,8 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
         
         if (storage) {
-            storage.get(['syh_stream_charts'], function(result: any) {
-                const db = (result && result.syh_stream_charts) ? result.syh_stream_charts : {};
+            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
+                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
                 const brandData = db[currentBrand] || {};
                 
                 const select = document.getElementById('syh-compare-select') as HTMLSelectElement | null;

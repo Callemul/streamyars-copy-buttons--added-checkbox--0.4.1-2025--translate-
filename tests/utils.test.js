@@ -5,6 +5,7 @@ import { test, describe } from 'node:test';
 global.window = global;
 
 const { SYH_UTILS } = await import('../modules/utils.ts');
+const { STORAGE_KEYS } = await import('../modules/storage.ts');
 
 describe('SYH_UTILS tests', () => {
 
@@ -117,8 +118,8 @@ describe('SYH_UTILS tests', () => {
     test('16. saveBannerCategory - виклик без контексту this (unbound function)', async () => {
         let savedDb = {};
         const mockStorage = {
-            get(keys, cb) { cb({ syh_banner_categories: savedDb }); },
-            set(obj, cb) { if (obj.syh_banner_categories) savedDb = obj.syh_banner_categories; if (cb) cb(); }
+            get(keys, cb) { cb({ [STORAGE_KEYS.CATEGORIES]: savedDb }); },
+            set(obj, cb) { if (obj[STORAGE_KEYS.CATEGORIES]) savedDb = obj[STORAGE_KEYS.CATEGORIES]; if (cb) cb(); }
         };
         SYH_UTILS._storage = mockStorage;
 

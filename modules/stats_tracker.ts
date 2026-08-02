@@ -1,5 +1,5 @@
 import { SYH_CONFIG } from './config.ts';
-import { SYH_STORAGE } from './storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage.ts';
 
 export interface SyhStatsTracker {
     intervalId: ReturnType<typeof setInterval> | null;
@@ -171,8 +171,8 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         
         const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
         if (storage) {
-            storage.get(['syh_stream_charts'], function(result: any) {
-                const db = (result && result.syh_stream_charts) ? result.syh_stream_charts : {};
+            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
+                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
                 if (db[self.currentBrand] && db[self.currentBrand][today]) {
                     if (db[self.currentBrand][today].phase_questions_start) {
                         btnQ.innerText = '✅ Питання';
@@ -202,8 +202,8 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
 
         const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
         if (storage) {
-            storage.get(['syh_stream_charts'], function(result: any) {
-                let db = (result && result.syh_stream_charts) ? result.syh_stream_charts : {};
+            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
+                let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
                 if (!db[self.currentBrand]) db[self.currentBrand] = {};
                 if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
@@ -216,7 +216,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                 }
                 btnElement.style.opacity = '0.7';
 
-                storage.set({ 'syh_stream_charts': db });
+                storage.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
             });
         }
     },
@@ -251,8 +251,8 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
 
             const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
             if (storage) {
-                storage.get(['syh_stream_charts'], function(result: any) {
-                    let db = (result && result.syh_stream_charts) ? result.syh_stream_charts : {};
+                storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
+                    let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
                     
                     if (!db[self.currentBrand]) db[self.currentBrand] = {};
                     if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
@@ -271,7 +271,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                         viewers: viewerCount
                     });
 
-                    storage.set({ 'syh_stream_charts': db });
+                    storage.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
                 });
             }
         }, ((SYH_CONFIG as any)?.TIMINGS?.STATS_TRACKING_INTERVAL) || 60000); 

@@ -1,9 +1,9 @@
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
 export const db: any = {};
 
 export function saveDataToStorage(): void {
-    SYH_STORAGE.set({ 'db': db });
+    SYH_STORAGE.set({ [STORAGE_KEYS.DB]: db });
 }
 
 export async function loadData(key: string): Promise<unknown> {
@@ -22,15 +22,15 @@ const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 
 $(document).ready(function() {
     const keysToLoad = [
-        'db', 
-        'syh_prayers',
+        STORAGE_KEYS.DB, 
+        STORAGE_KEYS.PRAYERS,
         'tg_active_tab',
         'tg_active_subtab',
         'tg_textarea_sizes',
         'tg_translit_old',
         'tg_translit_new',
         'tg_scroll_positions',
-        'syh_yt_collected'
+        STORAGE_KEYS.YT_COLLECTED
     ];
 
     SHEET_IDS.forEach(sId => {
@@ -49,22 +49,22 @@ $(document).ready(function() {
             `tg_cleanedLogCount__${sId}`,
             `tg_cleanedLogDetailsVisible__${sId}`,
             `tg_cleanedLogDetailsOpen__${sId}`,
-            `syh_popup_divider_pos__${sId}`,
-            `syh_collected__${sId}`
+            `syh:popup:divider_pos:${sId}`,
+            `syh:popup:collected:${sId}`
         );
     });
 
     let storageLoaded = false;
 
     SYH_STORAGE.get(keysToLoad, function(result) {
-        if (result.db) { 
-            Object.assign(db, result.db);
+        if (result[STORAGE_KEYS.DB]) { 
+            Object.assign(db, result[STORAGE_KEYS.DB]);
             if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS); 
             if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach); 
         }
 
-        if (result.syh_yt_collected) {
-            (window as any).syh_yt_collected = result.syh_yt_collected;
+        if (result[STORAGE_KEYS.YT_COLLECTED]) {
+            (window as any).syh_yt_collected = result[STORAGE_KEYS.YT_COLLECTED];
         }
         
         SHEET_IDS.forEach(sId => {
@@ -141,7 +141,7 @@ $(document).ready(function() {
                 $(`#cleanedLogCount__${sId}`).text('');
             }
 
-            const divPos = result[`syh_popup_divider_pos__${sId}`];
+            const divPos = result[`syh:popup:divider_pos:${sId}`];
             if (divPos) {
                 $(`#step3Left__${sId}`).css('flex', divPos);
                 $(`#step3Right__${sId}`).css('flex', 100 - divPos);
@@ -185,7 +185,7 @@ $(document).ready(function() {
         }
 
         if (typeof (window as any).renderPrayers === 'function') {
-            (window as any).renderPrayers(result.syh_prayers || []);
+            (window as any).renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
         }
 
         if (result.tg_scroll_positions) {
@@ -444,7 +444,7 @@ $(document).ready(function() {
             const total = flexLeft + flexRight;
             const posPercent = (flexLeft / total) * 100;
 
-            SYH_STORAGE.set({ [`syh_popup_divider_pos__${sId}`]: posPercent });
+            SYH_STORAGE.set({ [`syh:popup:divider_pos:${sId}`]: posPercent });
             activeResizer = null;
         }
     });

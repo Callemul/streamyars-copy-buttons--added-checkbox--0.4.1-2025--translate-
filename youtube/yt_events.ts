@@ -1,7 +1,7 @@
 // youtube/yt_events.ts
 import { YT_SELECTORS } from './yt_selectors.ts';
 import { extractCommentData, restoreButtonState, restoreCheckboxState } from './yt_ui.ts';
-import { SYH_STORAGE } from '../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage.ts';
 
 export interface YTCollectedItem {
     id: string;
@@ -66,7 +66,7 @@ export function saveCollectedItem(
     } else {
         updated = [item, ...collectedList];
     }
-    SYH_STORAGE.set({ syh_yt_collected: updated });
+    SYH_STORAGE.set({ [STORAGE_KEYS.YT_COLLECTED]: updated });
     return updated;
 }
 
@@ -102,7 +102,7 @@ export function bindYTEvents(
             checked: true,
             timestamp: Date.now()
         };
-        SYH_STORAGE.set({ syh_yt_checkbox_state: caches.checkboxStates });
+        SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
     };
 
     // 1. Клік "Додати до питань"
@@ -127,7 +127,7 @@ export function bindYTEvents(
 
             // Кеш кнопок
             caches.buttonStates[commentId] = 'question';
-            SYH_STORAGE.set({ syh_yt_button_states: caches.buttonStates });
+            SYH_STORAGE.set({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
 
             // Збереження у зібрані
             const item: YTCollectedItem = {
@@ -167,7 +167,7 @@ export function bindYTEvents(
 
             // Кеш кнопок
             caches.buttonStates[commentId] = 'prayer';
-            SYH_STORAGE.set({ syh_yt_button_states: caches.buttonStates });
+            SYH_STORAGE.set({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
 
             // Збереження у зібрані
             const item: YTCollectedItem = {
@@ -217,7 +217,7 @@ export function bindYTEvents(
                 checked: isChecked,
                 timestamp: Date.now()
             };
-            SYH_STORAGE.set({ syh_yt_checkbox_state: caches.checkboxStates });
+            SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
         });
     }
 

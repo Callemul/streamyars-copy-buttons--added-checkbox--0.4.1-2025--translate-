@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_CONFIG } from '../modules/config';
 import { SHEET_LABELS, SheetId } from '../modules/sheets';
 
@@ -86,9 +86,9 @@ class OptionsController {
     }
 
     private loadSettings(): void {
-        SYH_STORAGE.get(['db', 'syh_options', 'syh_studio_enabled'], (result) => {
-            const db = result.db || {};
-            const opts: Partial<OptionsState> = result.syh_options || {};
+        SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS, STORAGE_KEYS.STUDIO_ENABLED], (result) => {
+            const db = result[STORAGE_KEYS.DB] || {};
+            const opts: Partial<OptionsState> = result[STORAGE_KEYS.OPTIONS] || {};
 
             const sschoolInput = document.getElementById('optSschoolName') as HTMLInputElement;
             if (sschoolInput) sschoolInput.value = db.newTitleSS || DEFAULT_OPTIONS.newTitleSS;
@@ -119,7 +119,7 @@ class OptionsController {
 
             const studioToggle = document.getElementById('optStudioEnabled') as HTMLInputElement;
             if (studioToggle) {
-                const isStudioEnabled = result.syh_studio_enabled !== undefined ? result.syh_studio_enabled : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
+                const isStudioEnabled = result[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? result[STORAGE_KEYS.STUDIO_ENABLED] : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
                 studioToggle.checked = isStudioEnabled;
             }
 
@@ -139,8 +139,8 @@ class OptionsController {
         const youtubeEnabledVal = (document.getElementById('optYouTubeEnabled') as HTMLInputElement)?.checked;
         const studioEnabledVal = (document.getElementById('optStudioEnabled') as HTMLInputElement)?.checked;
 
-        SYH_STORAGE.get(['db'], (result) => {
-            const currentDb = result.db || {};
+        SYH_STORAGE.get([STORAGE_KEYS.DB], (result) => {
+            const currentDb = result[STORAGE_KEYS.DB] || {};
             currentDb.newTitleSS = sschoolVal;
             currentDb.newTitlePreach = preachVal;
 
@@ -158,9 +158,9 @@ class OptionsController {
             };
 
             SYH_STORAGE.set({
-                'db': currentDb,
-                'syh_options': newOptions,
-                'syh_studio_enabled': studioEnabledVal
+                [STORAGE_KEYS.DB]: currentDb,
+                [STORAGE_KEYS.OPTIONS]: newOptions,
+                [STORAGE_KEYS.STUDIO_ENABLED]: studioEnabledVal
             }, () => {
                 this.showToast('✅ Налаштування успішно збережено!');
             });
@@ -168,8 +168,8 @@ class OptionsController {
     }
 
     private loadStudioLog(): void {
-        SYH_STORAGE.get(['syh_studio_manual_override_log'], (res) => {
-            const logs: StudioOverrideLogEntry[] = res.syh_studio_manual_override_log || [];
+        SYH_STORAGE.get([STORAGE_KEYS.STUDIO_OVERRIDE_LOG], (res) => {
+            const logs: StudioOverrideLogEntry[] = res[STORAGE_KEYS.STUDIO_OVERRIDE_LOG] || [];
             const tbody = document.getElementById('studioLogBody');
             if (!tbody) return;
 
@@ -215,8 +215,8 @@ class OptionsController {
     }
 
     private copyStudioLog(): void {
-        SYH_STORAGE.get(['syh_studio_manual_override_log'], async (res) => {
-            const logs: StudioOverrideLogEntry[] = res.syh_studio_manual_override_log || [];
+        SYH_STORAGE.get([STORAGE_KEYS.STUDIO_OVERRIDE_LOG], async (res) => {
+            const logs: StudioOverrideLogEntry[] = res[STORAGE_KEYS.STUDIO_OVERRIDE_LOG] || [];
             if (logs.length === 0) {
                 this.showToast('ℹ️ Лог порожній, нічого копіювати');
                 return;
@@ -252,7 +252,7 @@ class OptionsController {
 
     private clearStudioLog(): void {
         if (confirm('Очистити лог ручних корекцій категорій YouTube Studio?')) {
-            SYH_STORAGE.set({ syh_studio_manual_override_log: [] }, () => {
+            SYH_STORAGE.set({ [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]: [] }, () => {
                 this.loadStudioLog();
                 this.showToast('🗑 Лог Studio успішно очищено');
             });
@@ -260,12 +260,12 @@ class OptionsController {
     }
 
     private exportConfig(): void {
-        SYH_STORAGE.get(['db', 'syh_options'], (result) => {
+        SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS], (result) => {
             const exportData = {
                 timestamp: new Date().toISOString(),
                 version: '1.0.0',
-                db: result.db || {},
-                syh_options: result.syh_options || DEFAULT_OPTIONS
+                db: result[STORAGE_KEYS.DB] || {},
+                syh_options: result[STORAGE_KEYS.OPTIONS] || DEFAULT_OPTIONS
             };
             const jsonStr = JSON.stringify(exportData, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -285,15 +285,9 @@ class OptionsController {
         if (!data || typeof data !== 'object' || Array.isArray(data)) {
             return false;
         }
-        const hasDb = 'db' in data;
-        const hasOptions = 'syh_options' in data;
+        const hasDb = 'db' in data || STORAGE_KEYS.DB in data;
+        const hasOptions = 'syh_options' in data || STORAGE_KEYS.OPTIONS in data;
         if (!hasDb && !hasOptions) {
-            return false;
-        }
-        if (hasDb && (typeof data.db !== 'object' || data.db === null || Array.isArray(data.db))) {
-            return false;
-        }
-        if (hasOptions && (typeof data.syh_options !== 'object' || data.syh_options === null || Array.isArray(data.syh_options))) {
             return false;
         }
         return true;
@@ -310,8 +304,8 @@ class OptionsController {
                 const imported = JSON.parse(e.target?.result as string);
                 if (this.validateImportedConfig(imported)) {
                     SYH_STORAGE.set({
-                        'db': imported.db || {},
-                        'syh_options': imported.syh_options || DEFAULT_OPTIONS
+                        [STORAGE_KEYS.DB]: imported[STORAGE_KEYS.DB] || imported.db || {},
+                        [STORAGE_KEYS.OPTIONS]: imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || DEFAULT_OPTIONS
                     }, () => {
                         this.loadSettings();
                         this.showToast('📤 Конфігурацію успішно імпортовано!');
@@ -329,8 +323,8 @@ class OptionsController {
     private resetDefaults(): void {
         if (confirm('Ви впевнені, що хочете скинути всі налаштування до стандартних?')) {
             SYH_STORAGE.set({
-                'db': { newTitleSS: DEFAULT_OPTIONS.newTitleSS, newTitlePreach: DEFAULT_OPTIONS.newTitlePreach },
-                'syh_options': DEFAULT_OPTIONS
+                [STORAGE_KEYS.DB]: { newTitleSS: DEFAULT_OPTIONS.newTitleSS, newTitlePreach: DEFAULT_OPTIONS.newTitlePreach },
+                [STORAGE_KEYS.OPTIONS]: DEFAULT_OPTIONS
             }, () => {
                 this.loadSettings();
                 this.showToast('⚠️ Налаштування скинуто до початкових!');

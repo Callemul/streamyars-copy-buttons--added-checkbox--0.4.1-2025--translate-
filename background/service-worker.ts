@@ -3,17 +3,23 @@
  * Обробка фонових задач, подій встановлення/оновлення та комунікації між компонентами.
  */
 
+import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage.ts';
+
 // Подія встановлення або оновлення розширення
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalled) {
-  chrome.runtime.onInstalled.addListener((details: chrome.runtime.InstalledDetails) => {
+  chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails) => {
     console.log(`[Service Worker] StreamYard Helper installed/updated: ${details.reason}`);
     
+    if (details.reason === 'install' || details.reason === 'update') {
+      await migrateStorageIfNeeded();
+    }
+
     if (details.reason === 'install') {
       // Ініціалізація дефолтних налаштувань у сховищі при першому встановленні
       if (chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({
-          syh_installed_at: new Date().toISOString(),
-          syh_version: chrome.runtime.getManifest().version
+          [STORAGE_KEYS.INSTALLED_AT]: new Date().toISOString(),
+          [STORAGE_KEYS.VERSION]: chrome.runtime.getManifest().version
         });
       }
     }

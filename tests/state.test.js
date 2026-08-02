@@ -52,6 +52,7 @@ global.window.SYH_STORAGE = mockStorageAdapter;
 
 const { SYH_STATE } = await import('../modules/state.ts');
 const { SYH_UTILS } = await import('../modules/utils.ts');
+const { STORAGE_KEYS } = await import('../modules/storage.ts');
 
 describe('SYH_STATE tests', () => {
 
@@ -74,7 +75,7 @@ describe('SYH_STATE tests', () => {
 
         assert.strictEqual(SYH_STATE.getState('item_1'), true);
 
-        const saved = mockStorageStore['syh_checkbox_state'];
+        const saved = mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE];
         assert.ok(saved);
         assert.strictEqual(saved.data['item_1'], true);
         const today = SYH_UTILS.getTodayDateString();
@@ -88,13 +89,13 @@ describe('SYH_STATE tests', () => {
         SYH_STATE.updateState('item_1', false, 0);
         assert.strictEqual(SYH_STATE.getState('item_1'), false);
 
-        const saved = mockStorageStore['syh_checkbox_state'];
+        const saved = mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE];
         assert.strictEqual(saved.data['item_1'], false);
     });
 
     test('4. init успішно завантажує збережений стан, якщо дата збігається з сьогоднішньою', async () => {
         const today = SYH_UTILS.getTodayDateString();
-        mockStorageStore['syh_checkbox_state'] = {
+        mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE] = {
             date: today,
             data: { 'banner_1': true, 'banner_2': false }
         };
@@ -110,7 +111,7 @@ describe('SYH_STATE tests', () => {
         const today = SYH_UTILS.getTodayDateString();
         const yesterday = '2026-07-23';
 
-        mockStorageStore['syh_checkbox_state'] = {
+        mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE] = {
             date: yesterday,
             data: { 'old_banner': true }
         };
@@ -122,7 +123,7 @@ describe('SYH_STATE tests', () => {
         assert.deepStrictEqual(SYH_STATE.itemStates, {});
         assert.strictEqual(SYH_STATE.lastDate, today);
         // Запис у storage також має бути видалений
-        assert.strictEqual(mockStorageStore['syh_checkbox_state'], undefined);
+        assert.strictEqual(mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE], undefined);
     });
 
     test('6. init обробляє порожнє або відсутнє сховище без помилок', async () => {
@@ -134,7 +135,7 @@ describe('SYH_STATE tests', () => {
     });
 
     test('7. init коректно обробляє пошкоджені дані у сховищі', async () => {
-        mockStorageStore['syh_checkbox_state'] = "corrupted_string";
+        mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE] = "corrupted_string";
 
         await new Promise(resolve => SYH_STATE.init(resolve));
 
@@ -164,7 +165,7 @@ describe('SYH_STATE tests', () => {
         SYH_STATE.itemStates = { 'test_key': true };
         SYH_STATE.saveState(0);
 
-        const saved = mockStorageStore['syh_checkbox_state'];
+        const saved = mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE];
         assert.ok(saved);
         assert.ok(saved.date);
         assert.strictEqual(saved.data['test_key'], true);
@@ -173,7 +174,7 @@ describe('SYH_STATE tests', () => {
     test('10. ізоляція дат гарантує локальний часовий пояс YYYY-MM-DD', () => {
         const today = SYH_UTILS.getTodayDateString();
         SYH_STATE.updateState('tz_test', true, 0);
-        const saved = mockStorageStore['syh_checkbox_state'];
+        const saved = mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE];
         assert.strictEqual(saved.date, today);
     });
 
@@ -206,7 +207,7 @@ describe('SYH_STATE tests', () => {
         await new Promise(resolve => setTimeout(resolve, 80));
 
         assert.strictEqual(saveCount, 1, 'Відбувся лише 1 запис у storage після дебаунсу');
-        assert.strictEqual(mockStorageStore['syh_checkbox_state'].data['k2'], true);
+        assert.strictEqual(mockStorageStore[STORAGE_KEYS.CHECKBOX_STATE].data['k2'], true);
 
         mockStorageAdapter.set = origSet;
     });

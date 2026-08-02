@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../modules/storage.ts';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage.ts';
 
 export interface PrayerItem {
     id?: string;
@@ -55,7 +55,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         }
     });
     if (needsSaveId) {
-        SYH_STORAGE.set({ 'syh_prayers': prayersList });
+        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: prayersList });
     }
 
     // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
@@ -67,7 +67,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     });
 
     if (cleanedList.length !== prayersList.length) {
-        SYH_STORAGE.set({ 'syh_prayers': cleanedList });
+        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: cleanedList });
         prayersList = cleanedList;
     }
 
@@ -262,12 +262,12 @@ $(document).ready(function() {
         const id = $(this).attr('data-id');
         const newText = $(this).text().trim();
         
-        SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-            const list: PrayerItem[] = result.syh_prayers || [];
+        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+            const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
             const targetItem = list.find(item => item.id === id);
             if (targetItem && targetItem.text !== newText) {
                 targetItem.text = newText;
-                SYH_STORAGE.set({ 'syh_prayers': list });
+                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });
             }
         });
     });
@@ -282,8 +282,8 @@ $(document).ready(function() {
         const newAuthor = $(this).text().trim();
         
         if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
-            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-                const list: PrayerItem[] = result.syh_prayers || [];
+            SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
                 let updated = false;
                 list.forEach(item => {
                     if (item.author === oldAuthor) {
@@ -292,7 +292,7 @@ $(document).ready(function() {
                     }
                 });
                 if (updated) {
-                    SYH_STORAGE.set({ 'syh_prayers': list });
+                    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });
                 }
             });
         }
@@ -319,14 +319,14 @@ $(document).ready(function() {
     $(document).on('click', '.del-author-btn', function() {
         const authorToDelete = $(this).data('author');
         if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
-            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-                let list: PrayerItem[] = result.syh_prayers || [];
+            SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
                 const authorPrayers = list.filter(item => item.author === authorToDelete);
                 
                 sendUnstarMessagesForList(authorPrayers);
                 
                 list = list.filter(item => item.author !== authorToDelete);
-                SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                     renderPrayers(list);
                 });
             });
@@ -336,7 +336,7 @@ $(document).ready(function() {
     // Примусово очистити ВСЮ базу молитов без зняття зірок
     $(document).on('click', '#syh-wipe-prayers', function() {
         if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
-            SYH_STORAGE.set({ 'syh_prayers': [] }, function() {
+            SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: [] }, function() {
                 renderPrayers([]);
             });
         }
@@ -350,15 +350,15 @@ $(document).ready(function() {
                 const url = new URL(tabs[0].url);
                 const currentRoomId = url.pathname.replace(/\//g, '');
                 
-                SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-                    const list: PrayerItem[] = result.syh_prayers || [];
+                SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                    const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
                     list.forEach(item => {
                         if (item.type === 'prayer') {
                             item.roomId = currentRoomId;
                             item.timestamp = Date.now(); 
                         }
                     });
-                    SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                         renderPrayers(list);
                     });
                 });
@@ -370,14 +370,14 @@ $(document).ready(function() {
 
     $(document).on('click', '.del-prayer-btn', function() {
         const id = $(this).attr('data-id');
-        SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-            let list: PrayerItem[] = result.syh_prayers || [];
+        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+            let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
             const targetItem = list.find(item => item.id === id);
             if (targetItem) {
                 sendUnstarMessage(targetItem.text);
             }
             list = list.filter(item => item.id !== id);
-            SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+            SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                 renderPrayers(list);
             });
         });
@@ -416,10 +416,10 @@ $(document).ready(function() {
     // Очищення через червону кнопку корзини
     $('#clearPrayersBtn').click(function() {
         if (confirm("Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.")) {
-            SYH_STORAGE.get(['syh_prayers'], function(result: Record<string, any>) {
-                let list: PrayerItem[] = result.syh_prayers || [];
+            SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
                 list = list.filter(item => item.type !== 'prayer');
-                SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                     renderPrayers(list);
                 });
             });
@@ -476,8 +476,8 @@ $(document).ready(function() {
                 if (results && results[0] && results[0].result) {
                     const fetched = results[0].result as PrayerItem[];
                     
-                    SYH_STORAGE.get(['syh_prayers'], function(res: Record<string, any>) {
-                        const list: PrayerItem[] = res.syh_prayers || [];
+                    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
+                        const list: PrayerItem[] = res[STORAGE_KEYS.PRAYERS] || [];
                         let addedCount = 0;
                         
                         // Додаємо тільки ті, яких ще немає в базі
@@ -488,7 +488,7 @@ $(document).ready(function() {
                             }
                         });
                         
-                        SYH_STORAGE.set({ 'syh_prayers': list }, function() {
+                        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                             renderPrayers(list);
                             $('#fetchPrayersBtn').text(originalText);
                             if (addedCount > 0) {
