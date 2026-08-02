@@ -4,9 +4,30 @@
  * ВАЖЛИВО: localStorage fallback видалено навмисно — він ламає синхронізацію між контент-скриптом і попапом.
  */
 
-declare var module: any;
-
 export const STORAGE_SCHEMA_VERSION = 2;
+
+export interface StoredOptions {
+    newTitleSS?: string;
+    newTitlePreach?: string;
+    ui_locale?: string;
+    anti_afk_enabled?: boolean;
+    anti_afk_interval_sec?: number;
+    auto_heal_enabled?: boolean;
+    text_truncation_length?: number;
+    show_copy_buttons?: boolean;
+    youtube_enabled?: boolean;
+    studio_enabled?: boolean;
+}
+
+export interface StorageSchema {
+    [STORAGE_KEYS.OPTIONS]?: StoredOptions;
+    [STORAGE_KEYS.DB]?: Record<string, any>;
+    [STORAGE_KEYS.CATEGORIES]?: Record<string, string>;
+    [STORAGE_KEYS.CHECKBOX_STATE]?: { date?: string; data?: Record<string, boolean> };
+    [STORAGE_KEYS.PRAYERS]?: Array<{ id?: string; author: string; text: string; type?: string; icon?: string; roomId?: string; timestamp?: number }>;
+    [STORAGE_KEYS.YT_COLLECTED]?: any[];
+    [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
+}
 
 export const STORAGE_KEYS = {
     // Core
@@ -254,12 +275,4 @@ export async function migrateStorageIfNeeded(): Promise<void> {
     });
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        SYH_STORAGE,
-        STORAGE_KEYS,
-        STORAGE_SCHEMA_VERSION,
-        migrateKey,
-        migrateStorageIfNeeded
-    };
-}
+

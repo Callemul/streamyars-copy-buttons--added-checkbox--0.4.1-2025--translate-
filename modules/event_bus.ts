@@ -9,7 +9,9 @@ export type SyhEventType =
     | 'PRAYER_MARKED'
     | 'ANTI_AFK_TRIGGERED'
     | 'OPTIONS_UPDATED'
-    | 'CONTEXT_INVALIDATED';
+    | 'CONTEXT_INVALIDATED'
+    | 'FILTER_BANNERS_REQUESTED'
+    | 'FILTER_COMMENTS_REQUESTED';
 
 export interface SyhEventPayloads {
     COMMENT_ACTION: { type: 'question' | 'prayer' | 'copy'; author: string; text: string };
@@ -23,6 +25,8 @@ export interface SyhEventPayloads {
     ANTI_AFK_TRIGGERED: { timestamp: number };
     OPTIONS_UPDATED: { options: Record<string, any> };
     CONTEXT_INVALIDATED: void;
+    FILTER_BANNERS_REQUESTED: { filter?: string; query?: string };
+    FILTER_COMMENTS_REQUESTED: { filter?: string; query?: string };
 }
 
 type EventCallback<T extends SyhEventType> = (data: SyhEventPayloads[T]) => void;

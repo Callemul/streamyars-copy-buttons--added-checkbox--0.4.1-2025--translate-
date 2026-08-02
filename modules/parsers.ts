@@ -6,10 +6,17 @@ export interface GroupedQuestion {
     textLines: string[];
 }
 
+export interface CleaningLogEntry {
+    before: string;
+    after: string;
+    removed: string;
+}
+
 export interface SyhParsers {
     parseEmojiNumberedQuestions(rawText: string): string[];
     parseStandardNumberedQuestions(rawText: string): string[];
     parseSabbathSchoolUnnumberedQuestions(rawText: string): string[];
+    cleanAuthorName(rawName: string, cleaningLog?: CleaningLogEntry[]): string;
 }
 
 export const SYH_PARSERS: SyhParsers = {
@@ -96,17 +103,13 @@ export const SYH_PARSERS: SyhParsers = {
     parseSabbathSchoolUnnumberedQuestions: function(rawText: string): string[] {
         console.log("Parsing as Sabbath School Unnumbered questions.");
         const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-        const maxLen = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
-                       (typeof window !== 'undefined' && (window as any).SYH_CONFIG && (window as any).SYH_CONFIG.LIMITS && (window as any).SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
+        const maxLen = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
         
-        // Знаходимо перший рядок з ключовими словами
         const startIndex = lines.findIndex(l => /памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(l));
         if (startIndex === -1) return [];
         
-        // Ігноруємо заголовок (все перед startIndex)
         const questionLines = lines.slice(startIndex);
         
-        // Помилка якщо більше 10 питань
         if (questionLines.length > 10) {
             throw new Error("Помилка: Кількість питань перевищує ліміт (максимум 10)!");
         }
@@ -115,6 +118,41 @@ export const SYH_PARSERS: SyhParsers = {
             const cleanLine = line.replace(/\s*\([^)]+\)$/, '').trim();
             return cleanLine.length >= 200 ? cleanLine.substring(0, maxLen) + "..." : cleanLine;
         });
+    },
+
+    cleanAuthorName: function(rawName: string, cleaningLog?: CleaningLogEntry[]): string {
+        const original = rawName.trim();
+        let name = original;
+        const removedParts: string[] = [];
+
+        if (name.startsWith('@')) {
+            removedParts.push('@');
+            name = name.substring(1);
+        }
+
+        const bulletMatch = name.match(/\s*•.*$/);
+        if (bulletMatch) {
+            removedParts.push(bulletMatch[0].trim());
+            name = name.replace(/\s*•.*$/, '');
+        }
+
+        const suffixMatch = name.match(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/);
+        if (suffixMatch) {
+            removedParts.push(suffixMatch[0]);
+            name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
+        }
+
+        name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2').trim();
+
+        if (cleaningLog && name !== original) {
+            cleaningLog.push({
+                before: original,
+                after: name,
+                removed: removedParts.length > 0 ? removedParts.join(' | ') : 'форматування'
+            });
+        }
+
+        return name;
     }
 };
 

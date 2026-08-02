@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { SYH_UTILS } from '../modules/utils';
+import { SYH_PARSERS } from '../modules/parsers';
 
 const SHEET_IDS = getAllSheetIds();
 
@@ -196,39 +197,7 @@ export function numberToEmoji(num: number): string {
 export const RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
 
 export function cleanAuthorName(rawName: string, cleaningLog?: any[]): string {
-    const original = rawName.trim();
-    let name = original;
-    const removedParts: string[] = [];
-
-    if (name.startsWith('@')) {
-        removedParts.push('@');
-        name = name.substring(1);
-    }
-
-    const bulletMatch = name.match(/\s*•.*$/);
-    if (bulletMatch) {
-        removedParts.push(bulletMatch[0].trim());
-        name = name.replace(/\s*•.*$/, '');
-    }
-
-    const suffixMatch = name.match(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/);
-    if (suffixMatch) {
-        removedParts.push(suffixMatch[0]);
-        name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
-    }
-
-    name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2');
-    name = name.trim();
-
-    if (cleaningLog && name !== original) {
-        cleaningLog.push({
-            before: original,
-            after: name,
-            removed: removedParts.length > 0 ? removedParts.join(' | ') : 'форматування (символи не видалялись)'
-        });
-    }
-
-    return name;
+    return SYH_PARSERS.cleanAuthorName(rawName, cleaningLog);
 }
 
 export function cleanTelegramHeadersLogged(text: string, cleaningLog?: any[]): string {
