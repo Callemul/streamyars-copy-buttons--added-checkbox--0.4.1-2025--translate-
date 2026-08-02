@@ -3,6 +3,7 @@ import { SYH_STATE } from './state';
 import { SYH_UTILS } from './utils';
 import { SYH_UI } from './ui_core';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_BUS } from './event_bus';
 
 export interface PrayerRecord {
     author: string;
@@ -307,6 +308,12 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             }
             
             if (textToCopy) {
+                SYH_BUS.emit('COMMENT_ACTION', {
+                    type: action === 'copy-prayer' ? 'prayer' : (action === 'copy-author-comment' ? 'question' : 'copy'),
+                    author: author,
+                    text: commentText
+                });
+
                 if (self.UTILS) {
                     self.UTILS.copyAndShowBanner(textToCopy, header);
                 } else if ((window as any).SYH_UTILS) {

@@ -10,13 +10,22 @@ export const SHEET_IDS = {
 export type SheetId = typeof SHEET_IDS[keyof typeof SHEET_IDS];
 
 export const SHEET_LABELS: Record<SheetId, string> = {
-    vp_ss: 'Время перемен СШ',
-    oparin: 'Опарин проповеди',
-    molchanov_ss: 'Молчанов СШ',
-    molchanov_preach: 'Молчанов проповеди',
+    [SHEET_IDS.VP_SS]: 'Время перемен СШ',
+    [SHEET_IDS.OPARIN]: 'Опарин проповеди',
+    [SHEET_IDS.MOLCHANOV_SS]: 'Молчанов СШ',
+    [SHEET_IDS.MOLCHANOV_PREACH]: 'Молчанов проповеди',
 };
+
+export function getAllSheetIds(): SheetId[] {
+    return Object.values(SHEET_IDS);
+}
+
+export function isValidSheetId(id: string): id is SheetId {
+    return getAllSheetIds().includes(id as SheetId);
+}
 
 if (typeof window !== 'undefined') {
     (window as any).SHEET_IDS = SHEET_IDS;
     (window as any).SHEET_LABELS = SHEET_LABELS;
+    (window as any).getAllSheetIds = getAllSheetIds;
 }

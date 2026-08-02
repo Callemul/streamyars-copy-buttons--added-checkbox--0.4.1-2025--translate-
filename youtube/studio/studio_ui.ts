@@ -1,5 +1,5 @@
 // youtube/studio/studio_ui.ts
-import { SHEET_IDS, SHEET_LABELS, SheetId } from '../../modules/sheets';
+import { SHEET_IDS, SHEET_LABELS, SheetId, getAllSheetIds } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 
 export interface StudioCommentUIElements {
@@ -78,10 +78,7 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         dropdownEl.style.display = 'none';
 
         const optionKeys: (SheetId | 'auto_reset')[] = [
-            SHEET_IDS.VP_SS,
-            SHEET_IDS.OPARIN,
-            SHEET_IDS.MOLCHANOV_SS,
-            SHEET_IDS.MOLCHANOV_PREACH,
+            ...getAllSheetIds(),
             'auto_reset'
         ];
 

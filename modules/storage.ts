@@ -81,12 +81,14 @@ export function migrateKey(oldKey: string): string {
     return oldKey;
 }
 
+export type StorageKeyValues = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS] | string;
+
 export interface StorageAdapter {
     isChromeStorageAvailable(): boolean;
-    get(keys: string | string[], cb: (result: Record<string, any>) => void): void;
+    get<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
     set(items: Record<string, any>, cb?: () => void): void;
-    remove(keys: string | string[], cb?: () => void): void;
-    onChanged(callback: (changes: Record<string, any>, areaName: string) => void): void;
+    remove(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void;
+    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
 }
 
 export const SYH_STORAGE: StorageAdapter = {
