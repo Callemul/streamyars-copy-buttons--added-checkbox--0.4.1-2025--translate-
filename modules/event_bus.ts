@@ -49,6 +49,14 @@ class TypedEventBus {
         return () => this.off(event, callback);
     }
 
+    public once<T extends SyhEventType>(event: T, callback: EventCallback<T>): () => void {
+        const unsubscribe = this.on(event, (data) => {
+            unsubscribe();
+            callback(data);
+        });
+        return unsubscribe;
+    }
+
     public off<T extends SyhEventType>(event: T, callback: EventCallback<T>): void {
         const eventSet = this.listeners[event];
         if (eventSet) {

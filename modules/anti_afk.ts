@@ -246,5 +246,3 @@ export const SYH_ANTI_AFK = {
     startAntiAfk,
     stopAntiAfk
 };
-
-// Window pollution assignment removed for modular clean architecture

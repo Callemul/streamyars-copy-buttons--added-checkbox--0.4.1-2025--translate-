@@ -60,11 +60,23 @@ class DynamicSheetRegistry {
 export const SHEET_REGISTRY = new DynamicSheetRegistry();
 
 export const SHEET_DEFINITIONS: Record<string, SheetDefinition> = new Proxy({}, {
-    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop)
+    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop),
+    ownKeys: () => SHEET_REGISTRY.getAllIds(),
+    getOwnPropertyDescriptor: (_, prop: string) => ({
+        enumerable: true,
+        configurable: true,
+        value: SHEET_REGISTRY.getDefinition(prop)
+    })
 });
 
 export const SHEET_LABELS: Record<string, string> = new Proxy({}, {
-    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop)?.label || prop
+    get: (_, prop: string) => SHEET_REGISTRY.getDefinition(prop)?.label || prop,
+    ownKeys: () => SHEET_REGISTRY.getAllIds(),
+    getOwnPropertyDescriptor: (_, prop: string) => ({
+        enumerable: true,
+        configurable: true,
+        value: SHEET_REGISTRY.getDefinition(prop)?.label || prop
+    })
 });
 
 export function getAllSheetIds(): SheetId[] {

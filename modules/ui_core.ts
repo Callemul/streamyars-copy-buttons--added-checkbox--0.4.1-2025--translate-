@@ -61,9 +61,9 @@ export interface SyhUi extends SYH_UI_Core {
 
 import { SYH_BUS } from './event_bus';
 
-export function init(config?: any, state?: any): void {
+export function init(config?: SyhConfig, state?: SyhState): void {
     try {
-        SYH_UI.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
+        SYH_UI.SELECTORS = config ? (config.SELECTORS as Record<string, string>) : (SYH_CONFIG.SELECTORS as Record<string, string>);
         SYH_UI.STATE = state || SYH_STATE;
         
         if (SYH_UI.STATE) {
@@ -72,19 +72,21 @@ export function init(config?: any, state?: any): void {
 
         SYH_UI.validateSelectorsSyntax();
         
-        SYH_STORAGE.getAsync([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES]).then((result: Record<string, any>) => {
-            SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
-            SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
-        }).catch(e => console.error("[SYH UI] Error loading initial storage cache:", e));
+        SYH_STORAGE.getAsync<{ [STORAGE_KEYS.PRAYERS]?: PrayerItem[]; [STORAGE_KEYS.CATEGORIES]?: Record<string, string> }>([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES])
+            .then((result) => {
+                SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
+                SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
+            })
+            .catch(e => console.error("[SYH UI] Error loading initial storage cache:", e));
 
-        SYH_STORAGE.onChanged((changes: Record<string, any>) => {
+        SYH_STORAGE.onChanged((changes: Record<string, { oldValue?: unknown; newValue?: unknown }>) => {
             try {
                 if (changes[STORAGE_KEYS.PRAYERS] && changes[STORAGE_KEYS.PRAYERS].newValue !== undefined) {
-                    SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
+                    SYH_UI.prayersCache = (changes[STORAGE_KEYS.PRAYERS].newValue as PrayerItem[]) || [];
                     SYH_UI.filterStarredComments();
                 }
                 if (changes[STORAGE_KEYS.CATEGORIES] && changes[STORAGE_KEYS.CATEGORIES].newValue !== undefined) {
-                    SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
+                    SYH_UI.bannerCategoriesCache = (changes[STORAGE_KEYS.CATEGORIES].newValue as Record<string, string>) || {};
                     SYH_UI.filterBanners();
                 }
             } catch (e) {

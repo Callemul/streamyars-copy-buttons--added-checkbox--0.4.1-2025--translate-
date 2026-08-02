@@ -100,6 +100,4 @@ export function getCommentTextAreaElement(thread: HTMLElement): HTMLElement | nu
     return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.COMMENT_TEXT_AREA);
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).STUDIO_SELECTORS = STUDIO_SELECTORS;
-}
+// Exported as standard ESM module. Global window assignment removed.
