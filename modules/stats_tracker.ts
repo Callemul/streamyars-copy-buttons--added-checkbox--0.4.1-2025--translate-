@@ -2,7 +2,9 @@ import { SYH_CONFIG } from './config';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export interface SyhStatsTracker {
-    intervalId: ReturnType<typeof setInterval> | null;
+    intervalId: number | null;
+    pendingRAF: number | null;
+    observer: MutationObserver | null;
     currentBrand: string;
     lastKnownBrand: string;
 
@@ -11,6 +13,7 @@ export interface SyhStatsTracker {
     restoreButtonStates(btnQ: HTMLElement, btnP: HTMLElement): void;
     markPhase(phase: 'questions' | 'prayers', btnElement: HTMLElement): void;
     startTracking(): void;
+    destroy(): void;
     showAnalyticsModal(): void;
     getBrandFromLocalStorage(): string;
     searchBrandNameInObject(obj: any): string | null;
@@ -18,6 +21,8 @@ export interface SyhStatsTracker {
 
 export const SYH_STATS_TRACKER: SyhStatsTracker = {
     intervalId: null,
+    pendingRAF: null,
+    observer: null,
     currentBrand: "DefaultShow",
     lastKnownBrand: "",
 
@@ -159,8 +164,19 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         }
 
         setTimeout(injectHeaderButtons, 1000); 
-        const uiObserver = new MutationObserver(() => injectHeaderButtons());
-        uiObserver.observe(document.body, { childList: true, subtree: true });
+
+        if (self.observer) {
+            self.observer.disconnect();
+        }
+
+        self.observer = new MutationObserver(() => {
+            if (self.pendingRAF !== null) return;
+            self.pendingRAF = requestAnimationFrame(() => {
+                self.pendingRAF = null;
+                injectHeaderButtons();
+            });
+        });
+        self.observer.observe(document.body, { childList: true, subtree: true });
     },
 
     restoreButtonStates: function(btnQ: HTMLElement, btnP: HTMLElement): void {
@@ -169,22 +185,19 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
             : new Date().toLocaleDateString('sv-SE');
         const self = this;
         
-        const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
-        if (storage) {
-            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
-                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-                if (db[self.currentBrand] && db[self.currentBrand][today]) {
-                    if (db[self.currentBrand][today].phase_questions_start) {
-                        btnQ.innerText = '✅ Питання';
-                        btnQ.style.opacity = '0.7';
-                    }
-                    if (db[self.currentBrand][today].phase_prayers_start) {
-                        btnP.innerText = '✅ Молитви';
-                        btnP.style.opacity = '0.7';
-                    }
+        SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
+            const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+            if (db[self.currentBrand] && db[self.currentBrand][today]) {
+                if (db[self.currentBrand][today].phase_questions_start) {
+                    btnQ.innerText = '✅ Питання';
+                    btnQ.style.opacity = '0.7';
                 }
-            });
-        }
+                if (db[self.currentBrand][today].phase_prayers_start) {
+                    btnP.innerText = '✅ Молитви';
+                    btnP.style.opacity = '0.7';
+                }
+            }
+        });
     },
 
     markPhase: function(phase: 'questions' | 'prayers', btnElement: HTMLElement): void {
@@ -200,34 +213,35 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
             : new Date().toLocaleDateString('sv-SE');
         const self = this;
 
-        const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
-        if (storage) {
-            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
-                let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-                if (!db[self.currentBrand]) db[self.currentBrand] = {};
-                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
+        SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
+            let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+            if (!db[self.currentBrand]) db[self.currentBrand] = {};
+            if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
-                if (phase === 'questions') {
-                    db[self.currentBrand][today].phase_questions_start = timerText;
-                    btnElement.innerText = '✅ Питання';
-                } else if (phase === 'prayers') {
-                    db[self.currentBrand][today].phase_prayers_start = timerText;
-                    btnElement.innerText = '✅ Молитви';
-                }
-                btnElement.style.opacity = '0.7';
+            if (phase === 'questions') {
+                db[self.currentBrand][today].phase_questions_start = timerText;
+                btnElement.innerText = '✅ Питання';
+            } else if (phase === 'prayers') {
+                db[self.currentBrand][today].phase_prayers_start = timerText;
+                btnElement.innerText = '✅ Молитви';
+            }
+            btnElement.style.opacity = '0.7';
 
-                storage.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
-            });
-        }
+            SYH_STORAGE.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
+        });
     },
 
     startTracking: function(): void {
         const self = this;
+        if (this.intervalId !== null) return;
         
-        this.intervalId = setInterval(() => {
+        this.intervalId = window.setInterval(() => {
             // KILL SWITCH: Тихе самознищення таймера без виведення помилок у панель
             if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-                if (self.intervalId) clearInterval(self.intervalId);
+                if (self.intervalId !== null) {
+                    clearInterval(self.intervalId);
+                    self.intervalId = null;
+                }
                 return;
             }
 
@@ -249,32 +263,44 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                 ? (window as any).SYH_UTILS.getTodayDateString()
                 : new Date().toLocaleDateString('sv-SE');
 
-            const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
-            if (storage) {
-                storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
-                    let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-                    
-                    if (!db[self.currentBrand]) db[self.currentBrand] = {};
-                    if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
+            SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
+                let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+                
+                if (!db[self.currentBrand]) db[self.currentBrand] = {};
+                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
-                    const session = db[self.currentBrand][today];
-                    
-                    if (session.initial_viewers === undefined && session.data.length === 0) {
-                        session.initial_viewers = viewerCount;
-                    }
+                const session = db[self.currentBrand][today];
+                
+                if (session.initial_viewers === undefined && session.data.length === 0) {
+                    session.initial_viewers = viewerCount;
+                }
 
-                    const lastEntry = session.data[session.data.length - 1];
-                    if (lastEntry && lastEntry.time === timerText) return;
+                const lastEntry = session.data[session.data.length - 1];
+                if (lastEntry && lastEntry.time === timerText) return;
 
-                    session.data.push({
-                        time: timerText,
-                        viewers: viewerCount
-                    });
-
-                    storage.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
+                session.data.push({
+                    time: timerText,
+                    viewers: viewerCount
                 });
-            }
+
+                SYH_STORAGE.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
+            });
         }, ((SYH_CONFIG as any)?.TIMINGS?.STATS_TRACKING_INTERVAL) || 60000); 
+    },
+
+    destroy: function(): void {
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        if (this.pendingRAF !== null) {
+            cancelAnimationFrame(this.pendingRAF);
+            this.pendingRAF = null;
+        }
+        if (this.observer) {
+            this.observer.disconnect();
+            this.observer = null;
+        }
     },
 
     // ДЕЛЕГУВАННЯ: Виклик великої модалки аналітики та експорту делегується в stats_exporter.js
