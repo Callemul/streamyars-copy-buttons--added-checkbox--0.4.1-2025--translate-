@@ -32,7 +32,7 @@ export interface SyhStatsExporter {
     exportPresentation(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
 }
 
-declare const Chart: any;
+import { Chart } from 'chart.js/auto';
 
 export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     chartInstance: null,
@@ -151,26 +151,7 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     },
 
     loadChartJs: async function(): Promise<boolean> {
-        if (typeof Chart !== 'undefined') return true;
-        if (this._chartLoadingPromise) return this._chartLoadingPromise;
-
-        this._chartLoadingPromise = (async () => {
-            if (typeof Chart !== 'undefined') return true;
-            try {
-                const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
-                    ? chrome.runtime.getURL('lib/chart.js') 
-                    : 'lib/chart.js';
-                const response = await fetch(url);
-                const scriptText = await response.text();
-                (0, eval)(scriptText);
-                return typeof Chart !== 'undefined';
-            } catch (err) {
-                console.error("[SYH] Помилка завантаження Chart.js:", err);
-                return false;
-            }
-        })();
-
-        return this._chartLoadingPromise;
+        return true;
     },
 
     renderChart: async function(todayData?: StreamChartSession | null, _pastData?: StreamChartSession | null): Promise<void> {
