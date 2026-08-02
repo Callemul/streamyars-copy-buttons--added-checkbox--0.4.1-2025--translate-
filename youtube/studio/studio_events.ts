@@ -26,12 +26,12 @@
 //   Селектори DOM            → studio_selectors.ts
 
 import { SYH_STORAGE } from '../../modules/storage';
-import { SheetId, SHEET_LABELS } from '../../modules/sheets';
+import { SheetId } from '../../modules/sheets';
 import { ChannelKey } from '../../modules/channel_config';
 import { CommentService } from '../../modules/comment_service';
-import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref, getCommentTextAreaElement } from './studio_selectors';
+import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref } from './studio_selectors';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
-import { generateVideoKey, setStudioVideoSheetOverride, VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
+import { generateVideoKey, setStudioVideoSheetOverride } from './studio_video_map';
 import { generateCommentKey, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 import { resolveCategoryForVideo, VideoSheetMapEntry } from './studio_category_matcher';
 

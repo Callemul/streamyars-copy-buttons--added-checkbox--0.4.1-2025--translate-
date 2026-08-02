@@ -59,7 +59,7 @@ export class CommentAssistantService implements CommentAssistantInterface {
         let rx: RegExp;
         try {
             rx = new RegExp(`(?<![\\p{L}\\p{N}])(${escapedWord})(?![\\p{L}\\p{N}])`, 'giu');
-        } catch (e) {
+        } catch (_e) {
             rx = new RegExp(`(^|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])(${escapedWord})($|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])`, 'gi');
         }
         this.regexCache.set(lowerWord, rx);

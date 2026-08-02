@@ -12,7 +12,7 @@ export const SYH_I18N: I18nAdapter = {
             try {
                 const msg = chrome.i18n.getMessage(key);
                 if (msg) return msg;
-            } catch (e) {
+            } catch (_e) {
                 // Extension context invalidated
             }
         }

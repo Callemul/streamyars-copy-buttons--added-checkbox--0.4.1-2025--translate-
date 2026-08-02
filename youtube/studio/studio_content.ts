@@ -27,7 +27,7 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import { getStudioChannelInfo, StudioChannelInfo } from './studio_channel';
 import { getCommentThreads } from './studio_selectors';
 import { bindStudioCommentEvents, StudioEventCaches } from './studio_events';
-import { getStudioVideoSheetMap, VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
+import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 
 const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;

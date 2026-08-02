@@ -1,5 +1,5 @@
 // youtube/studio/studio_ui.ts
-import { SHEET_IDS, SHEET_LABELS, SheetId, getAllSheetIds } from '../../modules/sheets';
+import { SHEET_LABELS, SheetId, getAllSheetIds } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 import { UiFactory } from '../../modules/ui_factory';
 

@@ -477,7 +477,7 @@ $(document).ready(function () {
 
     $(document).on('mousemove', function (e) {
         if (!activeResizer) return;
-        const { sId, divider, left, right } = activeResizer;
+        const { divider, left, right } = activeResizer;
         const container = divider.parent();
         const containerOffset = container.offset();
         const containerWidth = container.width();

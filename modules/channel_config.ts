@@ -1,6 +1,5 @@
 // modules/channel_config.ts
 import { SHEET_IDS, type SheetId } from './sheets';
-import { fuzzyIncludes } from './fuzzy_match';
 
 export type ChannelKey = 'vp' | 'slovo' | 'unknown';
 

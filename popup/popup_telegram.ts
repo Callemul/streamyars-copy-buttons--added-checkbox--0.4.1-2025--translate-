@@ -3,14 +3,10 @@ import { getAllSheetIds, SHEET_REGISTRY } from '../modules/sheets';
 import {
     countQuestionsInText,
     numberToEmoji,
-    cleanAuthorName,
-    cleanTelegramHeadersLogged,
     parseAndFilterOldList,
-    parseTelegramExportLineByLine,
-    TelegramQuestionItem,
-    GroupedNewItem
+    TelegramQuestionItem
 } from '../modules/telegram_parser';
-import type { YTCollectedItem, CleaningLogEntry, DeletedLogEntry } from '../modules/types';
+import type { YTCollectedItem } from '../modules/types';
 
 const SHEET_IDS = getAllSheetIds();
 

@@ -1,6 +1,6 @@
 // youtube/yt_events.ts
 import { YT_SELECTORS } from './yt_selectors';
-import { extractCommentData, restoreButtonState, restoreCheckboxState } from './yt_ui';
+import { extractCommentData } from './yt_ui';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
 export interface YTCollectedItem {

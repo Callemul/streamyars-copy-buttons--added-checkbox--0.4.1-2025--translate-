@@ -200,9 +200,9 @@ export class AntiAfkService {
                         }
                     });
                     this.observer.observe(rootNode, { childList: true, subtree: true });
-                } catch (err) {
-                    console.warn("[SYH Anti-AFK] Помилка старту MutationObserver:", err);
-                }
+            } catch (_err) {
+                console.warn("[SYH Anti-AFK] Помилка старту MutationObserver");
+            }
             }
 
             this.afkTimer = setInterval(() => {

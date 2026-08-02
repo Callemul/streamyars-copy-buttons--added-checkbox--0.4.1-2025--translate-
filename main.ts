@@ -1,5 +1,4 @@
 import { SYH_CONFIG } from './modules/config';
-import { SYH_STORAGE } from './modules/storage';
 import { SYH_STATE } from './modules/state';
 import { SYH_UTILS } from './modules/utils';
 import { SYH_UI } from './modules/ui_core';
@@ -7,14 +6,11 @@ import './modules/ui_comments';
 import './modules/ui_banners';
 import { SYH_PARSERS } from './modules/parsers';
 import { SYH_BANNER_CREATOR } from './modules/banner_creator';
-import { SYH_EVENT_COMMENTS, SYH_EVENT_COMMENTS_PLUGIN } from './modules/event_comments';
-import { SYH_EVENT_BANNERS, SYH_EVENT_BANNERS_PLUGIN } from './modules/event_banners';
-import { SYH_VIDEO_COPIER, SYH_VIDEO_COPIER_PLUGIN } from './modules/video_copier';
+import { SYH_EVENT_COMMENTS_PLUGIN } from './modules/event_comments';
+import { SYH_EVENT_BANNERS_PLUGIN } from './modules/event_banners';
+import { SYH_VIDEO_COPIER_PLUGIN } from './modules/video_copier';
 import { SYH_STATS_TRACKER } from './modules/stats_tracker';
-import { SYH_STATS_EXPORTER } from './modules/stats_exporter';
-import { SYH_INFO_MODAL } from './modules/info_modal';
-import { SYH_I18N } from './modules/i18n';
-import { SYH_ANTI_AFK, SYH_ANTI_AFK_PLUGIN } from './modules/anti_afk';
+import { SYH_ANTI_AFK_PLUGIN } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 import { SYH_MESSAGING } from './modules/messaging';
 import { SYH_PLUGINS } from './modules/plugin_registry';
@@ -35,7 +31,7 @@ import { SYH_PLUGINS } from './modules/plugin_registry';
     console.log(`StreamYard Helper v${syhVersion} [Anti-AFK & Modular Architecture] Loaded!`);
 
     
-    const { SELECTORS, TIMINGS } = SYH_CONFIG;
+    const { SELECTORS } = SYH_CONFIG;
 
     import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 

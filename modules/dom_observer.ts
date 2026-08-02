@@ -1,5 +1,3 @@
-import { SYH_BUS } from './event_bus';
-
 export type DomHandler = (element: Element) => void;
 
 interface SelectorRegistration {
@@ -99,4 +97,4 @@ export class DomObserverService {
     }
 }
 
-export const SYH_DOM_OBSERVER = new DomObserverService();
+export const SYH_DOM_OBSERVER = new DomObserverService();

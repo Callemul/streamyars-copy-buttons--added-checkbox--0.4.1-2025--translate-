@@ -170,8 +170,8 @@ export function filterBanners(): void {
     };
 
     let visibleCount = 0;
-    let countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
-    let countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
+    const countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
+    const countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
 
     Array.from(bannerList.children).forEach(liChild => {
         const li = liChild as HTMLElement;
@@ -234,7 +234,7 @@ export function filterBanners(): void {
             messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
             <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
             
-            let suggestions: string[] = [];
+            const suggestions: string[] = [];
             if (activeFilter !== 'all' && countSearch.all > 0) {
                 if (countSearch.stream > 0 && activeFilter !== 'stream') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="stream" style="color: #f39c12; text-decoration: underline;">🎙️ Ефір (${countSearch.stream})</a>`);
                 if (countSearch.audience > 0 && activeFilter !== 'audience') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="audience" style="color: #f39c12; text-decoration: underline;">❓ Глядачі (${countSearch.audience})</a>`);

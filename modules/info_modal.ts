@@ -177,10 +177,10 @@ export const SYH_INFO_MODAL: SyhInfoModal = {
         // 4. Списки та параграфи
         const lines = html.split('\n');
         const processedLines: string[] = [];
-        let listStack: number[] = []; // Стек для відстеження рівнів вкладеності списків
+        const listStack: number[] = []; // Стек для відстеження рівнів вкладеності списків
         
-        for (let line of lines) {
-            let trimmed = line.trim();
+        for (const line of lines) {
+            const trimmed = line.trim();
             const listMatch = line.match(/^(\s*)([-*])\s+(.*)$/);
             
             if (listMatch) {

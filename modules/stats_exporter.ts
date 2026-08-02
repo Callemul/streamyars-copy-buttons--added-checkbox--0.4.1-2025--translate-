@@ -258,9 +258,9 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         const overall = this.calcStats(allViewers);
         const initialViewers = dataObj.initial_viewers || allViewers[0] || 0;
 
-        let p1: number[] = [], p2: number[] = [], p3: number[] = [];
-        let tQ = dataObj.phase_questions_start || "99:99:99";
-        let tP = dataObj.phase_prayers_start || "99:99:99";
+        const p1: number[] = [], p2: number[] = [], p3: number[] = [];
+        const tQ = dataObj.phase_questions_start || "99:99:99";
+        const tP = dataObj.phase_prayers_start || "99:99:99";
 
         const toSec = (t?: string): number => {
             if (!t || typeof t !== 'string') return 0;

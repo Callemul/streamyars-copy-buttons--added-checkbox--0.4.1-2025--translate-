@@ -203,7 +203,7 @@ export function filterStarredComments(): void {
     };
 
     let sortedTexts: string[] = [];
-    let grouped: Record<string, string[]> = {};
+    const grouped: Record<string, string[]> = {};
     
     SYH_UI_STATE.prayersCache.forEach((p: PrayerItem) => {
         if (activeFilter === 'prayer' && p.type !== 'prayer') return;
@@ -215,7 +215,7 @@ export function filterStarredComments(): void {
         grouped[cleanAuthor].push(p.text);
     });
 
-    for (let author in grouped) {
+    for (const author in grouped) {
         sortedTexts = sortedTexts.concat(grouped[author]);
     }
 
@@ -225,8 +225,8 @@ export function filterStarredComments(): void {
     }
 
     let visibleCount = 0;
-    let countAbsolute = { all: 0, question: 0, prayer: 0, other: 0 };
-    let countSearch = { all: 0, question: 0, prayer: 0, other: 0 };
+    const countAbsolute = { all: 0, question: 0, prayer: 0, other: 0 };
+    const countSearch = { all: 0, question: 0, prayer: 0, other: 0 };
 
     Array.from(commentList.children).forEach((liChild) => {
         const li = liChild as HTMLElement;
@@ -309,7 +309,7 @@ export function filterStarredComments(): void {
             messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
             <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
             
-            let suggestions: string[] = [];
+            const suggestions: string[] = [];
             if (activeFilter !== 'all' && countSearch.all > 0) {
                 if (countSearch.question > 0 && activeFilter !== 'question') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="question" style="color: #f39c12; text-decoration: underline;">❓ Питання (${countSearch.question})</a>`);
                 if (countSearch.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countSearch.prayer})</a>`);

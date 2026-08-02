@@ -256,7 +256,7 @@ export class SheetStateService {
             }
         }
 
-        let rightPeople = ytItems.length;
+        const rightPeople = ytItems.length;
         let rightQuestions = 0;
         let rightPrayers = 0;
 

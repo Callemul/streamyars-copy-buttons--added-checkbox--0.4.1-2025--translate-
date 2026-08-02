@@ -1,6 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_CONFIG } from '../modules/config';
-import { SHEET_LABELS, SheetId } from '../modules/sheets';
+import { SHEET_LABELS } from '../modules/sheets';
 import { CommentService } from '../modules/comment_service';
 import type { StudioOverrideLogEntry } from '../modules/types';
 
@@ -297,7 +297,7 @@ class OptionsController {
                 } else {
                     alert('Некоректний формат файлу конфігурації.');
                 }
-            } catch (err) {
+            } catch (_err) {
                 alert('Помилка при зчитуванні JSON файлу.');
             }
         };

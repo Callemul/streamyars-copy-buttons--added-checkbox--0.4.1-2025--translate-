@@ -219,7 +219,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         const self = this;
 
         SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
-            let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+            const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
             if (!db[self.currentBrand]) db[self.currentBrand] = {};
             if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
 
@@ -266,7 +266,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
             const today = SYH_UTILS.getTodayDateString();
 
             SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
-                let db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
                 
                 if (!db[self.currentBrand]) db[self.currentBrand] = {};
                 if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
@@ -324,7 +324,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     try {
                         const parsed = JSON.parse(val);
                         if (parsed?.name && typeof parsed.name === 'string') return parsed.name;
-                    } catch (err) {
+                    } catch (_err) {
                         console.warn("[SYH StatsTracker] Corrupted JSON in localStorage key:", key);
                     }
                 } else if (typeof val === 'string' && val.trim().length > 0) {

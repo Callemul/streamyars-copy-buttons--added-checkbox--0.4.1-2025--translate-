@@ -1,6 +1,6 @@
 // youtube/studio/studio_video_map.ts
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
-import { SheetId, SHEET_LABELS } from '../../modules/sheets';
+import { SheetId } from '../../modules/sheets';
 import { ChannelKey } from '../../modules/channel_config';
 import { VideoSheetMapEntry } from './studio_category_matcher';
 import type { StudioOverrideLogEntry } from '../../modules/types';
@@ -17,7 +17,7 @@ export function generateVideoKey(videoLinkHref: string | null, videoTitle: strin
             // Standardize URL / pathname if full URL or relative href
             const url = new URL(videoLinkHref, 'https://studio.youtube.com');
             return url.pathname + url.search;
-        } catch (e) {
+        } catch (_e) {
             return videoLinkHref.trim();
         }
     }
