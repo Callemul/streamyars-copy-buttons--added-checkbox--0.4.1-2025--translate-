@@ -11,84 +11,117 @@ export interface ChannelInfo {
     handles: string[];
 }
 
-export const ALLOWED_CHANNELS: Record<'vp' | 'slovo', ChannelInfo> = {
-    vp: {
-        key: 'vp',
-        label: 'Время перемен',
-        keywords: ['время перемен', 'времяперемен', 'vremya peremen', 'vremyaperemen'],
-        handles: ['@vperemen', '@vperementv', '@vremyaperemen']
-    },
-    slovo: {
-        key: 'slovo',
-        label: 'Слово живое',
-        keywords: ['слово живое', 'словоживое', 'slovo zhivoe', 'slovozhivoe'],
-        handles: ['@slovozhivoe', '@slovo_zhivoe']
-    }
-};
-
-/**
- * Перевірка, чи є ключ каналу допустимим
- */
-export function isAllowedChannelKey(key: string): key is 'vp' | 'slovo' {
-    return key === 'vp' || key === 'slovo';
+export interface CategoryMatcherRule {
+    sheetId: SheetId;
+    matchers: ((title: string) => boolean)[];
 }
 
-/**
- * Визначення ключа каналу за назвою або handle
- */
-export function detectChannelKey(channelName: string, channelHandle?: string): ChannelKey {
-    const nameLower = (channelName || '').toLowerCase().trim();
-    const handleLower = (channelHandle || '').toLowerCase().trim();
-
-    // 1. Перевірка за handle, якщо є
-    if (handleLower) {
-        for (const info of Object.values(ALLOWED_CHANNELS)) {
-            if (info.handles.some(h => handleLower.includes(h.toLowerCase()))) {
-                return info.key;
-            }
-        }
-    }
-
-    // 2. Перевірка за назвою каналу (keywords)
-    if (nameLower) {
-        for (const info of Object.values(ALLOWED_CHANNELS)) {
-            if (info.keywords.some(kw => nameLower.includes(kw))) {
-                return info.key;
-            }
-        }
-    }
-
-    return 'unknown';
+export interface ChannelConfigItem extends ChannelInfo {
+    rules: CategoryMatcherRule[];
 }
 
-/**
- * Автоматичне визначення аркуша/категорії за назвою відео та ключем каналу
- */
-export function matchCategory(videoTitle: string, channelKey: ChannelKey): SheetId | null {
-    if (!videoTitle || channelKey === 'unknown') return null;
-    const lowerTitle = videoTitle.toLowerCase();
+export class ChannelRegistry {
+    private channels: Map<string, ChannelConfigItem> = new Map();
 
-    if (channelKey === 'vp') {
-        const hasSS = (lowerTitle.includes('субботн') && lowerTitle.includes('школ')) || lowerTitle.includes('сш');
-        const hasOparin = lowerTitle.includes('опарин');
+    constructor() {
+        this.registerDefaultChannels();
+    }
 
-        if (hasSS) {
-            return SHEET_IDS.VP_SS;
+    private registerDefaultChannels() {
+        this.registerChannel({
+            key: 'vp',
+            label: 'Время перемен',
+            keywords: ['время перемен', 'времяперемен', 'vremya peremen', 'vremyaperemen'],
+            handles: ['@vperemen', '@vperementv', '@vremyaperemen'],
+            rules: [
+                {
+                    sheetId: SHEET_IDS.VP_SS,
+                    matchers: [
+                        (t) => (t.includes('субботн') && t.includes('школ')) || t.includes('сш')
+                    ]
+                },
+                {
+                    sheetId: SHEET_IDS.OPARIN,
+                    matchers: [(t) => t.includes('опарин')]
+                }
+            ]
+        });
+
+        this.registerChannel({
+            key: 'slovo',
+            label: 'Слово живое',
+            keywords: ['слово живое', 'словоживое', 'slovo zhivoe', 'slovozhivoe'],
+            handles: ['@slovozhivoe', '@slovo_zhivoe'],
+            rules: [
+                {
+                    sheetId: SHEET_IDS.MOLCHANOV_SS,
+                    matchers: [
+                        (t) => (t.includes('субботн') && t.includes('школ')) || t.includes('сш')
+                    ]
+                },
+                {
+                    sheetId: SHEET_IDS.MOLCHANOV_PREACH,
+                    matchers: [() => true] // fallback
+                }
+            ]
+        });
+    }
+
+    public registerChannel(config: ChannelConfigItem): void {
+        this.channels.set(config.key, config);
+    }
+
+    public getChannel(key: string): ChannelConfigItem | undefined {
+        return this.channels.get(key);
+    }
+
+    public detectChannelKey(channelName: string, channelHandle?: string): ChannelKey {
+        const nameLower = (channelName || '').toLowerCase().trim();
+        const handleLower = (channelHandle || '').toLowerCase().trim();
+
+        for (const info of this.channels.values()) {
+            if (handleLower && info.handles.some(h => handleLower.includes(h.toLowerCase()))) {
+                return info.key as ChannelKey;
+            }
+            if (nameLower && info.keywords.some(kw => nameLower.includes(kw))) {
+                return info.key as ChannelKey;
+            }
         }
-        if (hasOparin) {
-            return SHEET_IDS.OPARIN;
+        return 'unknown';
+    }
+
+    public matchCategory(videoTitle: string, channelKey: ChannelKey): SheetId | null {
+        if (!videoTitle || channelKey === 'unknown') return null;
+        const channel = this.channels.get(channelKey);
+        if (!channel) return null;
+
+        const lowerTitle = videoTitle.toLowerCase();
+        for (const rule of channel.rules) {
+            if (rule.matchers.some(m => m(lowerTitle))) {
+                return rule.sheetId;
+            }
         }
         return null;
     }
+}
 
-    if (channelKey === 'slovo') {
-        if ((lowerTitle.includes('субботн') && lowerTitle.includes('школ')) || lowerTitle.includes('сш')) {
-            return SHEET_IDS.MOLCHANOV_SS;
-        }
-        return SHEET_IDS.MOLCHANOV_PREACH;
-    }
+export const CHANNEL_REGISTRY = new ChannelRegistry();
 
-    return null;
+export const ALLOWED_CHANNELS: Record<string, ChannelInfo> = new Proxy({}, {
+    get: (_, prop: string) => CHANNEL_REGISTRY.getChannel(prop),
+    ownKeys: () => Array.from(CHANNEL_REGISTRY['channels'].keys())
+});
+
+export function isAllowedChannelKey(key: string): key is 'vp' | 'slovo' {
+    return CHANNEL_REGISTRY.getChannel(key) !== undefined;
+}
+
+export function detectChannelKey(channelName: string, channelHandle?: string): ChannelKey {
+    return CHANNEL_REGISTRY.detectChannelKey(channelName, channelHandle);
+}
+
+export function matchCategory(videoTitle: string, channelKey: ChannelKey): SheetId | null {
+    return CHANNEL_REGISTRY.matchCategory(videoTitle, channelKey);
 }
 
 // Pure ESM Export - Window pollution removed

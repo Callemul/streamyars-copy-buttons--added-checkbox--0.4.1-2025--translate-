@@ -1,4 +1,5 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_UTILS } from './utils';
 
 export interface ViewerDataPoint {
     time: string;
@@ -105,12 +106,9 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
 
     loadChartData: function(currentBrand: string): void {
         const self = this;
-        const today = (window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.getTodayDateString === 'function'
-            ? (window as any).SYH_UTILS.getTodayDateString()
-            : new Date().toLocaleDateString('sv-SE');
+        const today = SYH_UTILS.getTodayDateString();
 
-        // ФІКС: Використовуємо захищений адаптер замість сирого chrome.storage
-        const storage = SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage ? (window as any).SYH_UTILS.storage : null);
+        const storage = SYH_STORAGE;
         
         if (storage) {
             storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
@@ -381,6 +379,4 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_STATS_EXPORTER = SYH_STATS_EXPORTER;
-}
+// Pure ESM Module Export

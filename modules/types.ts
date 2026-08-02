@@ -34,4 +34,38 @@ export interface StudioOverrideLogEntry {
     videoTitle: string;
     autoDetectedSheet: string | null;
     assignedSheet: string;
-}
+}
+
+export interface CleaningLogEntry {
+    before: string;
+    after: string;
+    removed: string;
+    original?: string;
+    cleaned?: string;
+}
+
+export interface ParsedTelegramItem {
+    author: string;
+    text: string;
+    source: 'old' | 'new' | 'pray' | 'yt';
+}
+
+export interface DeletedLogEntry {
+    originalId: number | string;
+    author: string;
+    type: 'block' | 'sub';
+    count: number;
+}
+
+export type SyhMessageAction =
+    | 'unstar_comment'
+    | 'PING'
+    | 'GET_VERSION'
+    | 'BACKGROUND_LOG';
+
+export interface SyhRuntimeMessage {
+    action?: SyhMessageAction;
+    type?: string;
+    text?: string;
+    data?: unknown;
+}

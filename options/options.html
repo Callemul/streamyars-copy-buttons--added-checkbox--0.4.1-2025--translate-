@@ -152,7 +152,7 @@
 
                         <div class="form-group">
                             <label>Дозволені канали YouTube Studio (Read-only)</label>
-                            <ul class="allowed-channels-list" style="margin: 6px 0 12px 20px; padding: 0; font-size: 13px; color: var(--text-muted);">
+                            <ul class="allowed-channels-list">
                                 <li><b>Время перемен</b> (handles: @vperemen, @vperementv, @vremyaperemen)</li>
                                 <li><b>Слово живое</b> (handles: @slovozhivoe, @slovo_zhivoe)</li>
                             </ul>
@@ -160,23 +160,23 @@
 
                         <div class="form-group">
                             <label>Лог ручних корекцій категорій (YouTube Studio)</label>
-                            <div class="actions-row" style="margin-bottom: 10px; display: flex; gap: 8px;">
+                            <div class="actions-row log-actions-row">
                                 <button id="copyStudioLogBtn" class="btn secondary-btn" type="button">📋 Скопіювати лог</button>
                                 <button id="clearStudioLogBtn" class="btn danger-btn" type="button">🗑 Очистити лог</button>
                             </div>
-                            <div class="log-table-wrapper" style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                                <table id="studioLogTable" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                            <div class="log-table-wrapper">
+                                <table id="studioLogTable" class="studio-log-table">
                                     <thead>
-                                        <tr style="background: var(--border); text-align: left;">
-                                            <th style="padding: 6px 8px;">Час</th>
-                                            <th style="padding: 6px 8px;">Канал</th>
-                                            <th style="padding: 6px 8px;">Відео</th>
-                                            <th style="padding: 6px 8px;">Авто-категорія</th>
-                                            <th style="padding: 6px 8px;">Назначено</th>
+                                        <tr>
+                                            <th>Час</th>
+                                            <th>Канал</th>
+                                            <th>Відео</th>
+                                            <th>Авто-категорія</th>
+                                            <th>Назначено</th>
                                         </tr>
                                     </thead>
                                     <tbody id="studioLogBody">
-                                        <tr><td colspan="5" style="padding: 12px; text-align: center; color: var(--text-muted);">Записи у лозі відсутні</td></tr>
+                                        <tr><td colspan="5" class="empty-log-msg">Записи у лозі відсутні</td></tr>
                                     </tbody>
                                 </table>
                             </div>

@@ -108,8 +108,4 @@ export function setStudioVideoSheetOverride(
     });
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).generateVideoKey = generateVideoKey;
-    (window as any).getStudioVideoSheetMap = getStudioVideoSheetMap;
-    (window as any).setStudioVideoSheetOverride = setStudioVideoSheetOverride;
-}
+// Pure ESM module export

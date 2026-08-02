@@ -54,6 +54,4 @@ export function isAllowedChannel(): boolean {
     return allowed;
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).isAllowedChannel = isAllowedChannel;
-}
+// Pure ESM module export

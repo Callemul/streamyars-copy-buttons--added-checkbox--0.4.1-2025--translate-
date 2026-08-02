@@ -318,3 +318,46 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
+
+/* Studio Allowed Channels & Log Styles */
+.allowed-channels-list {
+    margin: 6px 0 12px 20px;
+    padding: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.log-actions-row {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.log-table-wrapper {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.studio-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.studio-log-table thead tr {
+    background: var(--bg-color);
+    text-align: left;
+}
+
+.studio-log-table th, 
+.studio-log-table td {
+    padding: 6px 8px;
+}
+
+.empty-log-msg {
+    padding: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+}

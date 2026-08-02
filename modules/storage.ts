@@ -70,6 +70,24 @@ export function getSheetCollectedStorageKey(sheetId: string): string {
     return `syh:popup:collected:${sheetId}`;
 }
 
+export const POPUP_SHEET_KEYS = {
+    oldList: (sheetId: string) => getSheetStorageKey(sheetId, 'oldList'),
+    answered: (sheetId: string) => getSheetStorageKey(sheetId, 'answered'),
+    newTelegram: (sheetId: string) => getSheetStorageKey(sheetId, 'newTelegram'),
+    finalResultHtml: (sheetId: string) => getSheetStorageKey(sheetId, 'finalResultHtml'),
+    statsHtml: (sheetId: string) => getSheetStorageKey(sheetId, 'statsHtml'),
+    statsVisible: (sheetId: string) => getSheetStorageKey(sheetId, 'statsVisible'),
+    deletedLogHtml: (sheetId: string) => getSheetStorageKey(sheetId, 'deletedLogHtml'),
+    deletedLogCount: (sheetId: string) => getSheetStorageKey(sheetId, 'deletedLogCount'),
+    deletedLogDetailsVisible: (sheetId: string) => getSheetStorageKey(sheetId, 'deletedLogDetailsVisible'),
+    deletedLogDetailsOpen: (sheetId: string) => getSheetStorageKey(sheetId, 'deletedLogDetailsOpen'),
+    cleanedLogHtml: (sheetId: string) => getSheetStorageKey(sheetId, 'cleanedLogHtml'),
+    cleanedLogCount: (sheetId: string) => getSheetStorageKey(sheetId, 'cleanedLogCount'),
+    cleanedLogDetailsVisible: (sheetId: string) => getSheetStorageKey(sheetId, 'cleanedLogDetailsVisible'),
+    cleanedLogDetailsOpen: (sheetId: string) => getSheetStorageKey(sheetId, 'cleanedLogDetailsOpen'),
+    dividerPos: (sheetId: string) => `syh:popup:divider_pos:${sheetId}`,
+};
+
 const EXACT_KEY_MIGRATIONS: Readonly<Record<string, string>> = {
     'syh_yt_collected': STORAGE_KEYS.YT_COLLECTED,
     'syh_yt_button_states': STORAGE_KEYS.YT_BUTTON_STATES,

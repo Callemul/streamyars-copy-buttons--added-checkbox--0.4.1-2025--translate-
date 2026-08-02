@@ -117,10 +117,10 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     btnInfo.onmouseover = () => btnInfo.style.background = '#636979';
                     btnInfo.onmouseout = () => btnInfo.style.background = '#4F5461';
                     btnInfo.onclick = () => {
-                        if ((window as any).SYH_INFO_MODAL && typeof (window as any).SYH_INFO_MODAL.showModal === 'function') {
-                            (window as any).SYH_INFO_MODAL.showModal();
+                        if (SYH_INFO_MODAL && typeof SYH_INFO_MODAL.showModal === 'function') {
+                            SYH_INFO_MODAL.showModal();
                         } else {
-                            console.warn("[SYH] Модуль info_modal.js ще не завантажено.");
+                            console.warn("[SYH] Модуль info_modal ще не завантажено.");
                         }
                     };
 

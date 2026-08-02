@@ -38,7 +38,7 @@ const DEFAULT_OPTIONS: OptionsState = {
 };
 
 class OptionsController {
-    private toastTimer: any = null;
+    private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor() {
         this.initNavigation();

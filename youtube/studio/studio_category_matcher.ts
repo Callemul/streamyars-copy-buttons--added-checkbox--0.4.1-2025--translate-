@@ -51,6 +51,4 @@ export function resolveCategoryForVideo(
     };
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).resolveCategoryForVideo = resolveCategoryForVideo;
-}
+// Pure ESM module export

@@ -134,9 +134,8 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
                 await this.createSingleBanner(cleanQuestion);
                 
-                const utils = this.UTILS || (window as any).SYH_UTILS;
-                if (utils && typeof utils.saveBannerCategory === 'function') {
-                    await utils.saveBannerCategory(cleanQuestion, item.category);
+                if (this.UTILS && typeof this.UTILS.saveBannerCategory === 'function') {
+                    await this.UTILS.saveBannerCategory(cleanQuestion, item.category);
                 }
 
                 createdCount++;
@@ -155,9 +154,8 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
         await this.finalCleanup();
 
-        const ui = this.UI || (window as any).SYH_UI;
-        if (ui && typeof ui.filterBanners === 'function') {
-            ui.filterBanners();
+        if (this.UI && typeof this.UI.filterBanners === 'function') {
+            this.UI.filterBanners();
         }
 
         alert(`Готово! Створено: ${createdCount}.`);
@@ -244,6 +242,4 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_BANNER_CREATOR = SYH_BANNER_CREATOR;
-}
+// Pure ESM Module Export

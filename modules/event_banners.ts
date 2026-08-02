@@ -165,11 +165,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             if (type === 'banner' && action === 'copy-banner') {
                 const bannerBlock = button.closest(self.SELECTORS?.bannerBlock || '');
                 const bannerText = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
-                if (self.UTILS) {
-                    self.UTILS.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
-                } else if ((window as any).SYH_UTILS) {
-                    (window as any).SYH_UTILS.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
-                }
+                const utils = self.UTILS || SYH_UTILS;
+                utils.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
                 const checkbox = bannerBlock?.querySelector<HTMLInputElement>('.syh-checkbox');
                 if (checkbox) {
                     checkbox.checked = true;
@@ -184,15 +181,13 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
                 const targetType = action.replace('mark-', '');
                 
                 const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
-                const saver = (self.UTILS && self.UTILS.saveBannerCategory) ? self.UTILS.saveBannerCategory : (window as any).SYH_UTILS?.saveBannerCategory;
-                if (saver) {
-                    saver.call(self.UTILS || (window as any).SYH_UTILS, bannerText, currentType).then(() => {
-                        if (self.UI) {
-                            self.UI.bannerCategoriesCache[bannerText] = currentType;
-                            self.UI.filterBanners();
-                        }
-                    });
-                }
+                const utils = self.UTILS || SYH_UTILS;
+                utils.saveBannerCategory(bannerText, currentType).then(() => {
+                    if (self.UI) {
+                        self.UI.bannerCategoriesCache[bannerText] = currentType;
+                        self.UI.filterBanners();
+                    }
+                });
                 return;
             }
         });
@@ -306,6 +301,4 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_EVENT_BANNERS = SYH_EVENT_BANNERS;
-}
+// Pure ESM Module Export

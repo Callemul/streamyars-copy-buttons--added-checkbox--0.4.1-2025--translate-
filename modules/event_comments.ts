@@ -4,6 +4,7 @@ import { SYH_UTILS } from './utils';
 import { SYH_UI } from './ui_core';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
+import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
 
 export interface PrayerRecord {
     author: string;
@@ -76,9 +77,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                             if (self.STATE && textKey) {
                                 self.STATE.updateState(textKey, true);
                             }
-                            if ((window as any).SYH_COMMENT_ASSISTANT) {
-                                (window as any).SYH_COMMENT_ASSISTANT.processComment(commentBlock);
-                            }
+                            SYH_COMMENT_ASSISTANT.processComment(commentBlock);
                         }
                     }
                 }
@@ -230,9 +229,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                         if (self.STATE && textKey) {
                             self.STATE.updateState(textKey, checkbox.checked);
                         }
-                        if ((window as any).SYH_COMMENT_ASSISTANT) {
-                            (window as any).SYH_COMMENT_ASSISTANT.processComment(commentBlock);
-                        }
+                        SYH_COMMENT_ASSISTANT.processComment(commentBlock);
                     }
                 }
             }
@@ -312,11 +309,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     text: commentText
                 });
 
-                if (self.UTILS) {
-                    self.UTILS.copyAndShowBanner(textToCopy, header);
-                } else if ((window as any).SYH_UTILS) {
-                    (window as any).SYH_UTILS.copyAndShowBanner(textToCopy, header);
-                }
+                self.UTILS.copyAndShowBanner(textToCopy, header);
 
                 const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
                 if (checkboxNode) {
@@ -348,9 +341,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             if (self.STATE) {
                 self.STATE.updateState(textKey, checkbox.checked);
             }
-            if ((window as any).SYH_COMMENT_ASSISTANT) {
-                (window as any).SYH_COMMENT_ASSISTANT.processComment(commentBlock);
-            }
+            SYH_COMMENT_ASSISTANT.processComment(commentBlock);
         });
     },
 
@@ -418,6 +409,4 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_EVENT_COMMENTS = SYH_EVENT_COMMENTS;
-}
+// Pure ESM Module Export

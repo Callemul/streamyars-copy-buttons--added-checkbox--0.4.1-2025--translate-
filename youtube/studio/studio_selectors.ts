@@ -26,18 +26,18 @@
 //   getVideoThumbnailElement() — ytcp-comment-video-thumbnail для badge+checkbox
 
 export const STUDIO_SELECTORS = {
-    CHANNEL_NAME: '#entity-label-container #entity-name, ytcp-navigation-drawer #entity-name, #entity-name',
-    COMMENT_THREAD: '.ytcp-comment-thread',
-    COMMENT: 'ytcp-comment#comment, ytcp-comment',
-    COMMENT_TEXT_AREA: '#expander-container, #content-text, #content, #expander',
-    CONTENT_TEXT: '#content-text',
-    AUTHOR_NAME: '#metadata #name .author-text, #metadata #name, #name .author-text, #name',
-    ACTION_TOOLBAR: 'ytcp-comment-action-buttons #toolbar, #action-buttons #toolbar',
-    METADATA: '#metadata',
-    VIDEO_THUMBNAIL: 'ytcp-comment-video-thumbnail',
-    VIDEO_TITLE: '#video-title',
-    VIDEO_LINK: 'ytcp-comment-video-thumbnail a#body, #video-title a',
-    COMMENTS_ITEMS_CONTAINER: '#comments-content #items, #iron-list #items, #comments-section #items'
+    CHANNEL_NAME: ['#entity-label-container #entity-name', 'ytcp-navigation-drawer #entity-name', '#entity-name'],
+    COMMENT_THREAD: ['.ytcp-comment-thread', 'ytcp-comment-thread'],
+    COMMENT: ['ytcp-comment#comment', 'ytcp-comment'],
+    COMMENT_TEXT_AREA: ['#expander-container', '#content-text', '#content', '#expander'],
+    CONTENT_TEXT: ['#content-text', 'ytcp-comment-text #content-text', '.content-text'],
+    AUTHOR_NAME: ['#metadata #name .author-text', '#metadata #name', '#name .author-text', '#name'],
+    ACTION_TOOLBAR: ['ytcp-comment-action-buttons #toolbar', '#action-buttons #toolbar', '#toolbar'],
+    METADATA: ['#metadata', '.metadata-container'],
+    VIDEO_THUMBNAIL: ['ytcp-comment-video-thumbnail', '.video-thumbnail'],
+    VIDEO_TITLE: ['#video-title', '.video-title-text'],
+    VIDEO_LINK: ['ytcp-comment-video-thumbnail a#body', '#video-title a', 'a.ytcp-comment-video-thumbnail'],
+    COMMENTS_ITEMS_CONTAINER: ['#comments-content #items', '#iron-list #items', '#comments-section #items', '#items']
 };
 
 export function getChannelNameElement(doc: Document | HTMLElement = document): HTMLElement | null {

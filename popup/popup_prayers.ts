@@ -246,7 +246,6 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
 
     outputDiv.data('raw-text', fullTextForCopy.trim());
 }
-(window as any).renderPrayers = renderPrayers;
 
 $(document).ready(function() {
     $(document).on('focus', '.editable-prayer', function() {

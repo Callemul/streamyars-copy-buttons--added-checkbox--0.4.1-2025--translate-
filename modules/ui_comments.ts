@@ -1,6 +1,7 @@
 import { SYH_UI, PrayerItem } from './ui_core';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
+import { SYH_STATE } from './state';
 
 export function addButtonsToComment(commentNode: Element): void {
     const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -18,7 +19,7 @@ export function addButtonsToComment(commentNode: Element): void {
         targetContainer.insertAdjacentHTML('beforeend', buttonsHTML);
         
         const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
-        const state = SYH_UI.STATE || (window as any).SYH_STATE;
+        const state = SYH_UI.STATE || SYH_STATE;
         
         if (state && typeof state.getState === 'function' && state.getState(commentText)) {
             const checkbox = targetContainer.querySelector<HTMLInputElement>('.syh-checkbox');
@@ -229,11 +230,7 @@ export function filterStarredComments(): void {
         let matchesSearch = true;
         if (searchQuery) {
             const combinedTarget = originalText + " " + authorText;
-            matchesSearch = SYH_UTILS && typeof SYH_UTILS.smartSearch === 'function'
-                ? SYH_UTILS.smartSearch(searchQuery, combinedTarget)
-                : ((window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.smartSearch === 'function'
-                    ? (window as any).SYH_UTILS.smartSearch(searchQuery, combinedTarget)
-                    : combinedTarget.toLowerCase().includes(searchQuery.toLowerCase()));
+            matchesSearch = SYH_UTILS.smartSearch(searchQuery, combinedTarget);
         }
 
         if (matchesSearch) {

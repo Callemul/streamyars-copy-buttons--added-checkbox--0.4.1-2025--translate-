@@ -206,6 +206,4 @@ export function updateStudioCheckedClass(threadEl: HTMLElement, isChecked: boole
     }
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).injectStudioCommentUI = injectStudioCommentUI;
-}
+// Pure ESM module export
