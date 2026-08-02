@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "pack": "npx repomix",
-    "test": "node --experimental-strip-types --test tests/utils.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js test_parsers.js",
+    "test": "node --experimental-strip-types --test tests/utils.test.js tests/storage.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js test_parsers.js",
     "lint": "eslint --no-error-on-unmatched-pattern --no-warn-ignored \"modules/**/*.ts\" main.ts \"popup/**/*.js\" \"options/**/*.ts\" \"youtube/**/*.ts\""
   },
   "devDependencies": {

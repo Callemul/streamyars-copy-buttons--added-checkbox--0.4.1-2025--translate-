@@ -61,3 +61,24 @@
    - Сторінки та інтерфейс попапу/опцій лежать у `popup/` та `options/`.
 3. **Регулярні вирази**:
    - При пошуку по проекту за допомогою `grep_search` завжди вказуйте конкретні файлові маски або шукайте безпосередньо в директорії `modules/` (наприклад, `SearchPath: ".../modules"`), щоб миттєво знайти потрібне місце.
+
+---
+
+## 🗄️ Правила роботи зі сховищем (Storage Contract)
+
+### Хто що використовує:
+| Контекст            | Метод доступу              | Причина |
+|---------------------|----------------------------|---------|
+| Контент-скрипти (modules/) | import SYH_STORAGE | єдиний централізований адаптер |
+| Popup (popup/*.js)  | chrome.storage.local напряму | popup context ніколи не zombie |
+| YouTube (youtube/)  | import SYH_STORAGE | аналогічно до modules/ |
+
+### ЗАБОРОНЕНО:
+- ❌ localStorage fallback у SYH_STORAGE (ламає синхронізацію при zombie context)
+- ❌ window.SYH_STORAGE || ланцюжки у модулях (маскують помилки)
+- ❌ Прямий chrome.storage.local у контент-скриптах (обходить централізований адаптер)
+
+### Як debugити zombie context:
+Відкрий DevTools → Console на вкладці streamyard.com.
+Якщо видно: [SYH Storage] chrome.storage not available — це zombie context.
+Натисни Reload в chrome://extensions або перезавантаж сторінку.

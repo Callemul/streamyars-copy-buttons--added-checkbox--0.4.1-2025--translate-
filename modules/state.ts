@@ -31,7 +31,7 @@ export const SYH_STATE: SyhState = {
         const today = getTodayDateString();
 
         // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE || (typeof window !== 'undefined' ? ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage)) : null);
+        const storage = SYH_STORAGE;
 
         if (!storage) {
             console.error("SYH_STATE: Не знайдено адаптер сховища!");
@@ -108,7 +108,7 @@ export const SYH_STATE: SyhState = {
         };
 
         // Отримання централізованого адаптера сховища
-        const storage = SYH_STORAGE || (typeof window !== 'undefined' ? ((window as any).SYH_STORAGE || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage)) : null);
+        const storage = SYH_STORAGE;
 
         if (storage) {
             storage.set({ 'syh_checkbox_state': stateToSave }, function() {

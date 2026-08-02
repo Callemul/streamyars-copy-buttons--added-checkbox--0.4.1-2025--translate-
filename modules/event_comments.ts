@@ -333,7 +333,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     },
 
     saveToDatabase: function(author: string, text: string, type: string, icon: string): void {
-        const storage = SYH_STORAGE || (window as any).SYH_STORAGE || (this.UTILS && this.UTILS.storage) || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage);
+        const storage = SYH_STORAGE;
 
         if (!storage) {
             console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
@@ -372,7 +372,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             this.UI.prayersCache = this.UI.prayersCache.filter((item: any) => item.text !== text);
         }
 
-        const storage = SYH_STORAGE || (window as any).SYH_STORAGE || (this.UTILS && this.UTILS.storage) || ((window as any).SYH_UTILS && (window as any).SYH_UTILS.storage);
+        const storage = SYH_STORAGE;
 
         if (!storage) {
             console.error("SYH_EVENT_COMMENTS: Не знайдено адаптер сховища!");
