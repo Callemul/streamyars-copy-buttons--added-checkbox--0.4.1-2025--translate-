@@ -1,7 +1,57 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
 
 export const db: any = {};
+
+/**
+ * Динамічна інсталяція HTML-блоків аркушів із шаблону <template>
+ */
+export function renderSheetTemplates(): void {
+    const $template = $('#sheet-content-template');
+    const $container = $('#sheet-contents-container');
+    if ($template.length === 0 || $container.length === 0) return;
+
+    const sheetIds = getAllSheetIds();
+    sheetIds.forEach((sId, idx) => {
+        const $clone = $($template.html());
+        $clone.attr('id', `sheet-content-${sId}`);
+        $clone.attr('aria-label', SHEET_LABELS[sId] || sId);
+        if (idx === 0) $clone.addClass('active');
+
+        // Mapping dynamic IDs for child controls
+        $clone.find('.js-old-total-count').attr('id', `oldTotalCount__${sId}`);
+        $clone.find('.js-old-list').attr('id', `oldList__${sId}`);
+        $clone.find('.js-answered-ids').attr('id', `answeredIds__${sId}`);
+        $clone.find('.js-tg-total-count-all').attr('id', `tgTotalCountAll__${sId}`);
+        $clone.find('.js-step3-columns').attr('id', `step3Columns__${sId}`);
+        $clone.find('.js-step3-left').attr('id', `step3Left__${sId}`);
+        $clone.find('.js-tg-total-count-left').attr('id', `tgTotalCountLeft__${sId}`);
+        $clone.find('.js-new-telegram').attr('id', `newTelegram__${sId}`);
+        $clone.find('.js-step3-divider').attr('id', `step3Divider__${sId}`);
+        $clone.find('.js-step3-right').attr('id', `step3Right__${sId}`);
+        $clone.find('.js-tg-total-count-right').attr('id', `tgTotalCountRight__${sId}`);
+        $clone.find('.js-clear-yt-collected').attr('id', `clearYTCollected__${sId}`);
+        $clone.find('.js-yt-collected-list').attr('id', `ytCollectedList__${sId}`);
+        $clone.find('.js-process-btn').attr('id', `processTelegramBtn__${sId}`);
+        $clone.find('.js-clear-state-btn').attr('id', `clearStateBtn__${sId}`);
+        $clone.find('.js-stats-bar').attr('id', `statsBar__${sId}`);
+        $clone.find('.js-count-old').attr('id', `countOld__${sId}`);
+        $clone.find('.js-count-del').attr('id', `countDel__${sId}`);
+        $clone.find('.js-count-new-left').attr('id', `countNewLeft__${sId}`);
+        $clone.find('.js-count-new-yt').attr('id', `countNewYT__${sId}`);
+        $clone.find('.js-count-total').attr('id', `countTotal__${sId}`);
+        $clone.find('.js-copy-result-btn').attr('id', `copyResultBtn__${sId}`);
+        $clone.find('.js-final-result-div').attr('id', `finalResultDiv__${sId}`);
+        $clone.find('.js-deleted-log-details').attr('id', `deletedLogDetails__${sId}`);
+        $clone.find('.js-deleted-log-count').attr('id', `deletedLogCount__${sId}`);
+        $clone.find('.js-deleted-log').attr('id', `deletedLog__${sId}`);
+        $clone.find('.js-cleaned-log-details').attr('id', `cleanedLogDetails__${sId}`);
+        $clone.find('.js-cleaned-log-count').attr('id', `cleanedLogCount__${sId}`);
+        $clone.find('.js-cleaned-log').attr('id', `cleanedLog__${sId}`);
+
+        $container.append($clone);
+    });
+}
 
 export function saveDataToStorage(): void {
     SYH_STORAGE.set({ [STORAGE_KEYS.DB]: db });
@@ -22,6 +72,8 @@ export async function saveData(key: string, value: unknown): Promise<void> {
 const SHEET_IDS = getAllSheetIds();
 
 $(document).ready(function() {
+    renderSheetTemplates();
+
     const keysToLoad = [
         STORAGE_KEYS.DB, 
         STORAGE_KEYS.PRAYERS,

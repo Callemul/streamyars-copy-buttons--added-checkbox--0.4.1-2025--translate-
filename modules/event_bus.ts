@@ -4,6 +4,8 @@ export type SyhEventType =
     | 'STATE_CHANGED'
     | 'STORAGE_SYNC'
     | 'PHASE_CHANGED'
+    | 'SHEET_TAB_CHANGED'
+    | 'SHEET_DATA_PROCESSED'
     | 'CONTEXT_INVALIDATED';
 
 export interface SyhEventPayloads {
@@ -12,6 +14,8 @@ export interface SyhEventPayloads {
     STATE_CHANGED: { key: string; value: boolean };
     STORAGE_SYNC: { key: string; newValue: any };
     PHASE_CHANGED: { phase: 'questions' | 'prayers'; timestamp: string };
+    SHEET_TAB_CHANGED: { activeSheetId: string };
+    SHEET_DATA_PROCESSED: { sheetId: string; totalQuestions: number; totalPrayers: number };
     CONTEXT_INVALIDATED: void;
 }
 

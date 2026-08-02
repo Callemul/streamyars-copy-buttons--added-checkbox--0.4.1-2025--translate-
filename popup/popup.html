@@ -44,329 +44,91 @@
             </div>
         </div>
 
-        <!-- SHEET 1: vp_ss -->
-        <div id="sheet-content-vp_ss" class="sheet-content active" role="tabpanel" aria-label="Время перемен СШ">
-            <div class="input-group">
-                <label class="section-title" for="oldList__vp_ss">1. Старий список <span id="oldTotalCount__vp_ss"></span>:</label>
-                <textarea id="oldList__vp_ss" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
-            </div>
+        <!-- DYNAMIC SHEET CONTAINER (Rendered from #sheet-content-template via JS) -->
+        <div id="sheet-contents-container"></div>
 
-            <div class="input-group">
-                <label class="section-title" for="answeredIds__vp_ss">2. Номери ВІДПОВІДЕЙ (видалити):</label>
-                <input type="text" id="answeredIds__vp_ss" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
-            </div>
+        <!-- REUSABLE SHEET CONTENT TEMPLATE -->
+        <template id="sheet-content-template">
+            <div class="sheet-content" role="tabpanel">
+                <div class="input-group">
+                    <label class="section-title">1. Старий список <span class="js-old-total-count"></span>:</label>
+                    <textarea class="js-old-list" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
+                </div>
 
-            <div class="input-group">
-                <label class="section-title">
-                    3. Новий список:
-                    <span id="tgTotalCountAll__vp_ss" class="counter-badge counter-total"></span>
-                </label>
-                <div class="step3-columns" id="step3Columns__vp_ss">
-                    <div class="step3-col step3-col-left" id="step3Left__vp_ss">
-                        <div class="col-header">
-                            📝 Telegram (ручний ввід)
-                            <span id="tgTotalCountLeft__vp_ss" class="counter-badge counter-left" style="display:none;"></span>
+                <div class="input-group">
+                    <label class="section-title">2. Номери ВІДПОВІДЕЙ (видалити):</label>
+                    <input type="text" class="js-answered-ids" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
+                </div>
+
+                <div class="input-group">
+                    <label class="section-title">
+                        3. Новий список:
+                        <span class="js-tg-total-count-all counter-badge counter-total"></span>
+                    </label>
+                    <div class="step3-columns js-step3-columns">
+                        <div class="step3-col step3-col-left js-step3-left">
+                            <div class="col-header">
+                                📝 Telegram (ручний ввід)
+                                <span class="js-tg-total-count-left counter-badge counter-left" style="display:none;"></span>
+                            </div>
+                            <textarea class="js-new-telegram" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
                         </div>
-                        <textarea id="newTelegram__vp_ss" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
-                    </div>
 
-                    <div class="step3-divider" id="step3Divider__vp_ss" title="Перетягніть для зміни розміру"></div>
+                        <div class="step3-divider js-step3-divider" title="Перетягніть для зміни розміру"></div>
 
-                    <div class="step3-col step3-col-right" id="step3Right__vp_ss">
-                        <div class="col-header">
-                            🎬 YouTube
-                            <span id="tgTotalCountRight__vp_ss" class="counter-badge counter-right" style="display:none;"></span>
-                            <button id="clearYTCollected__vp_ss" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
+                        <div class="step3-col step3-col-right js-step3-right">
+                            <div class="col-header">
+                                🎬 YouTube
+                                <span class="js-tg-total-count-right counter-badge counter-right" style="display:none;"></span>
+                                <button class="col-header-btn js-clear-yt-collected" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
+                            </div>
+                            <div class="yt-collected-list js-yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
                         </div>
-                        <div id="ytCollectedList__vp_ss" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="btn-row">
-                <button id="processTelegramBtn__vp_ss" class="action-btn primary" aria-label="Обробити список з Телеграму">ОБРОБИТИ СПИСОК 🚀</button>
-                <button id="clearStateBtn__vp_ss" class="action-btn danger" title="Очистити" aria-label="Очистити список питань">🗑</button>
-            </div>
-
-            <div id="statsBar__vp_ss" class="stats-bar">
-                <div class="stats-row">
-                    <div class="stat-item old">Залишилось старих: <b id="countOld__vp_ss">0</b></div>
-                    <div class="stat-item del">Видалено: <b id="countDel__vp_ss">0</b></div>
-                </div>
-                <div class="stats-row new-row">
-                    <div class="stat-item new">Нові з лівої: <span id="countNewLeft__vp_ss">0</span></div>
-                    <div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__vp_ss">0</b></div>
-                </div>
-                <div class="stats-row total-row">
-                    <div class="stat-item total">Разом: <b id="countTotal__vp_ss">0</b></div>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">Результат:</label>
-                <div class="result-wrapper">
-                    <button id="copyResultBtn__vp_ss" class="copy-btn-top" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
-                    <div id="finalResultDiv__vp_ss" class="rich-editor" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
-                </div>
-            </div>
-
-            <details id="deletedLogDetails__vp_ss">
-                <summary>🗑 Лог видаленого <span id="deletedLogCount__vp_ss" class="log-count"></span></summary>
-                <div id="deletedLog__vp_ss" class="deleted-log">
-                    <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
-                </div>
-            </details>
-
-            <details id="cleanedLogDetails__vp_ss">
-                <summary>🧹 Лог чистки тексту <span id="cleanedLogCount__vp_ss" class="log-count"></span></summary>
-                <div id="cleanedLog__vp_ss" class="cleaned-log">
-                    <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
-                </div>
-            </details>
-        </div>
-
-        <!-- SHEET 2: oparin -->
-        <div id="sheet-content-oparin" class="sheet-content" role="tabpanel" aria-label="Опарин проповеди">
-            <div class="input-group">
-                <label class="section-title" for="oldList__oparin">1. Старий список <span id="oldTotalCount__oparin"></span>:</label>
-                <textarea id="oldList__oparin" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title" for="answeredIds__oparin">2. Номери ВІДПОВІДЕЙ (видалити):</label>
-                <input type="text" id="answeredIds__oparin" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">
-                    3. Новий список:
-                    <span id="tgTotalCountAll__oparin" class="counter-badge counter-total"></span>
-                </label>
-                <div class="step3-columns" id="step3Columns__oparin">
-                    <div class="step3-col step3-col-left" id="step3Left__oparin">
-                        <div class="col-header">
-                            📝 Telegram (ручний ввід)
-                            <span id="tgTotalCountLeft__oparin" class="counter-badge counter-left" style="display:none;"></span>
-                        </div>
-                        <textarea id="newTelegram__oparin" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
-                    </div>
-
-                    <div class="step3-divider" id="step3Divider__oparin" title="Перетягніть для зміни розміру"></div>
-
-                    <div class="step3-col step3-col-right" id="step3Right__oparin">
-                        <div class="col-header">
-                            🎬 YouTube
-                            <span id="tgTotalCountRight__oparin" class="counter-badge counter-right" style="display:none;"></span>
-                            <button id="clearYTCollected__oparin" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
-                        </div>
-                        <div id="ytCollectedList__oparin" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="btn-row">
-                <button id="processTelegramBtn__oparin" class="action-btn primary" aria-label="Обробити список з Телеграму">ОБРОБИТИ СПИСОК 🚀</button>
-                <button id="clearStateBtn__oparin" class="action-btn danger" title="Очистити" aria-label="Очистити список питань">🗑</button>
-            </div>
-
-            <div id="statsBar__oparin" class="stats-bar">
-                <div class="stats-row">
-                    <div class="stat-item old">Залишилось старих: <b id="countOld__oparin">0</b></div>
-                    <div class="stat-item del">Видалено: <b id="countDel__oparin">0</b></div>
+                <div class="btn-row">
+                    <button class="action-btn primary js-process-btn" aria-label="Обробити список">ОБРОБИТИ СПИСОК 🚀</button>
+                    <button class="action-btn danger js-clear-state-btn" title="Очистити" aria-label="Очистити список питань">🗑</button>
                 </div>
-                <div class="stats-row new-row">
-                    <div class="stat-item new">Нові з лівої: <span id="countNewLeft__oparin">0</span></div>
-                    <div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__oparin">0</b></div>
-                </div>
-                <div class="stats-row total-row">
-                    <div class="stat-item total">Разом: <b id="countTotal__oparin">0</b></div>
-                </div>
-            </div>
 
-            <div class="input-group">
-                <label class="section-title">Результат:</label>
-                <div class="result-wrapper">
-                    <button id="copyResultBtn__oparin" class="copy-btn-top" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
-                    <div id="finalResultDiv__oparin" class="rich-editor" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
-                </div>
-            </div>
-
-            <details id="deletedLogDetails__oparin">
-                <summary>🗑 Лог видаленого <span id="deletedLogCount__oparin" class="log-count"></span></summary>
-                <div id="deletedLog__oparin" class="deleted-log">
-                    <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
-                </div>
-            </details>
-
-            <details id="cleanedLogDetails__oparin">
-                <summary>🧹 Лог чистки тексту <span id="cleanedLogCount__oparin" class="log-count"></span></summary>
-                <div id="cleanedLog__oparin" class="cleaned-log">
-                    <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
-                </div>
-            </details>
-        </div>
-
-        <!-- SHEET 3: molchanov_ss -->
-        <div id="sheet-content-molchanov_ss" class="sheet-content" role="tabpanel" aria-label="Молчанов СШ">
-            <div class="input-group">
-                <label class="section-title" for="oldList__molchanov_ss">1. Старий список <span id="oldTotalCount__molchanov_ss"></span>:</label>
-                <textarea id="oldList__molchanov_ss" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title" for="answeredIds__molchanov_ss">2. Номери ВІДПОВІДЕЙ (видалити):</label>
-                <input type="text" id="answeredIds__molchanov_ss" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">
-                    3. Новий список:
-                    <span id="tgTotalCountAll__molchanov_ss" class="counter-badge counter-total"></span>
-                </label>
-                <div class="step3-columns" id="step3Columns__molchanov_ss">
-                    <div class="step3-col step3-col-left" id="step3Left__molchanov_ss">
-                        <div class="col-header">
-                            📝 Telegram (ручний ввід)
-                            <span id="tgTotalCountLeft__molchanov_ss" class="counter-badge counter-left" style="display:none;"></span>
-                        </div>
-                        <textarea id="newTelegram__molchanov_ss" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
+                <div class="stats-bar js-stats-bar">
+                    <div class="stats-row">
+                        <div class="stat-item old">Залишилось старих: <b class="js-count-old">0</b></div>
+                        <div class="stat-item del">Видалено: <b class="js-count-del">0</b></div>
                     </div>
-
-                    <div class="step3-divider" id="step3Divider__molchanov_ss" title="Перетягніть для зміни розміру"></div>
-
-                    <div class="step3-col step3-col-right" id="step3Right__molchanov_ss">
-                        <div class="col-header">
-                            🎬 YouTube
-                            <span id="tgTotalCountRight__molchanov_ss" class="counter-badge counter-right" style="display:none;"></span>
-                            <button id="clearYTCollected__molchanov_ss" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
-                        </div>
-                        <div id="ytCollectedList__molchanov_ss" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
+                    <div class="stats-row new-row">
+                        <div class="stat-item new">Нові з лівої: <span class="js-count-new-left">0</span></div>
+                        <div class="stat-item new-yt">Нові з YouTube: <b class="js-count-new-yt">0</b></div>
+                    </div>
+                    <div class="stats-row total-row">
+                        <div class="stat-item total">Разом: <b class="js-count-total">0</b></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="btn-row">
-                <button id="processTelegramBtn__molchanov_ss" class="action-btn primary" aria-label="Обробити список з Телеграму">ОБРОБИТИ СПИСОК 🚀</button>
-                <button id="clearStateBtn__molchanov_ss" class="action-btn danger" title="Очистити" aria-label="Очистити список питань">🗑</button>
-            </div>
-
-            <div id="statsBar__molchanov_ss" class="stats-bar">
-                <div class="stats-row">
-                    <div class="stat-item old">Залишилось старих: <b id="countOld__molchanov_ss">0</b></div>
-                    <div class="stat-item del">Видалено: <b id="countDel__molchanov_ss">0</b></div>
-                </div>
-                <div class="stats-row new-row">
-                    <div class="stat-item new">Нові з лівої: <span id="countNewLeft__molchanov_ss">0</span></div>
-                    <div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__molchanov_ss">0</b></div>
-                </div>
-                <div class="stats-row total-row">
-                    <div class="stat-item total">Разом: <b id="countTotal__molchanov_ss">0</b></div>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">Результат:</label>
-                <div class="result-wrapper">
-                    <button id="copyResultBtn__molchanov_ss" class="copy-btn-top" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
-                    <div id="finalResultDiv__molchanov_ss" class="rich-editor" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
-                </div>
-            </div>
-
-            <details id="deletedLogDetails__molchanov_ss">
-                <summary>🗑 Лог видаленого <span id="deletedLogCount__molchanov_ss" class="log-count"></span></summary>
-                <div id="deletedLog__molchanov_ss" class="deleted-log">
-                    <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
-                </div>
-            </details>
-
-            <details id="cleanedLogDetails__molchanov_ss">
-                <summary>🧹 Лог чистки тексту <span id="cleanedLogCount__molchanov_ss" class="log-count"></span></summary>
-                <div id="cleanedLog__molchanov_ss" class="cleaned-log">
-                    <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
-                </div>
-            </details>
-        </div>
-
-        <!-- SHEET 4: molchanov_preach -->
-        <div id="sheet-content-molchanov_preach" class="sheet-content" role="tabpanel" aria-label="Молчанов проповеди">
-            <div class="input-group">
-                <label class="section-title" for="oldList__molchanov_preach">1. Старий список <span id="oldTotalCount__molchanov_preach"></span>:</label>
-                <textarea id="oldList__molchanov_preach" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title" for="answeredIds__molchanov_preach">2. Номери ВІДПОВІДЕЙ (видалити):</label>
-                <input type="text" id="answeredIds__molchanov_preach" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">
-                    3. Новий список:
-                    <span id="tgTotalCountAll__molchanov_preach" class="counter-badge counter-total"></span>
-                </label>
-                <div class="step3-columns" id="step3Columns__molchanov_preach">
-                    <div class="step3-col step3-col-left" id="step3Left__molchanov_preach">
-                        <div class="col-header">
-                            📝 Telegram (ручний ввід)
-                            <span id="tgTotalCountLeft__molchanov_preach" class="counter-badge counter-left" style="display:none;"></span>
-                        </div>
-                        <textarea id="newTelegram__molchanov_preach" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
-                    </div>
-
-                    <div class="step3-divider" id="step3Divider__molchanov_preach" title="Перетягніть для зміни розміру"></div>
-
-                    <div class="step3-col step3-col-right" id="step3Right__molchanov_preach">
-                        <div class="col-header">
-                            🎬 YouTube
-                            <span id="tgTotalCountRight__molchanov_preach" class="counter-badge counter-right" style="display:none;"></span>
-                            <button id="clearYTCollected__molchanov_preach" class="col-header-btn" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
-                        </div>
-                        <div id="ytCollectedList__molchanov_preach" class="yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
+                <div class="input-group">
+                    <label class="section-title">Результат:</label>
+                    <div class="result-wrapper">
+                        <button class="copy-btn-top js-copy-result-btn" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
+                        <div class="rich-editor js-final-result-div" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
                     </div>
                 </div>
+
+                <details class="js-deleted-log-details">
+                    <summary>🗑 Лог видаленого <span class="log-count js-deleted-log-count"></span></summary>
+                    <div class="deleted-log js-deleted-log">
+                        <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
+                    </div>
+                </details>
+
+                <details class="js-cleaned-log-details">
+                    <summary>🧹 Лог чистки тексту <span class="log-count js-cleaned-log-count"></span></summary>
+                    <div class="cleaned-log js-cleaned-log">
+                        <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
+                    </div>
+                </details>
             </div>
-
-            <div class="btn-row">
-                <button id="processTelegramBtn__molchanov_preach" class="action-btn primary" aria-label="Обробити список з Телеграму">ОБРОБИТИ СПИСОК 🚀</button>
-                <button id="clearStateBtn__molchanov_preach" class="action-btn danger" title="Очистити" aria-label="Очистити список питань">🗑</button>
-            </div>
-
-            <div id="statsBar__molchanov_preach" class="stats-bar">
-                <div class="stats-row">
-                    <div class="stat-item old">Залишилось старих: <b id="countOld__molchanov_preach">0</b></div>
-                    <div class="stat-item del">Видалено: <b id="countDel__molchanov_preach">0</b></div>
-                </div>
-                <div class="stats-row new-row">
-                    <div class="stat-item new">Нові з лівої: <span id="countNewLeft__molchanov_preach">0</span></div>
-                    <div class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__molchanov_preach">0</b></div>
-                </div>
-                <div class="stats-row total-row">
-                    <div class="stat-item total">Разом: <b id="countTotal__molchanov_preach">0</b></div>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label class="section-title">Результат:</label>
-                <div class="result-wrapper">
-                    <button id="copyResultBtn__molchanov_preach" class="copy-btn-top" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
-                    <div id="finalResultDiv__molchanov_preach" class="rich-editor" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
-                </div>
-            </div>
-
-            <details id="deletedLogDetails__molchanov_preach">
-                <summary>🗑 Лог видаленого <span id="deletedLogCount__molchanov_preach" class="log-count"></span></summary>
-                <div id="deletedLog__molchanov_preach" class="deleted-log">
-                    <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
-                </div>
-            </details>
-
-            <details id="cleanedLogDetails__molchanov_preach">
-                <summary>🧹 Лог чистки тексту <span id="cleanedLogCount__molchanov_preach" class="log-count"></span></summary>
-                <div id="cleanedLog__molchanov_preach" class="cleaned-log">
-                    <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
-                </div>
-            </details>
-        </div>
+        </template>
     </div>
 
     <div id="tab-old" class="tab-content" role="tabpanel" aria-label="Трансліт та Налаштування">

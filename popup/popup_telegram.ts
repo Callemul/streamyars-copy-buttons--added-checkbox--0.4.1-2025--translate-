@@ -1,5 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
+import { SYH_UTILS } from '../modules/utils';
 
 const SHEET_IDS = getAllSheetIds();
 
@@ -234,22 +235,7 @@ export function cleanAuthorName(rawName: string, cleaningLog?: any[]): string {
 }
 
 export function cleanTelegramHeadersLogged(text: string, cleaningLog?: any[]): string {
-    if (!text) return "";
-    const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-    const removedMatches: string[] = [];
-    const cleaned = text.replace(tgHeaderRegex, (match, offset) => {
-        removedMatches.push(match.trim());
-        return offset === 0 ? "" : "\n";
-    }).trim();
-
-    if (cleaningLog && removedMatches.length > 0) {
-        cleaningLog.push({
-            before: text.trim(),
-            after: cleaned,
-            removed: removedMatches.join(' | ')
-        });
-    }
-    return cleaned;
+    return SYH_UTILS.cleanTelegramHeaders(text, cleaningLog);
 }
 
 export function parseAndFilterOldList(text: string, answeredIds?: number[] | null, cleaningLog?: any[]): any {

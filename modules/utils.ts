@@ -293,11 +293,22 @@ export const SYH_UTILS: SyhUtils = {
         });
     },
 
-    cleanTelegramHeaders: function(text: string | null | undefined): string {
+    cleanTelegramHeaders: function(text: string | null | undefined, cleaningLog?: any[]): string {
         if (!text) return "";
         const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-        return text.replace(tgHeaderRegex, (_match, offset) => {
+        const removedMatches: string[] = [];
+        const cleaned = text.replace(tgHeaderRegex, (match, offset) => {
+            removedMatches.push(match.trim());
             return offset === 0 ? "" : "\n";
         }).trim();
+
+        if (cleaningLog && removedMatches.length > 0) {
+            cleaningLog.push({
+                before: text.trim(),
+                after: cleaned,
+                removed: removedMatches.join(' | ')
+            });
+        }
+        return cleaned;
     }
 };

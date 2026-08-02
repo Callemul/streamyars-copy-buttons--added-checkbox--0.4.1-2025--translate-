@@ -9,15 +9,30 @@ export const SHEET_IDS = {
 
 export type SheetId = typeof SHEET_IDS[keyof typeof SHEET_IDS];
 
-export const SHEET_LABELS: Record<SheetId, string> = {
-    [SHEET_IDS.VP_SS]: 'Время перемен СШ',
-    [SHEET_IDS.OPARIN]: 'Опарин проповеди',
-    [SHEET_IDS.MOLCHANOV_SS]: 'Молчанов СШ',
-    [SHEET_IDS.MOLCHANOV_PREACH]: 'Молчанов проповеди',
+export interface SheetDefinition {
+    id: SheetId;
+    label: string;
+    description: string;
+    icon?: string;
+}
+
+export const SHEET_DEFINITIONS: Record<SheetId, SheetDefinition> = {
+    [SHEET_IDS.VP_SS]: { id: SHEET_IDS.VP_SS, label: 'Время перемен СШ', description: 'Суботня школа Время Перемен', icon: '📖' },
+    [SHEET_IDS.OPARIN]: { id: SHEET_IDS.OPARIN, label: 'Опарин проповеди', description: 'Проповіді Опаріна', icon: '🎙️' },
+    [SHEET_IDS.MOLCHANOV_SS]: { id: SHEET_IDS.MOLCHANOV_SS, label: 'Молчанов СШ', description: 'Суботня школа Молчанова', icon: '📚' },
+    [SHEET_IDS.MOLCHANOV_PREACH]: { id: SHEET_IDS.MOLCHANOV_PREACH, label: 'Молчанов проповеди', description: 'Проповіді Молчанова', icon: '💬' },
 };
+
+export const SHEET_LABELS: Record<SheetId, string> = Object.fromEntries(
+    Object.values(SHEET_DEFINITIONS).map(s => [s.id, s.label])
+) as Record<SheetId, string>;
 
 export function getAllSheetIds(): SheetId[] {
     return Object.values(SHEET_IDS);
+}
+
+export function getAllSheetDefinitions(): SheetDefinition[] {
+    return Object.values(SHEET_DEFINITIONS);
 }
 
 export function isValidSheetId(id: string): id is SheetId {
