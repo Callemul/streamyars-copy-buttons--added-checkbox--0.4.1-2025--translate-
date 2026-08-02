@@ -165,11 +165,10 @@ export function bindStudioCommentEvents(
     const commentKey = generateCommentKey(videoTitle, author, text);
 
     const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
-    const videoKeyChanged = isAlreadyBound && threadEl.dataset.syhVideoKey !== videoKey;
+    const commentKeyChanged = isAlreadyBound && threadEl.dataset.syhCommentKey !== commentKey;
 
-    // Skip full re-binding only if already bound, video key is the same, and no forceUpdate.
-    // If videoKey changed (virtual DOM reuse) — always refresh UI data.
-    if (isAlreadyBound && !forceUpdate && !videoKeyChanged) {
+    // Skip full re-binding only if already bound, comment key is the same, and no forceUpdate.
+    if (isAlreadyBound && !forceUpdate && !commentKeyChanged) {
         return;
     }
 
@@ -180,7 +179,7 @@ export function bindStudioCommentEvents(
     const categoryResult = resolveCategoryForVideo(videoTitle, videoKey, channelKey, caches.videoSheetMap);
     const resolvedSheetId = categoryResult.sheetId;
 
-    // Restore UI states
+    // Restore UI states for current commentKey
     const buttonState = caches.buttonStates[commentKey] || null;
     const checkboxState = caches.checkboxStates[commentKey]?.checked || false;
 
@@ -193,12 +192,14 @@ export function bindStudioCommentEvents(
         updateStudioCheckedClass(threadEl, checkboxState);
     }
 
-    // Store attributes on element for fast lookup during retroactive updates
+    // Store attributes on element for fast lookup during retroactive updates and virtual scroll checks
     threadEl.dataset.syhVideoKey = videoKey;
     threadEl.dataset.syhCommentKey = commentKey;
 
-    // If only data changed (virtual scroll reuse), skip re-attaching event listeners
-    if (videoKeyChanged && !forceUpdate) {
+    // If element was already bound and only comment data changed (virtual scroll reuse),
+    // UI elements (badge, buttons, checkbox) have already been refreshed above.
+    // Return early since event listeners are already attached to the persistent toolbar/badge DOM elements.
+    if (commentKeyChanged && !forceUpdate) {
         return;
     }
 

@@ -1,9 +1,9 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
-import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows } from './popup_telegram';
+import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows, clearAllYTCollected } from './popup_telegram';
 import { renderPrayers } from './popup_prayers';
 
-export const db: any = {};
+export const db: Record<string, unknown> = {};
 
 /**
  * Динамічна інсталяція HTML-блоків аркушів із шаблону <template>
@@ -284,9 +284,7 @@ $(document).ready(function() {
             if (oldListTimer) clearTimeout(oldListTimer);
             oldListTimer = setTimeout(() => {
                 SYH_STORAGE.set({ [`tg_oldList__${sId}`]: val }); 
-                if (typeof (window as any).updateOldInputStats === 'function') {
-                    (window as any).updateOldInputStats(sId);
-                }
+                updateOldInputStats(sId);
             }, 300);
         });
         
@@ -295,9 +293,7 @@ $(document).ready(function() {
             if (newTelegramTimer) clearTimeout(newTelegramTimer);
             newTelegramTimer = setTimeout(() => {
                 SYH_STORAGE.set({ [`tg_newTelegram__${sId}`]: val }); 
-                if (typeof (window as any).updateNewInputStats === 'function') {
-                    (window as any).updateNewInputStats(sId);
-                }
+                updateNewInputStats(sId);
             }, 300);
         });
         
@@ -358,9 +354,7 @@ $(document).ready(function() {
         });
 
         $(`#clearYTCollected__${sId}`).click(function() {
-            if (typeof (window as any).clearAllYTCollected === 'function') {
-                (window as any).clearAllYTCollected(sId);
-            }
+            clearAllYTCollected(sId);
         });
     });
 

@@ -3,18 +3,10 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import { SheetId, SHEET_LABELS } from '../../modules/sheets';
 import { ChannelKey } from '../../modules/channel_config';
 import { VideoSheetMapEntry } from './studio_category_matcher';
+import type { StudioOverrideLogEntry } from '../../modules/types';
 
 export const VIDEO_MAP_STORAGE_KEY = STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP;
 export const MANUAL_OVERRIDE_LOG_KEY = STORAGE_KEYS.STUDIO_OVERRIDE_LOG;
-
-export interface CorrectionLogEntry {
-    timestamp: string;
-    channelKey: ChannelKey;
-    channelLabel: string;
-    videoTitle: string;
-    autoDetectedSheet: SheetId | null;
-    assignedSheet: SheetId | 'auto_reset';
-}
 
 /**
  * Generate unique videoKey from video link href or title
@@ -64,7 +56,7 @@ export function setStudioVideoSheetOverride(
 
         SYH_STORAGE.get([VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY], (res) => {
             const map: Record<string, VideoSheetMapEntry> = res[VIDEO_MAP_STORAGE_KEY] || {};
-            const log: CorrectionLogEntry[] = res[MANUAL_OVERRIDE_LOG_KEY] || [];
+            const log: StudioOverrideLogEntry[] = res[MANUAL_OVERRIDE_LOG_KEY] || [];
 
             if (sheetId === null) {
                 // Reset to auto -> remove key from map
@@ -79,7 +71,7 @@ export function setStudioVideoSheetOverride(
                 };
 
                 // Add log entry
-                const logEntry: CorrectionLogEntry = {
+                const logEntry: StudioOverrideLogEntry = {
                     timestamp: new Date().toISOString(),
                     channelKey,
                     channelLabel: channelLabel || channelKey,

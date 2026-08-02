@@ -237,4 +237,19 @@ if (document.readyState === 'loading') {
     studioController.init();
 }
 
+import type { ISyhPlugin } from '../../modules/plugin_registry';
+
+export const SYH_STUDIO_PLUGIN: ISyhPlugin = {
+    id: 'syh_studio_module',
+    name: 'YouTube Studio Helper',
+    enabled: true,
+    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('studio.youtube.com'),
+    init: () => {
+        studioController.init();
+    },
+    destroy: () => {
+        studioController.stopModule();
+    }
+};
+
 export { studioController };

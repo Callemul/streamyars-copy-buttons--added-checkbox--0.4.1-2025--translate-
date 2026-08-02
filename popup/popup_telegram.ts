@@ -6,8 +6,11 @@ import {
     cleanAuthorName,
     cleanTelegramHeadersLogged,
     parseAndFilterOldList,
-    parseTelegramExportLineByLine
+    parseTelegramExportLineByLine,
+    TelegramQuestionItem,
+    GroupedNewItem
 } from '../modules/telegram_parser';
+import type { YTCollectedItem, CleaningLogEntry, DeletedLogEntry } from '../modules/types';
 
 const SHEET_IDS = getAllSheetIds();
 
@@ -26,23 +29,23 @@ export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
     const parsed = parseAndFilterOldList(text, []); 
     const qPeople = parsed.questions.length;
     let qQuestions = 0;
-    parsed.questions.forEach((q: any) => qQuestions += countQuestionsInText(q.text));
+    parsed.questions.forEach((q: TelegramQuestionItem) => qQuestions += countQuestionsInText(q.text));
     const pCount = parsed.prayers.length;
     $(`#oldTotalCount__${sheetId}`).text(`(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`);
     $(`#oldTotalCount__${sheetId}`).css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 }
 
-export const syh_yt_collected: any[] = [];
-export const syh_collected_by_sheet: Record<string, any[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
+export const syh_yt_collected: YTCollectedItem[] = [];
+export const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
     const keysToGet = [sheetKey, STORAGE_KEYS.YT_COLLECTED];
 
     SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let items = result[sheetKey] || [];
+        let items: YTCollectedItem[] = result[sheetKey] || [];
         if (sheetId === 'vp_ss') {
-            const oldItems = result[STORAGE_KEYS.YT_COLLECTED] || [];
+            const oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
             syh_yt_collected.length = 0;
             syh_yt_collected.push(...oldItems);
             items = [...oldItems, ...items];
@@ -54,7 +57,7 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
         if (items.length === 0) {
             $list.append('<div class="yt-empty-msg">Зібраних коментарів з YouTube немає</div>');
         } else {
-            items.forEach((item: any) => {
+            items.forEach((item: YTCollectedItem) => {
                 const $card = $('<div>')
                     .addClass('yt-collected-item')
                     .addClass(item.type === 'question' ? 'is-question' : 'is-prayer')
@@ -135,53 +138,33 @@ export function updateRightColumnStats(sheetId: string = 'vp_ss'): { people: num
     return { people: items.length, questions: qCount, prayers: pCount };
 }
 
+import { SheetStateService } from '../modules/sheet_state_service';
+
 export function updateCombinedCounters(sheetId: string = 'vp_ss'): void {
-    // 1. Left column stats (Telegram)
     const text = ($(`#newTelegram__${sheetId}`).val() as string) || '';
-    let leftPeople = 0;
-    let leftQuestions = 0;
-    let leftPrayers = 0;
-    if (text.trim()) {
-        if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
-            const parsed = parseAndFilterOldList(text, []);
-            leftPeople = parsed.questions.length;
-            parsed.questions.forEach((q: any) => leftQuestions += countQuestionsInText(q.text));
-            leftPrayers = parsed.prayers.length;
-        } else {
-            const items = parseTelegramExportLineByLine(text);
-            leftPeople = items.length;
-            items.forEach((q: any) => leftQuestions += countQuestionsInText(q.text));
-        }
-    }
+    const ytItems = syh_collected_by_sheet[sheetId] || [];
+    const stats = SheetStateService.computeSheetCounters(text, ytItems);
 
-    // 2. Right column stats (YouTube)
-    const rightStats = updateRightColumnStats(sheetId);
-
-    // 3. Render Badges
-    if (leftPeople > 0) {
-        let leftStr = leftPeople + ' люд. - ' + leftQuestions + ' пит.';
-        if (leftPrayers > 0) leftStr += ' | Молитви: ' + leftPrayers;
+    if (stats.leftPeople > 0) {
+        let leftStr = `${stats.leftPeople} люд. - ${stats.leftQuestions} пит.`;
+        if (stats.leftPrayers > 0) leftStr += ` | Молитви: ${stats.leftPrayers}`;
         $(`#tgTotalCountLeft__${sheetId}`).text(leftStr).show();
     } else {
         $(`#tgTotalCountLeft__${sheetId}`).text('').hide();
     }
 
-    if (rightStats.people > 0) {
-        let rightStr = rightStats.people + ' люд. - ' + rightStats.questions + ' пит.';
-        if (rightStats.prayers > 0) rightStr += ' | Молитви: ' + rightStats.prayers;
+    if (stats.rightPeople > 0) {
+        let rightStr = `${stats.rightPeople} люд. - ${stats.rightQuestions} пит.`;
+        if (stats.rightPrayers > 0) rightStr += ` | Молитви: ${stats.rightPrayers}`;
         $(`#tgTotalCountRight__${sheetId}`).text(rightStr).show();
     } else {
         $(`#tgTotalCountRight__${sheetId}`).text('').hide();
     }
 
-    const totalPeople = leftPeople + rightStats.people;
-    const totalQuestions = leftQuestions + rightStats.questions;
-    const totalPrayers = leftPrayers + rightStats.prayers;
-
-    if (totalPeople > 0) {
-        let allStr = 'Разом: ' + totalPeople + ' люд. - ' + totalQuestions + ' пит.';
-        if (totalPrayers > 0) allStr += ' | Молитви: ' + totalPrayers;
-        $(`#tgTotalCountAll__${sheetId}`).text('(' + allStr + ')').show();
+    if (stats.totalPeople > 0) {
+        let allStr = `Разом: ${stats.totalPeople} люд. - ${stats.totalQuestions} пит.`;
+        if (stats.totalPrayers > 0) allStr += ` | Молитви: ${stats.totalPrayers}`;
+        $(`#tgTotalCountAll__${sheetId}`).text(`(${allStr})`).show();
     } else {
         $(`#tgTotalCountAll__${sheetId}`).text('').hide();
     }
@@ -220,68 +203,24 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     const oldListText = ($(`#oldList__${sheetId}`).val() as string) || '';
     const answeredInput = ($(`#answeredIds__${sheetId}`).val() as string) || '';
     const telegramText = ($(`#newTelegram__${sheetId}`).val() as string) || '';
-    const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-    const cleaningLog: any[] = [];
-    const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
-    
-    let newQuestions: any[];
-    let newPrayers: any[] = [];
-    if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
-        const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
-        newQuestions = parsedNew.questions.map((q: any) => ({ ...q, source: 'new' }));
-        newPrayers = parsedNew.prayers.map((p: any) => ({ ...p, source: 'pray' }));
-    } else {
-        newQuestions = parseTelegramExportLineByLine(telegramText, cleaningLog);
-    }
-    
-    // YouTube new items
     const ytItems = syh_collected_by_sheet[sheetId] || [];
-    const newYTQuestions: any[] = [];
-    const newYTPrayers: any[] = [];
 
-    ytItems.forEach(item => {
-        if (item.type === 'question') {
-            newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
-        } else if (item.type === 'prayer') {
-            newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
-        }
+    const result = SheetStateService.processSheetData({
+        oldListText,
+        answeredInput,
+        telegramText,
+        ytItems
     });
 
-    const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
-    const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
-    
-    const oldPeople = preservedData.questions.length;
-    let oldQuestionsTotal = 0;
-    preservedData.questions.forEach((q: any) => oldQuestionsTotal += countQuestionsInText(q.text));
-    
-    const newLeftPeople = newQuestions.length;
-    let newLeftQuestionsTotal = 0;
-    newQuestions.forEach((q: any) => newLeftQuestionsTotal += countQuestionsInText(q.text));
-    const newLeftPrayersTotal = newPrayers.length;
-    
-    const newYTPeople = ytItems.length;
-    let newYTQuestionsTotal = 0;
-    newYTQuestions.forEach((q: any) => newYTQuestionsTotal += countQuestionsInText(q.text));
-    const newYTPrayersTotal = newYTPrayers.length;
+    const { questions, prayers, stats, deletedLog: delLog, cleaningLog } = result;
 
-    let delPeople = 0;
-    let delQuestionsTotal = 0;
-    preservedData.deleted.forEach((d: any) => {
-        if (d.type === 'block') { delPeople++; delQuestionsTotal += d.count; } 
-        else if (d.type === 'sub') { delQuestionsTotal += d.count; }
-    });
-    
-    const totalPeople = oldPeople + newLeftPeople + newYTPeople;
-    const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
-    const totalPrayers = combinedPrayers.length;
-    
-    $(`#statsBar__${sheetId} .stat-item.old`).html('Залишилось старих: <b>' + oldPeople + ' люд. - ' + oldQuestionsTotal + ' пит.</b>');
-    $(`#countDel__${sheetId}`).text(delPeople + ' люд. - ' + delQuestionsTotal + ' пит.');
-    
-    let newLeftText = newLeftPeople + ' люд. - ' + newLeftQuestionsTotal + ' пит.';
-    if (newLeftPrayersTotal > 0) newLeftText += ' | Молитви: ' + newLeftPrayersTotal;
+    $(`#statsBar__${sheetId} .stat-item.old`).html('Залишилось старих: <b>' + stats.oldPeople + ' люд. - ' + stats.oldQuestionsTotal + ' пит.</b>');
+    $(`#countDel__${sheetId}`).text(stats.delPeople + ' люд. - ' + stats.delQuestionsTotal + ' пит.');
+
+    let newLeftText = stats.newLeftPeople + ' люд. - ' + stats.newLeftQuestionsTotal + ' пит.';
+    if (stats.newLeftPrayersTotal > 0) newLeftText += ' | Молитви: ' + stats.newLeftPrayersTotal;
     $(`#countNewLeft__${sheetId}`).html(newLeftText);
-    
+
     if ($(`#countNewYT__${sheetId}`).length === 0 && $(`#statsBar__${sheetId}`).length > 0) {
         if ($(`#statsBar__${sheetId} .stats-row.new-row`).length > 0) {
             $(`#statsBar__${sheetId} .stats-row.new-row`).append(`<span class="stat-item new-yt">Нові з YouTube: <b id="countNewYT__${sheetId}">0</b></span>`);
@@ -290,24 +229,23 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
         }
     }
 
-    let newYTText = newYTPeople + ' люд. - ' + newYTQuestionsTotal + ' пит.';
-    if (newYTPrayersTotal > 0) newYTText += ' | Молитви: ' + newYTPrayersTotal;
+    let newYTText = stats.newYTPeople + ' люд. - ' + stats.newYTQuestionsTotal + ' пит.';
+    if (stats.newYTPrayersTotal > 0) newYTText += ' | Молитви: ' + stats.newYTPrayersTotal;
     $(`#countNewYT__${sheetId}`).html(newYTText);
 
-    let totalText = totalPeople + ' люд. - ' + totalQuestions + ' пит.';
-    if (totalPrayers > 0) totalText += ' | Молитви: ' + totalPrayers;
+    let totalText = stats.totalPeople + ' люд. - ' + stats.totalQuestions + ' пит.';
+    if (stats.totalPrayers > 0) totalText += ' | Молитви: ' + stats.totalPrayers;
     $(`#countTotal__${sheetId}`).text(totalText);
-    
-    $(`#statsBar__${sheetId}`).show();
 
+    $(`#statsBar__${sheetId}`).show();
     updateCombinedCounters(sheetId);
-    
+
     const outputDiv = $(`#finalResultDiv__${sheetId}`);
     outputDiv.empty();
-    if (combinedQuestions.length > 0) {
+    if (questions.length > 0) {
         const header = $('<div>').text("❓❓❓ВОПРОСЫ\n\n");
         outputDiv.append(header);
-        combinedQuestions.forEach((item, index) => {
+        questions.forEach((item, index) => {
             const emojiNum = numberToEmoji(index + 1);
             const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
             const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
@@ -315,10 +253,10 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
             outputDiv.append(block);
         });
     }
-    if (combinedPrayers.length > 0) {
+    if (prayers.length > 0) {
         const header = $('<div>').text("🙏🙏🙏МОЛИТВЫ\n\n");
         outputDiv.append(header);
-        combinedPrayers.forEach((item, index) => {
+        prayers.forEach((item, index) => {
             const emojiNum = numberToEmoji(index + 1);
             const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
             const block = $('<div>').addClass('q-block').addClass('q-pray');
@@ -326,24 +264,25 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
             outputDiv.append(block);
         });
     }
-    const deletedLog = $(`#deletedLog__${sheetId}`);
-    deletedLog.empty();
-    if (preservedData.deleted.length > 0) {
-        preservedData.deleted.forEach((d: any) => {
+
+    const deletedLogDiv = $(`#deletedLog__${sheetId}`);
+    deletedLogDiv.empty();
+    if (delLog.length > 0) {
+        delLog.forEach((d) => {
             let msg = '№' + d.originalId + ' (' + d.author + '): ';
             if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
             else msg += 'Видалено підпункт';
-            deletedLog.append($('<div>').addClass('del-row').text(msg));
+            deletedLogDiv.append($('<div>').addClass('del-row').text(msg));
         });
-        $(`#deletedLogCount__${sheetId}`).text(`(${preservedData.deleted.length})`);
+        $(`#deletedLogCount__${sheetId}`).text(`(${delLog.length})`);
     } else {
-        deletedLog.append($('<div>').addClass('del-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Видалень немає'));
+        deletedLogDiv.append($('<div>').addClass('del-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Видалень немає'));
         $(`#deletedLogCount__${sheetId}`).text('(0)');
     }
     $(`#deletedLogDetails__${sheetId}`).show();
 
-    const cleanedLog = $(`#cleanedLog__${sheetId}`);
-    cleanedLog.empty();
+    const cleanedLogDiv = $(`#cleanedLog__${sheetId}`);
+    cleanedLogDiv.empty();
     if (cleaningLog.length > 0) {
         const table = $('<table>').addClass('clean-table');
         table.append(
@@ -362,10 +301,10 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
                 )
             );
         });
-        cleanedLog.append(table);
+        cleanedLogDiv.append(table);
         $(`#cleanedLogCount__${sheetId}`).text(`(${cleaningLog.length})`);
     } else {
-        cleanedLog.append($('<div>').addClass('clean-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Очищених фраз чи нікнеймів немає'));
+        cleanedLogDiv.append($('<div>').addClass('clean-empty-msg').css({ color: '#9ca3af', padding: '6px', 'font-style': 'italic' }).text('Очищених фраз чи нікнеймів немає'));
         $(`#cleanedLogCount__${sheetId}`).text('(0)');
     }
     $(`#cleanedLogDetails__${sheetId}`).show();
@@ -389,19 +328,19 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
         }
     });
 
-    // Збереження результатів процесингу Telegram в сховище per sheetId
-    SYH_STORAGE.set({
-        [`tg_finalResultHtml__${sheetId}`]: outputDiv.html(),
-        [`tg_statsHtml__${sheetId}`]: $(`#statsBar__${sheetId}`).html(),
-        [`tg_statsVisible__${sheetId}`]: $(`#statsBar__${sheetId}`).is(':visible'),
-        [`tg_deletedLogHtml__${sheetId}`]: deletedLog.html(),
-        [`tg_deletedLogCount__${sheetId}`]: preservedData.deleted.length,
-        [`tg_deletedLogDetailsVisible__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).is(':visible'),
-        [`tg_deletedLogDetailsOpen__${sheetId}`]: $(`#deletedLogDetails__${sheetId}`).attr('open') !== undefined,
-        [`tg_cleanedLogHtml__${sheetId}`]: cleanedLog.html(),
-        [`tg_cleanedLogCount__${sheetId}`]: cleaningLog.length,
-        [`tg_cleanedLogDetailsVisible__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
-        [`tg_cleanedLogDetailsOpen__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined
+    // Збереження результатів процесингу Telegram в сховище per sheetId за допомогою SheetStateService
+    SheetStateService.saveSheetState(sheetId, {
+        finalResultHtml: outputDiv.html(),
+        statsHtml: $(`#statsBar__${sheetId}`).html(),
+        statsVisible: $(`#statsBar__${sheetId}`).is(':visible'),
+        deletedLogHtml: deletedLog.html(),
+        deletedLogCount: preservedData.deleted.length,
+        deletedLogDetailsVisible: $(`#deletedLogDetails__${sheetId}`).is(':visible'),
+        deletedLogDetailsOpen: $(`#deletedLogDetails__${sheetId}`).attr('open') !== undefined,
+        cleanedLogHtml: cleanedLog.html(),
+        cleanedLogCount: cleaningLog.length,
+        cleanedLogDetailsVisible: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
+        cleanedLogDetailsOpen: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined
     });
 }
 

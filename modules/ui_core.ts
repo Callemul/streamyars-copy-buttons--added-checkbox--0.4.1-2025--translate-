@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { SYH_STATE } from './state';
-import { SYH_CONFIG } from './config';
+import { SYH_STATE, SyhState } from './state';
+import { SYH_CONFIG, SyhConfig } from './config';
+import { SYH_UI_STATE, SyhUiState } from './ui_state';
 import { 
     addButtonsToComment, 
     updateCommentVisuals, 
@@ -22,21 +23,8 @@ import {
 
 import type { PrayerItem } from './types';
 
-export interface SYH_UI_Core {
-    SELECTORS: Record<string, string> | null;
-    STATE: any;
-    activeFilter: string;
-    searchQuery: string;
-    prayersCache: PrayerItem[];
-    bannerActiveFilter: string;
-    bannerSearchQuery: string;
-    bannerCategoriesCache: Record<string, string>;
-    _filterBannersTimeout?: ReturnType<typeof setTimeout> | number;
-    _filterCommentsTimeout?: ReturnType<typeof setTimeout> | number;
-}
-
-export interface SyhUi extends SYH_UI_Core {
-    init(config?: any, state?: any): void;
+export interface SyhUi extends SyhUiState {
+    init(config?: SyhConfig, state?: SyhState): void;
     validateSelectorsSyntax(): void;
     restoreDomCheckboxes(): void;
 
@@ -63,31 +51,31 @@ import { SYH_BUS } from './event_bus';
 
 export function init(config?: SyhConfig, state?: SyhState): void {
     try {
-        SYH_UI.SELECTORS = config ? (config.SELECTORS as Record<string, string>) : (SYH_CONFIG.SELECTORS as Record<string, string>);
-        SYH_UI.STATE = state || SYH_STATE;
+        SYH_UI_STATE.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
+        SYH_UI_STATE.STATE = state || SYH_STATE;
         
-        if (SYH_UI.STATE) {
-            SYH_UI.STATE.onStateLoaded = () => SYH_UI.restoreDomCheckboxes();
+        if (SYH_UI_STATE.STATE) {
+            SYH_UI_STATE.STATE.onStateLoaded = () => restoreDomCheckboxes();
         }
 
-        SYH_UI.validateSelectorsSyntax();
+        validateSelectorsSyntax();
         
         SYH_STORAGE.getAsync<{ [STORAGE_KEYS.PRAYERS]?: PrayerItem[]; [STORAGE_KEYS.CATEGORIES]?: Record<string, string> }>([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES])
             .then((result) => {
-                SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
-                SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
+                SYH_UI_STATE.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
+                SYH_UI_STATE.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
             })
             .catch(e => console.error("[SYH UI] Error loading initial storage cache:", e));
 
         SYH_STORAGE.onChanged((changes: Record<string, { oldValue?: unknown; newValue?: unknown }>) => {
             try {
                 if (changes[STORAGE_KEYS.PRAYERS] && changes[STORAGE_KEYS.PRAYERS].newValue !== undefined) {
-                    SYH_UI.prayersCache = (changes[STORAGE_KEYS.PRAYERS].newValue as PrayerItem[]) || [];
-                    SYH_UI.filterStarredComments();
+                    SYH_UI_STATE.prayersCache = (changes[STORAGE_KEYS.PRAYERS].newValue as PrayerItem[]) || [];
+                    filterStarredComments();
                 }
                 if (changes[STORAGE_KEYS.CATEGORIES] && changes[STORAGE_KEYS.CATEGORIES].newValue !== undefined) {
-                    SYH_UI.bannerCategoriesCache = (changes[STORAGE_KEYS.CATEGORIES].newValue as Record<string, string>) || {};
-                    SYH_UI.filterBanners();
+                    SYH_UI_STATE.bannerCategoriesCache = (changes[STORAGE_KEYS.CATEGORIES].newValue as Record<string, string>) || {};
+                    filterBanners();
                 }
             } catch (e) {
                 console.error("[SYH] Помилка синхронізації сховища в UI:", e);
@@ -96,7 +84,7 @@ export function init(config?: SyhConfig, state?: SyhState): void {
 
         // Підписка на події від інших модулів через шину подій
         SYH_BUS.on('COMMENT_MARKED', (event) => {
-            SYH_UI.updateCommentVisuals(event.element, event.type);
+            updateCommentVisuals(event.element, event.type);
         });
 
     } catch (error) {
@@ -105,10 +93,10 @@ export function init(config?: SyhConfig, state?: SyhState): void {
 }
 
 export function validateSelectorsSyntax(): void {
-    if (!SYH_UI.SELECTORS) return;
+    if (!SYH_UI_STATE.SELECTORS) return;
     console.log("[SYH] Запуск синтаксичного сканування CSS-селекторів...");
-    for (const key in SYH_UI.SELECTORS) {
-        const selector = SYH_UI.SELECTORS[key];
+    for (const key in SYH_UI_STATE.SELECTORS) {
+        const selector = SYH_UI_STATE.SELECTORS[key];
         if (!selector) continue;
         try {
             document.querySelector(selector);
@@ -119,8 +107,8 @@ export function validateSelectorsSyntax(): void {
 }
 
 export function restoreDomCheckboxes(): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
-    const itemStates = SYH_UI.STATE?.itemStates || {};
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    const itemStates = SYH_UI_STATE.STATE?.itemStates || {};
     
     if (!selectors) {
         console.warn("[SYH_UI] Конфігурація SELECTORS ще не завантажена.");
@@ -153,18 +141,35 @@ export function restoreDomCheckboxes(): void {
 }
 
 export const SYH_UI: SyhUi = {
-    SELECTORS: null,
-    STATE: null,
-    activeFilter: 'all', 
-    searchQuery: '',     
-    prayersCache: [],
+    get SELECTORS() { return SYH_UI_STATE.SELECTORS; },
+    set SELECTORS(val) { SYH_UI_STATE.SELECTORS = val; },
 
-    bannerActiveFilter: 'all',
-    bannerSearchQuery: '',
-    bannerCategoriesCache: {},
+    get STATE() { return SYH_UI_STATE.STATE; },
+    set STATE(val) { SYH_UI_STATE.STATE = val; },
 
-    _filterBannersTimeout: undefined,
-    _filterCommentsTimeout: undefined,
+    get activeFilter() { return SYH_UI_STATE.activeFilter; },
+    set activeFilter(val) { SYH_UI_STATE.activeFilter = val; },
+
+    get searchQuery() { return SYH_UI_STATE.searchQuery; },
+    set searchQuery(val) { SYH_UI_STATE.searchQuery = val; },
+
+    get prayersCache() { return SYH_UI_STATE.prayersCache; },
+    set prayersCache(val) { SYH_UI_STATE.prayersCache = val; },
+
+    get bannerActiveFilter() { return SYH_UI_STATE.bannerActiveFilter; },
+    set bannerActiveFilter(val) { SYH_UI_STATE.bannerActiveFilter = val; },
+
+    get bannerSearchQuery() { return SYH_UI_STATE.bannerSearchQuery; },
+    set bannerSearchQuery(val) { SYH_UI_STATE.bannerSearchQuery = val; },
+
+    get bannerCategoriesCache() { return SYH_UI_STATE.bannerCategoriesCache; },
+    set bannerCategoriesCache(val) { SYH_UI_STATE.bannerCategoriesCache = val; },
+
+    get _filterBannersTimeout() { return SYH_UI_STATE._filterBannersTimeout; },
+    set _filterBannersTimeout(val) { SYH_UI_STATE._filterBannersTimeout = val; },
+
+    get _filterCommentsTimeout() { return SYH_UI_STATE._filterCommentsTimeout; },
+    set _filterCommentsTimeout(val) { SYH_UI_STATE._filterCommentsTimeout = val; },
 
     init,
     validateSelectorsSyntax,

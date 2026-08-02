@@ -1,15 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_CONFIG } from '../modules/config';
 import { SHEET_LABELS, SheetId } from '../modules/sheets';
-
-export interface StudioOverrideLogEntry {
-    timestamp: string;
-    channelKey: 'vp' | 'slovo' | 'unknown';
-    channelLabel: string;
-    videoTitle: string;
-    autoDetectedSheet: SheetId | null;
-    assignedSheet: SheetId;
-}
+import type { StudioOverrideLogEntry } from '../modules/types';
 
 interface OptionsState {
     newTitleSS: string;

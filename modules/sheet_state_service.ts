@@ -1,0 +1,276 @@
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
+import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine } from './telegram_parser';
+import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
+
+export interface SheetCounterStats {
+    leftPeople: number;
+    leftQuestions: number;
+    leftPrayers: number;
+    rightPeople: number;
+    rightQuestions: number;
+    rightPrayers: number;
+    totalPeople: number;
+    totalQuestions: number;
+    totalPrayers: number;
+}
+
+export interface SheetStateData {
+    oldList: string;
+    answered: string;
+    newTelegram: string;
+    finalResultHtml: string;
+    statsHtml: string;
+    statsVisible: boolean;
+    deletedLogHtml: string;
+    deletedLogCount: number;
+    deletedLogDetailsVisible: boolean;
+    deletedLogDetailsOpen: boolean;
+    cleanedLogHtml: string;
+    cleanedLogCount: number;
+    cleanedLogDetailsVisible: boolean;
+    cleanedLogDetailsOpen: boolean;
+    dividerPos: number;
+    ytCollected: YTCollectedItem[];
+}
+
+export interface ProcessedSheetResult {
+    questions: TelegramQuestionItem[];
+    prayers: TelegramQuestionItem[];
+    stats: {
+        oldPeople: number;
+        oldQuestionsTotal: number;
+        newLeftPeople: number;
+        newLeftQuestionsTotal: number;
+        newLeftPrayersTotal: number;
+        newYTPeople: number;
+        newYTQuestionsTotal: number;
+        newYTPrayersTotal: number;
+        delPeople: number;
+        delQuestionsTotal: number;
+        totalPeople: number;
+        totalQuestions: number;
+        totalPrayers: number;
+    };
+    deletedLog: DeletedLogEntry[];
+    cleaningLog: CleaningLogEntry[];
+}
+
+import type { TelegramQuestionItem, GroupedNewItem } from './telegram_parser';
+
+export class SheetStateService {
+    public static processSheetData(inputs: {
+        oldListText: string;
+        answeredInput: string;
+        telegramText: string;
+        ytItems: YTCollectedItem[];
+    }): ProcessedSheetResult {
+        const { oldListText, answeredInput, telegramText, ytItems } = inputs;
+        const answeredIds = answeredInput
+            .split(/[\s,]+/)
+            .map(s => parseFloat(s.trim()))
+            .filter(n => !isNaN(n));
+
+        const cleaningLog: CleaningLogEntry[] = [];
+        const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
+
+        let newQuestions: TelegramQuestionItem[];
+        let newPrayers: TelegramQuestionItem[] = [];
+
+        if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
+            const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
+            newQuestions = parsedNew.questions.map((q) => ({ ...q, source: 'new' as const }));
+            newPrayers = parsedNew.prayers.map((p) => ({ ...p, source: 'pray' as const }));
+        } else {
+            const parsedLineItems: GroupedNewItem[] = parseTelegramExportLineByLine(telegramText, cleaningLog);
+            newQuestions = parsedLineItems.map(item => ({ ...item, source: 'new' as const }));
+        }
+
+        const newYTQuestions: TelegramQuestionItem[] = [];
+        const newYTPrayers: TelegramQuestionItem[] = [];
+
+        ytItems.forEach((item: YTCollectedItem) => {
+            if (item.type === 'question') {
+                newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
+            } else if (item.type === 'prayer') {
+                newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
+            }
+        });
+
+        const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
+        const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
+
+        const oldPeople = preservedData.questions.length;
+        let oldQuestionsTotal = 0;
+        preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
+
+        const newLeftPeople = newQuestions.length;
+        let newLeftQuestionsTotal = 0;
+        newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
+        const newLeftPrayersTotal = newPrayers.length;
+
+        const newYTPeople = ytItems.length;
+        let newYTQuestionsTotal = 0;
+        newYTQuestions.forEach((q) => newYTQuestionsTotal += countQuestionsInText(q.text));
+        const newYTPrayersTotal = newYTPrayers.length;
+
+        let delPeople = 0;
+        let delQuestionsTotal = 0;
+        preservedData.deleted.forEach((d: DeletedLogEntry) => {
+            if (d.type === 'block') {
+                delPeople++;
+                delQuestionsTotal += d.count;
+            } else if (d.type === 'sub') {
+                delQuestionsTotal += d.count;
+            }
+        });
+
+        const totalPeople = oldPeople + newLeftPeople + newYTPeople;
+        const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
+        const totalPrayers = combinedPrayers.length;
+
+        return {
+            questions: combinedQuestions,
+            prayers: combinedPrayers,
+            stats: {
+                oldPeople,
+                oldQuestionsTotal,
+                newLeftPeople,
+                newLeftQuestionsTotal,
+                newLeftPrayersTotal,
+                newYTPeople,
+                newYTQuestionsTotal,
+                newYTPrayersTotal,
+                delPeople,
+                delQuestionsTotal,
+                totalPeople,
+                totalQuestions,
+                totalPrayers
+            },
+            deletedLog: preservedData.deleted,
+            cleaningLog
+        };
+    }
+
+    public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
+        const sheetKey = getSheetCollectedStorageKey(sheetId);
+        const keysToLoad = [
+            `tg_oldList__${sheetId}`,
+            `tg_answered__${sheetId}`,
+            `tg_newTelegram__${sheetId}`,
+            `tg_finalResultHtml__${sheetId}`,
+            `tg_statsHtml__${sheetId}`,
+            `tg_statsVisible__${sheetId}`,
+            `tg_deletedLogHtml__${sheetId}`,
+            `tg_deletedLogCount__${sheetId}`,
+            `tg_deletedLogDetailsVisible__${sheetId}`,
+            `tg_deletedLogDetailsOpen__${sheetId}`,
+            `tg_cleanedLogHtml__${sheetId}`,
+            `tg_cleanedLogCount__${sheetId}`,
+            `tg_cleanedLogDetailsVisible__${sheetId}`,
+            `tg_cleanedLogDetailsOpen__${sheetId}`,
+            `syh:popup:divider_pos:${sheetId}`,
+            sheetKey
+        ];
+
+        if (sheetId === 'vp_ss') {
+            keysToLoad.push(STORAGE_KEYS.YT_COLLECTED);
+        }
+
+        const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToLoad);
+        let ytCollected: YTCollectedItem[] = res[sheetKey] || [];
+        if (sheetId === 'vp_ss') {
+            const oldItems: YTCollectedItem[] = res[STORAGE_KEYS.YT_COLLECTED] || [];
+            ytCollected = [...oldItems, ...ytCollected];
+        }
+
+        return {
+            oldList: res[`tg_oldList__${sheetId}`] || '',
+            answered: res[`tg_answered__${sheetId}`] || '',
+            newTelegram: res[`tg_newTelegram__${sheetId}`] || '',
+            finalResultHtml: res[`tg_finalResultHtml__${sheetId}`] || '',
+            statsHtml: res[`tg_statsHtml__${sheetId}`] || '',
+            statsVisible: !!res[`tg_statsVisible__${sheetId}`],
+            deletedLogHtml: res[`tg_deletedLogHtml__${sheetId}`] || '',
+            deletedLogCount: res[`tg_deletedLogCount__${sheetId}`] || 0,
+            deletedLogDetailsVisible: !!res[`tg_deletedLogDetailsVisible__${sheetId}`],
+            deletedLogDetailsOpen: !!res[`tg_deletedLogDetailsOpen__${sheetId}`],
+            cleanedLogHtml: res[`tg_cleanedLogHtml__${sheetId}`] || '',
+            cleanedLogCount: res[`tg_cleanedLogCount__${sheetId}`] || 0,
+            cleanedLogDetailsVisible: !!res[`tg_cleanedLogDetailsVisible__${sheetId}`],
+            cleanedLogDetailsOpen: !!res[`tg_cleanedLogDetailsOpen__${sheetId}`],
+            dividerPos: res[`syh:popup:divider_pos:${sheetId}`] || 50,
+            ytCollected
+        };
+    }
+
+    public static async saveSheetState(sheetId: string, updates: Record<string, any>): Promise<void> {
+        const storageObj: Record<string, any> = {};
+        for (const [key, value] of Object.entries(updates)) {
+            storageObj[`tg_${key}__${sheetId}`] = value;
+        }
+        await SYH_STORAGE.setAsync(storageObj);
+    }
+
+    public static async clearSheetState(sheetId: string): Promise<void> {
+        const keysToRemove = [
+            `tg_oldList__${sheetId}`,
+            `tg_answered__${sheetId}`,
+            `tg_newTelegram__${sheetId}`,
+            `tg_finalResultHtml__${sheetId}`,
+            `tg_statsHtml__${sheetId}`,
+            `tg_statsVisible__${sheetId}`,
+            `tg_deletedLogHtml__${sheetId}`,
+            `tg_deletedLogCount__${sheetId}`,
+            `tg_deletedLogDetailsVisible__${sheetId}`,
+            `tg_deletedLogDetailsOpen__${sheetId}`,
+            `tg_cleanedLogHtml__${sheetId}`,
+            `tg_cleanedLogCount__${sheetId}`,
+            `tg_cleanedLogDetailsVisible__${sheetId}`,
+            `tg_cleanedLogDetailsOpen__${sheetId}`
+        ];
+        await SYH_STORAGE.removeAsync(keysToRemove);
+    }
+
+    public static computeSheetCounters(telegramText: string, ytItems: YTCollectedItem[]): SheetCounterStats {
+        let leftPeople = 0;
+        let leftQuestions = 0;
+        let leftPrayers = 0;
+
+        if (telegramText && telegramText.trim()) {
+            if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
+                const parsed = parseAndFilterOldList(telegramText, []);
+                leftPeople = parsed.questions.length;
+                parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
+                leftPrayers = parsed.prayers.length;
+            } else {
+                const items = parseTelegramExportLineByLine(telegramText);
+                leftPeople = items.length;
+                items.forEach((q) => leftQuestions += countQuestionsInText(q.text));
+            }
+        }
+
+        let rightPeople = ytItems.length;
+        let rightQuestions = 0;
+        let rightPrayers = 0;
+
+        ytItems.forEach(item => {
+            if (item.type === 'question') {
+                rightQuestions += countQuestionsInText(item.text);
+            } else if (item.type === 'prayer') {
+                rightPrayers += 1;
+            }
+        });
+
+        return {
+            leftPeople,
+            leftQuestions,
+            leftPrayers,
+            rightPeople,
+            rightQuestions,
+            rightPrayers,
+            totalPeople: leftPeople + rightPeople,
+            totalQuestions: leftQuestions + rightQuestions,
+            totalPrayers: leftPrayers + rightPrayers
+        };
+    }
+}

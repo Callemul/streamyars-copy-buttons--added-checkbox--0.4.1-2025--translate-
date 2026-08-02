@@ -240,6 +240,21 @@ export function startAntiAfk(
     }
 }
 
+import type { ISyhPlugin } from './plugin_registry';
+
+export const SYH_ANTI_AFK_PLUGIN: ISyhPlugin = {
+    id: 'syh_anti_afk',
+    name: 'StreamYard Anti-AFK Defender',
+    enabled: true,
+    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
+    init: () => {
+        startAntiAfk();
+    },
+    destroy: () => {
+        stopAntiAfk();
+    }
+};
+
 export const SYH_ANTI_AFK = {
     checkAndClickAntiAfk,
     simulateUserActivity,

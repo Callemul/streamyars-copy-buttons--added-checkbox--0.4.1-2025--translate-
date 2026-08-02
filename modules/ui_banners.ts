@@ -1,11 +1,11 @@
-import { SYH_UI } from './ui_core';
+import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_STATE } from './state';
 import { SYH_EVENT_BANNERS } from './event_banners';
 
 export function addButtonsToBanner(bannerNode: Element): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const bannerWrap = bannerNode.querySelector(selectors.bannerWrap);
     if (bannerWrap && !bannerWrap.querySelector('.syh-banner-controls')) {
         const buttonsHTML = `
@@ -21,7 +21,7 @@ export function addButtonsToBanner(bannerNode: Element): void {
         bannerWrap.insertAdjacentHTML('beforeend', buttonsHTML);
         const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
         
-        const state = SYH_UI.STATE || SYH_STATE;
+        const state = SYH_UI_STATE.STATE || SYH_STATE;
         if (state && typeof state.getState === 'function' && state.getState(bannerText)) {
             const checkbox = bannerWrap.querySelector<HTMLInputElement>('.syh-checkbox');
             if (checkbox) checkbox.checked = true;
@@ -41,7 +41,7 @@ export function updateBannerVisuals(bannerBlock: Element, type: string): void {
 
 export function applySavedBannerLabels(bannerNode: Element, text: string): void {
     if (!text || !text.trim()) return;
-    const type = SYH_UI.bannerCategoriesCache[text] || 'none';
+    const type = SYH_UI_STATE.bannerCategoriesCache[text] || 'none';
     updateBannerVisuals(bannerNode, type);
 }
 
@@ -67,22 +67,22 @@ export function addBannerHeaderControls(headerNode: Element): void {
         const searchContainerHTML = `
             <div id="syh-banner-search-container" style="padding: 10px 15px 5px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eee; background: #fff; width: 100%; box-sizing: border-box;">
                 <div class="syh-banner-search-wrapper">
-                    <input type="text" id="syh-banner-search" value="${SYH_UI.bannerSearchQuery || ''}" placeholder="🔍 Пошук банерів..." aria-label="Пошук банерів" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
-                    <button id="syh-clear-banner-search-btn" class="syh-clear-banner-search" style="display: ${SYH_UI.bannerSearchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук банерів">✕</button>
+                    <input type="text" id="syh-banner-search" value="${SYH_UI_STATE.bannerSearchQuery || ''}" placeholder="🔍 Пошук банерів..." aria-label="Пошук банерів" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                    <button id="syh-clear-banner-search-btn" class="syh-clear-banner-search" style="display: ${SYH_UI_STATE.bannerSearchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук банерів">✕</button>
                     <button id="syh-scroll-to-active-banner-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до активного банера на екрані" aria-label="Повернутися до активного банера на екрані">🎯</button>
                 </div>
                 
                 <div role="tablist" aria-label="Фільтри категорій банерів" style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
-                    <button role="tab" aria-selected="${SYH_UI.bannerActiveFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі банери" class="syh-banner-filter-btn ${SYH_UI.bannerActiveFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-banner-filter-all">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі банери" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-banner-filter-all">
                         <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.bannerActiveFilter === 'stream' ? 'true' : 'false'}" aria-label="Показати банери ефіру" class="syh-banner-filter-btn ${SYH_UI.bannerActiveFilter === 'stream' ? 'active' : ''}" data-filter="stream" id="syh-banner-filter-stream">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'stream' ? 'true' : 'false'}" aria-label="Показати банери ефіру" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'stream' ? 'active' : ''}" data-filter="stream" id="syh-banner-filter-stream">
                         <span>🎙️</span><span class="tab-text">Ефір</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.bannerActiveFilter === 'audience' ? 'true' : 'false'}" aria-label="Показати банери глядачів" class="syh-banner-filter-btn ${SYH_UI.bannerActiveFilter === 'audience' ? 'active' : ''}" data-filter="audience" id="syh-banner-filter-audience">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'audience' ? 'true' : 'false'}" aria-label="Показати банери глядачів" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'audience' ? 'active' : ''}" data-filter="audience" id="syh-banner-filter-audience">
                         <span>❓</span><span class="tab-text">Глядачі</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.bannerActiveFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитовні банери" class="syh-banner-filter-btn ${SYH_UI.bannerActiveFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-banner-filter-prayer">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитовні банери" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-banner-filter-prayer">
                         <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
                     </button>
                 </div>
@@ -108,7 +108,7 @@ export function addBannerHeaderControls(headerNode: Element): void {
 }
 
 export function updateMasterCheckboxState(): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const masterCheckbox = document.querySelector<HTMLInputElement>('.syh-master-checkbox');
     if (!masterCheckbox) return;
 
@@ -140,13 +140,13 @@ export function updateMasterCheckboxState(): void {
 }
 
 export function filterBanners(): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
     const bannerList = document.querySelector<HTMLElement>(bannerListSelector);
     if (!bannerList) return;
 
-    const activeFilter = SYH_UI.bannerActiveFilter || 'all';
-    const searchQuery = SYH_UI.bannerSearchQuery || '';
+    const activeFilter = SYH_UI_STATE.bannerActiveFilter || 'all';
+    const searchQuery = SYH_UI_STATE.bannerSearchQuery || '';
 
     const safeTextUpdate = (selector: string, newText: string) => {
         const el = document.querySelector(selector);
@@ -166,7 +166,7 @@ export function filterBanners(): void {
         if (!bannerWrap) return;
 
         const originalText = bannerWrap.querySelector(selectors.bannerText)?.textContent || '';
-        const commentType = SYH_UI.bannerCategoriesCache[originalText] || 'none';
+        const commentType = SYH_UI_STATE.bannerCategoriesCache[originalText] || 'none';
         
         updateBannerVisuals(bannerWrap, commentType);
         

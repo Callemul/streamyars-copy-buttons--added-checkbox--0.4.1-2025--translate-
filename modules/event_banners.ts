@@ -1,20 +1,32 @@
-import { SYH_CONFIG } from './config';
-import { SYH_STATE } from './state';
-import { SYH_UTILS } from './utils';
-import { SYH_UI } from './ui_core';
-import { SYH_BANNER_CREATOR } from './banner_creator';
+import { SYH_CONFIG, SyhConfig, SelectorValue } from './config';
+import { SYH_STATE, SyhState } from './state';
+import { SYH_UTILS, SyhUtils } from './utils';
+import { SYH_UI, SyhUi } from './ui_core';
+import { SYH_BANNER_CREATOR, SyhBannerCreator } from './banner_creator';
+import type { ISyhPlugin } from './plugin_registry';
 
 export interface SyhEventBanners {
-    SELECTORS: Record<string, string> | null;
-    STATE: any;
-    UTILS: any;
-    UI: any;
-    BANNER_CREATOR: any;
+    SELECTORS: Record<string, SelectorValue> | null;
+    STATE: SyhState | null;
+    UTILS: SyhUtils | null;
+    UI: SyhUi | null;
+    BANNER_CREATOR: SyhBannerCreator | null;
 
-    init(config?: any, state?: any, utils?: any, ui?: any, bannerCreator?: any): void;
+    init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void;
     bindEvents(): void;
     bindBannersFilterControls(): void;
 }
+
+export const SYH_EVENT_BANNERS_PLUGIN: ISyhPlugin = {
+    id: 'syh_event_banners',
+    name: 'StreamYard Banners Handler',
+    enabled: true,
+    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
+    init: () => {
+        SYH_EVENT_BANNERS.init();
+        SYH_EVENT_BANNERS.bindEvents();
+    }
+};
 
 export const SYH_EVENT_BANNERS: SyhEventBanners = {
     SELECTORS: null,
@@ -23,7 +35,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
     UI: null,
     BANNER_CREATOR: null,
 
-    init: function(config?: any, state?: any, utils?: any, ui?: any, bannerCreator?: any): void {
+    init: function(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void {
         this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
         this.STATE = state || SYH_STATE;
         this.UTILS = utils || SYH_UTILS;
@@ -38,7 +50,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
         document.addEventListener('contextmenu', function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (!target || !self.SELECTORS?.bannerBlock) return;
-            const bannerBlock = target.closest(self.SELECTORS.bannerBlock);
+            const bannerBlock = target.closest(self.SELECTORS.bannerBlock as string);
             if (bannerBlock) {
                 // Запобігаємо перехопленню, якщо клікнули на текстове поле, чекбокс або кастомні кнопки керування всередині банера
                 const isInputOrCustom = target.closest('input, textarea, .syh-button');
@@ -111,8 +123,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
                     };
 
                     checkedBanners.forEach((checkbox) => {
-                        const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
-                        const textKey = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                        const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
+                        const textKey = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
                         const commentType = (self.UI && self.UI.bannerCategoriesCache) ? (self.UI.bannerCategoriesCache[textKey] || 'none') : 'none';
                         
                         if (commentType === activeFilter) {
@@ -154,8 +166,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
                 if (proceed) {
                     checkedBanners.forEach((checkbox) => {
-                        const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
-                        const deleteButton = bannerBlock?.querySelector(self.SELECTORS?.bannerDeleteButton || '') as HTMLElement | null;
+                        const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
+                        const deleteButton = bannerBlock?.querySelector((self.SELECTORS?.bannerDeleteButton as string) || '') as HTMLElement | null;
                         if (deleteButton) deleteButton.click();
                     });
                 }
@@ -163,8 +175,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             }
 
             if (type === 'banner' && action === 'copy-banner') {
-                const bannerBlock = button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                const bannerBlock = button.closest((self.SELECTORS?.bannerBlock as string) || '');
+                const bannerText = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
                 const utils = self.UTILS || SYH_UTILS;
                 utils.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
                 const checkbox = bannerBlock?.querySelector<HTMLInputElement>('.syh-checkbox');
@@ -176,8 +188,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             }
 
             if (action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
-                const bannerBlock = button.closest(self.SELECTORS?.bannerBlock || '');
-                const bannerText = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                const bannerBlock = button.closest((self.SELECTORS?.bannerBlock as string) || '');
+                const bannerText = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
                 const targetType = action.replace('mark-', '');
                 
                 const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
@@ -196,8 +208,8 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             const target = e.target as Element | null;
             const checkbox = target?.closest('.syh-checkbox[data-type="banner"]') as HTMLInputElement | null;
             if (checkbox) {
-                const bannerBlock = checkbox.closest(self.SELECTORS?.bannerBlock || '');
-                const textKey = bannerBlock?.querySelector(self.SELECTORS?.bannerText || '')?.textContent || '';
+                const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
+                const textKey = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
                 if (self.STATE) {
                     self.STATE.updateState(textKey, checkbox.checked);
                 }
@@ -209,7 +221,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             if (masterCheckbox) {
                 const isChecked = masterCheckbox.checked;
                 masterCheckbox.indeterminate = false;
-                const bannerBlocks = document.querySelectorAll(self.SELECTORS?.bannerBlock || '');
+                const bannerBlocks = document.querySelectorAll((self.SELECTORS?.bannerBlock as string) || '');
                 bannerBlocks.forEach(block => {
                     const cb = block.querySelector('.syh-checkbox[data-type="banner"]') as HTMLInputElement | null;
                     if (cb) {

@@ -1,6 +1,7 @@
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_PARSERS } from './parsers';
+import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
 
 export interface BannerItem {
     text: string;
@@ -75,7 +76,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
                 }
             }
 
-            if (/памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+            if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
                 this.log("Формат: Суботня Школа (без нумерації)");
                 blockQuestions = this.PARSERS.parseSabbathSchoolUnnumberedQuestions(text);
                 blockCategory = "stream"; 
@@ -130,7 +131,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
                 await new Promise(r => setTimeout(r, pauseTime));
                 
                 // Очищення дужок з авторами, навіть якщо дужка не закрита (наприклад, " ( Опарин , Молчанов")
-                const cleanQuestion = item.text.replace(/\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi, "").trim();
+                const cleanQuestion = item.text.replace(SPEAKER_SUFFIX_CLEANUP_REGEX, "").trim();
 
                 await this.createSingleBanner(cleanQuestion);
                 

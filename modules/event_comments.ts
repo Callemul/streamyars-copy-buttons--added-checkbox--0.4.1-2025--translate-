@@ -1,10 +1,11 @@
-import { SYH_CONFIG } from './config';
-import { SYH_STATE } from './state';
-import { SYH_UTILS } from './utils';
-import { SYH_UI } from './ui_core';
+import { SYH_CONFIG, SyhConfig, SelectorValue } from './config';
+import { SYH_STATE, SyhState } from './state';
+import { SYH_UTILS, SyhUtils } from './utils';
+import { SYH_UI, SyhUi } from './ui_core';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
+import type { ISyhPlugin } from './plugin_registry';
 
 export interface PrayerRecord {
     author: string;
@@ -16,20 +17,31 @@ export interface PrayerRecord {
 }
 
 export interface SyhEventComments {
-    SELECTORS: Record<string, string> | null;
-    STATE: any;
-    UTILS: any;
-    UI: any;
+    SELECTORS: Record<string, SelectorValue> | null;
+    STATE: SyhState | null;
+    UTILS: SyhUtils | null;
+    UI: SyhUi | null;
     TIMINGS: Record<string, number> | null;
     isBound: boolean;
     autoHealObserver?: MutationObserver;
     autoHealContainer?: Element;
 
-    init(config?: any, state?: any, utils?: any, ui?: any): void;
+    init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi): void;
     bindEvents(): void;
     saveToDatabase(author: string, text: string, type: string, icon: string): void;
     removeFromDatabase(text: string): void;
 }
+
+export const SYH_EVENT_COMMENTS_PLUGIN: ISyhPlugin = {
+    id: 'syh_event_comments',
+    name: 'StreamYard Comments Handler',
+    enabled: true,
+    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
+    init: () => {
+        SYH_EVENT_COMMENTS.init();
+        SYH_EVENT_COMMENTS.bindEvents();
+    }
+};
 
 export const SYH_EVENT_COMMENTS: SyhEventComments = {
     SELECTORS: null,
@@ -40,7 +52,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     TIMINGS: null,
     isBound: false,
 
-    init: function(config?: any, state?: any, utils?: any, ui?: any): void {
+    init: function(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi): void {
         this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
         this.TIMINGS = config ? config.TIMINGS : (SYH_CONFIG ? SYH_CONFIG.TIMINGS : null);
         this.STATE = state || SYH_STATE;
@@ -132,6 +144,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
 
         let rafScheduled = false;
         self.autoHealObserver = new MutationObserver(() => {
+            if (document.hidden) return;
             checkAndReattachAutoHeal();
             if (!rafScheduled) {
                 rafScheduled = true;

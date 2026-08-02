@@ -7,16 +7,17 @@ import './modules/ui_comments';
 import './modules/ui_banners';
 import { SYH_PARSERS } from './modules/parsers';
 import { SYH_BANNER_CREATOR } from './modules/banner_creator';
-import { SYH_EVENT_COMMENTS } from './modules/event_comments';
-import { SYH_EVENT_BANNERS } from './modules/event_banners';
-import { SYH_VIDEO_COPIER } from './modules/video_copier';
+import { SYH_EVENT_COMMENTS, SYH_EVENT_COMMENTS_PLUGIN } from './modules/event_comments';
+import { SYH_EVENT_BANNERS, SYH_EVENT_BANNERS_PLUGIN } from './modules/event_banners';
+import { SYH_VIDEO_COPIER, SYH_VIDEO_COPIER_PLUGIN } from './modules/video_copier';
 import { SYH_STATS_TRACKER } from './modules/stats_tracker';
 import { SYH_STATS_EXPORTER } from './modules/stats_exporter';
 import { SYH_INFO_MODAL } from './modules/info_modal';
 import { SYH_I18N } from './modules/i18n';
-import { SYH_ANTI_AFK } from './modules/anti_afk';
+import { SYH_ANTI_AFK, SYH_ANTI_AFK_PLUGIN } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 import { SYH_MESSAGING } from './modules/messaging';
+import { SYH_PLUGINS } from './modules/plugin_registry';
 
 (() => {
     'use strict';
@@ -35,11 +36,6 @@ import { SYH_MESSAGING } from './modules/messaging';
 
     
     const { SELECTORS, TIMINGS } = SYH_CONFIG;
-
-    // --- ANTI-AFK (АВТОМАТИЧНЕ ЗАКРИТТЯ ВІКНА ТАЙМАУТУ) ---
-    function startAntiAfk(): void {
-        SYH_ANTI_AFK.startAntiAfk(SYH_CONFIG, SYH_STORAGE, SYH_I18N);
-    }
 
     import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
@@ -82,16 +78,18 @@ import { SYH_MESSAGING } from './modules/messaging';
         SYH_UI.init(SYH_CONFIG, SYH_STATE);
         SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
         
-        SYH_EVENT_COMMENTS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI);
-        SYH_EVENT_BANNERS.init(SYH_CONFIG, SYH_STATE, SYH_UTILS, SYH_UI, SYH_BANNER_CREATOR);
         SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
         SYH_COMMENT_ASSISTANT.processAllComments();
 
-        if (window.SYH_VIDEO_COPIER) window.SYH_VIDEO_COPIER.init();
-        if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
+        // Реєстрація та автоматичний запуск плагінів через SYH_PLUGINS
+        SYH_PLUGINS.register(SYH_EVENT_COMMENTS_PLUGIN);
+        SYH_PLUGINS.register(SYH_EVENT_BANNERS_PLUGIN);
+        SYH_PLUGINS.register(SYH_ANTI_AFK_PLUGIN);
+        SYH_PLUGINS.register(SYH_VIDEO_COPIER_PLUGIN);
 
-        SYH_EVENT_COMMENTS.bindEvents();
-        SYH_EVENT_BANNERS.bindEvents();
+        SYH_PLUGINS.initSupportedPlugins();
+
+        if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
 
         // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі через SYH_MESSAGING
         SYH_MESSAGING.onMessage((message) => {
@@ -114,8 +112,7 @@ import { SYH_MESSAGING } from './modules/messaging';
             }
         });
 
-        // Запуск захисту від AFK
-        startAntiAfk();
+
 
         document.querySelectorAll(SELECTORS.commentBlock).forEach((el) => SYH_UI.addButtonsToComment(el as HTMLElement));
         document.querySelectorAll(SELECTORS.bannerBlock).forEach((el) => SYH_UI.addButtonsToBanner(el as HTMLElement));

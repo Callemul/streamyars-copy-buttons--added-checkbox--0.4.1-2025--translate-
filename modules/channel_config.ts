@@ -124,4 +124,7 @@ export function matchCategory(videoTitle: string, channelKey: ChannelKey): Sheet
     return CHANNEL_REGISTRY.matchCategory(videoTitle, channelKey);
 }
 
+export const SABBATH_SCHOOL_KEYWORDS_REGEX = /памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i;
+export const SPEAKER_SUFFIX_CLEANUP_REGEX = /\s*\(\s*(?:Опарин|Молчанов|Василенко|Жаловага|Молчанів|Опарін).*?$/gi;
+
 // Pure ESM Export - Window pollution removed

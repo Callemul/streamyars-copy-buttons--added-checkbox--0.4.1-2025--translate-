@@ -1,4 +1,5 @@
 import { SYH_CONFIG } from './config';
+import { SABBATH_SCHOOL_KEYWORDS_REGEX } from './channel_config';
 
 export interface GroupedQuestion {
     number: string;
@@ -107,7 +108,7 @@ export const SYH_PARSERS: SyhParsers = {
         const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
         const maxLen = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
         
-        const startIndex = lines.findIndex(l => /памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i.test(l));
+        const startIndex = lines.findIndex(l => SABBATH_SCHOOL_KEYWORDS_REGEX.test(l));
         if (startIndex === -1) return [];
         
         const questionLines = lines.slice(startIndex);

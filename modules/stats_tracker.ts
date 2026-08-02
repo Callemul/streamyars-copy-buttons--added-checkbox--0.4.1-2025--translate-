@@ -172,10 +172,17 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
             if (self.pendingRAF !== null) return;
             self.pendingRAF = requestAnimationFrame(() => {
                 self.pendingRAF = null;
-                injectHeaderButtons();
+                if (!document.getElementById('syh-header-controls')) {
+                    injectHeaderButtons();
+                }
             });
         });
-        self.observer.observe(document.body, { childList: true, subtree: true });
+
+        const targetNode = document.querySelector('[data-testid="header-center"]')?.parentElement
+            || document.querySelector('header')
+            || document.body;
+
+        self.observer.observe(targetNode, { childList: true, subtree: true });
     },
 
     restoreButtonStates: function(btnQ: HTMLElement, btnP: HTMLElement): void {

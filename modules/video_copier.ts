@@ -11,6 +11,18 @@ export interface SyhVideoCopier {
     downloadAllFreshVideos(): Promise<void>;
 }
 
+import type { ISyhPlugin } from './plugin_registry';
+
+export const SYH_VIDEO_COPIER_PLUGIN: ISyhPlugin = {
+    id: 'syh_video_copier',
+    name: 'StreamYard Video Copier & Downloader',
+    enabled: true,
+    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
+    init: () => {
+        SYH_VIDEO_COPIER.init();
+    }
+};
+
 export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     init: function(): void {
         this.startObserver();
@@ -19,6 +31,7 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     startObserver: function(): void {
         let timeoutId: ReturnType<typeof setTimeout> | null = null;
         const observer = new MutationObserver(() => {
+            if (document.hidden) return;
             // ФІКС ПРОДУКТИВНОСТІ: Дебаунс 200мс для запобігання перевантаження CPU при частих мутаціях DOM
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
@@ -29,7 +42,11 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
             }, 200);
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        const targetNode = document.querySelector('#app')
+            || document.querySelector('#root')
+            || document.body;
+
+        observer.observe(targetNode, { childList: true, subtree: true });
     },
 
     // --- КНОПКА 1: Біля заголовка H2 (на сторінці одного відео) ---

@@ -1,10 +1,11 @@
-import { SYH_UI, PrayerItem } from './ui_core';
+import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_STATE } from './state';
+import type { PrayerItem } from './types';
 
 export function addButtonsToComment(commentNode: Element): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const targetContainer = commentNode.querySelector(selectors.commentButtonContainer);
     if (targetContainer && !targetContainer.querySelector('.syh-custom-buttons-comment')) {
         const buttonsHTML = `
@@ -19,7 +20,7 @@ export function addButtonsToComment(commentNode: Element): void {
         targetContainer.insertAdjacentHTML('beforeend', buttonsHTML);
         
         const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
-        const state = SYH_UI.STATE || SYH_STATE;
+        const state = SYH_UI_STATE.STATE || SYH_STATE;
         
         if (state && typeof state.getState === 'function' && state.getState(commentText)) {
             const checkbox = targetContainer.querySelector<HTMLInputElement>('.syh-checkbox');
@@ -42,7 +43,7 @@ export function updateCommentVisuals(commentWrap: Element, type: string): void {
 export function applySavedLabels(commentNode: Element, text: string): void {
     if (!text || !text.trim()) return; 
     
-    const found = SYH_UI.prayersCache.find((item: PrayerItem) => item.text === text);
+    const found = SYH_UI_STATE.prayersCache.find((item: PrayerItem) => item.text === text);
     const type = found ? found.type : 'none';
     updateCommentVisuals(commentNode, type);
 }
@@ -52,22 +53,22 @@ export function addStarredTabControls(starredHeaderNode: Element): void {
         const controlsHTML = `
             <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                 <div class="syh-search-wrapper">
-                    <input type="text" id="syh-starred-search" value="${SYH_UI.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
-                    <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${SYH_UI.searchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук коментарів">✕</button>
+                    <input type="text" id="syh-starred-search" value="${SYH_UI_STATE.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                    <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${SYH_UI_STATE.searchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук коментарів">✕</button>
                     <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані" aria-label="Повернутися до коментаря на екрані">🎯</button>
                 </div>
                 
                 <div role="tablist" aria-label="Фільтри коментарів" style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
-                    <button role="tab" aria-selected="${SYH_UI.activeFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі коментарі" class="syh-filter-btn ${SYH_UI.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі коментарі" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
                         <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.activeFilter === 'question' ? 'true' : 'false'}" aria-label="Показати питання" class="syh-filter-btn ${SYH_UI.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'question' ? 'true' : 'false'}" aria-label="Показати питання" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
                         <span>❓</span><span class="tab-text">Питання</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.activeFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитви" class="syh-filter-btn ${SYH_UI.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитви" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
                         <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
                     </button>
-                    <button role="tab" aria-selected="${SYH_UI.activeFilter === 'other' ? 'true' : 'false'}" aria-label="Показати інші коментарі" class="syh-filter-btn ${SYH_UI.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
+                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'other' ? 'true' : 'false'}" aria-label="Показати інші коментарі" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
                         <span>📝</span><span class="tab-text">Інші</span><span class="tab-count"></span>
                     </button>
                 </div>
@@ -76,7 +77,7 @@ export function addStarredTabControls(starredHeaderNode: Element): void {
         
         starredHeaderNode.innerHTML = controlsHTML;
 
-        const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+        const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
 
         if (!document.querySelector('#syh-empty-state-msg')) {
             const starredList = document.querySelector(selectors.starredList);
@@ -101,8 +102,8 @@ export function bindStarredControls(): void {
 
     if (searchInput) {
         searchInput.oninput = function() {
-            SYH_UI.searchQuery = searchInput.value.toLowerCase();
-            if (clearBtn) clearBtn.style.display = SYH_UI.searchQuery ? 'flex' : 'none';
+            SYH_UI_STATE.searchQuery = searchInput.value.toLowerCase();
+            if (clearBtn) clearBtn.style.display = SYH_UI_STATE.searchQuery ? 'flex' : 'none';
             filterStarredComments();
         };
     }
@@ -110,7 +111,7 @@ export function bindStarredControls(): void {
     if (clearBtn) {
         clearBtn.onclick = function() {
             if (searchInput) searchInput.value = '';
-            SYH_UI.searchQuery = '';
+            SYH_UI_STATE.searchQuery = '';
             clearBtn.style.display = 'none';
             filterStarredComments();
         };
@@ -129,7 +130,7 @@ export function bindStarredControls(): void {
         if (target?.closest('#syh-empty-clear-link')) {
             e.preventDefault();
             if (searchInput) searchInput.value = '';
-            SYH_UI.searchQuery = '';
+            SYH_UI_STATE.searchQuery = '';
             if (clearBtn) clearBtn.style.display = 'none';
             filterStarredComments();
             return;
@@ -153,10 +154,10 @@ export function bindStarredControls(): void {
             filterBtn.classList.add('active');
             filterBtn.setAttribute('aria-selected', 'true');
             
-            SYH_UI.activeFilter = filterBtn.dataset.filter || 'all';
+            SYH_UI_STATE.activeFilter = filterBtn.dataset.filter || 'all';
             filterStarredComments();
 
-            if (SYH_UI.searchQuery && searchInput) {
+            if (SYH_UI_STATE.searchQuery && searchInput) {
                 searchInput.classList.remove('syh-search-pulse');
                 void searchInput.offsetWidth;
                 searchInput.classList.add('syh-search-pulse');
@@ -166,12 +167,12 @@ export function bindStarredControls(): void {
 }
 
 export function filterStarredComments(): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const commentList = document.querySelector<HTMLElement>(selectors.starredList);
     if (!commentList) return;
 
-    const activeFilter = SYH_UI.activeFilter;
-    const searchQuery = SYH_UI.searchQuery;
+    const activeFilter = SYH_UI_STATE.activeFilter;
+    const searchQuery = SYH_UI_STATE.searchQuery;
 
     const safeHtmlUpdate = (el: Element | null, newHtml: string) => {
         if (el && el.innerHTML !== newHtml) el.innerHTML = newHtml;
@@ -184,7 +185,7 @@ export function filterStarredComments(): void {
     let sortedTexts: string[] = [];
     let grouped: Record<string, string[]> = {};
     
-    SYH_UI.prayersCache.forEach((p: PrayerItem) => {
+    SYH_UI_STATE.prayersCache.forEach((p: PrayerItem) => {
         if (activeFilter === 'prayer' && p.type !== 'prayer') return;
         if (activeFilter === 'question' && p.type !== 'question') return;
         if (activeFilter === 'other') return; 
@@ -217,7 +218,7 @@ export function filterStarredComments(): void {
         const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
         const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
         
-        const foundInCache = SYH_UI.prayersCache.find((item: PrayerItem) => item.text === originalText);
+        const foundInCache = SYH_UI_STATE.prayersCache.find((item: PrayerItem) => item.text === originalText);
         const commentType = foundInCache ? foundInCache.type : 'none';
         
         updateCommentVisuals(commentWrap, commentType);
@@ -262,8 +263,8 @@ export function filterStarredComments(): void {
     if (countAbsolute.other === 0) {
         if (otherTabBtn && otherTabBtn.style.display !== 'none') otherTabBtn.style.display = 'none';
         
-        if (SYH_UI.activeFilter === 'other') {
-            SYH_UI.activeFilter = 'all';
+        if (SYH_UI_STATE.activeFilter === 'other') {
+            SYH_UI_STATE.activeFilter = 'all';
             document.querySelectorAll('.syh-filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('#syh-comment-filter-all')?.classList.add('active');
             return filterStarredComments(); 
@@ -330,7 +331,7 @@ export function filterStarredComments(): void {
 }
 
 export function scrollToActiveComment(): void {
-    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const commentList = document.querySelector(selectors.starredList);
     if (commentList) {
         const activeLi = Array.from(commentList.children).find(child => child.querySelector('.lucide-circle-minus')) as HTMLElement | undefined;
