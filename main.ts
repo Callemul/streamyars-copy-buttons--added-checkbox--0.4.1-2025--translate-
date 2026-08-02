@@ -16,6 +16,7 @@ import { SYH_INFO_MODAL } from './modules/info_modal';
 import { SYH_I18N } from './modules/i18n';
 import { SYH_ANTI_AFK } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
+import { SYH_MESSAGING } from './modules/messaging';
 
 (() => {
     'use strict';
@@ -92,28 +93,26 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
         SYH_EVENT_COMMENTS.bindEvents();
         SYH_EVENT_BANNERS.bindEvents();
 
-        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-            chrome.runtime.onMessage.addListener(function(message: any, _sender: any, _sendResponse: any) {
-                if (message && message.action === 'unstar_comment') {
-                    const targetText = message.text ? message.text.trim() : "";
-                    if (!targetText) return;
+        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі через SYH_MESSAGING
+        SYH_MESSAGING.onMessage((message) => {
+            if (message && message.action === 'unstar_comment') {
+                const targetText = message.text ? message.text.trim() : "";
+                if (!targetText) return;
 
-                    const commentBlocks = document.querySelectorAll(SELECTORS.commentBlock);
-                    for (const block of Array.from(commentBlocks)) {
-                        const textNode = block.querySelector(SELECTORS.commentText);
-                        if (textNode && textNode.textContent?.trim() === targetText) {
-                            const starBtnNode = block.querySelector(SELECTORS.starButton) as HTMLElement | null;
-                            if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
-                                console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
-                                starBtnNode.click();
-                            }
-                            break;
+                const commentBlocks = document.querySelectorAll(SELECTORS.commentBlock);
+                for (const block of Array.from(commentBlocks)) {
+                    const textNode = block.querySelector(SELECTORS.commentText);
+                    if (textNode && textNode.textContent?.trim() === targetText) {
+                        const starBtnNode = block.querySelector(SELECTORS.starButton) as HTMLElement | null;
+                        if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
+                            console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
+                            starBtnNode.click();
                         }
+                        break;
                     }
                 }
-            });
-        }
+            }
+        });
 
         // Запуск захисту від AFK
         startAntiAfk();

@@ -1,26 +1,21 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_MESSAGING } from '../modules/messaging';
 
 import type { PrayerItem } from '../modules/types';
 export type { PrayerItem };
 
-// Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі
+// Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі через SYH_MESSAGING
 export function sendUnstarMessage(text: string): void {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        const tabId = tabs[0]?.id;
-        if (tabId !== undefined) {
-            chrome.tabs.sendMessage(tabId, { action: 'unstar_comment', text: text });
-        }
-    });
+    if (!text) return;
+    SYH_MESSAGING.sendToActiveTab({ action: 'unstar_comment', text: text });
 }
 
 // Хелпер відправки сигналів для списку коментарів
 export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        const tabId = tabs[0]?.id;
-        if (tabId !== undefined) {
-            prayersList.forEach(item => {
-                chrome.tabs.sendMessage(tabId, { action: 'unstar_comment', text: item.text });
-            });
+    if (!prayersList || prayersList.length === 0) return;
+    prayersList.forEach(item => {
+        if (item.text) {
+            SYH_MESSAGING.sendToActiveTab({ action: 'unstar_comment', text: item.text });
         }
     });
 }
