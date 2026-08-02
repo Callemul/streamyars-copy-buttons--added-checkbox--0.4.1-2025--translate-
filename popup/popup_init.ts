@@ -1,4 +1,5 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { getAllSheetIds } from '../modules/sheets';
 
 export const db: any = {};
 
@@ -18,7 +19,7 @@ export async function saveData(key: string, value: unknown): Promise<void> {
     });
 }
 
-const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
+const SHEET_IDS = getAllSheetIds();
 
 $(document).ready(function() {
     const keysToLoad = [

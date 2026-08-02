@@ -205,24 +205,10 @@ export function bindStudioCommentEvents(
     const getFreshContext = () => {
         const freshAuthor = getAuthorNameText(threadEl);
         const freshText = getCommentText(threadEl);
-        let freshVideoTitle = getVideoTitleText(threadEl);
-        let freshVideoHref = getVideoLinkHref(threadEl);
+        const freshVideoTitle = getVideoTitleText(threadEl);
+        const freshVideoHref = getVideoLinkHref(threadEl);
 
-        const isReply = threadEl.hasAttribute('is-reply');
-        if (isReply && !freshVideoTitle) {
-            const parentThread = threadEl.closest('ytcp-comment-thread');
-            if (parentThread) {
-                const parentComment = parentThread.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
-                if (parentComment) {
-                    if (!freshVideoTitle) freshVideoTitle = getVideoTitleText(parentComment);
-                    if (!freshVideoHref)  freshVideoHref  = getVideoLinkHref(parentComment);
-                    if (!freshVideoTitle && !freshVideoHref && parentComment.dataset.syhVideoKey) {
-                        freshVideoHref = parentComment.dataset.syhVideoKey;
-                    }
-                }
-            }
-        }
-        const freshVideoKey = generateVideoKey(freshVideoHref, freshVideoTitle);
+        const freshVideoKey = generateVideoKey(freshVideoHref || threadEl.dataset.syhVideoKey || null, freshVideoTitle);
         const freshCommentKey = generateCommentKey(freshVideoTitle, freshAuthor, freshText);
 
         return { freshAuthor, freshText, freshVideoTitle, freshVideoHref, freshVideoKey, freshCommentKey };

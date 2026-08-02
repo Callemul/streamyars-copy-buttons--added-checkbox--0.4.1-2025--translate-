@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { getAllSheetIds } from '../modules/sheets';
 
-const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
+const SHEET_IDS = getAllSheetIds();
 
 export function countQuestionsInText(text: string): number {
     if (!text) return 0;
