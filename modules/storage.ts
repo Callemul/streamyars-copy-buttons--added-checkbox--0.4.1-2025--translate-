@@ -103,13 +103,14 @@ export const SYH_STORAGE: StorageAdapter = {
     get: function(keys: string | string[], cb: (result: Record<string, any>) => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.get(keys, (result) => {
+                const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+                chrome.storage.local.get(migratedKeys, (result) => {
                     if (chrome.runtime.lastError) {
                         console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
                         if (cb) cb({});
                         return;
                     }
-                    if (cb) cb(result);
+                    if (cb) cb(result || {});
                 });
                 return;
             } catch (e: any) {
@@ -123,7 +124,11 @@ export const SYH_STORAGE: StorageAdapter = {
     set: function(items: Record<string, any>, cb?: () => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.set(items, () => {
+                const migratedItems: Record<string, any> = {};
+                for (const [k, v] of Object.entries(items)) {
+                    migratedItems[migrateKey(k)] = v;
+                }
+                chrome.storage.local.set(migratedItems, () => {
                     if (chrome.runtime.lastError) {
                         console.error('[SYH Storage] chrome.storage.local.set error:', chrome.runtime.lastError.message);
                     }
@@ -141,7 +146,8 @@ export const SYH_STORAGE: StorageAdapter = {
     remove: function(keys: string | string[], cb?: () => void): void {
         if (this.isChromeStorageAvailable()) {
             try {
-                chrome.storage.local.remove(keys, () => {
+                const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+                chrome.storage.local.remove(migratedKeys, () => {
                     if (chrome.runtime.lastError) {
                         console.error('[SYH Storage] chrome.storage.local.remove error:', chrome.runtime.lastError.message);
                     }

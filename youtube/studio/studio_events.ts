@@ -86,7 +86,7 @@ export function saveStudioCollectedItem(
     sheetId: SheetId,
     item: { id: string; author: string; text: string; type: 'question' | 'prayer'; timestamp: number; videoId: string; videoTitle: string }
 ): Promise<void> {
-    const storageKey = `syh_collected__${sheetId}`;
+    const storageKey = `syh:popup:collected:${sheetId}`;
     return new Promise((resolve) => {
         SYH_STORAGE.get([storageKey], (res) => {
             const list: any[] = res[storageKey] || [];

@@ -57,13 +57,15 @@ class StudioModuleController {
 
         // 3. Listen for storage changes (e.g. syh_studio_enabled toggle from Options)
         SYH_STORAGE.onChanged((changes) => {
-            if (changes[STUDIO_ENABLED_KEY]) {
-                this.enabled = changes[STUDIO_ENABLED_KEY].newValue ?? true;
+            const studioEnabledChange = changes[STUDIO_ENABLED_KEY] || changes['syh_studio_enabled'];
+            if (studioEnabledChange) {
+                this.enabled = studioEnabledChange.newValue ?? true;
                 console.log('[SYH Studio] syh_studio_enabled changed to:', this.enabled);
                 this.handleStateChange();
             }
-            if (changes[VIDEO_MAP_STORAGE_KEY]) {
-                this.caches.videoSheetMap = changes[VIDEO_MAP_STORAGE_KEY].newValue || {};
+            const videoMapChange = changes[VIDEO_MAP_STORAGE_KEY] || changes['syh_studio_video_sheet_map'];
+            if (videoMapChange) {
+                this.caches.videoSheetMap = videoMapChange.newValue || {};
                 this.scheduleProcessComments(true);
             }
         });

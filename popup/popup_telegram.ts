@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
 const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 
@@ -29,15 +29,16 @@ export const syh_collected_by_sheet: Record<string, any[]> = {
 };
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
-    const keysToGet = [`syh_collected__${sheetId}`];
+    const sheetKey = `syh:popup:collected:${sheetId}`;
+    const keysToGet = [sheetKey];
     if (sheetId === 'vp_ss') {
-        keysToGet.push('syh_yt_collected');
+        keysToGet.push(STORAGE_KEYS.YT_COLLECTED);
     }
 
     SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let items = result[`syh_collected__${sheetId}`] || [];
+        let items = result[sheetKey] || result[`syh_collected__${sheetId}`] || [];
         if (sheetId === 'vp_ss') {
-            const oldItems = result.syh_yt_collected || [];
+            const oldItems = result[STORAGE_KEYS.YT_COLLECTED] || result.syh_yt_collected || [];
             syh_yt_collected.length = 0;
             syh_yt_collected.push(...oldItems);
             // Тимчасове рішення (TODO п.1): Для vp_ss об'єднуємо старий модуль + новий Studio-модуль
@@ -79,24 +80,25 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
 }
 
 export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
-    const keysToGet = [`syh_collected__${sheetId}`];
+    const sheetKey = `syh:popup:collected:${sheetId}`;
+    const keysToGet = [sheetKey];
     if (sheetId === 'vp_ss') {
-        keysToGet.push('syh_yt_collected');
+        keysToGet.push(STORAGE_KEYS.YT_COLLECTED);
     }
 
     SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let sheetItems: any[] = result[`syh_collected__${sheetId}`] || [];
+        let sheetItems: any[] = result[sheetKey] || result[`syh_collected__${sheetId}`] || [];
         const foundInSheet = sheetItems.some(item => item.id === commentId);
 
         if (foundInSheet) {
             sheetItems = sheetItems.filter(item => item.id !== commentId);
-            SYH_STORAGE.set({ [`syh_collected__${sheetId}`]: sheetItems }, function() {
+            SYH_STORAGE.set({ [sheetKey]: sheetItems }, function() {
                 loadYTCollected(sheetId);
             });
         } else if (sheetId === 'vp_ss') {
-            let oldItems: any[] = result.syh_yt_collected || [];
+            let oldItems: any[] = result[STORAGE_KEYS.YT_COLLECTED] || result.syh_yt_collected || [];
             oldItems = oldItems.filter(item => item.id !== commentId);
-            SYH_STORAGE.set({ syh_yt_collected: oldItems }, function() {
+            SYH_STORAGE.set({ [STORAGE_KEYS.YT_COLLECTED]: oldItems }, function() {
                 loadYTCollected(sheetId);
             });
         }
@@ -105,9 +107,10 @@ export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_s
 
 export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
     if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
-        const updateObj: Record<string, any> = { [`syh_collected__${sheetId}`]: [] };
+        const sheetKey = `syh:popup:collected:${sheetId}`;
+        const updateObj: Record<string, any> = { [sheetKey]: [] };
         if (sheetId === 'vp_ss') {
-            updateObj.syh_yt_collected = [];
+            updateObj[STORAGE_KEYS.YT_COLLECTED] = [];
         }
         SYH_STORAGE.set(updateObj, function() {
             loadYTCollected(sheetId);
@@ -707,8 +710,8 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     $(`#cleanedLogDetails__${sheetId}`).show();
 
     // 30-денне очищення чекбоксів YouTube
-    SYH_STORAGE.get(['syh_yt_checkbox_state'], function(res: Record<string, any>) {
-        const states = res.syh_yt_checkbox_state;
+    SYH_STORAGE.get([STORAGE_KEYS.YT_CHECKBOX_STATE], function(res: Record<string, any>) {
+        const states = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || res.syh_yt_checkbox_state;
         if (states && typeof states === 'object') {
             const now = Date.now();
             const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
@@ -720,7 +723,7 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
                 }
             }
             if (modified) {
-                SYH_STORAGE.set({ syh_yt_checkbox_state: states });
+                SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: states });
             }
         }
     });
