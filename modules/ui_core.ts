@@ -63,6 +63,8 @@ export interface SyhUi extends SYH_UI_Core {
     scrollToActiveBanner(): void;
 }
 
+import { SYH_BUS } from './event_bus';
+
 export function init(config?: any, state?: any): void {
     try {
         SYH_UI.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
@@ -74,31 +76,33 @@ export function init(config?: any, state?: any): void {
 
         SYH_UI.validateSelectorsSyntax();
         
-        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES], function(result: Record<string, any>) {
+        SYH_STORAGE.getAsync([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES]).then((result: Record<string, any>) => {
             SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
             SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
         });
 
-        SYH_STORAGE.onChanged(function(changes: Record<string, any>) {
+        SYH_STORAGE.onChanged((changes: Record<string, any>) => {
             try {
                 if (changes[STORAGE_KEYS.PRAYERS]) {
                     SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
-                    if (typeof SYH_UI.filterStarredComments === 'function') {
-                        SYH_UI.filterStarredComments(); 
-                    }
+                    SYH_UI.filterStarredComments();
                 }
                 if (changes[STORAGE_KEYS.CATEGORIES]) {
                     SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
-                    if (typeof SYH_UI.filterBanners === 'function') {
-                        SYH_UI.filterBanners();
-                    }
+                    SYH_UI.filterBanners();
                 }
             } catch (e) {
                 console.error("[SYH] Помилка синхронізації сховища в UI:", e);
             }
         });
+
+        // Підписка на події від інших модулів через шину подій
+        SYH_BUS.on('COMMENT_MARKED', (event) => {
+            SYH_UI.updateCommentVisuals(event.element, event.type);
+        });
+
     } catch (error) {
-        console.error("[SYH] Критичний збій ініціалізації модуля UI Core. Запущено авто-відновлення:", error);
+        console.error("[SYH] Критичний збій ініціалізації модуля UI Core:", error);
     }
 }
 
@@ -117,26 +121,31 @@ export function validateSelectorsSyntax(): void {
 }
 
 export function restoreDomCheckboxes(): void {
-    const selectors = SYH_UI.SELECTORS || ((window as any).SYH_CONFIG ? (window as any).SYH_CONFIG.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null));
-    const itemStates = (SYH_STATE ? (SYH_STATE as any).itemStates : ((window as any).SYH_STATE ? (window as any).SYH_STATE.itemStates : {}));
+    const selectors = SYH_UI.SELECTORS || SYH_CONFIG.SELECTORS;
+    const itemStates = SYH_UI.STATE?.itemStates || {};
     
     if (!selectors) {
         console.warn("[SYH_UI] Конфігурація SELECTORS ще не завантажена.");
         return;
     }
 
-    console.log("[SYH_UI] Примусове відновлення стану чекбоксів у DOM для вирішення Race Condition.");
+    console.log("[SYH_UI] Відновлення стану чекбоксів у DOM...");
     
     document.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach((checkbox) => {
         const type = checkbox.dataset.type;
         let textKey = "";
 
+        const selCommentBlock = Array.isArray(selectors.commentBlock) ? selectors.commentBlock[0] : selectors.commentBlock;
+        const selCommentText = Array.isArray(selectors.commentText) ? selectors.commentText[0] : selectors.commentText;
+        const selBannerBlock = Array.isArray(selectors.bannerBlock) ? selectors.bannerBlock[0] : selectors.bannerBlock;
+        const selBannerText = Array.isArray(selectors.bannerText) ? selectors.bannerText[0] : selectors.bannerText;
+
         if (type === 'comment') {
-            const commentBlock = checkbox.closest(selectors.commentBlock || '[class*="PlatformComment__Wrap"]');
-            textKey = commentBlock?.querySelector(selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
+            const commentBlock = checkbox.closest(selCommentBlock || '[class*="PlatformComment__Wrap"]');
+            textKey = commentBlock?.querySelector(selCommentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
         } else if (type === 'banner') {
-            const bannerBlock = checkbox.closest(selectors.bannerBlock || '[class*="Banner__LiWrap"]');
-            textKey = bannerBlock?.querySelector(selectors.bannerText || '[class*="Banner__BannerText"]')?.textContent || "";
+            const bannerBlock = checkbox.closest(selBannerBlock || '[class*="Banner__LiWrap"]');
+            textKey = bannerBlock?.querySelector(selBannerText || '[class*="Banner__BannerText"]')?.textContent || "";
         }
 
         if (textKey) {
@@ -182,6 +191,4 @@ export const SYH_UI: SyhUi = {
     scrollToActiveBanner
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_UI = SYH_UI;
-}
+

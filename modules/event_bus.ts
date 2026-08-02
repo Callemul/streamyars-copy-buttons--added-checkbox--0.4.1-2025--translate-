@@ -1,6 +1,9 @@
 export type SyhEventType =
     | 'COMMENT_ACTION'
+    | 'COMMENT_MARKED'
+    | 'COMMENT_REMOVED'
     | 'BANNER_ACTION'
+    | 'BANNER_CREATED'
     | 'STATE_CHANGED'
     | 'STORAGE_SYNC'
     | 'PHASE_CHANGED'
@@ -15,7 +18,10 @@ export type SyhEventType =
 
 export interface SyhEventPayloads {
     COMMENT_ACTION: { type: 'question' | 'prayer' | 'copy'; author: string; text: string };
+    COMMENT_MARKED: { element: Element; type: 'question' | 'prayer' | 'none'; author: string; text: string };
+    COMMENT_REMOVED: { text: string };
     BANNER_ACTION: { action: string; bannerText: string };
+    BANNER_CREATED: { text: string; category: string };
     STATE_CHANGED: { key: string; value: boolean };
     STORAGE_SYNC: { key: string; newValue: any };
     PHASE_CHANGED: { phase: 'questions' | 'prayers'; timestamp: string };

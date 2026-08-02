@@ -40,135 +40,38 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
         SYH_ANTI_AFK.startAntiAfk(SYH_CONFIG, SYH_STORAGE, SYH_I18N);
     }
 
-    // --- OBSERVER ---
-    const MAX_PENDING_MUTATIONS = 500;
-    let pendingMutations: MutationRecord[] = [];
-    let rafScheduled = false;
+    import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
-    function processMutations(mutationsList: MutationRecord[]): void {
-        let bannerStateChanged = false;
-        let commentStateChanged = false;
-        
-        for (const mutation of mutationsList) {
-            for (const node of Array.from(mutation.addedNodes)) {
-                if (node.nodeType !== 1) continue;
-                const element = node as Element;
-                
-                if (element.matches(SELECTORS.commentBlock)) {
-                    SYH_UI.addButtonsToComment(element);
-                    SYH_COMMENT_ASSISTANT.processComment(element);
-                } else if (element.querySelector(SELECTORS.commentBlock)) {
-                    element.querySelectorAll(SELECTORS.commentBlock).forEach((el: Element) => {
-                        SYH_UI.addButtonsToComment(el);
-                        SYH_COMMENT_ASSISTANT.processComment(el);
-                    });
-                }
-                
-                if (element.matches(SELECTORS.bannerBlock)) {
-                    SYH_UI.addButtonsToBanner(element);
-                    bannerStateChanged = true;
-                } else if (element.querySelector(SELECTORS.bannerBlock)) {
-                    element.querySelectorAll(SELECTORS.bannerBlock).forEach((el: Element) => {
-                        SYH_UI.addButtonsToBanner(el);
-                        bannerStateChanged = true;
-                    });
-                }
-                
-                if (element.matches(SELECTORS.bannerHeader)) {
-                    SYH_UI.addBannerHeaderControls(element);
-                } else if (element.querySelector(SELECTORS.bannerHeader)) {
-                    element.querySelectorAll(SELECTORS.bannerHeader).forEach((el: Element) => SYH_UI.addBannerHeaderControls(el));
-                }
-                
-                if (element.matches(SELECTORS.starredHeaderWrap)) {
-                    SYH_UI.addStarredTabControls(element);
-                } else if (element.querySelector(SELECTORS.starredHeaderWrap)) {
-                    element.querySelectorAll(SELECTORS.starredHeaderWrap).forEach((el: Element) => SYH_UI.addStarredTabControls(el));
-                }
-                
-                if (element.matches(SELECTORS.starredItemWrap) || (element.closest && element.closest(SELECTORS.starredList))) {
-                    commentStateChanged = true;
-                }
-            }
-            
-            for (const node of Array.from(mutation.removedNodes)) {
-                if (node.nodeType === 1) {
-                    const element = node as Element;
-                    if (element.matches(SELECTORS.bannerBlock) || element.querySelector(SELECTORS.bannerBlock)) {
-                        bannerStateChanged = true;
-                    }
-                    if (element.matches(SELECTORS.commentBlock) || element.querySelector(SELECTORS.commentBlock) || element.matches(SELECTORS.starredCommentItem)) {
-                        commentStateChanged = true;
-                    }
-                }
-            }
-        }
-        
-        if (bannerStateChanged) {
+    function setupDomRegistration(): void {
+        const commentSelector = Array.isArray(SELECTORS.commentBlock) ? SELECTORS.commentBlock[0] : SELECTORS.commentBlock;
+        const bannerSelector = Array.isArray(SELECTORS.bannerBlock) ? SELECTORS.bannerBlock[0] : SELECTORS.bannerBlock;
+        const bannerHeaderSelector = Array.isArray(SELECTORS.bannerHeader) ? SELECTORS.bannerHeader[0] : SELECTORS.bannerHeader;
+        const starredHeaderSelector = Array.isArray(SELECTORS.starredHeaderWrap) ? SELECTORS.starredHeaderWrap[0] : SELECTORS.starredHeaderWrap;
+
+        SYH_DOM_OBSERVER.register(commentSelector, (el) => {
+            SYH_UI.addButtonsToComment(el);
+            SYH_COMMENT_ASSISTANT.processComment(el);
+        }, () => {
+            SYH_UI.filterStarredComments();
+        });
+
+        SYH_DOM_OBSERVER.register(bannerSelector, (el) => {
+            SYH_UI.addButtonsToBanner(el);
             SYH_UI.updateMasterCheckboxState();
-        if (SYH_UI && typeof SYH_UI.filterBanners === 'function') {
-            clearTimeout(SYH_UI._filterBannersTimeout);
-            SYH_UI._filterBannersTimeout = setTimeout(() => SYH_UI.filterBanners(), TIMINGS.FILTER_DEBOUNCE);
-        }
-        }
+            SYH_UI.filterBanners();
+        }, () => {
+            SYH_UI.updateMasterCheckboxState();
+            SYH_UI.filterBanners();
+        });
 
-        if (commentStateChanged) {
-            if (window.SYH_UI && typeof window.SYH_UI.filterStarredComments === 'function') {
-                clearTimeout(window.SYH_UI._filterCommentsTimeout);
-                window.SYH_UI._filterCommentsTimeout = setTimeout(() => window.SYH_UI.filterStarredComments(), TIMINGS.FILTER_DEBOUNCE);
-            }
-        }
+        SYH_DOM_OBSERVER.register(bannerHeaderSelector, (el) => {
+            SYH_UI.addBannerHeaderControls(el);
+        });
+
+        SYH_DOM_OBSERVER.register(starredHeaderSelector, (el) => {
+            SYH_UI.addStarredTabControls(el);
+        });
     }
-
-    function flushMutations(): void {
-        const mutationsToProcess = pendingMutations;
-        pendingMutations = [];
-        rafScheduled = false;
-        if (mutationsToProcess.length > 0) {
-            processMutations(mutationsToProcess);
-        }
-    }
-
-    let currentTargetContainer: Element | null = null;
-
-    function checkAndReattachObserver(): void {
-        if (!currentTargetContainer || currentTargetContainer === document.body || !currentTargetContainer.isConnected) {
-            const specificContainer = document.querySelector('[data-testid="chat-container"]')
-                || document.querySelector('.chat-container')
-                || document.querySelector('#app')
-                || document.querySelector('#root');
-
-            if (specificContainer && specificContainer !== currentTargetContainer) {
-                console.log("[SYH] Чат-контейнер знайдено. Перепідключаю main MutationObserver з body до конкретного контейнера.");
-                observer.disconnect();
-                currentTargetContainer = specificContainer;
-                observer.observe(currentTargetContainer, { childList: true, subtree: true });
-            }
-        }
-    }
-
-    const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
-        if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-            observer.disconnect();
-            return;
-        }
-        checkAndReattachObserver();
-        pendingMutations.push(...mutationsList);
-
-        if (pendingMutations.length >= MAX_PENDING_MUTATIONS) {
-            flushMutations();
-            return;
-        }
-
-        if (!rafScheduled) {
-            rafScheduled = true;
-            if (document.hidden) {
-                setTimeout(flushMutations, 200);
-            } else {
-                requestAnimationFrame(flushMutations);
-            }
-        }
-    });
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
     function init(): void {
@@ -221,13 +124,15 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 
         if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
 
+        setupDomRegistration();
+
         const targetContainer = document.querySelector('[data-testid="chat-container"]')
             || document.querySelector('.chat-container')
             || document.querySelector('#app')
             || document.querySelector('#root')
             || document.body;
 
-        observer.observe(targetContainer, { childList: true, subtree: true });
+        SYH_DOM_OBSERVER.start(targetContainer);
         
         console.log("SYH is running.");
     }
