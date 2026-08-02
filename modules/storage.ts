@@ -63,7 +63,7 @@ export const STORAGE_KEYS = {
  * Type-safe helper to build sheet-specific storage keys
  */
 export function getSheetStorageKey(sheetId: string, suffix: string): string {
-    return `tg_${suffix}__${sheetId}`;
+    return `syh:popup:sheet:${sheetId}:${suffix}`;
 }
 
 export function getSheetCollectedStorageKey(sheetId: string): string {
@@ -113,7 +113,14 @@ const PREFIX_MIGRATIONS: ReadonlyArray<[string, (suffix: string) => string]> = [
     ['syh_old_input__', (suffix) => `${STORAGE_KEYS.TELEGRAM_OLD_INPUT_PREFIX}${suffix}`],
     ['studio_comment_state__', (suffix) => `syh:studio:state:${suffix}`],
     ['syh_popup_divider_pos__', (suffix) => `syh:popup:divider_pos:${suffix}`],
-    ['syh_collected__', (suffix) => `syh:popup:collected:${suffix}`]
+    ['syh_collected__', (suffix) => `syh:popup:collected:${suffix}`],
+    ['tg_', (suffix) => {
+        const parts = suffix.split('__');
+        if (parts.length === 2) {
+            return `syh:popup:sheet:${parts[1]}:${parts[0]}`;
+        }
+        return `syh:popup:legacy:${suffix}`;
+    }]
 ];
 
 export function migrateKey(oldKey: string): string {

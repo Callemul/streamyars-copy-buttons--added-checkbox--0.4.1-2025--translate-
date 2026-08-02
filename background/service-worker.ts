@@ -26,29 +26,71 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalle
   });
 }
 
-// Обробник повідомлень від content scripts та popup
-if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-  chrome.runtime.onMessage.addListener((message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => {
-    if (!message || typeof message !== 'object') return false;
+export type BackgroundMessageHandler = (
+  message: any,
+  sender: chrome.runtime.MessageSender
+) => Promise<any> | any;
 
-    switch (message.type) {
-      case 'PING':
-        sendResponse({ status: 'ok', response: 'PONG', timestamp: Date.now() });
-        return false;
+class ServiceWorkerMessageRouter {
+  private handlers: Map<string, BackgroundMessageHandler> = new Map();
 
-      case 'GET_VERSION':
-        const manifest = chrome.runtime.getManifest();
-        sendResponse({ version: manifest.version, name: manifest.name });
-        return false;
+  constructor() {
+    this.registerDefaultHandlers();
+  }
 
-      case 'BACKGROUND_LOG':
-        console.log(`[Content/Popup Log]:`, message.data);
-        sendResponse({ status: 'logged' });
-        return false;
+  public register(type: string, handler: BackgroundMessageHandler): void {
+    this.handlers.set(type, handler);
+  }
 
-      default:
-        // Якщо тип повідомлення не розпізнано фоновим скриптом
-        return false;
-    }
-  });
+  private registerDefaultHandlers(): void {
+    this.register('PING', () => ({
+      status: 'ok',
+      response: 'PONG',
+      timestamp: Date.now()
+    }));
+
+    this.register('GET_VERSION', () => {
+      const manifest = chrome.runtime.getManifest();
+      return { version: manifest.version, name: manifest.name };
+    });
+
+    this.register('BACKGROUND_LOG', (message) => {
+      console.log(`[Content/Popup Log]:`, message.data);
+      return { status: 'logged' };
+    });
+  }
+
+  public listen(): void {
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.onMessage) return;
+
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (!message || typeof message !== 'object') return false;
+
+      const type = message.type || message.action;
+      const handler = this.handlers.get(type);
+
+      if (handler) {
+        try {
+          const result = handler(message, sender);
+          if (result && typeof result.then === 'function') {
+            result
+              .then((res: any) => sendResponse(res))
+              .catch((err: any) => sendResponse({ error: err?.message || String(err) }));
+            return true; // Тримає асинхронний канал відкритим
+          } else {
+            sendResponse(result);
+            return false;
+          }
+        } catch (err: any) {
+          sendResponse({ error: err?.message || String(err) });
+          return false;
+        }
+      }
+
+      return false;
+    });
+  }
 }
+
+export const SW_ROUTER = new ServiceWorkerMessageRouter();
+SW_ROUTER.listen();
