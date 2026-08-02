@@ -1,9 +1,9 @@
-// modules/comment_assistant.ts
 import { SYH_CONFIG } from './config';
+import type { SelectorValue } from './config';
 
 export interface CommentAssistantInterface {
     triggerWords: string[];
-    selectors: Record<string, string>;
+    selectors: Record<string, SelectorValue>;
     init(config?: any): void;
     escapeHTML(str: string): string;
     createTriggerRegExp(word: string): RegExp;
@@ -14,26 +14,28 @@ export interface CommentAssistantInterface {
     processAllComments(): void;
 }
 
-export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
-    triggerWords: SYH_CONFIG?.TRIGGER_WORDS || ['вопрос'],
-    selectors: SYH_CONFIG?.SELECTORS || {
-        commentBlock: '[class*="PlatformComment__Wrap"]',
-        commentText: '[class*="PlatformCommentShell__ContentSpan"]'
-    },
+export class CommentAssistantService implements CommentAssistantInterface {
+    public triggerWords: string[];
+    public selectors: Record<string, SelectorValue>;
 
-    init(config?: any) {
+    constructor(config = SYH_CONFIG) {
+        this.triggerWords = config?.TRIGGER_WORDS || ['вопрос'];
+        this.selectors = (config?.SELECTORS as Record<string, SelectorValue>) || {
+            commentBlock: '[class*="PlatformComment__Wrap"]',
+            commentText: '[class*="PlatformCommentShell__ContentSpan"]'
+        };
+    }
+
+    public init(config?: any) {
         if (config?.TRIGGER_WORDS) {
             this.triggerWords = config.TRIGGER_WORDS;
         }
         if (config?.SELECTORS) {
             this.selectors = config.SELECTORS;
         }
-    },
+    }
 
-    /**
-     * Безпечна екранація HTML-символів
-     */
-    escapeHTML(str: string): string {
+    public escapeHTML(str: string): string {
         if (!str) return '';
         return str
             .replace(/&/g, '&amp;')
@@ -41,37 +43,26 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
-    },
+    }
 
-    /**
-     * Створення регулярного виразу з урахуванням кириличних меж слів
-     * Використовує Unicode lookbehind/lookahead (?<![\p{L}\p{N}]) та (?![\p{L}\p{N}])
-     */
-    createTriggerRegExp(word: string): RegExp {
+    public createTriggerRegExp(word: string): RegExp {
         const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         try {
             return new RegExp(`(?<![\\p{L}\\p{N}])(${escapedWord})(?![\\p{L}\\p{N}])`, 'giu');
         } catch (e) {
-            // Фолбек для середовищ без підтримки Unicode lookbehind
             return new RegExp(`(^|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])(${escapedWord})($|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])`, 'gi');
         }
-    },
+    }
 
-    /**
-     * Перевірка чи містить текст хоча б одне тригерне слово
-     */
-    hasTrigger(text: string): boolean {
+    public hasTrigger(text: string): boolean {
         if (!text || !this.triggerWords || this.triggerWords.length === 0) return false;
         return this.triggerWords.some(word => {
             const rx = this.createTriggerRegExp(word);
             return rx.test(text);
         });
-    },
+    }
 
-    /**
-     * Підсвічує тригерні слова у тексті за допомогою спец-тегу <mark class="syh-trigger-highlight">
-     */
-    highlightTriggers(text: string): { highlightedText: string; matchedWords: string[] } {
+    public highlightTriggers(text: string): { highlightedText: string; matchedWords: string[] } {
         if (!text) return { highlightedText: '', matchedWords: [] };
         
         let safeHTML = this.escapeHTML(text);
@@ -80,7 +71,6 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
         this.triggerWords.forEach(word => {
             const rx = this.createTriggerRegExp(word);
             safeHTML = safeHTML.replace(rx, (match, p1, p2, p3) => {
-                // Визначаємо, чи використовується фолбек-вираз з 3 групами захоплення
                 const isFallback = typeof p2 === 'string';
                 const targetWord = isFallback ? p2 : (p1 || match);
                 
@@ -97,35 +87,36 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
         });
 
         return { highlightedText: safeHTML, matchedWords };
-    },
+    }
 
-    /**
-     * Видаляє підсвічування (повертає чистий текст)
-     */
-    stripHighlights(text: string): string {
+    public stripHighlights(text: string): string {
         if (!text) return '';
         return text.replace(/<mark class="syh-trigger-highlight"[^>]*>(.*?)<\/mark>/gi, '$1');
-    },
+    }
 
-    /**
-     * Головна функція обробки елемента коментаря
-     * @param commentBlock DOM елемент коментаря
-     * @returns boolean (чи було застосовано підсвічування)
-     */
-    processComment(commentBlock: HTMLElement | Element): boolean {
+    public processComment(commentBlock: HTMLElement | Element): boolean {
         if (!commentBlock) return false;
 
-        const textNode = commentBlock.querySelector(this.selectors.commentText || '[class*="PlatformCommentShell__ContentSpan"]');
+        const commentTextSelector = this.selectors.commentText;
+        
+        let textNode: Element | null = null;
+        if (typeof commentTextSelector === 'string') {
+            textNode = commentBlock.querySelector(commentTextSelector);
+        } else {
+            for (const sel of commentTextSelector) {
+                textNode = commentBlock.querySelector(sel);
+                if (textNode) break;
+            }
+        }
+        
         if (!textNode) return false;
 
-        // Отримуємо або зберігаємо початковий чистий текст коментаря
         let originalText = textNode.getAttribute('data-syh-original-text');
         if (originalText === null) {
             originalText = textNode.textContent || '';
             textNode.setAttribute('data-syh-original-text', originalText);
         }
 
-        // Перевіряємо на тригерні слова
         if (this.hasTrigger(originalText)) {
             const { highlightedText, matchedWords } = this.highlightTriggers(originalText);
             textNode.innerHTML = highlightedText;
@@ -136,19 +127,20 @@ export const SYH_COMMENT_ASSISTANT: CommentAssistantInterface = {
             commentBlock.removeAttribute('data-syh-triggered');
             return false;
         }
-    },
+    }
 
-    /**
-     * Сканує всі коментарі у DOM та обробляє їх
-     */
-    processAllComments() {
+    public processAllComments() {
         if (typeof document === 'undefined') return;
-        const selector = this.selectors.commentBlock || '[class*="PlatformComment__Wrap"]';
-        const comments = document.querySelectorAll(selector);
+        const selector = this.selectors.commentBlock;
+        let comments: NodeListOf<Element> = document.querySelectorAll('[class*="PlatformComment__Wrap"]');
+        if (typeof selector === 'string') {
+            comments = document.querySelectorAll(selector);
+        } else {
+            const selectors = selector.join(',');
+            comments = document.querySelectorAll(selectors);
+        }
         comments.forEach(block => this.processComment(block));
     }
-};
-
-if (typeof window !== 'undefined') {
-    (window as any).SYH_COMMENT_ASSISTANT = SYH_COMMENT_ASSISTANT;
 }
+
+export const SYH_COMMENT_ASSISTANT = new CommentAssistantService();

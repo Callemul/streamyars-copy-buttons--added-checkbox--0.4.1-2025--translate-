@@ -5,7 +5,7 @@ import { test, describe, beforeEach } from 'node:test';
 global.window = global;
 
 global.chrome = {
-    runtime: { lastError: null },
+    runtime: { id: 'test-extension-id', lastError: null },
     storage: {
         local: {
             get: (keys, cb) => {},

@@ -1,6 +1,8 @@
 // modules/config.ts
+export type SelectorValue = string | string[];
+
 export interface SyhConfig {
-    SELECTORS: Record<string, string>;
+    SELECTORS: Record<string, SelectorValue>;
     TIMINGS: {
         ANTI_AFK_INTERVAL: number;
         AUTO_HEAL_POLLING: number;
@@ -13,14 +15,28 @@ export interface SyhConfig {
     TRIGGER_WORDS: string[];
 }
 
+/**
+ * Допоміжний резолвер селекторів з підтримкою масивів-фолбеків
+ */
+export function resolveSelector(selectorValue: SelectorValue, root: ParentNode = document): Element | null {
+    if (typeof selectorValue === 'string') {
+        return root.querySelector(selectorValue);
+    }
+    for (const sel of selectorValue) {
+        const el = root.querySelector(sel);
+        if (el) return el;
+    }
+    return null;
+}
+
 export const SYH_CONFIG: SyhConfig = {
     SELECTORS: {
-        // Коментарі
-        commentBlock: '[class*="PlatformComment__Wrap"]',
-        commentButtonContainer: '[class*="PlatformComment__TopRightButtonGroup"]',
-        commentAuthor: '[class*="PlatformCommentShell__NameText"]',
-        commentText: '[class*="PlatformCommentShell__ContentSpan"]',
-        starButton: '[class*="PlatformComment__StarButton"]',
+        // Коментарі (з фолбеками)
+        commentBlock: ['[class*="PlatformComment__Wrap"]', '[data-testid="platform-comment"]'],
+        commentButtonContainer: ['[class*="PlatformComment__TopRightButtonGroup"]', '[data-testid="comment-button-group"]'],
+        commentAuthor: ['[class*="PlatformCommentShell__NameText"]', '[data-testid="comment-author"]'],
+        commentText: ['[class*="PlatformCommentShell__ContentSpan"]', '[data-testid="comment-content"]'],
+        starButton: ['[class*="PlatformComment__StarButton"]', '[aria-label*="star" i]'],
         starredHeaderWrap: '[class*="StarredCommentList__HeaderWrap"]',
         starredItemWrap: '[class*="StarredCommentList__ItemWrap"]',
         starredList: '[class*="StarredCommentList__List"]',
@@ -32,9 +48,7 @@ export const SYH_CONFIG: SyhConfig = {
         bannerText: '[class*="Banner__BannerText"]',
         bannerHeader: '[class*="BannersHeader__Header"]',
         bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]',
-        
-        // ОНОВЛЕНИЙ ТОЧНИЙ СЕЛЕКТОР для кнопки видалення (корзини) - тепер шукає нову іконку lucide-trash2
-        bannerDeleteButton: 'button:has(svg.lucide-trash2)',
+        bannerDeleteButton: ['button:has(svg.lucide-trash2)', 'button:has(svg.lucide-trash-2)', '[data-testid="delete-banner-btn"]'],
 
         // Форма створення банера
         createBannerButton: '[class*="BannerList__BottomRow"] button',
@@ -42,10 +56,9 @@ export const SYH_CONFIG: SyhConfig = {
         bannerFormTextarea: 'form[class*="CreateBannerForm__Form"] textarea',
         bannerFormAddButton: 'form[class*="CreateBannerForm__Form"] button[type="submit"]',
 
-       // --- СЕЛЕКТОРИ ТАЙМЕРА (V4 - Smart Check) ---
+        // Таймер
         timerDropdownButton: '#banner-timer-dropdown-button', 
         timerOptionOffId: '#banner-timer-dropdown-option-null', 
-        // Цей текст має співпадати з тим, що написано на кнопці, коли таймер вимкнено
         get timerOffTextResult(): string {
             if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
                 try {
@@ -71,7 +84,3 @@ export const SYH_CONFIG: SyhConfig = {
 
     TRIGGER_WORDS: ['вопрос']            // Список тригерних слів для Помічника коментарів
 };
-
-if (typeof window !== 'undefined') {
-    (window as any).SYH_CONFIG = SYH_CONFIG;
-}

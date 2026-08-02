@@ -93,6 +93,8 @@ export const SYH_STORAGE: StorageAdapter = {
     isChromeStorageAvailable: function(): boolean {
         try {
             return typeof chrome !== 'undefined' && 
+                   !!chrome.runtime && 
+                   !!chrome.runtime.id &&
                    !!chrome.storage && 
                    !!chrome.storage.local;
         } catch {
@@ -101,69 +103,69 @@ export const SYH_STORAGE: StorageAdapter = {
     },
 
     get: function(keys: string | string[], cb: (result: Record<string, any>) => void): void {
-        if (this.isChromeStorageAvailable()) {
-            try {
-                const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
-                chrome.storage.local.get(migratedKeys, (result) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
-                        if (cb) cb({});
-                        return;
-                    }
-                    if (cb) cb(result || {});
-                });
-                return;
-            } catch (e: any) {
-                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
-            }
+        if (!this.isChromeStorageAvailable()) {
+            if (cb) cb({});
+            return;
         }
-        console.error('[SYH Storage] chrome.storage not available. get skipped.');
-        if (cb) cb({});
+        try {
+            const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+            chrome.storage.local.get(migratedKeys, (result) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                    if (cb) cb({});
+                    return;
+                }
+                if (cb) cb(result || {});
+            });
+        } catch (e: any) {
+            console.error('[SYH Storage] Context invalidated or API failed:', e?.message || e);
+            if (cb) cb({});
+        }
     },
 
     set: function(items: Record<string, any>, cb?: () => void): void {
-        if (this.isChromeStorageAvailable()) {
-            try {
-                const migratedItems: Record<string, any> = {};
-                for (const [k, v] of Object.entries(items)) {
-                    migratedItems[migrateKey(k)] = v;
-                }
-                chrome.storage.local.set(migratedItems, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[SYH Storage] chrome.storage.local.set error:', chrome.runtime.lastError.message);
-                    }
-                    if (cb) cb();
-                });
-                return;
-            } catch (e: any) {
-                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
-            }
+        if (!this.isChromeStorageAvailable()) {
+            if (cb) cb();
+            return;
         }
-        console.error('[SYH Storage] chrome.storage not available. Data NOT saved.');
-        if (cb) cb();
+        try {
+            const migratedItems: Record<string, any> = {};
+            for (const [k, v] of Object.entries(items)) {
+                migratedItems[migrateKey(k)] = v;
+            }
+            chrome.storage.local.set(migratedItems, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
+                }
+                if (cb) cb();
+            });
+        } catch (e: any) {
+            console.error('[SYH Storage] set failed:', e?.message || e);
+            if (cb) cb();
+        }
     },
 
     remove: function(keys: string | string[], cb?: () => void): void {
-        if (this.isChromeStorageAvailable()) {
-            try {
-                const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
-                chrome.storage.local.remove(migratedKeys, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[SYH Storage] chrome.storage.local.remove error:', chrome.runtime.lastError.message);
-                    }
-                    if (cb) cb();
-                });
-                return;
-            } catch (e: any) {
-                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
-            }
+        if (!this.isChromeStorageAvailable()) {
+            if (cb) cb();
+            return;
         }
-        console.error('[SYH Storage] chrome.storage not available. Remove skipped.');
-        if (cb) cb();
+        try {
+            const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+            chrome.storage.local.remove(migratedKeys, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('[SYH Storage] remove error:', chrome.runtime.lastError.message);
+                }
+                if (cb) cb();
+            });
+        } catch (e: any) {
+            console.error('[SYH Storage] remove failed:', e?.message || e);
+            if (cb) cb();
+        }
     },
 
     onChanged: function(callback: (changes: Record<string, any>, areaName: string) => void): void {
-        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+        if (this.isChromeStorageAvailable() && chrome.storage.onChanged) {
             try {
                 chrome.storage.onChanged.addListener(callback);
             } catch (e: any) {
@@ -216,12 +218,6 @@ export async function migrateStorageIfNeeded(): Promise<void> {
             }
         });
     });
-}
-
-if (typeof window !== 'undefined') {
-    (window as any).SYH_STORAGE = SYH_STORAGE;
-    (window as any).STORAGE_KEYS = STORAGE_KEYS;
-    (window as any).migrateStorageIfNeeded = migrateStorageIfNeeded;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
