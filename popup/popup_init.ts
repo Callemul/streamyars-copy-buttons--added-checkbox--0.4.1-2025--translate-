@@ -1,16 +1,26 @@
-// popup_init.js
-// Глобальна база даних налаштувань
-window.db = {};
+import { SYH_STORAGE } from '../modules/storage';
+
+export const db: any = {};
+
+export function saveDataToStorage(): void {
+    SYH_STORAGE.set({ 'db': db });
+}
+
+export async function loadData(key: string): Promise<unknown> {
+    return new Promise(resolve => {
+        SYH_STORAGE.get([key], (res) => resolve(res[key]));
+    });
+}
+
+export async function saveData(key: string, value: unknown): Promise<void> {
+    return new Promise(resolve => {
+        SYH_STORAGE.set({ [key]: value }, resolve);
+    });
+}
 
 const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 
-// Функція збереження налаштувань у локальне сховище Chrome
-window.saveDataToStorage = function() {
-    chrome.storage.local.set({ 'db': window.db });
-};
-
 $(document).ready(function() {
-    // 1. Формування списку ключів для завантаження per-sheet
     const keysToLoad = [
         'db', 
         'syh_prayers',
@@ -44,25 +54,25 @@ $(document).ready(function() {
         );
     });
 
-    // 2. Первинне завантаження та відновлення налаштувань і стану полів
-    chrome.storage.local.get(keysToLoad, function(result) {
+    let storageLoaded = false;
+
+    SYH_STORAGE.get(keysToLoad, function(result) {
         if (result.db) { 
-            window.db = result.db; 
-            if (window.db.newTitleSS) $("#sschoolName").val(window.db.newTitleSS); 
-            if (window.db.newTitlePreach) $("#preachNameInput").val(window.db.newTitlePreach); 
+            Object.assign(db, result.db);
+            if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS); 
+            if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach); 
         }
 
         if (result.syh_yt_collected) {
-            window.syh_yt_collected = result.syh_yt_collected;
+            (window as any).syh_yt_collected = result.syh_yt_collected;
         }
         
-        // Відновлення кожної з 4 вкладок-аркушів
         SHEET_IDS.forEach(sId => {
             const oldListVal = result[`tg_oldList__${sId}`];
             if (oldListVal) { 
                 $(`#oldList__${sId}`).val(oldListVal); 
-                if (typeof window.updateOldInputStats === 'function') {
-                    window.updateOldInputStats(sId);
+                if (typeof (window as any).updateOldInputStats === 'function') {
+                    (window as any).updateOldInputStats(sId);
                 }
             }
 
@@ -74,8 +84,8 @@ $(document).ready(function() {
             const newTgVal = result[`tg_newTelegram__${sId}`];
             if (newTgVal) { 
                 $(`#newTelegram__${sId}`).val(newTgVal); 
-                if (typeof window.updateNewInputStats === 'function') {
-                    window.updateNewInputStats(sId);
+                if (typeof (window as any).updateNewInputStats === 'function') {
+                    (window as any).updateNewInputStats(sId);
                 }
             }
 
@@ -87,7 +97,7 @@ $(document).ready(function() {
             if (result[`tg_statsVisible__${sId}`]) {
                 const statsHtml = result[`tg_statsHtml__${sId}`];
                 if (statsHtml) $(`#statsBar__${sId}`).html(statsHtml);
-                if (typeof window.ensureStatsBarRows === 'function') window.ensureStatsBarRows(sId);
+                if (typeof (window as any).ensureStatsBarRows === 'function') (window as any).ensureStatsBarRows(sId);
                 $(`#statsBar__${sId}`).show();
             }
 
@@ -131,19 +141,17 @@ $(document).ready(function() {
                 $(`#cleanedLogCount__${sId}`).text('');
             }
 
-            // Відновлення ресайзера per-sheet
             const divPos = result[`syh_popup_divider_pos__${sId}`];
             if (divPos) {
                 $(`#step3Left__${sId}`).css('flex', divPos);
                 $(`#step3Right__${sId}`).css('flex', 100 - divPos);
             }
 
-            if (typeof window.loadYTCollected === 'function') {
-                window.loadYTCollected(sId);
+            if (typeof (window as any).loadYTCollected === 'function') {
+                (window as any).loadYTCollected(sId);
             }
         });
 
-        // Відновлення головної вкладки
         if (result.tg_active_tab) {
             $('.tab-link').removeClass('active').attr('aria-selected', 'false');
             $('.tab-content').removeClass('active');
@@ -151,7 +159,6 @@ $(document).ready(function() {
             $('#' + result.tg_active_tab).addClass('active');
         }
 
-        // Відновлення під-вкладки (аркуша)
         if (result.tg_active_subtab && SHEET_IDS.includes(result.tg_active_subtab)) {
             $('.subtab-button').removeClass('active').attr('aria-selected', 'false');
             $('.sheet-content').removeClass('active');
@@ -159,7 +166,6 @@ $(document).ready(function() {
             $('#sheet-content-' + result.tg_active_subtab).addClass('active');
         }
 
-        // Відновлення розмірів textarea
         if (result.tg_textarea_sizes) {
             const sizes = result.tg_textarea_sizes;
             for (const id in sizes) {
@@ -171,7 +177,6 @@ $(document).ready(function() {
             }
         }
 
-        // Відновлення полів трансліту
         if (result.tg_translit_old) {
             $('#textArea1_oldText').val(result.tg_translit_old);
         }
@@ -179,12 +184,10 @@ $(document).ready(function() {
             $('#textArea2_generatedRuText').val(result.tg_translit_new);
         }
 
-        // Малюємо список молитов при старті
-        if (typeof window.renderPrayers === 'function') {
-            window.renderPrayers(result.syh_prayers || []);
+        if (typeof (window as any).renderPrayers === 'function') {
+            (window as any).renderPrayers(result.syh_prayers || []);
         }
 
-        // Відновлення позицій скролу
         if (result.tg_scroll_positions) {
             const scrolls = result.tg_scroll_positions;
             setTimeout(() => {
@@ -202,61 +205,81 @@ $(document).ready(function() {
             }, 100);
         }
 
-        // Ініціалізація ResizeObserver після застосування розмірів
+        storageLoaded = true;
         setTimeout(initResizeObserver, 300);
         initStep3Resizers();
     });
 
-    // 3. Логіка навігації між головними вкладками попапу
     $('.tab-link').click(function() {
         const tabId = $(this).data('tab'); 
         $('.tab-link').removeClass('active').attr('aria-selected', 'false'); 
         $('.tab-content').removeClass('active'); 
         $(this).addClass('active').attr('aria-selected', 'true'); 
         $('#' + tabId).addClass('active');
-        chrome.storage.local.set({ 'tg_active_tab': tabId });
+        SYH_STORAGE.set({ 'tg_active_tab': tabId });
     });
 
-    // 4. Логіка навігації між під-вкладками (4 аркуші)
     $('.subtab-button').click(function() {
         const sheetId = $(this).data('sheet');
         $('.subtab-button').removeClass('active').attr('aria-selected', 'false');
         $('.sheet-content').removeClass('active');
         $(this).addClass('active').attr('aria-selected', 'true');
         $('#sheet-content-' + sheetId).addClass('active');
-        chrome.storage.local.set({ 'tg_active_subtab': sheetId });
+        SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
     });
 
-    // 5. Слухачі введення даних у поля для синхронізації зі сховищем per-sheet
+    let oldListTimer: any = null;
+    let newTelegramTimer: any = null;
+    let answeredIdsTimer: any = null;
+    let finalResultTimer: any = null;
+    let translitOldTimer: any = null;
+    let translitNewTimer: any = null;
+
     SHEET_IDS.forEach(sId => {
         $(`#oldList__${sId}`).on('input', function() { 
-            chrome.storage.local.set({ [`tg_oldList__${sId}`]: $(this).val() }); 
-            if (typeof window.updateOldInputStats === 'function') {
-                window.updateOldInputStats(sId);
-            }
+            const val = $(this).val();
+            if (oldListTimer) clearTimeout(oldListTimer);
+            oldListTimer = setTimeout(() => {
+                SYH_STORAGE.set({ [`tg_oldList__${sId}`]: val }); 
+                if (typeof (window as any).updateOldInputStats === 'function') {
+                    (window as any).updateOldInputStats(sId);
+                }
+            }, 300);
         });
         
         $(`#newTelegram__${sId}`).on('input', function() { 
-            chrome.storage.local.set({ [`tg_newTelegram__${sId}`]: $(this).val() }); 
-            if (typeof window.updateNewInputStats === 'function') {
-                window.updateNewInputStats(sId);
-            }
+            const val = $(this).val();
+            if (newTelegramTimer) clearTimeout(newTelegramTimer);
+            newTelegramTimer = setTimeout(() => {
+                SYH_STORAGE.set({ [`tg_newTelegram__${sId}`]: val }); 
+                if (typeof (window as any).updateNewInputStats === 'function') {
+                    (window as any).updateNewInputStats(sId);
+                }
+            }, 300);
         });
         
         $(`#answeredIds__${sId}`).on('input', function() { 
-            chrome.storage.local.set({ [`tg_answered__${sId}`]: $(this).val() }); 
+            const val = $(this).val();
+            if (answeredIdsTimer) clearTimeout(answeredIdsTimer);
+            answeredIdsTimer = setTimeout(() => {
+                SYH_STORAGE.set({ [`tg_answered__${sId}`]: val }); 
+            }, 300);
         });
 
         $(`#finalResultDiv__${sId}`).on('input blur', function() {
-            chrome.storage.local.set({ [`tg_finalResultHtml__${sId}`]: $(this).html() });
+            const html = $(this).html();
+            if (finalResultTimer) clearTimeout(finalResultTimer);
+            finalResultTimer = setTimeout(() => {
+                SYH_STORAGE.set({ [`tg_finalResultHtml__${sId}`]: html });
+            }, 300);
         });
 
         $(`#deletedLogDetails__${sId}`).on('toggle', function() {
-            chrome.storage.local.set({ [`tg_deletedLogDetailsOpen__${sId}`]: this.open });
+            SYH_STORAGE.set({ [`tg_deletedLogDetailsOpen__${sId}`]: (this as HTMLDetailsElement).open });
         });
 
         $(`#cleanedLogDetails__${sId}`).on('toggle', function() {
-            chrome.storage.local.set({ [`tg_cleanedLogDetailsOpen__${sId}`]: this.open });
+            SYH_STORAGE.set({ [`tg_cleanedLogDetailsOpen__${sId}`]: (this as HTMLDetailsElement).open });
         });
 
         $(`#clearStateBtn__${sId}`).click(function() {
@@ -272,7 +295,7 @@ $(document).ready(function() {
                 $(`#cleanedLogDetails__${sId}`).hide(); 
                 $(`#oldTotalCount__${sId}`).text(''); 
                 $(`#tgTotalCountAll__${sId}`).text(''); 
-                chrome.storage.local.remove([
+                SYH_STORAGE.remove([
                     `tg_oldList__${sId}`, 
                     `tg_answered__${sId}`, 
                     `tg_newTelegram__${sId}`,
@@ -292,34 +315,40 @@ $(document).ready(function() {
         });
 
         $(`#clearYTCollected__${sId}`).click(function() {
-            if (typeof window.clearAllYTCollected === 'function') {
-                window.clearAllYTCollected(sId);
+            if (typeof (window as any).clearAllYTCollected === 'function') {
+                (window as any).clearAllYTCollected(sId);
             }
         });
     });
 
-    // Збереження полів трансліту
     $('#textArea1_oldText').on('input', function() {
-        chrome.storage.local.set({ 'tg_translit_old': $(this).val() });
+        const val = $(this).val();
+        if (translitOldTimer) clearTimeout(translitOldTimer);
+        translitOldTimer = setTimeout(() => {
+            SYH_STORAGE.set({ 'tg_translit_old': val });
+        }, 300);
     });
+    
     $('#textArea2_generatedRuText').on('input', function() {
-        chrome.storage.local.set({ 'tg_translit_new': $(this).val() });
+        const val = $(this).val();
+        if (translitNewTimer) clearTimeout(translitNewTimer);
+        translitNewTimer = setTimeout(() => {
+            SYH_STORAGE.set({ 'tg_translit_new': val });
+        }, 300);
     });
 
-    // 6. Кнопки збереження конфігурації назв СШ та проповідей
     $("#sschoolNameBtn").click(function() { 
-        window.db.newTitleSS = $("#sschoolName").val(); 
-        window.saveDataToStorage(); 
+        db.newTitleSS = $("#sschoolName").val(); 
+        saveDataToStorage(); 
         alert("Збережено!"); 
     });
     
     $("#preachNameBtn").click(function() { 
-        window.db.newTitlePreach = $("#preachNameInput").val(); 
-        window.saveDataToStorage(); 
+        db.newTitlePreach = $("#preachNameInput").val(); 
+        saveDataToStorage(); 
         alert("Збережено!"); 
     });
 
-    // 7. Відкриття повноцінної Options Page
     $("#openOptionsPageBtn").click(function() {
         if (chrome.runtime && chrome.runtime.openOptionsPage) {
             chrome.runtime.openOptionsPage();
@@ -328,7 +357,6 @@ $(document).ready(function() {
         }
     });
 
-    // 8. Допоміжні функції ResizeObserver та збереження скролу
     function initResizeObserver() {
         const textareas = ['textArea1_oldText', 'textArea2_generatedRuText'];
         SHEET_IDS.forEach(sId => {
@@ -336,20 +364,21 @@ $(document).ready(function() {
         });
 
         const resizeObserver = new ResizeObserver(entries => {
-            chrome.storage.local.get(['tg_textarea_sizes'], function(res) {
+            if (!storageLoaded) return;
+            SYH_STORAGE.get(['tg_textarea_sizes'], function(res) {
                 const sizes = res.tg_textarea_sizes || {};
                 let updated = false;
                 for (const entry of entries) {
                     const id = entry.target.id;
-                    const width = entry.target.style.width;
-                    const height = entry.target.style.height;
+                    const width = (entry.target as HTMLElement).style.width;
+                    const height = (entry.target as HTMLElement).style.height;
                     if (width || height) {
                         sizes[id] = { width, height };
                         updated = true;
                     }
                 }
                 if (updated) {
-                    chrome.storage.local.set({ 'tg_textarea_sizes': sizes });
+                    SYH_STORAGE.set({ 'tg_textarea_sizes': sizes });
                 }
             });
         });
@@ -359,11 +388,11 @@ $(document).ready(function() {
         });
     }
 
-    let scrollTimeout;
+    let scrollTimeout: any;
     function saveScrollPositions() {
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            const scrolls = {
+            const scrolls: any = {
                 window: window.scrollY || document.documentElement.scrollTop,
                 prayersResultDiv: $('#prayersResultDiv').scrollTop() || 0,
                 textArea1_oldText: $('#textArea1_oldText').scrollTop() || 0,
@@ -375,7 +404,7 @@ $(document).ready(function() {
                 scrolls[`oldList__${sId}`] = $(`#oldList__${sId}`).scrollTop() || 0;
                 scrolls[`newTelegram__${sId}`] = $(`#newTelegram__${sId}`).scrollTop() || 0;
             });
-            chrome.storage.local.set({ 'tg_scroll_positions': scrolls });
+            SYH_STORAGE.set({ 'tg_scroll_positions': scrolls });
         }, 150);
     }
     $(window).on('scroll', saveScrollPositions);
@@ -384,7 +413,42 @@ $(document).ready(function() {
         $(`#finalResultDiv__${sId}, #deletedLog__${sId}, #oldList__${sId}, #newTelegram__${sId}`).on('scroll', saveScrollPositions);
     });
 
-    // 9. Логіка ресайзера кроку 3 per sheetId
+    let activeResizer: { sId: string, divider: JQuery, left: JQuery, right: JQuery } | null = null;
+
+    $(document).on('mousemove', function(e) {
+        if (!activeResizer) return;
+        const { sId, divider, left, right } = activeResizer;
+        const container = divider.parent();
+        const containerOffset = container.offset();
+        const containerWidth = container.width();
+        
+        if (!containerOffset || !containerWidth || containerWidth <= 0) return;
+
+        const leftWidth = e.pageX - containerOffset.left;
+        let percent = (leftWidth / containerWidth) * 100;
+        if (percent < 15) percent = 15;
+        if (percent > 85) percent = 85;
+
+        left.css('flex', `${percent}%`);
+        right.css('flex', `${100 - percent}%`);
+    });
+
+    $(document).on('mouseup', function() {
+        if (activeResizer) {
+            const { sId, divider, left, right } = activeResizer;
+            divider.removeClass('is-dragging');
+            $('body').css('user-select', '');
+
+            const flexLeft = parseFloat(left.css('flex')) || parseFloat(left.css('flex-grow')) || 1;
+            const flexRight = parseFloat(right.css('flex')) || parseFloat(right.css('flex-grow')) || 1;
+            const total = flexLeft + flexRight;
+            const posPercent = (flexLeft / total) * 100;
+
+            SYH_STORAGE.set({ [`syh_popup_divider_pos__${sId}`]: posPercent });
+            activeResizer = null;
+        }
+    });
+
     function initStep3Resizers() {
         SHEET_IDS.forEach(sId => {
             const $divider = $(`#step3Divider__${sId}`);
@@ -394,43 +458,11 @@ $(document).ready(function() {
 
             if (!$divider.length || !$container.length) return;
 
-            let isDragging = false;
-
             $divider.on('mousedown', function(e) {
                 e.preventDefault();
-                isDragging = true;
+                activeResizer = { sId, divider: $divider, left: $left, right: $right };
                 $divider.addClass('is-dragging');
                 $('body').css('user-select', 'none');
-            });
-
-            $(document).on('mousemove', function(e) {
-                if (!isDragging) return;
-                const containerOffset = $container.offset();
-                const containerWidth = $container.width();
-                if (!containerOffset || containerWidth <= 0) return;
-
-                const leftWidth = e.pageX - containerOffset.left;
-                let percent = (leftWidth / containerWidth) * 100;
-                if (percent < 15) percent = 15;
-                if (percent > 85) percent = 85;
-
-                $left.css('flex', percent);
-                $right.css('flex', 100 - percent);
-            });
-
-            $(document).on('mouseup', function() {
-                if (isDragging) {
-                    isDragging = false;
-                    $divider.removeClass('is-dragging');
-                    $('body').css('user-select', '');
-
-                    const flexLeft = parseFloat($left.css('flex-grow')) || 1;
-                    const flexRight = parseFloat($right.css('flex-grow')) || 1;
-                    const total = flexLeft + flexRight;
-                    const posPercent = (flexLeft / total) * 100;
-
-                    chrome.storage.local.set({ [`syh_popup_divider_pos__${sId}`]: posPercent });
-                }
             });
         });
     }
