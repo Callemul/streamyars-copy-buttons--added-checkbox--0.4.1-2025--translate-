@@ -17,6 +17,8 @@ Chrome Extension MV3, Vite + TS. Фази 1-2 виконані.
 ---
 
 > ⚠️ Це великий рефакторинг. Виконуй **покроково**, верифікуй після кожного кроку.
+> ⚠️ **НЕ змінювати ключі storage** (`syh_yt_collected` тощо) — це окрема сесія 3D.
+> ⚠️ **НЕ видаляй helper-функції** `loadData`/`saveData` після Кроку 2 — сесії 3B/3C імпортують їх з цього файлу. Вони мають лишитись як `export`, але делегувати в SYH_STORAGE (див. Крок 2).
 
 ## Крок 1: JS → TypeScript + ES модулі
 
@@ -34,13 +36,15 @@ window.loadData = function(key, callback) {
     });
 };
 
-// ✅ СТАЛО:
+// ✅ ПРОМІЖНИЙ СТАН (тільки на час Кроку 1!):
 export function loadData(key: string, callback: (value: unknown) => void): void {
     chrome.storage.local.get([key], (result) => {
         callback(result[key]);
     });
 }
 ```
+
+> ⚠️ Приклад вище — НЕ фінальний вигляд. Прямий `chrome.storage.local` усередині helper'ів замінюється на SYH_STORAGE у Кроці 2.
 
 **Верифікація:** `npm run build` + popup працює.
 
@@ -64,6 +68,22 @@ await SYH_STORAGE.set('syh_yt_collected', newData);
 ```
 
 > Якщо SYH_STORAGE використовує async/await — callback-стиль потрібно перетворити на async функції.
+> Обробка `chrome.runtime.lastError` автоматично закрита адаптером — окремих перевірок НЕ додавати.
+
+**Фінальний вигляд helper'ів з Кроку 1** (НЕ видаляти — їх імпортують 3B/3C):
+
+```typescript
+// ✅ ФІНАЛЬНИЙ СТАН:
+export async function loadData(key: string): Promise<unknown> {
+    return SYH_STORAGE.get(key);
+}
+
+export async function saveData(key: string, value: unknown): Promise<void> {
+    return SYH_STORAGE.set(key, value);
+}
+```
+
+> Якщо зміна сигнатури helper'ів (callback → Promise) ламає їхні виклики всередині popup_init — онови виклики на `await`. Якщо конфлікт сигнатур не вирішується чисто — ЗУПИНИСЬ і доповідь.
 
 **Верифікація:** `npm run build` + popup читає/пише дані.
 
@@ -71,7 +91,7 @@ await SYH_STORAGE.set('syh_yt_collected', newData);
 
 ## Крок 3: Debounce storage writes (L7, ~рядки 232-246)
 
-**Проблема:** Кожне натискання клавіші у input → `chrome.storage.local.set()`. Десятки зайвих записів.
+**Проблема:** Кожне натискання клавіші у input → запис у storage. Десятки зайвих записів.
 
 ```typescript
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -127,8 +147,9 @@ const resizeObserver = new ResizeObserver(() => {
 - [ ] 0 штук `window.functionName = ...`
 - [ ] Всі функції — ES-модулі з `import/export`
 - [ ] `popup.html` → `<script type="module">`
-- [ ] 0 прямих `chrome.storage.local.get/set`
+- [ ] 0 прямих `chrome.storage.local.get/set` (включно з тілом helper'ів loadData/saveData)
 - [ ] Всі storage через `SYH_STORAGE`
+- [ ] Helper'и `loadData`/`saveData` лишились як `export` і делегують у SYH_STORAGE
 - [ ] Debounce на input saves (≤1 write/300ms)
 - [ ] 2 listeners на document (move+up) замість 8
 - [ ] Popup не "стрибає" при відкритті

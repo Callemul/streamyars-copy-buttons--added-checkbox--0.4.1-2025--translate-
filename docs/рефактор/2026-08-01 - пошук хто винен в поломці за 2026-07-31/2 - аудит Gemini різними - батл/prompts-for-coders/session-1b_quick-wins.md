@@ -44,7 +44,10 @@ for (const key of Object.keys(localStorage)) {
 
 ---
 
-## L2: Видалити temp файл (~1 хв)
+## L2: Видалити тимчасові temp/tmp файли (~1 хв)
 
-Видалити файл `youtube/studio/studio_styles.css.temp` — він не використовується.
-Приймання: файл відсутній, збірка працює.
+Видалити непідтримувані тимчасові файли розробки:
+- `youtube/studio/studio_styles.css.temp`
+- `youtube/studio/studio_ui.ts.tmp`
+
+Приймання: обидва файли відсутні, збірка працює.

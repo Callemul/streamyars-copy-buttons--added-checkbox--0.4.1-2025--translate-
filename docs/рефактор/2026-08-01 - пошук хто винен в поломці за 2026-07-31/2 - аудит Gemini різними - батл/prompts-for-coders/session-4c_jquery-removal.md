@@ -5,23 +5,44 @@ Chrome Extension MV3, Vite + TS. Фази 1–3 виконані.
 Верифікація: `npm run lint && npm run test && npm run build` + ручна перевірка content scripts на живих сторінках.
 
 ## Скоуп
-Читай і змінюй ТІЛЬКИ: `modules/yt_collector.ts`, `modules/tg_importer.ts`, `modules/stats_exporter.ts`, `modules/studio_comment_exporter.ts`, `modules/studio_transcript.ts`, `manifest.json` (прибрати jquery.js), видалити `popup/jquery.js`
+Читай і змінюй ТІЛЬКИ: файли, знайдені на Кроці 0 (інвентаризація), + `manifest.json` і `popup/jquery.js` (видалення — тільки за умови, див. Крок 3).
+Аудит вказує на `modules/ui_*.ts`, `modules/event_*.ts` — але фактичний список визначає Крок 0.
 **Якщо код не збігається з описом — ЗУПИНИСЬ і доповідь. Не вигадуй рішення.**
 
 ## Формат звіту
-- Змінено: `файл` → `функція/блок`
-- Кількість jQuery-викликів до → після (по кожному файлу)
+- Крок 0: повний список файлів з jQuery + кількість викликів у кожному
+- Змінено: `файл` → `функція/блок`, кількість jQuery-викликів до → після
 - Кожен критерій приймання: ✅ або ❌
 - Повний вивід верифікації
 
 ---
 
-## Таблиця відповідності jQuery → нативний API
+## Крок 0: Інвентаризація jQuery (ОБОВ'ЯЗКОВИЙ, до будь-яких змін)
+
+Виконай пошук і запиши результат у звіт:
+
+```bash
+grep -rn "jQuery\|\\$(\|\\$\\." --include="*.ts" --include="*.js" --include="*.html" --include="*.json" .
+```
+
+(виключи `node_modules`, `dist`, легітимні `$` у template literals `${...}` і regex)
+
+Зафіксуй: які файли використовують jQuery, скільки викликів у кожному, звідки jQuery підключається (`manifest.json` content_scripts? `popup.html` `<script>`? npm-пакет?).
+
+> Якщо jQuery знайдено у файлах поза `modules/` (наприклад, у popup) — НЕ мігруй їх у цій сесії, доповісти. Пріоритет сесії — content scripts.
+
+## Крок 1: Міграція по одному файлу
+
+Порядок: від файлу з найменшою кількістю jQuery-викликів до найбільшої.
+
+Після КОЖНОГО файлу: `npm run build` + перевірка, що файл більше не містить `$(` чи `jQuery`.
+
+### Таблиця відповідності jQuery → нативний API
 
 ```typescript
 // ❌ $(document).ready(fn)
 // ✅ document.addEventListener('DOMContentLoaded', fn)
-//    або якщо script завантажується з defer / в кінці body — просто викликати fn()
+//    або якщо script з defer / в кінці body — просто викликати fn()
 
 // ❌ $('#btn').on('click', handler)
 // ✅ document.getElementById('btn')?.addEventListener('click', handler)
@@ -44,8 +65,8 @@ Chrome Extension MV3, Vite + TS. Фази 1–3 виконані.
 // ❌ $('#el').val()
 // ✅ (document.getElementById('el') as HTMLInputElement).value
 
-// ❌ $('#el').addClass('active') / .removeClass('active') / .toggleClass('active')
-// ✅ document.getElementById('el')?.classList.add('active') / .remove('active') / .toggle('active')
+// ❌ $('#el').addClass('x') / .removeClass('x') / .toggleClass('x')
+// ✅ el.classList.add('x') / .remove('x') / .toggle('x')
 
 // ❌ $('#el').show() / .hide()
 // ✅ el.style.display = '' / el.style.display = 'none'
@@ -70,30 +91,35 @@ Chrome Extension MV3, Vite + TS. Фази 1–3 виконані.
 // ✅ el.remove()
 ```
 
-## Крок 1: Міграція по одному файлу
+## Крок 2: Повторна інвентаризація
 
-Порядок: `yt_collector.ts` → `tg_importer.ts` → `stats_exporter.ts` → `studio_comment_exporter.ts` → `studio_transcript.ts`.
+Після міграції всіх content scripts — повтори пошук з Кроку 0.
 
-Після КОЖНОГО файлу: `npm run build` + перевірка, що файл більше не містить `$(` чи `jQuery`.
+## Крок 3: Видалення jQuery (УМОВНЕ!)
 
-## Крок 2: Видалити jQuery з проєкту
+Видаляй jQuery ТІЛЬКИ якщо Крок 2 показує **0 використань у всьому проєкті**:
 
 1. `manifest.json` — прибрати `jquery.js` з `content_scripts.js` (якщо там є)
-2. Видалити файл `popup/jquery.js`
-3. Пошук по всьому проєкту: `grep -r "jquery\|jQuery\|\\$(" --include="*.ts" --include="*.json"` — має бути 0 результатів (окрім легітимних `$` у template literals чи regex)
+2. Видалити файл `popup/jquery.js` — **ТІЛЬКИ якщо жоден popup-файл його не використовує** (перевір і `popup.html` на `<script src=`)
+3. Якщо jQuery — npm-пакет: `npm uninstall jquery`
 
-## Крок 3: Ручна перевірка на живих сторінках
+> ⚠️ Якщо використання лишились (наприклад, у popup) — НЕ видаляй `popup/jquery.js`. Доповідь: де лишилось, скільки викликів. Видалення jQuery відкладається.
+
+## Крок 4: Ручна перевірка на живих сторінках
 
 - [ ] streamyard.com — кнопка збору коментарів працює, overlay відображається
 - [ ] studio.youtube.com — кнопка експорту працює, прогрес відображається
 - [ ] popup — всі вкладки, кнопки, списки працюють як раніше
 
+> Нативний DOM API може мати subtle відмінності від jQuery (наприклад, `text()` vs `textContent` щодо прихованих елементів, `.val()` vs `.value`). Перевіряй поведінку, а не тільки компіляцію.
+
 ---
 
 ## Приймання
-- [ ] 0 jQuery-викликів у проєкті
-- [ ] `popup/jquery.js` видалено
-- [ ] `manifest.json` не посилається на jquery
-- [ ] Bundle size зменшився (перевірити вивід `npm run build`)
+- [ ] Звіт Кроку 0 містить повну інвентаризацію (файли + кількість викликів)
+- [ ] 0 jQuery-викликів у content scripts (`modules/`)
+- [ ] `popup/jquery.js` видалено АБО задокументовано, чому лишився (з кількістю використань)
+- [ ] `manifest.json` не посилається на jquery (якщо видалено)
+- [ ] Bundle size зменшився (вивід `npm run build`) — якщо jQuery видалено
 - [ ] Всі content scripts працюють на живих сторінках
 - [ ] `npm run lint && npm run test && npm run build` чисто

@@ -15,6 +15,10 @@ Chrome Extension MV3, Vite + TS. Фази 1 (критичні баги) вже �
 
 ---
 
+> ℹ️ **Чому тут немає M1 (lastError checks у popup) і L7 (debounce input)?**
+> M1 свідомо пропущена: у Фазі 3 popup мігрує на адаптер SYH_STORAGE, який вже має вбудовану обробку `chrome.runtime.lastError` — окремі перевірки стануть зайвими.
+> L7 перенесена в сесію 3A (файл `popup_init` там повністю переписується на TS — робити debounce двічі марно).
+
 ## M3: setInterval без cleanup у SPA навігації (~30 хв)
 
 **Файл:** `youtube/studio/studio_content.ts` (~рядки 45-65)
