@@ -91,8 +91,8 @@ import { SYH_PLUGINS } from './modules/plugin_registry';
 
         if (window.SYH_STATS_TRACKER) window.SYH_STATS_TRACKER.init();
 
-        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів unstar від Попапу в реальному часі через SYH_MESSAGING
-        SYH_MESSAGING.onMessage((message) => {
+        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів від Попапу в реальному часі через SYH_MESSAGING
+        SYH_MESSAGING.onMessage((message, sender, sendResponse) => {
             if (message && message.action === 'unstar_comment') {
                 const targetText = message.text ? message.text.trim() : "";
                 if (!targetText) return;
@@ -109,6 +109,35 @@ import { SYH_PLUGINS } from './modules/plugin_registry';
                         break;
                     }
                 }
+            } else if (message && message.action === 'FETCH_PRAYERS') {
+                const currentRoomId = window.location.pathname.replace(/\//g, '');
+                const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
+                const newPrayers: any[] = [];
+                const now = Date.now();
+                
+                comments.forEach(block => {
+                    const starBtn = block.querySelector('[class*="PlatformComment__StarButton"]');
+                    if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
+                        let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent?.trim() || "Глядач";
+                        while (author.startsWith('@')) author = author.substring(1);
+                        
+                        const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
+                        
+                        if (text) {
+                            newPrayers.push({
+                                id: 'p_' + now + '_' + Math.random().toString(36).substring(2, 9),
+                                author: author,
+                                text: text,
+                                type: "prayer",
+                                icon: "🙏🙏🙏",
+                                roomId: currentRoomId,
+                                timestamp: now
+                            });
+                        }
+                    }
+                });
+                if (sendResponse) sendResponse(newPrayers);
+                return true;
             }
         });
 

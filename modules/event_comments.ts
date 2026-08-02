@@ -28,6 +28,7 @@ export interface SyhEventComments {
 
     init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi): void;
     bindEvents(): void;
+    destroy(): void;
     saveToDatabase(author: string, text: string, type: string, icon: string): void;
     removeFromDatabase(text: string): void;
 }
@@ -58,6 +59,14 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         this.STATE = state || SYH_STATE;
         this.UTILS = utils || SYH_UTILS;
         this.UI = ui || SYH_UI;
+    },
+
+    destroy: function(): void {
+        if (this.autoHealObserver) {
+            this.autoHealObserver.disconnect();
+            this.autoHealObserver = undefined;
+        }
+        this.isBound = false;
     },
 
     bindEvents: function(): void {

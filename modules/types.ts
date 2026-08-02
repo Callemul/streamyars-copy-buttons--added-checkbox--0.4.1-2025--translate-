@@ -59,6 +59,7 @@ export interface DeletedLogEntry {
 
 export type SyhMessageAction =
     | 'unstar_comment'
+    | 'FETCH_PRAYERS'
     | 'PING'
     | 'GET_VERSION'
     | 'BACKGROUND_LOG';

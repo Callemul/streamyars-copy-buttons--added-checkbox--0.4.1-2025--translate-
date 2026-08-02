@@ -29,24 +29,11 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     },
 
     startObserver: function(): void {
-        let timeoutId: ReturnType<typeof setTimeout> | null = null;
-        const observer = new MutationObserver(() => {
-            if (document.hidden) return;
-            // ФІКС ПРОДУКТИВНОСТІ: Дебаунс 200мс для запобігання перевантаження CPU при частих мутаціях DOM
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                this.injectTitleButton();
-                this.injectModalButton();
-                this.injectListButtons();
-                this.injectMasterDownloadButton();
-            }, 200);
-        });
-
-        const targetNode = document.querySelector('#app')
-            || document.querySelector('#root')
-            || document.body;
-
-        observer.observe(targetNode, { childList: true, subtree: true });
+        // Замість створення власних MutationObserver, реєструємося у централізованому SYH_DOM_OBSERVER
+        SYH_DOM_OBSERVER.register('div[class*="TitleWrapper"]', () => this.injectTitleButton());
+        SYH_DOM_OBSERVER.register('div[aria-label="embed-modal-content-share"]', () => this.injectModalButton());
+        SYH_DOM_OBSERVER.register('a.media-item-card', () => this.injectListButtons());
+        SYH_DOM_OBSERVER.register('div[class*="ListWrap"]', () => this.injectMasterDownloadButton());
     },
 
     // --- КНОПКА 1: Біля заголовка H2 (на сторінці одного відео) ---
@@ -415,6 +402,4 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_VIDEO_COPIER = SYH_VIDEO_COPIER;
-}
+

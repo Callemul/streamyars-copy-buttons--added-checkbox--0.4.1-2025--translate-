@@ -25,48 +25,26 @@ export function getVideoId(): string {
 /**
  * Копіює текст у буфер обміну з фолбеком
  */
-export async function copyToClipboard(text: string): Promise<boolean> {
-    try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(text);
-            return true;
-        }
-    } catch (err) {
-        console.warn('[SYH YT] Clipboard API error, trying execCommand:', err);
-    }
+import { CommentService } from '../modules/comment_service';
 
-    try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return success;
-    } catch (err) {
-        console.error('[SYH YT] Copy failed:', err);
-        return false;
-    }
+export async function copyToClipboard(text: string): Promise<boolean> {
+    return CommentService.copyToClipboard(text);
 }
 
 /**
- * Зберігає збираний коментар у syh_yt_collected
+ * Зберігає зібраний коментар у syh_yt_collected через уніфікований CommentService
  */
 export function saveCollectedItem(
     item: YTCollectedItem,
     collectedList: YTCollectedItem[]
 ): YTCollectedItem[] {
     const index = collectedList.findIndex(i => i.id === item.id);
-    let updated: YTCollectedItem[];
-    if (index >= 0) {
-        updated = [...collectedList];
-        updated[index] = item;
-    } else {
-        updated = [item, ...collectedList];
-    }
+    const updated = index >= 0
+        ? collectedList.map((i, idx) => idx === index ? item : i)
+        : [item, ...collectedList];
+
     SYH_STORAGE.set({ [STORAGE_KEYS.YT_COLLECTED]: updated });
+    CommentService.saveCollectedComment('vp_ss', item).catch(() => {});
     return updated;
 }
 
@@ -110,8 +88,8 @@ export function bindYTEvents(
         btnQuestion.addEventListener('click', async (e) => {
             e.stopPropagation();
             const { author, text } = extractCommentData(commentNode);
-            const formatted = `@${author}\n\n${text}`;
-            await copyToClipboard(formatted);
+            const formatted = CommentService.formatForClipboard(author, text);
+            await CommentService.copyToClipboard(formatted);
 
             // Оновлення кнопок
             btnQuestion.innerText = 'Скопійовано';
@@ -150,8 +128,8 @@ export function bindYTEvents(
         btnPrayer.addEventListener('click', async (e) => {
             e.stopPropagation();
             const { author, text } = extractCommentData(commentNode);
-            const formatted = `@${author}\n\n${text}`;
-            await copyToClipboard(formatted);
+            const formatted = CommentService.formatForClipboard(author, text);
+            await CommentService.copyToClipboard(formatted);
 
             // Оновлення кнопок
             btnPrayer.innerText = 'Скопійовано';

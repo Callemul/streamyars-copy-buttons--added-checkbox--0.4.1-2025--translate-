@@ -1,5 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
+import { CommentService } from '../modules/comment_service';
 
 import type { PrayerItem } from '../modules/types';
 export type { PrayerItem };
@@ -379,26 +380,12 @@ $(document).ready(function() {
         const $btn = $(this);
         const originalText = $btn.text();
 
-        const copyFallback = (txt: string) => {
-            const $temp = $("<textarea>");
-            $("body").append($temp);
-            $temp.val(txt).select();
-            document.execCommand("copy");
-            $temp.remove();
-        };
-
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(text);
-            } else {
-                copyFallback(text);
-            }
-        } catch (err) {
-            console.warn("Clipboard API failed, using fallback:", err);
-            copyFallback(text);
+        const success = await CommentService.copyToClipboard(text);
+        if (success) {
+            $btn.text("Скопійовано! ✅");
+        } else {
+            $btn.text("Помилка ❌");
         }
-
-        $btn.text("Скопійовано! ✅");
         setTimeout(() => $btn.text(originalText), 2000);
     });
 
@@ -416,82 +403,41 @@ $(document).ready(function() {
     });
 
     // 🔄 НОВЕ: ФОНОВЕ ПІДТЯГУВАННЯ ЗІРКОВИХ КОМЕНТАРІВ ЗІ STREAMYARD (ТІЛЬКИ МОЛИТВИ)
-    $('#fetchPrayersBtn').click(function() {
+    $('#fetchPrayersBtn').click(async function() {
         const originalText = $(this).text();
         $(this).text("⌛...");
-        
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (!tabs[0] || !tabs[0].url || tabs[0].id === undefined) {
-                alert("Не знайдено активну вкладку StreamYard.");
-                $('#fetchPrayersBtn').text(originalText);
-                return;
-            }
-            const tabId = tabs[0].id;
-            
-            // Запускаємо скан прямо на сторінці StreamYard
-            chrome.scripting.executeScript({
-                target: { tabId: tabId },
-                func: () => {
-                    const currentRoomId = window.location.pathname.replace(/\//g, '');
-                    // ФІКС: Шукаємо ТІЛЬКИ ті коментарі, які промарковані як "prayer" (🙏)
-                    const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
-                    const newPrayers: PrayerItem[] = [];
-                    const now = Date.now();
-                    
-                    comments.forEach(block => {
-                        const starBtn = block.querySelector('[class*="PlatformComment__StarButton"]');
-                        // Перевіряємо, чи цей молитовний коментар має активну зірочку
-                        if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
-                            let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent?.trim() || "Глядач";
-                            while (author.startsWith('@')) author = author.substring(1);
-                            
-                            const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
-                            
-                            if (text) {
-                                newPrayers.push({
-                                    id: 'p_' + now + '_' + Math.random().toString(36).substring(2, 9),
-                                    author: author,
-                                    text: text,
-                                    type: "prayer",
-                                    icon: "🙏🙏🙏",
-                                    roomId: currentRoomId,
-                                    timestamp: now
-                                });
-                            }
+
+        try {
+            const fetched = await SYH_MESSAGING.sendToActiveTab<PrayerItem[]>({ action: 'FETCH_PRAYERS' });
+            if (fetched && Array.isArray(fetched)) {
+                SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
+                    const list: PrayerItem[] = res[STORAGE_KEYS.PRAYERS] || [];
+                    let addedCount = 0;
+
+                    fetched.forEach(f => {
+                        if (!list.find(p => p.text === f.text)) {
+                            list.push(f);
+                            addedCount++;
                         }
                     });
-                    return newPrayers;
-                }
-            }, (results) => {
-                if (results && results[0] && results[0].result) {
-                    const fetched = results[0].result as PrayerItem[];
-                    
-                    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
-                        const list: PrayerItem[] = res[STORAGE_KEYS.PRAYERS] || [];
-                        let addedCount = 0;
-                        
-                        // Додаємо тільки ті, яких ще немає в базі
-                        fetched.forEach(f => {
-                            if (!list.find(p => p.text === f.text)) {
-                                list.push(f);
-                                addedCount++;
-                            }
-                        });
-                        
-                        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
-                            renderPrayers(list);
-                            $('#fetchPrayersBtn').text(originalText);
-                            if (addedCount > 0) {
-                                alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
-                            } else {
-                                alert("[SYH] Зіркових МОЛИТОВ не знайдено (або вони всі вже є в списку).");
-                            }
-                        });
+
+                    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
+                        renderPrayers(list);
+                        $('#fetchPrayersBtn').text(originalText);
+                        if (addedCount > 0) {
+                            alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
+                        } else {
+                            alert("[SYH] Зіркових МОЛИТОВ не знайдено (або вони всі вже є в списку).");
+                        }
                     });
-                } else {
-                    $('#fetchPrayersBtn').text(originalText);
-                }
-            });
-        });
+                });
+            } else {
+                $('#fetchPrayersBtn').text(originalText);
+                alert("[SYH] Не вдалося підтягнути молитви з активної вкладки StreamYard.");
+            }
+        } catch (err) {
+            console.error("[SYH] Fetch prayers error:", err);
+            $('#fetchPrayersBtn').text(originalText);
+        }
     });
 });

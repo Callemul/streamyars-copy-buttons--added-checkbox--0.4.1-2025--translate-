@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_CONFIG } from '../modules/config';
 import { SHEET_LABELS, SheetId } from '../modules/sheets';
+import { CommentService } from '../modules/comment_service';
 import type { StudioOverrideLogEntry } from '../modules/types';
 
 interface OptionsState {
@@ -224,19 +225,10 @@ class OptionsController {
 
             const textToCopy = `=== YouTube Studio Manual Override Log (${logs.length} записів) ===\n\n` + lines.join('\n');
 
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(textToCopy);
-                } else {
-                    const temp = document.createElement('textarea');
-                    document.body.appendChild(temp);
-                    temp.value = textToCopy;
-                    temp.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(temp);
-                }
+            const success = await CommentService.copyToClipboard(textToCopy);
+            if (success) {
                 this.showToast('📋 Лог корекцій YouTube Studio скопійовано!');
-            } catch (err) {
+            } else {
                 alert('Не вдалося скопіювати лог в буфер обміну');
             }
         });

@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
 import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine } from './telegram_parser';
 import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
 
@@ -153,22 +153,23 @@ export class SheetStateService {
 
     public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
         const sheetKey = getSheetCollectedStorageKey(sheetId);
+        const k = POPUP_SHEET_KEYS;
         const keysToLoad = [
-            `tg_oldList__${sheetId}`,
-            `tg_answered__${sheetId}`,
-            `tg_newTelegram__${sheetId}`,
-            `tg_finalResultHtml__${sheetId}`,
-            `tg_statsHtml__${sheetId}`,
-            `tg_statsVisible__${sheetId}`,
-            `tg_deletedLogHtml__${sheetId}`,
-            `tg_deletedLogCount__${sheetId}`,
-            `tg_deletedLogDetailsVisible__${sheetId}`,
-            `tg_deletedLogDetailsOpen__${sheetId}`,
-            `tg_cleanedLogHtml__${sheetId}`,
-            `tg_cleanedLogCount__${sheetId}`,
-            `tg_cleanedLogDetailsVisible__${sheetId}`,
-            `tg_cleanedLogDetailsOpen__${sheetId}`,
-            `syh:popup:divider_pos:${sheetId}`,
+            k.oldList(sheetId),
+            k.answered(sheetId),
+            k.newTelegram(sheetId),
+            k.finalResultHtml(sheetId),
+            k.statsHtml(sheetId),
+            k.statsVisible(sheetId),
+            k.deletedLogHtml(sheetId),
+            k.deletedLogCount(sheetId),
+            k.deletedLogDetailsVisible(sheetId),
+            k.deletedLogDetailsOpen(sheetId),
+            k.cleanedLogHtml(sheetId),
+            k.cleanedLogCount(sheetId),
+            k.cleanedLogDetailsVisible(sheetId),
+            k.cleanedLogDetailsOpen(sheetId),
+            k.dividerPos(sheetId),
             sheetKey
         ];
 
@@ -184,21 +185,21 @@ export class SheetStateService {
         }
 
         return {
-            oldList: res[`tg_oldList__${sheetId}`] || '',
-            answered: res[`tg_answered__${sheetId}`] || '',
-            newTelegram: res[`tg_newTelegram__${sheetId}`] || '',
-            finalResultHtml: res[`tg_finalResultHtml__${sheetId}`] || '',
-            statsHtml: res[`tg_statsHtml__${sheetId}`] || '',
-            statsVisible: !!res[`tg_statsVisible__${sheetId}`],
-            deletedLogHtml: res[`tg_deletedLogHtml__${sheetId}`] || '',
-            deletedLogCount: res[`tg_deletedLogCount__${sheetId}`] || 0,
-            deletedLogDetailsVisible: !!res[`tg_deletedLogDetailsVisible__${sheetId}`],
-            deletedLogDetailsOpen: !!res[`tg_deletedLogDetailsOpen__${sheetId}`],
-            cleanedLogHtml: res[`tg_cleanedLogHtml__${sheetId}`] || '',
-            cleanedLogCount: res[`tg_cleanedLogCount__${sheetId}`] || 0,
-            cleanedLogDetailsVisible: !!res[`tg_cleanedLogDetailsVisible__${sheetId}`],
-            cleanedLogDetailsOpen: !!res[`tg_cleanedLogDetailsOpen__${sheetId}`],
-            dividerPos: res[`syh:popup:divider_pos:${sheetId}`] || 50,
+            oldList: res[k.oldList(sheetId)] || '',
+            answered: res[k.answered(sheetId)] || '',
+            newTelegram: res[k.newTelegram(sheetId)] || '',
+            finalResultHtml: res[k.finalResultHtml(sheetId)] || '',
+            statsHtml: res[k.statsHtml(sheetId)] || '',
+            statsVisible: !!res[k.statsVisible(sheetId)],
+            deletedLogHtml: res[k.deletedLogHtml(sheetId)] || '',
+            deletedLogCount: res[k.deletedLogCount(sheetId)] || 0,
+            deletedLogDetailsVisible: !!res[k.deletedLogDetailsVisible(sheetId)],
+            deletedLogDetailsOpen: !!res[k.deletedLogDetailsOpen(sheetId)],
+            cleanedLogHtml: res[k.cleanedLogHtml(sheetId)] || '',
+            cleanedLogCount: res[k.cleanedLogCount(sheetId)] || 0,
+            cleanedLogDetailsVisible: !!res[k.cleanedLogDetailsVisible(sheetId)],
+            cleanedLogDetailsOpen: !!res[k.cleanedLogDetailsOpen(sheetId)],
+            dividerPos: res[k.dividerPos(sheetId)] || 50,
             ytCollected
         };
     }
@@ -206,27 +207,33 @@ export class SheetStateService {
     public static async saveSheetState(sheetId: string, updates: Record<string, any>): Promise<void> {
         const storageObj: Record<string, any> = {};
         for (const [key, value] of Object.entries(updates)) {
-            storageObj[`tg_${key}__${sheetId}`] = value;
+            const keyFn = (POPUP_SHEET_KEYS as Record<string, (id: string) => string>)[key];
+            if (keyFn) {
+                storageObj[keyFn(sheetId)] = value;
+            } else {
+                storageObj[`syh:popup:sheet:${sheetId}:${key}`] = value;
+            }
         }
         await SYH_STORAGE.setAsync(storageObj);
     }
 
     public static async clearSheetState(sheetId: string): Promise<void> {
+        const k = POPUP_SHEET_KEYS;
         const keysToRemove = [
-            `tg_oldList__${sheetId}`,
-            `tg_answered__${sheetId}`,
-            `tg_newTelegram__${sheetId}`,
-            `tg_finalResultHtml__${sheetId}`,
-            `tg_statsHtml__${sheetId}`,
-            `tg_statsVisible__${sheetId}`,
-            `tg_deletedLogHtml__${sheetId}`,
-            `tg_deletedLogCount__${sheetId}`,
-            `tg_deletedLogDetailsVisible__${sheetId}`,
-            `tg_deletedLogDetailsOpen__${sheetId}`,
-            `tg_cleanedLogHtml__${sheetId}`,
-            `tg_cleanedLogCount__${sheetId}`,
-            `tg_cleanedLogDetailsVisible__${sheetId}`,
-            `tg_cleanedLogDetailsOpen__${sheetId}`
+            k.oldList(sheetId),
+            k.answered(sheetId),
+            k.newTelegram(sheetId),
+            k.finalResultHtml(sheetId),
+            k.statsHtml(sheetId),
+            k.statsVisible(sheetId),
+            k.deletedLogHtml(sheetId),
+            k.deletedLogCount(sheetId),
+            k.deletedLogDetailsVisible(sheetId),
+            k.deletedLogDetailsOpen(sheetId),
+            k.cleanedLogHtml(sheetId),
+            k.cleanedLogCount(sheetId),
+            k.cleanedLogDetailsVisible(sheetId),
+            k.cleanedLogDetailsOpen(sheetId)
         ];
         await SYH_STORAGE.removeAsync(keysToRemove);
     }

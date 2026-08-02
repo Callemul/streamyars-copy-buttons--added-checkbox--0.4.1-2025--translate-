@@ -28,7 +28,7 @@
 import { SYH_STORAGE } from '../../modules/storage';
 import { SheetId, SHEET_LABELS } from '../../modules/sheets';
 import { ChannelKey } from '../../modules/channel_config';
-import { copyToClipboard } from '../yt_events';
+import { CommentService } from '../../modules/comment_service';
 import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref, getCommentTextAreaElement } from './studio_selectors';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
 import { generateVideoKey, setStudioVideoSheetOverride, VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
@@ -233,8 +233,8 @@ export function bindStudioCommentEvents(
         ui.copyBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const ctx = getFreshContext();
-            const formatted = ctx.freshAuthor ? `@${ctx.freshAuthor}\n\n${ctx.freshText}` : ctx.freshText;
-            const success = await copyToClipboard(formatted);
+            const formatted = CommentService.formatForClipboard(ctx.freshAuthor, ctx.freshText);
+            const success = await CommentService.copyToClipboard(formatted);
 
             const origHtml = ui.copyBtn.innerHTML;
             const origTitle = ui.copyBtn.title;
@@ -271,8 +271,8 @@ export function bindStudioCommentEvents(
             return;
         }
 
-        const formatted = ctx.freshAuthor ? `@${ctx.freshAuthor}\n\n${ctx.freshText}` : ctx.freshText;
-        await copyToClipboard(formatted);
+        const formatted = CommentService.formatForClipboard(ctx.freshAuthor, ctx.freshText);
+        await CommentService.copyToClipboard(formatted);
 
         // Update button state cache & storage
         caches.buttonStates[ctx.freshCommentKey] = type;

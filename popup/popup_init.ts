@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
 import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows, clearAllYTCollected } from './popup_telegram';
 import { renderPrayers } from './popup_prayers';
@@ -6,52 +6,58 @@ import { renderPrayers } from './popup_prayers';
 export const db: Record<string, unknown> = {};
 
 /**
- * Динамічна інсталяція HTML-блоків аркушів із шаблону <template>
+ * Динамічна інсталяція HTML-блоків аркушів із шаблону <template> (Vanilla DOM)
  */
 export function renderSheetTemplates(): void {
-    const $template = $('#sheet-content-template');
-    const $container = $('#sheet-contents-container');
-    if ($template.length === 0 || $container.length === 0) return;
+    const template = document.getElementById('sheet-content-template') as HTMLTemplateElement | null;
+    const container = document.getElementById('sheet-contents-container');
+    if (!template || !container) return;
 
     const sheetIds = getAllSheetIds();
     sheetIds.forEach((sId, idx) => {
-        const $clone = $($template.html());
-        $clone.attr('id', `sheet-content-${sId}`);
-        $clone.attr('aria-label', SHEET_LABELS[sId] || sId);
-        if (idx === 0) $clone.addClass('active');
+        const clone = template.content.firstElementChild?.cloneNode(true) as HTMLElement | null;
+        if (!clone) return;
 
-        // Mapping dynamic IDs for child controls
-        $clone.find('.js-old-total-count').attr('id', `oldTotalCount__${sId}`);
-        $clone.find('.js-old-list').attr('id', `oldList__${sId}`);
-        $clone.find('.js-answered-ids').attr('id', `answeredIds__${sId}`);
-        $clone.find('.js-tg-total-count-all').attr('id', `tgTotalCountAll__${sId}`);
-        $clone.find('.js-step3-columns').attr('id', `step3Columns__${sId}`);
-        $clone.find('.js-step3-left').attr('id', `step3Left__${sId}`);
-        $clone.find('.js-tg-total-count-left').attr('id', `tgTotalCountLeft__${sId}`);
-        $clone.find('.js-new-telegram').attr('id', `newTelegram__${sId}`);
-        $clone.find('.js-step3-divider').attr('id', `step3Divider__${sId}`);
-        $clone.find('.js-step3-right').attr('id', `step3Right__${sId}`);
-        $clone.find('.js-tg-total-count-right').attr('id', `tgTotalCountRight__${sId}`);
-        $clone.find('.js-clear-yt-collected').attr('id', `clearYTCollected__${sId}`);
-        $clone.find('.js-yt-collected-list').attr('id', `ytCollectedList__${sId}`);
-        $clone.find('.js-process-btn').attr('id', `processTelegramBtn__${sId}`);
-        $clone.find('.js-clear-state-btn').attr('id', `clearStateBtn__${sId}`);
-        $clone.find('.js-stats-bar').attr('id', `statsBar__${sId}`);
-        $clone.find('.js-count-old').attr('id', `countOld__${sId}`);
-        $clone.find('.js-count-del').attr('id', `countDel__${sId}`);
-        $clone.find('.js-count-new-left').attr('id', `countNewLeft__${sId}`);
-        $clone.find('.js-count-new-yt').attr('id', `countNewYT__${sId}`);
-        $clone.find('.js-count-total').attr('id', `countTotal__${sId}`);
-        $clone.find('.js-copy-result-btn').attr('id', `copyResultBtn__${sId}`);
-        $clone.find('.js-final-result-div').attr('id', `finalResultDiv__${sId}`);
-        $clone.find('.js-deleted-log-details').attr('id', `deletedLogDetails__${sId}`);
-        $clone.find('.js-deleted-log-count').attr('id', `deletedLogCount__${sId}`);
-        $clone.find('.js-deleted-log').attr('id', `deletedLog__${sId}`);
-        $clone.find('.js-cleaned-log-details').attr('id', `cleanedLogDetails__${sId}`);
-        $clone.find('.js-cleaned-log-count').attr('id', `cleanedLogCount__${sId}`);
-        $clone.find('.js-cleaned-log').attr('id', `cleanedLog__${sId}`);
+        clone.id = `sheet-content-${sId}`;
+        clone.setAttribute('aria-label', SHEET_LABELS[sId] || sId);
+        if (idx === 0) clone.classList.add('active');
 
-        $container.append($clone);
+        const setAttrId = (selector: string, newId: string) => {
+            const el = clone.querySelector(selector);
+            if (el) el.id = newId;
+        };
+
+        setAttrId('.js-old-total-count', `oldTotalCount__${sId}`);
+        setAttrId('.js-old-list', `oldList__${sId}`);
+        setAttrId('.js-answered-ids', `answeredIds__${sId}`);
+        setAttrId('.js-tg-total-count-all', `tgTotalCountAll__${sId}`);
+        setAttrId('.js-step3-columns', `step3Columns__${sId}`);
+        setAttrId('.js-step3-left', `step3Left__${sId}`);
+        setAttrId('.js-tg-total-count-left', `tgTotalCountLeft__${sId}`);
+        setAttrId('.js-new-telegram', `newTelegram__${sId}`);
+        setAttrId('.js-step3-divider', `step3Divider__${sId}`);
+        setAttrId('.js-step3-right', `step3Right__${sId}`);
+        setAttrId('.js-tg-total-count-right', `tgTotalCountRight__${sId}`);
+        setAttrId('.js-clear-yt-collected', `clearYTCollected__${sId}`);
+        setAttrId('.js-yt-collected-list', `ytCollectedList__${sId}`);
+        setAttrId('.js-process-btn', `processTelegramBtn__${sId}`);
+        setAttrId('.js-clear-state-btn', `clearStateBtn__${sId}`);
+        setAttrId('.js-stats-bar', `statsBar__${sId}`);
+        setAttrId('.js-count-old', `countOld__${sId}`);
+        setAttrId('.js-count-del', `countDel__${sId}`);
+        setAttrId('.js-count-new-left', `countNewLeft__${sId}`);
+        setAttrId('.js-count-new-yt', `countNewYT__${sId}`);
+        setAttrId('.js-count-total', `countTotal__${sId}`);
+        setAttrId('.js-copy-result-btn', `copyResultBtn__${sId}`);
+        setAttrId('.js-final-result-div', `finalResultDiv__${sId}`);
+        setAttrId('.js-deleted-log-details', `deletedLogDetails__${sId}`);
+        setAttrId('.js-deleted-log-count', `deletedLogCount__${sId}`);
+        setAttrId('.js-deleted-log', `deletedLog__${sId}`);
+        setAttrId('.js-cleaned-log-details', `cleanedLogDetails__${sId}`);
+        setAttrId('.js-cleaned-log-count', `cleanedLogCount__${sId}`);
+        setAttrId('.js-cleaned-log', `cleanedLog__${sId}`);
+
+        container.appendChild(clone);
     });
 }
 
@@ -73,11 +79,11 @@ export async function saveData(key: string, value: unknown): Promise<void> {
 
 const SHEET_IDS = getAllSheetIds();
 
-$(document).ready(function() {
+$(document).ready(function () {
     renderSheetTemplates();
 
     const keysToLoad = [
-        STORAGE_KEYS.DB, 
+        STORAGE_KEYS.DB,
         STORAGE_KEYS.PRAYERS,
         'tg_active_tab',
         'tg_active_subtab',
@@ -90,75 +96,75 @@ $(document).ready(function() {
 
     SHEET_IDS.forEach(sId => {
         keysToLoad.push(
-            `tg_oldList__${sId}`,
-            `tg_answered__${sId}`,
-            `tg_newTelegram__${sId}`,
-            `tg_finalResultHtml__${sId}`,
-            `tg_statsHtml__${sId}`,
-            `tg_statsVisible__${sId}`,
-            `tg_deletedLogHtml__${sId}`,
-            `tg_deletedLogCount__${sId}`,
-            `tg_deletedLogDetailsVisible__${sId}`,
-            `tg_deletedLogDetailsOpen__${sId}`,
-            `tg_cleanedLogHtml__${sId}`,
-            `tg_cleanedLogCount__${sId}`,
-            `tg_cleanedLogDetailsVisible__${sId}`,
-            `tg_cleanedLogDetailsOpen__${sId}`,
-            `syh:popup:divider_pos:${sId}`,
-            `syh:popup:collected:${sId}`
+            POPUP_SHEET_KEYS.oldList(sId), `tg_oldList__${sId}`,
+            POPUP_SHEET_KEYS.answered(sId), `tg_answered__${sId}`,
+            POPUP_SHEET_KEYS.newTelegram(sId), `tg_newTelegram__${sId}`,
+            POPUP_SHEET_KEYS.finalResultHtml(sId), `tg_finalResultHtml__${sId}`,
+            POPUP_SHEET_KEYS.statsHtml(sId), `tg_statsHtml__${sId}`,
+            POPUP_SHEET_KEYS.statsVisible(sId), `tg_statsVisible__${sId}`,
+            POPUP_SHEET_KEYS.deletedLogHtml(sId), `tg_deletedLogHtml__${sId}`,
+            POPUP_SHEET_KEYS.deletedLogCount(sId), `tg_deletedLogCount__${sId}`,
+            POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId), `tg_deletedLogDetailsVisible__${sId}`,
+            POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId), `tg_deletedLogDetailsOpen__${sId}`,
+            POPUP_SHEET_KEYS.cleanedLogHtml(sId), `tg_cleanedLogHtml__${sId}`,
+            POPUP_SHEET_KEYS.cleanedLogCount(sId), `tg_cleanedLogCount__${sId}`,
+            POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId), `tg_cleanedLogDetailsVisible__${sId}`,
+            POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId), `tg_cleanedLogDetailsOpen__${sId}`,
+            POPUP_SHEET_KEYS.dividerPos(sId), `syh:popup:divider_pos:${sId}`,
+            getSheetCollectedStorageKey(sId), `syh:popup:collected:${sId}`
         );
     });
 
     let storageLoaded = false;
 
-    SYH_STORAGE.get(keysToLoad, function(result) {
-        if (result[STORAGE_KEYS.DB]) { 
+    SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
+        if (result[STORAGE_KEYS.DB]) {
             Object.assign(db, result[STORAGE_KEYS.DB]);
-            if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS); 
-            if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach); 
+            if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS as string);
+            if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach as string);
         }
-        
+
         SHEET_IDS.forEach(sId => {
-            const oldListVal = result[`tg_oldList__${sId}`];
-            if (oldListVal) { 
-                $(`#oldList__${sId}`).val(oldListVal); 
+            const oldListVal = result[POPUP_SHEET_KEYS.oldList(sId)] ?? result[`tg_oldList__${sId}`];
+            if (oldListVal) {
+                $(`#oldList__${sId}`).val(oldListVal);
                 updateOldInputStats(sId);
             }
 
-            const answeredVal = result[`tg_answered__${sId}`];
+            const answeredVal = result[POPUP_SHEET_KEYS.answered(sId)] ?? result[`tg_answered__${sId}`];
             if (answeredVal) {
                 $(`#answeredIds__${sId}`).val(answeredVal);
             }
 
-            const newTgVal = result[`tg_newTelegram__${sId}`];
-            if (newTgVal) { 
-                $(`#newTelegram__${sId}`).val(newTgVal); 
+            const newTgVal = result[POPUP_SHEET_KEYS.newTelegram(sId)] ?? result[`tg_newTelegram__${sId}`];
+            if (newTgVal) {
+                $(`#newTelegram__${sId}`).val(newTgVal);
                 updateNewInputStats(sId);
             }
 
-            const finalHtml = result[`tg_finalResultHtml__${sId}`];
+            const finalHtml = result[POPUP_SHEET_KEYS.finalResultHtml(sId)] ?? result[`tg_finalResultHtml__${sId}`];
             if (finalHtml) {
                 $(`#finalResultDiv__${sId}`).html(finalHtml);
             }
 
-            if (result[`tg_statsVisible__${sId}`]) {
-                const statsHtml = result[`tg_statsHtml__${sId}`];
+            if (result[POPUP_SHEET_KEYS.statsVisible(sId)] ?? result[`tg_statsVisible__${sId}`]) {
+                const statsHtml = result[POPUP_SHEET_KEYS.statsHtml(sId)] ?? result[`tg_statsHtml__${sId}`];
                 if (statsHtml) $(`#statsBar__${sId}`).html(statsHtml);
                 ensureStatsBarRows(sId);
                 $(`#statsBar__${sId}`).show();
             }
 
-            if (result[`tg_deletedLogDetailsVisible__${sId}`]) {
-                const delHtml = result[`tg_deletedLogHtml__${sId}`];
+            if (result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`]) {
+                const delHtml = result[POPUP_SHEET_KEYS.deletedLogHtml(sId)] ?? result[`tg_deletedLogHtml__${sId}`];
                 if (delHtml) $(`#deletedLog__${sId}`).html(delHtml);
-                let delCount = result[`tg_deletedLogCount__${sId}`];
+                let delCount = result[POPUP_SHEET_KEYS.deletedLogCount(sId)] ?? result[`tg_deletedLogCount__${sId}`];
                 if (delCount === undefined && delHtml) {
                     delCount = $(`#deletedLog__${sId}`).find('.del-row').length;
                 }
                 if (delCount) {
                     $(`#deletedLogCount__${sId}`).text(`(${delCount})`);
                 }
-                if (result[`tg_deletedLogDetailsOpen__${sId}`]) {
+                if (result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`]) {
                     $(`#deletedLogDetails__${sId}`).attr('open', 'open');
                 } else {
                     $(`#deletedLogDetails__${sId}`).removeAttr('open');
@@ -168,17 +174,17 @@ $(document).ready(function() {
                 $(`#deletedLogCount__${sId}`).text('');
             }
 
-            if (result[`tg_cleanedLogDetailsVisible__${sId}`]) {
-                const cleanHtml = result[`tg_cleanedLogHtml__${sId}`];
+            if (result[POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId)] ?? result[`tg_cleanedLogDetailsVisible__${sId}`]) {
+                const cleanHtml = result[POPUP_SHEET_KEYS.cleanedLogHtml(sId)] ?? result[`tg_cleanedLogHtml__${sId}`];
                 if (cleanHtml) $(`#cleanedLog__${sId}`).html(cleanHtml);
-                let cleanCount = result[`tg_cleanedLogCount__${sId}`];
+                let cleanCount = result[POPUP_SHEET_KEYS.cleanedLogCount(sId)] ?? result[`tg_cleanedLogCount__${sId}`];
                 if (cleanCount === undefined && cleanHtml) {
                     cleanCount = $(`#cleanedLog__${sId}`).find('.clean-table tr').length - 1;
                 }
                 if (cleanCount && cleanCount > 0) {
                     $(`#cleanedLogCount__${sId}`).text(`(${cleanCount})`);
                 }
-                if (result[`tg_cleanedLogDetailsOpen__${sId}`]) {
+                if (result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`]) {
                     $(`#cleanedLogDetails__${sId}`).attr('open', 'open');
                 } else {
                     $(`#cleanedLogDetails__${sId}`).removeAttr('open');
@@ -188,7 +194,7 @@ $(document).ready(function() {
                 $(`#cleanedLogCount__${sId}`).text('');
             }
 
-            const divPos = result[`syh:popup:divider_pos:${sId}`];
+            const divPos = result[POPUP_SHEET_KEYS.dividerPos(sId)] ?? result[`syh:popup:divider_pos:${sId}`];
             if (divPos) {
                 $(`#step3Left__${sId}`).css('flex', `${divPos}%`);
                 $(`#step3Right__${sId}`).css('flex', `${100 - divPos}%`);
@@ -238,7 +244,7 @@ $(document).ready(function() {
                 if (scrolls.prayersResultDiv !== undefined) $('#prayersResultDiv').scrollTop(scrolls.prayersResultDiv);
                 if (scrolls.textArea1_oldText !== undefined) $('#textArea1_oldText').scrollTop(scrolls.textArea1_oldText);
                 if (scrolls.textArea2_generatedRuText !== undefined) $('#textArea2_generatedRuText').scrollTop(scrolls.textArea2_generatedRuText);
-                
+
                 SHEET_IDS.forEach(sId => {
                     if (scrolls[`finalResultDiv__${sId}`] !== undefined) $(`#finalResultDiv__${sId}`).scrollTop(scrolls[`finalResultDiv__${sId}`]);
                     if (scrolls[`deletedLog__${sId}`] !== undefined) $(`#deletedLog__${sId}`).scrollTop(scrolls[`deletedLog__${sId}`]);
@@ -253,16 +259,16 @@ $(document).ready(function() {
         initStep3Resizers();
     });
 
-    $('.tab-link').click(function() {
-        const tabId = $(this).data('tab'); 
-        $('.tab-link').removeClass('active').attr('aria-selected', 'false'); 
-        $('.tab-content').removeClass('active'); 
-        $(this).addClass('active').attr('aria-selected', 'true'); 
+    $('.tab-link').click(function () {
+        const tabId = $(this).data('tab');
+        $('.tab-link').removeClass('active').attr('aria-selected', 'false');
+        $('.tab-content').removeClass('active');
+        $(this).addClass('active').attr('aria-selected', 'true');
         $('#' + tabId).addClass('active');
         SYH_STORAGE.set({ 'tg_active_tab': tabId });
     });
 
-    $('.subtab-button').click(function() {
+    $('.subtab-button').click(function () {
         const sheetId = $(this).data('sheet');
         $('.subtab-button').removeClass('active').attr('aria-selected', 'false');
         $('.sheet-content').removeClass('active');
@@ -271,102 +277,122 @@ $(document).ready(function() {
         SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
     });
 
-    let oldListTimer: any = null;
-    let newTelegramTimer: any = null;
-    let answeredIdsTimer: any = null;
-    let finalResultTimer: any = null;
-    let translitOldTimer: any = null;
-    let translitNewTimer: any = null;
+    let oldListTimer: ReturnType<typeof setTimeout> | null = null;
+    let newTelegramTimer: ReturnType<typeof setTimeout> | null = null;
+    let answeredIdsTimer: ReturnType<typeof setTimeout> | null = null;
+    let finalResultTimer: ReturnType<typeof setTimeout> | null = null;
+    let translitOldTimer: ReturnType<typeof setTimeout> | null = null;
+    let translitNewTimer: ReturnType<typeof setTimeout> | null = null;
 
     SHEET_IDS.forEach(sId => {
-        $(`#oldList__${sId}`).on('input', function() { 
+        $(`#oldList__${sId}`).on('input', function () {
             const val = $(this).val();
             if (oldListTimer) clearTimeout(oldListTimer);
             oldListTimer = setTimeout(() => {
-                SYH_STORAGE.set({ [`tg_oldList__${sId}`]: val }); 
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.oldList(sId)]: val,
+                    [`tg_oldList__${sId}`]: val
+                });
                 updateOldInputStats(sId);
             }, 300);
         });
-        
-        $(`#newTelegram__${sId}`).on('input', function() { 
+
+        $(`#newTelegram__${sId}`).on('input', function () {
             const val = $(this).val();
             if (newTelegramTimer) clearTimeout(newTelegramTimer);
             newTelegramTimer = setTimeout(() => {
-                SYH_STORAGE.set({ [`tg_newTelegram__${sId}`]: val }); 
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
+                    [`tg_newTelegram__${sId}`]: val
+                });
                 updateNewInputStats(sId);
             }, 300);
         });
-        
-        $(`#answeredIds__${sId}`).on('input', function() { 
+
+        $(`#answeredIds__${sId}`).on('input', function () {
             const val = $(this).val();
             if (answeredIdsTimer) clearTimeout(answeredIdsTimer);
             answeredIdsTimer = setTimeout(() => {
-                SYH_STORAGE.set({ [`tg_answered__${sId}`]: val }); 
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.answered(sId)]: val,
+                    [`tg_answered__${sId}`]: val
+                });
             }, 300);
         });
 
-        $(`#finalResultDiv__${sId}`).on('input blur', function() {
+        $(`#finalResultDiv__${sId}`).on('input blur', function () {
             const html = $(this).html();
             if (finalResultTimer) clearTimeout(finalResultTimer);
             finalResultTimer = setTimeout(() => {
-                SYH_STORAGE.set({ [`tg_finalResultHtml__${sId}`]: html });
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.finalResultHtml(sId)]: html,
+                    [`tg_finalResultHtml__${sId}`]: html
+                });
             }, 300);
         });
 
-        $(`#deletedLogDetails__${sId}`).on('toggle', function() {
-            SYH_STORAGE.set({ [`tg_deletedLogDetailsOpen__${sId}`]: (this as HTMLDetailsElement).open });
+        $(`#deletedLogDetails__${sId}`).on('toggle', function () {
+            const isOpen = (this as HTMLDetailsElement).open;
+            SYH_STORAGE.set({
+                [POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)]: isOpen,
+                [`tg_deletedLogDetailsOpen__${sId}`]: isOpen
+            });
         });
 
-        $(`#cleanedLogDetails__${sId}`).on('toggle', function() {
-            SYH_STORAGE.set({ [`tg_cleanedLogDetailsOpen__${sId}`]: (this as HTMLDetailsElement).open });
+        $(`#cleanedLogDetails__${sId}`).on('toggle', function () {
+            const isOpen = (this as HTMLDetailsElement).open;
+            SYH_STORAGE.set({
+                [POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)]: isOpen,
+                [`tg_cleanedLogDetailsOpen__${sId}`]: isOpen
+            });
         });
 
-        $(`#clearStateBtn__${sId}`).click(function() {
+        $(`#clearStateBtn__${sId}`).click(function () {
             if (confirm("Очистити всі поля введення в цьому аркуші?")) {
-                $(`#oldList__${sId}, #answeredIds__${sId}, #newTelegram__${sId}`).val(''); 
-                $(`#finalResultDiv__${sId}`).empty(); 
-                $(`#statsBar__${sId}`).hide(); 
+                $(`#oldList__${sId}, #answeredIds__${sId}, #newTelegram__${sId}`).val('');
+                $(`#finalResultDiv__${sId}`).empty();
+                $(`#statsBar__${sId}`).hide();
                 $(`#deletedLog__${sId}`).empty();
                 $(`#deletedLogCount__${sId}`).text('');
-                $(`#deletedLogDetails__${sId}`).hide(); 
+                $(`#deletedLogDetails__${sId}`).hide();
                 $(`#cleanedLog__${sId}`).empty();
                 $(`#cleanedLogCount__${sId}`).text('');
-                $(`#cleanedLogDetails__${sId}`).hide(); 
-                $(`#oldTotalCount__${sId}`).text(''); 
-                $(`#tgTotalCountAll__${sId}`).text(''); 
+                $(`#cleanedLogDetails__${sId}`).hide();
+                $(`#oldTotalCount__${sId}`).text('');
+                $(`#tgTotalCountAll__${sId}`).text('');
                 SYH_STORAGE.remove([
-                    `tg_oldList__${sId}`, 
-                    `tg_answered__${sId}`, 
-                    `tg_newTelegram__${sId}`,
-                    `tg_finalResultHtml__${sId}`,
-                    `tg_statsHtml__${sId}`,
-                    `tg_statsVisible__${sId}`,
-                    `tg_deletedLogHtml__${sId}`,
-                    `tg_deletedLogCount__${sId}`,
-                    `tg_deletedLogDetailsVisible__${sId}`,
-                    `tg_deletedLogDetailsOpen__${sId}`,
-                    `tg_cleanedLogHtml__${sId}`,
-                    `tg_cleanedLogCount__${sId}`,
-                    `tg_cleanedLogDetailsVisible__${sId}`,
-                    `tg_cleanedLogDetailsOpen__${sId}`
+                    POPUP_SHEET_KEYS.oldList(sId), `tg_oldList__${sId}`,
+                    POPUP_SHEET_KEYS.answered(sId), `tg_answered__${sId}`,
+                    POPUP_SHEET_KEYS.newTelegram(sId), `tg_newTelegram__${sId}`,
+                    POPUP_SHEET_KEYS.finalResultHtml(sId), `tg_finalResultHtml__${sId}`,
+                    POPUP_SHEET_KEYS.statsHtml(sId), `tg_statsHtml__${sId}`,
+                    POPUP_SHEET_KEYS.statsVisible(sId), `tg_statsVisible__${sId}`,
+                    POPUP_SHEET_KEYS.deletedLogHtml(sId), `tg_deletedLogHtml__${sId}`,
+                    POPUP_SHEET_KEYS.deletedLogCount(sId), `tg_deletedLogCount__${sId}`,
+                    POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId), `tg_deletedLogDetailsVisible__${sId}`,
+                    POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId), `tg_deletedLogDetailsOpen__${sId}`,
+                    POPUP_SHEET_KEYS.cleanedLogHtml(sId), `tg_cleanedLogHtml__${sId}`,
+                    POPUP_SHEET_KEYS.cleanedLogCount(sId), `tg_cleanedLogCount__${sId}`,
+                    POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId), `tg_cleanedLogDetailsVisible__${sId}`,
+                    POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId), `tg_cleanedLogDetailsOpen__${sId}`
                 ]);
             }
         });
 
-        $(`#clearYTCollected__${sId}`).click(function() {
+        $(`#clearYTCollected__${sId}`).click(function () {
             clearAllYTCollected(sId);
         });
     });
 
-    $('#textArea1_oldText').on('input', function() {
+    $('#textArea1_oldText').on('input', function () {
         const val = $(this).val();
         if (translitOldTimer) clearTimeout(translitOldTimer);
         translitOldTimer = setTimeout(() => {
             SYH_STORAGE.set({ 'tg_translit_old': val });
         }, 300);
     });
-    
-    $('#textArea2_generatedRuText').on('input', function() {
+
+    $('#textArea2_generatedRuText').on('input', function () {
         const val = $(this).val();
         if (translitNewTimer) clearTimeout(translitNewTimer);
         translitNewTimer = setTimeout(() => {
@@ -374,19 +400,19 @@ $(document).ready(function() {
         }, 300);
     });
 
-    $("#sschoolNameBtn").click(function() { 
-        db.newTitleSS = $("#sschoolName").val(); 
-        saveDataToStorage(); 
-        alert("Збережено!"); 
-    });
-    
-    $("#preachNameBtn").click(function() { 
-        db.newTitlePreach = $("#preachNameInput").val(); 
-        saveDataToStorage(); 
-        alert("Збережено!"); 
+    $("#sschoolNameBtn").click(function () {
+        db.newTitleSS = $("#sschoolName").val();
+        saveDataToStorage();
+        alert("Збережено!");
     });
 
-    $("#openOptionsPageBtn").click(function() {
+    $("#preachNameBtn").click(function () {
+        db.newTitlePreach = $("#preachNameInput").val();
+        saveDataToStorage();
+        alert("Збережено!");
+    });
+
+    $("#openOptionsPageBtn").click(function () {
         if (chrome.runtime && chrome.runtime.openOptionsPage) {
             chrome.runtime.openOptionsPage();
         } else {
@@ -402,7 +428,7 @@ $(document).ready(function() {
 
         const resizeObserver = new ResizeObserver(entries => {
             if (!storageLoaded) return;
-            SYH_STORAGE.get(['tg_textarea_sizes'], function(res) {
+            SYH_STORAGE.get(['tg_textarea_sizes'], function (res: Record<string, any>) {
                 const sizes = res.tg_textarea_sizes || {};
                 let updated = false;
                 for (const entry of entries) {
@@ -425,11 +451,11 @@ $(document).ready(function() {
         });
     }
 
-    let scrollTimeout: any;
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
     function saveScrollPositions() {
-        clearTimeout(scrollTimeout);
+        if (scrollTimeout) clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            const scrolls: any = {
+            const scrolls: Record<string, any> = {
                 window: window.scrollY || document.documentElement.scrollTop,
                 prayersResultDiv: $('#prayersResultDiv').scrollTop() || 0,
                 textArea1_oldText: $('#textArea1_oldText').scrollTop() || 0,
@@ -452,13 +478,13 @@ $(document).ready(function() {
 
     let activeResizer: { sId: string, divider: JQuery, left: JQuery, right: JQuery } | null = null;
 
-    $(document).on('mousemove', function(e) {
+    $(document).on('mousemove', function (e) {
         if (!activeResizer) return;
         const { sId, divider, left, right } = activeResizer;
         const container = divider.parent();
         const containerOffset = container.offset();
         const containerWidth = container.width();
-        
+
         if (!containerOffset || !containerWidth || containerWidth <= 0) return;
 
         const leftWidth = e.pageX - containerOffset.left;
@@ -470,7 +496,7 @@ $(document).ready(function() {
         right.css('flex', `${100 - percent}%`);
     });
 
-    $(document).on('mouseup', function() {
+    $(document).on('mouseup', function () {
         if (activeResizer) {
             const { sId, divider, left, right } = activeResizer;
             divider.removeClass('is-dragging');
@@ -481,7 +507,10 @@ $(document).ready(function() {
             const total = flexLeft + flexRight;
             const posPercent = (flexLeft / total) * 100;
 
-            SYH_STORAGE.set({ [`syh:popup:divider_pos:${sId}`]: posPercent });
+            SYH_STORAGE.set({
+                [POPUP_SHEET_KEYS.dividerPos(sId)]: posPercent,
+                [`syh:popup:divider_pos:${sId}`]: posPercent
+            });
             activeResizer = null;
         }
     });
@@ -495,7 +524,7 @@ $(document).ready(function() {
 
             if (!$divider.length || !$container.length) return;
 
-            $divider.on('mousedown', function(e) {
+            $divider.on('mousedown', function (e) {
                 e.preventDefault();
                 activeResizer = { sId, divider: $divider, left: $left, right: $right };
                 $divider.addClass('is-dragging');

@@ -4,6 +4,7 @@
  */
 
 import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage';
+import { RetentionService } from '../modules/retention_service';
 
 // Подія встановлення або оновлення розширення
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalled) {
@@ -12,6 +13,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalle
     
     if (details.reason === 'install' || details.reason === 'update') {
       await migrateStorageIfNeeded();
+      await RetentionService.runGlobalCleanup();
     }
 
     if (details.reason === 'install') {

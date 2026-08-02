@@ -23,7 +23,9 @@ const stateCache: StateCache = {
     youtubeEnabled: true
 };
 
-let observer: MutationObserver | null = null;
+import { SYH_DOM_OBSERVER } from '../modules/dom_observer';
+
+let unregisterObserver: (() => void) | null = null;
 
 /**
  * Обробка одного вузла коментаря YouTube
@@ -67,33 +69,25 @@ function processAllYTComments() {
 }
 
 /**
- * Запуск спостерігача за DOM (MutationObserver)
+ * Запуск спостерігача за DOM через централізований DomObserverService
  */
 function startObserver() {
-    if (observer) observer.disconnect();
+    if (unregisterObserver) {
+        unregisterObserver();
+        unregisterObserver = null;
+    }
 
-    observer = new MutationObserver((mutations) => {
-        if (!stateCache.youtubeEnabled) return;
+    const selector = Array.isArray(YT_SELECTORS.commentBlock) 
+        ? YT_SELECTORS.commentBlock.join(',') 
+        : YT_SELECTORS.commentBlock;
 
-        for (const mutation of mutations) {
-            for (const node of Array.from(mutation.addedNodes)) {
-                if (node.nodeType !== Node.ELEMENT_NODE) continue;
-                const el = node as Element;
-
-                if (el.matches && el.matches(YT_SELECTORS.commentBlock)) {
-                    processYTComment(el);
-                } else if (el.querySelectorAll) {
-                    const comments = el.querySelectorAll(YT_SELECTORS.commentBlock);
-                    comments.forEach(comment => processYTComment(comment));
-                }
-            }
+    unregisterObserver = SYH_DOM_OBSERVER.register(selector, (el) => {
+        if (stateCache.youtubeEnabled) {
+            processYTComment(el);
         }
     });
 
-    observer.observe(document.body || document.documentElement, {
-        childList: true,
-        subtree: true
-    });
+    SYH_DOM_OBSERVER.start(document.body || document.documentElement);
 }
 
 /**
@@ -102,9 +96,9 @@ function startObserver() {
 function initYouTubeModule() {
     if (!isAllowedChannel()) {
         console.log('[SYH YT] YouTube module skipped: Channel is not in allowed list');
-        if (observer) {
-            observer.disconnect();
-            observer = null;
+        if (unregisterObserver) {
+            unregisterObserver();
+            unregisterObserver = null;
         }
         document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
         return;

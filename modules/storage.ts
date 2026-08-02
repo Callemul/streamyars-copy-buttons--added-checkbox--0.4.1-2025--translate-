@@ -148,6 +148,10 @@ export interface StorageAdapter {
     getAsync<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
     setAsync(items: Record<string, any>): Promise<void>;
     removeAsync(keys: StorageKeyValues | StorageKeyValues[]): Promise<void>;
+    updateAsync<T = Record<string, any>>(
+        keys: StorageKeyValues | StorageKeyValues[],
+        updateFn: (current: T) => T | Promise<T>
+    ): Promise<T>;
     onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
 }
 
@@ -164,37 +168,28 @@ export const SYH_STORAGE: StorageAdapter = {
         }
     },
 
-    get: function(keys: string | string[], cb: (result: Record<string, any>) => void): void {
+    get: function<T = Record<string, unknown>>(
+        keys: StorageKeyValues | StorageKeyValues[],
+        cb: (result: T) => void
+    ): void {
         if (!this.isChromeStorageAvailable()) {
-            if (cb) cb({});
+            if (cb) cb({} as T);
             return;
         }
         try {
             const keysArray = Array.isArray(keys) ? keys : [keys];
-            const keyMap = new Map<string, string>();
-            const migratedKeys = keysArray.map(k => {
-                const mk = migrateKey(k);
-                keyMap.set(mk, k);
-                return mk;
-            });
-
-            chrome.storage.local.get(migratedKeys, (result) => {
+            chrome.storage.local.get(keysArray, (result) => {
                 if (chrome.runtime.lastError) {
                     console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
-                    if (cb) cb({});
+                    if (cb) cb({} as T);
                     return;
                 }
-                const output: Record<string, any> = { ...(result || {}) };
-                keyMap.forEach((origKey, migKey) => {
-                    if (origKey !== migKey && output[migKey] !== undefined && output[origKey] === undefined) {
-                        output[origKey] = output[migKey];
-                    }
-                });
-                if (cb) cb(output);
+                if (cb) cb((result || {}) as T);
             });
-        } catch (e: any) {
-            console.error('[SYH Storage] Context invalidated or API failed:', e?.message || e);
-            if (cb) cb({});
+        } catch (e: unknown) {
+            const err = e as Error;
+            console.error('[SYH Storage] Context invalidated or API failed:', err?.message || e);
+            if (cb) cb({} as T);
         }
     },
 
@@ -255,6 +250,16 @@ export const SYH_STORAGE: StorageAdapter = {
         return new Promise((resolve) => {
             this.remove(keys as any, resolve);
         });
+    },
+
+    updateAsync: async function<T = Record<string, any>>(
+        keys: StorageKeyValues | StorageKeyValues[],
+        updateFn: (current: T) => T | Promise<T>
+    ): Promise<T> {
+        const currentData = await this.getAsync<T>(keys);
+        const updatedData = await updateFn(currentData);
+        await this.setAsync(updatedData as Record<string, any>);
+        return updatedData;
     },
 
     onChanged: function(callback: (changes: Record<string, any>, areaName: string) => void): void {

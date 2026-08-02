@@ -1,10 +1,9 @@
 // youtube/studio/studio_comment_key.ts
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { STORAGE_KEYS } from '../../modules/storage';
+import { RetentionService } from '../../modules/retention_service';
 
 export const STUDIO_BUTTON_STATE_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
 export const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;
-
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Generate a deterministic hash string key from (videoTitle + authorName + commentText)
@@ -34,48 +33,10 @@ export interface StudioButtonStateEntry {
 }
 
 /**
- * 30-day cleanup helper for syh_studio_checkbox_state and syh_studio_button_state
+ * Delegates cleanup to central RetentionService
  */
 export function cleanupStudioState(): Promise<void> {
-    return new Promise((resolve) => {
-        SYH_STORAGE.get([STUDIO_CHECKBOX_STATE_KEY, STUDIO_BUTTON_STATE_KEY], (res) => {
-            const checkboxState: Record<string, StudioCheckboxStateEntry> = res[STUDIO_CHECKBOX_STATE_KEY] || {};
-            const buttonState: Record<string, any> = res[STUDIO_BUTTON_STATE_KEY] || {};
-            const now = Date.now();
-            let changed = false;
-
-            // Cleanup checkbox state older than 30 days
-            Object.keys(checkboxState).forEach((key) => {
-                const entry = checkboxState[key];
-                if (entry && typeof entry === 'object' && entry.timestamp) {
-                    if (now - entry.timestamp > THIRTY_DAYS_MS) {
-                        delete checkboxState[key];
-                        changed = true;
-                    }
-                }
-            });
-
-            // Cleanup button state older than 30 days if timestamp exists
-            Object.keys(buttonState).forEach((key) => {
-                const entry = buttonState[key];
-                if (entry && typeof entry === 'object' && entry.timestamp) {
-                    if (now - entry.timestamp > THIRTY_DAYS_MS) {
-                        delete buttonState[key];
-                        changed = true;
-                    }
-                }
-            });
-
-            if (changed) {
-                SYH_STORAGE.set({
-                    [STUDIO_CHECKBOX_STATE_KEY]: checkboxState,
-                    [STUDIO_BUTTON_STATE_KEY]: buttonState
-                }, () => resolve());
-            } else {
-                resolve();
-            }
-        });
-    });
+    return RetentionService.runGlobalCleanup();
 }
 
 // Pure ESM module export

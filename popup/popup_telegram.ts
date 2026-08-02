@@ -14,14 +14,7 @@ import type { YTCollectedItem, CleaningLogEntry, DeletedLogEntry } from '../modu
 
 const SHEET_IDS = getAllSheetIds();
 
-export {
-    countQuestionsInText,
-    numberToEmoji,
-    cleanAuthorName,
-    cleanTelegramHeadersLogged,
-    parseAndFilterOldList,
-    parseTelegramExportLineByLine
-};
+
 
 export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
     const text = ($(`#oldList__${sheetId}`).val() as string) || '';
@@ -35,8 +28,11 @@ export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
     $(`#oldTotalCount__${sheetId}`).css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
 }
 
-export const syh_yt_collected: YTCollectedItem[] = [];
-export const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
+const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
+
+export function getCollectedItemsForSheet(sheetId: string): YTCollectedItem[] {
+    return syh_collected_by_sheet[sheetId] || [];
+}
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
@@ -46,8 +42,6 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
         let items: YTCollectedItem[] = result[sheetKey] || [];
         if (sheetId === 'vp_ss') {
             const oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
-            syh_yt_collected.length = 0;
-            syh_yt_collected.push(...oldItems);
             items = [...oldItems, ...items];
         }
         syh_collected_by_sheet[sheetId] = items;

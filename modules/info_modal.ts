@@ -249,7 +249,3 @@ export const SYH_INFO_MODAL: SyhInfoModal = {
         return resultHtml;
     }
 };
-
-if (typeof window !== 'undefined') {
-    (window as any).SYH_INFO_MODAL = SYH_INFO_MODAL;
-}

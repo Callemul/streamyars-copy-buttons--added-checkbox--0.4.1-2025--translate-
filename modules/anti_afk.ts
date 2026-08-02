@@ -136,108 +136,121 @@ export function simulateUserActivity(): void {
     }
 }
 
-let activeAfkTimer: ReturnType<typeof setInterval> | null = null;
-let activeActivityTimer: ReturnType<typeof setInterval> | null = null;
-let activeAfkObserver: MutationObserver | null = null;
+export class AntiAfkService {
+    private afkTimer: ReturnType<typeof setInterval> | null = null;
+    private activityTimer: ReturnType<typeof setInterval> | null = null;
+    private observer: MutationObserver | null = null;
 
-export function stopAntiAfk(): void {
-    if (activeAfkObserver !== null) {
-        try {
-            activeAfkObserver.disconnect();
-        } catch {
-            // ignore
-        }
-        activeAfkObserver = null;
-    }
-    if (activeAfkTimer !== null) {
-        clearInterval(activeAfkTimer);
-        activeAfkTimer = null;
-    }
-    if (activeActivityTimer !== null) {
-        clearInterval(activeActivityTimer);
-        activeActivityTimer = null;
-    }
-    console.log("[SYH Anti-AFK] Anti-AFK захист зупинено.");
-}
-
-export function startAntiAfk(
-    config?: any,
-    storage?: any,
-    i18n?: I18nAdapterLike,
-    customTargetNode?: Element | Document | null
-): void {
-    stopAntiAfk();
-
-    const checkOptionsAndRun = (options?: any) => {
-        const enabled = options?.anti_afk_enabled !== false;
-        if (!enabled) {
-            console.log("[SYH Anti-AFK] Anti-AFK вимкнено у налаштуваннях.");
-            stopAntiAfk();
-            return;
-        }
-
-        const intervalSec = options?.anti_afk_interval_sec || (config?.TIMINGS?.ANTI_AFK_INTERVAL ? config.TIMINGS.ANTI_AFK_INTERVAL / 1000 : 30);
-        const intervalMs = Math.max(intervalSec * 1000, 5000);
-
-        console.log(`[SYH Anti-AFK] Anti-AFK активовано (Превентивна активність + MutationObserver + Резервний таймер ${intervalSec}с).`);
-
-        const rootNode = customTargetNode || (typeof document !== 'undefined' ? document.body || document.documentElement : null);
-
-        // 1. Початкова перевірка
-        checkAndClickAntiAfk(rootNode, i18n);
-
-        // 2. Превентивна імітація активності кожні 2.5 хвилини (150,000 мс)
-        simulateUserActivity();
-        activeActivityTimer = setInterval(simulateUserActivity, 150000);
-
-        // 3. MutationObserver перехоплення
-        if (rootNode && typeof MutationObserver !== 'undefined') {
+    public stop(): void {
+        if (this.observer !== null) {
             try {
-                activeAfkObserver = new MutationObserver((mutations) => {
-                    for (const mutation of mutations) {
-                        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                            const clicked = checkAndClickAntiAfk(rootNode, i18n);
-                            if (clicked) break;
-                        }
-                    }
-                });
-                activeAfkObserver.observe(rootNode, { childList: true, subtree: true });
-            } catch (err) {
-                console.warn("[SYH Anti-AFK] Помилка старту MutationObserver:", err);
-            }
-        }
-
-        // 4. Резервний таймер
-        activeAfkTimer = setInterval(() => {
-            try {
-                if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-                    stopAntiAfk();
-                    return;
-                }
+                this.observer.disconnect();
             } catch {
-                stopAntiAfk();
+                // ignore
+            }
+            this.observer = null;
+        }
+        if (this.afkTimer !== null) {
+            clearInterval(this.afkTimer);
+            this.afkTimer = null;
+        }
+        if (this.activityTimer !== null) {
+            clearInterval(this.activityTimer);
+            this.activityTimer = null;
+        }
+        console.log("[SYH Anti-AFK] Anti-AFK захист зупинено.");
+    }
+
+    public start(
+        config?: Record<string, unknown>,
+        storage?: { get: Function; onChanged?: Function },
+        i18n?: I18nAdapterLike,
+        customTargetNode?: Element | Document | null
+    ): void {
+        this.stop();
+
+        const checkOptionsAndRun = (options?: { anti_afk_enabled?: boolean; anti_afk_interval_sec?: number }) => {
+            const enabled = options?.anti_afk_enabled !== false;
+            if (!enabled) {
+                console.log("[SYH Anti-AFK] Anti-AFK вимкнено у налаштуваннях.");
+                this.stop();
                 return;
             }
 
+            const intervalSec = options?.anti_afk_interval_sec || 30;
+            const intervalMs = Math.max(intervalSec * 1000, 5000);
+
+            console.log(`[SYH Anti-AFK] Anti-AFK активовано (Превентивна активність + MutationObserver + Резервний таймер ${intervalSec}с).`);
+
+            const rootNode = customTargetNode || (typeof document !== 'undefined' ? document.body || document.documentElement : null);
+
             checkAndClickAntiAfk(rootNode, i18n);
-        }, intervalMs);
-    };
 
-    if (storage && typeof storage.get === 'function') {
-        storage.get([STORAGE_KEYS.OPTIONS], (data: any) => {
-            checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS]);
-        });
+            simulateUserActivity();
+            this.activityTimer = setInterval(simulateUserActivity, 150000);
 
-        if (typeof storage.onChanged === 'function') {
-            storage.onChanged((changes: any) => {
-                if (changes[STORAGE_KEYS.OPTIONS]) {
-                    checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue);
+            if (rootNode && typeof MutationObserver !== 'undefined') {
+                try {
+                    this.observer = new MutationObserver((mutations) => {
+                        for (const mutation of mutations) {
+                            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                                const clicked = checkAndClickAntiAfk(rootNode, i18n);
+                                if (clicked) break;
+                            }
+                        }
+                    });
+                    this.observer.observe(rootNode, { childList: true, subtree: true });
+                } catch (err) {
+                    console.warn("[SYH Anti-AFK] Помилка старту MutationObserver:", err);
                 }
+            }
+
+            this.afkTimer = setInterval(() => {
+                try {
+                    if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
+                        this.stop();
+                        return;
+                    }
+                } catch {
+                    this.stop();
+                    return;
+                }
+
+                checkAndClickAntiAfk(rootNode, i18n);
+            }, intervalMs);
+        };
+
+        if (storage && typeof storage.get === 'function') {
+            storage.get([STORAGE_KEYS.OPTIONS], (data: Record<string, unknown>) => {
+                checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS] as any);
             });
+
+            if (typeof storage.onChanged === 'function') {
+                storage.onChanged((changes: Record<string, { newValue?: unknown }>) => {
+                    if (changes[STORAGE_KEYS.OPTIONS]) {
+                        checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue as any);
+                    }
+                });
+            }
+        } else {
+            checkOptionsAndRun();
         }
-    } else {
-        checkOptionsAndRun();
     }
+}
+
+export const SYH_ANTI_AFK_SERVICE = new AntiAfkService();
+
+export function stopAntiAfk(): void {
+    SYH_ANTI_AFK_SERVICE.stop();
+}
+
+export function startAntiAfk(
+    config?: Record<string, unknown>,
+    storage?: unknown,
+    i18n?: I18nAdapterLike,
+    customTargetNode?: Element | Document | null
+): void {
+    SYH_ANTI_AFK_SERVICE.start(config, storage as any, i18n, customTargetNode);
 }
 
 import type { ISyhPlugin } from './plugin_registry';

@@ -313,53 +313,30 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     // Рекурсивний сканер для автоматичного пошуку активного бренда в сховищі без кліку по вкладці
     getBrandFromLocalStorage: function(): string {
         try {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (!key) continue;
-                
-                // Перевіряємо ключі, пов'язані зі станом студії чи збереженими брендами
-                if (key.includes('brand') || key.includes('studio') || key.includes('store') || key.includes('state')) {
-                    const val = localStorage.getItem(key);
-                    if (!val) continue;
-                    
-                    if (val.startsWith('{') || val.startsWith('[')) {
-                        try {
-                            const data = JSON.parse(val);
-                            const foundName = this.searchBrandNameInObject(data);
-                            if (foundName) return foundName;
-                        } catch (e) {
-                            continue;
-                        }
+            const knownKeys = ['streamyard_brand', 'sy_active_brand', 'brand_state'];
+            for (const key of knownKeys) {
+                const val = localStorage.getItem(key);
+                if (!val) continue;
+                if (val.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(val);
+                        if (parsed?.name && typeof parsed.name === 'string') return parsed.name;
+                    } catch (err) {
+                        console.warn("[SYH StatsTracker] Corrupted JSON in localStorage key:", key);
                     }
+                } else if (typeof val === 'string' && val.trim().length > 0) {
+                    return val.trim();
                 }
             }
         } catch (e) {
-            console.warn("[SYH] Помилка автозчитування бренда з localStorage:", e);
+            console.warn("[SYH] Помилка зчитування бренда з localStorage:", e);
         }
         return "";
     },
 
-    // Допоміжний рекурсивний обхідник JSON-дерева для знаходження імені бренда
     searchBrandNameInObject: function(obj: any): string | null {
         if (!obj || typeof obj !== 'object') return null;
-        
-        if (obj.activeBrand && obj.activeBrand.name) return obj.activeBrand.name;
-        if (obj.currentBrand && obj.currentBrand.name) return obj.currentBrand.name;
-        if (obj.brand && obj.brand.name) return obj.brand.name;
-        
-        for (const key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                const val = obj[key];
-                if (key === 'activeBrandName' || key === 'brandName' || key === 'currentBrandName') {
-                    if (typeof val === 'string') return val;
-                }
-                if (typeof val === 'object') {
-                    const res = this.searchBrandNameInObject(val);
-                    if (res) return res;
-                }
-            }
-        }
-        return null;
+        return obj?.activeBrand?.name || obj?.brand?.name || null;
     }
 };
 
