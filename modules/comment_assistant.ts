@@ -17,6 +17,7 @@ export interface CommentAssistantInterface {
 export class CommentAssistantService implements CommentAssistantInterface {
     public triggerWords: string[];
     public selectors: Record<string, SelectorValue>;
+    private regexCache: Map<string, RegExp> = new Map();
 
     constructor(config = SYH_CONFIG) {
         this.triggerWords = config?.TRIGGER_WORDS || ['вопрос'];
@@ -29,6 +30,7 @@ export class CommentAssistantService implements CommentAssistantInterface {
     public init(config?: any) {
         if (config?.TRIGGER_WORDS) {
             this.triggerWords = config.TRIGGER_WORDS;
+            this.regexCache.clear();
         }
         if (config?.SELECTORS) {
             this.selectors = config.SELECTORS;
@@ -46,12 +48,22 @@ export class CommentAssistantService implements CommentAssistantInterface {
     }
 
     public createTriggerRegExp(word: string): RegExp {
-        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        try {
-            return new RegExp(`(?<![\\p{L}\\p{N}])(${escapedWord})(?![\\p{L}\\p{N}])`, 'giu');
-        } catch (e) {
-            return new RegExp(`(^|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])(${escapedWord})($|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])`, 'gi');
+        const lowerWord = word.toLowerCase();
+        if (this.regexCache.has(lowerWord)) {
+            const cached = this.regexCache.get(lowerWord)!;
+            cached.lastIndex = 0;
+            return cached;
         }
+
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        let rx: RegExp;
+        try {
+            rx = new RegExp(`(?<![\\p{L}\\p{N}])(${escapedWord})(?![\\p{L}\\p{N}])`, 'giu');
+        } catch (e) {
+            rx = new RegExp(`(^|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])(${escapedWord})($|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])`, 'gi');
+        }
+        this.regexCache.set(lowerWord, rx);
+        return rx;
     }
 
     public hasTrigger(text: string): boolean {

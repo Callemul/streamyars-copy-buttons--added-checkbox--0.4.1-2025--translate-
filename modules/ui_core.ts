@@ -20,11 +20,7 @@ import {
     scrollToActiveBanner 
 } from './ui_banners';
 
-export interface PrayerItem {
-    text: string;
-    type: string;
-    author: string;
-}
+import type { PrayerItem } from './types';
 
 export interface SYH_UI_Core {
     SELECTORS: Record<string, string> | null;

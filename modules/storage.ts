@@ -19,13 +19,15 @@ export interface StoredOptions {
     studio_enabled?: boolean;
 }
 
+import type { PrayerItem, YTCollectedItem } from './types';
+
 export interface StorageSchema {
     [STORAGE_KEYS.OPTIONS]?: StoredOptions;
     [STORAGE_KEYS.DB]?: Record<string, any>;
     [STORAGE_KEYS.CATEGORIES]?: Record<string, string>;
     [STORAGE_KEYS.CHECKBOX_STATE]?: { date?: string; data?: Record<string, boolean> };
-    [STORAGE_KEYS.PRAYERS]?: Array<{ id?: string; author: string; text: string; type?: string; icon?: string; roomId?: string; timestamp?: number }>;
-    [STORAGE_KEYS.YT_COLLECTED]?: any[];
+    [STORAGE_KEYS.PRAYERS]?: PrayerItem[];
+    [STORAGE_KEYS.YT_COLLECTED]?: YTCollectedItem[];
     [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
 }
 

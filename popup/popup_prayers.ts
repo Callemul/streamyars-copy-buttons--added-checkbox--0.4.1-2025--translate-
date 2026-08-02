@@ -1,14 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
-export interface PrayerItem {
-    id?: string;
-    author: string;
-    text: string;
-    type?: string;
-    icon?: string;
-    roomId?: string;
-    timestamp?: number;
-}
+import type { PrayerItem } from '../modules/types';
+export type { PrayerItem };
 
 // Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі
 export function sendUnstarMessage(text: string): void {
