@@ -42,8 +42,9 @@ test('Popup DOM Smoke Test: popup.html contains all critical IDs for 4 sheets', 
 });
 
 test('Popup Init Script Test: Root-level event listeners are properly scoped inside document.ready', () => {
-    const initPath = path.resolve(process.cwd(), 'popup/popup_init.js');
-    assert.ok(fs.existsSync(initPath), 'popup_init.js exists');
+    let initPath = path.resolve(process.cwd(), 'popup/popup_init.ts');
+    if (!fs.existsSync(initPath)) initPath = path.resolve(process.cwd(), 'popup/popup_init.js');
+    assert.ok(fs.existsSync(initPath), 'popup_init script exists');
     const initContent = fs.readFileSync(initPath, 'utf8');
 
     const lines = initContent.split('\n');

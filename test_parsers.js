@@ -38,7 +38,7 @@ global.jQuery = jQueryMock;
 const { SYH_PARSERS } = await import('./modules/parsers.ts');
 const { SYH_CONFIG } = await import('./modules/config.ts');
 const { SYH_BANNER_CREATOR } = await import('./modules/banner_creator.ts');
-await import('./popup/popup_telegram.js');
+await import('./popup/popup_telegram.ts');
 
 const parsers = SYH_PARSERS;
 

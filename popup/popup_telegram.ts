@@ -1,55 +1,56 @@
-// popup_telegram.js
-// Допоміжні утиліти парсингу та розрахунку статистики питань Telegram
+import { SYH_STORAGE } from '../modules/storage.ts';
+
 const SHEET_IDS = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 
-window.countQuestionsInText = function(text) {
+export function countQuestionsInText(text: string): number {
     if (!text) return 0;
     const bullets = (text.match(/🔹/g) || []).length;
     return bullets > 0 ? bullets : 1;
-};
+}
 
-window.updateOldInputStats = function(sheetId = 'vp_ss') {
-    const text = $(`#oldList__${sheetId}`).val();
+export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
+    const text = ($(`#oldList__${sheetId}`).val() as string) || '';
     if (!text) { $(`#oldTotalCount__${sheetId}`).text(''); return; }
-    const parsed = window.parseAndFilterOldList(text, []); 
+    const parsed = parseAndFilterOldList(text, []); 
     const qPeople = parsed.questions.length;
     let qQuestions = 0;
-    parsed.questions.forEach(q => qQuestions += window.countQuestionsInText(q.text));
+    parsed.questions.forEach((q: any) => qQuestions += countQuestionsInText(q.text));
     const pCount = parsed.prayers.length;
     $(`#oldTotalCount__${sheetId}`).text(`(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`);
     $(`#oldTotalCount__${sheetId}`).css({ 'color': '#2b7de9', 'font-weight': 'bold', 'font-size': '12px' });
-};
+}
 
-window.syh_yt_collected = [];
-window.syh_collected_by_sheet = {
+export const syh_yt_collected: any[] = [];
+export const syh_collected_by_sheet: Record<string, any[]> = {
     vp_ss: [],
     oparin: [],
     molchanov_ss: [],
     molchanov_preach: []
 };
 
-window.loadYTCollected = function(sheetId = 'vp_ss') {
+export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const keysToGet = [`syh_collected__${sheetId}`];
     if (sheetId === 'vp_ss') {
         keysToGet.push('syh_yt_collected');
     }
 
-    chrome.storage.local.get(keysToGet, function(result) {
+    SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
         let items = result[`syh_collected__${sheetId}`] || [];
         if (sheetId === 'vp_ss') {
             const oldItems = result.syh_yt_collected || [];
-            window.syh_yt_collected = oldItems;
+            syh_yt_collected.length = 0;
+            syh_yt_collected.push(...oldItems);
             // Тимчасове рішення (TODO п.1): Для vp_ss об'єднуємо старий модуль + новий Studio-модуль
             items = [...oldItems, ...items];
         }
-        window.syh_collected_by_sheet[sheetId] = items;
+        syh_collected_by_sheet[sheetId] = items;
 
         const $list = $(`#ytCollectedList__${sheetId}`);
         $list.empty();
         if (items.length === 0) {
             $list.append('<div class="yt-empty-msg">Зібраних коментарів з YouTube немає</div>');
         } else {
-            items.forEach((item) => {
+            items.forEach((item: any) => {
                 const $card = $('<div>')
                     .addClass('yt-collected-item')
                     .addClass(item.type === 'question' ? 'is-question' : 'is-prayer')
@@ -64,7 +65,7 @@ window.loadYTCollected = function(sheetId = 'vp_ss') {
 
                 $delBtn.click(function(e) {
                     e.stopPropagation();
-                    window.deleteYTCollectedItem(item.id, sheetId);
+                    deleteYTCollectedItem(item.id, sheetId);
                 });
 
                 $header.append($author, $badge, $delBtn);
@@ -73,82 +74,82 @@ window.loadYTCollected = function(sheetId = 'vp_ss') {
                 $list.append($card);
             });
         }
-        window.updateCombinedCounters(sheetId);
+        updateCombinedCounters(sheetId);
     });
-};
+}
 
-window.deleteYTCollectedItem = function(commentId, sheetId = 'vp_ss') {
+export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
     const keysToGet = [`syh_collected__${sheetId}`];
     if (sheetId === 'vp_ss') {
         keysToGet.push('syh_yt_collected');
     }
 
-    chrome.storage.local.get(keysToGet, function(result) {
-        let sheetItems = result[`syh_collected__${sheetId}`] || [];
+    SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
+        let sheetItems: any[] = result[`syh_collected__${sheetId}`] || [];
         const foundInSheet = sheetItems.some(item => item.id === commentId);
 
         if (foundInSheet) {
             sheetItems = sheetItems.filter(item => item.id !== commentId);
-            chrome.storage.local.set({ [`syh_collected__${sheetId}`]: sheetItems }, function() {
-                window.loadYTCollected(sheetId);
+            SYH_STORAGE.set({ [`syh_collected__${sheetId}`]: sheetItems }, function() {
+                loadYTCollected(sheetId);
             });
         } else if (sheetId === 'vp_ss') {
-            let oldItems = result.syh_yt_collected || [];
+            let oldItems: any[] = result.syh_yt_collected || [];
             oldItems = oldItems.filter(item => item.id !== commentId);
-            chrome.storage.local.set({ syh_yt_collected: oldItems }, function() {
-                window.loadYTCollected(sheetId);
+            SYH_STORAGE.set({ syh_yt_collected: oldItems }, function() {
+                loadYTCollected(sheetId);
             });
         }
     });
-};
+}
 
-window.clearAllYTCollected = function(sheetId = 'vp_ss') {
+export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
     if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
-        const updateObj = { [`syh_collected__${sheetId}`]: [] };
+        const updateObj: Record<string, any> = { [`syh_collected__${sheetId}`]: [] };
         if (sheetId === 'vp_ss') {
             updateObj.syh_yt_collected = [];
         }
-        chrome.storage.local.set(updateObj, function() {
-            window.loadYTCollected(sheetId);
+        SYH_STORAGE.set(updateObj, function() {
+            loadYTCollected(sheetId);
         });
     }
-};
+}
 
-window.updateRightColumnStats = function(sheetId = 'vp_ss') {
-    const items = window.syh_collected_by_sheet[sheetId] || [];
+export function updateRightColumnStats(sheetId: string = 'vp_ss'): { people: number; questions: number; prayers: number } {
+    const items = syh_collected_by_sheet[sheetId] || [];
     let qCount = 0;
     let pCount = 0;
     items.forEach(item => {
         if (item.type === 'question') {
-            qCount += window.countQuestionsInText(item.text);
+            qCount += countQuestionsInText(item.text);
         } else if (item.type === 'prayer') {
             pCount += 1;
         }
     });
     return { people: items.length, questions: qCount, prayers: pCount };
-};
+}
 
-window.updateCombinedCounters = function(sheetId = 'vp_ss') {
+export function updateCombinedCounters(sheetId: string = 'vp_ss'): void {
     // 1. Left column stats (Telegram)
-    const text = $(`#newTelegram__${sheetId}`).val() || '';
+    const text = ($(`#newTelegram__${sheetId}`).val() as string) || '';
     let leftPeople = 0;
     let leftQuestions = 0;
     let leftPrayers = 0;
     if (text.trim()) {
         if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(text)) {
-            const parsed = window.parseAndFilterOldList(text, []);
+            const parsed = parseAndFilterOldList(text, []);
             leftPeople = parsed.questions.length;
-            parsed.questions.forEach(q => leftQuestions += window.countQuestionsInText(q.text));
+            parsed.questions.forEach((q: any) => leftQuestions += countQuestionsInText(q.text));
             leftPrayers = parsed.prayers.length;
         } else {
-            const items = window.parseTelegramExportLineByLine(text);
+            const items = parseTelegramExportLineByLine(text);
             leftPeople = items.length;
-            items.forEach(q => leftQuestions += window.countQuestionsInText(q.text));
+            items.forEach((q: any) => leftQuestions += countQuestionsInText(q.text));
         }
     }
 
     // 2. Right column stats (YouTube)
-    const rightStats = window.updateRightColumnStats(sheetId);
+    const rightStats = updateRightColumnStats(sheetId);
 
     // 3. Render Badges
     if (leftPeople > 0) {
@@ -178,24 +179,24 @@ window.updateCombinedCounters = function(sheetId = 'vp_ss') {
     } else {
         $(`#tgTotalCountAll__${sheetId}`).text('').hide();
     }
-};
+}
 
-window.updateNewInputStats = function(sheetId = 'vp_ss') {
-    window.updateCombinedCounters(sheetId);
-};
+export function updateNewInputStats(sheetId: string = 'vp_ss'): void {
+    updateCombinedCounters(sheetId);
+}
 
-window.numberToEmoji = function(num) {
+export function numberToEmoji(num: number): string {
     const emojis = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
     if (num <= 10) return emojis[num];
-    return num.toString().split('').map(d => emojis[parseInt(d)]).join('');
-};
+    return num.toString().split('').map(d => emojis[parseInt(d, 10)]).join('');
+}
 
-window.RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
+export const RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
 
-window.cleanAuthorName = function(rawName, cleaningLog) {
+export function cleanAuthorName(rawName: string, cleaningLog?: any[]): string {
     const original = rawName.trim();
     let name = original;
-    const removedParts = [];
+    const removedParts: string[] = [];
 
     if (name.startsWith('@')) {
         removedParts.push('@');
@@ -226,12 +227,12 @@ window.cleanAuthorName = function(rawName, cleaningLog) {
     }
 
     return name;
-};
+}
 
-window.cleanTelegramHeadersLogged = function(text, cleaningLog) {
+export function cleanTelegramHeadersLogged(text: string, cleaningLog?: any[]): string {
     if (!text) return "";
     const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
-    const removedMatches = [];
+    const removedMatches: string[] = [];
     const cleaned = text.replace(tgHeaderRegex, (match, offset) => {
         removedMatches.push(match.trim());
         return offset === 0 ? "" : "\n";
@@ -245,18 +246,18 @@ window.cleanTelegramHeadersLogged = function(text, cleaningLog) {
         });
     }
     return cleaned;
-};
+}
 
-window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
+export function parseAndFilterOldList(text: string, answeredIds?: number[] | null, cleaningLog?: any[]): any {
     cleaningLog = cleaningLog || [];
     const messages = [text];
 
-    let allQuestions = [];
-    let allPrayers = [];
-    const deletedItems = [];
+    let allQuestions: any[] = [];
+    let allPrayers: any[] = [];
+    const deletedItems: any[] = [];
 
-    const processOldItem = (itemsArray, itemObj, filterIds, id, deletedArr, src) => {
-        const lines = itemObj.rawLines;
+    const processOldItem = (itemsArray: any[], itemObj: any, filterIds: number[] | null, id: number, deletedArr: any[], src: string) => {
+        const lines: string[] = itemObj.rawLines;
         while (lines.length > 0 && lines[0].trim() === "") lines.shift();
         if (lines.length === 0) return;
 
@@ -276,7 +277,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
 
         let contentLines = lines.slice(1);
         while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
-        if (contentLines.length > 0 && window.RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
+        if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
             const timeLine = contentLines[0].trim();
             contentLines = contentLines.slice(1);
             if (cleaningLog) {
@@ -291,9 +292,9 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
         let rawText = contentLines.map(l => l.trimEnd()).join('\n').trim();
         if (!author) author = "Анонім";
 
-        rawText = window.cleanTelegramHeadersLogged(rawText, cleaningLog);
+        rawText = cleanTelegramHeadersLogged(rawText, cleaningLog);
 
-        const totalQuestionsInBlock = window.countQuestionsInText(rawText);
+        const totalQuestionsInBlock = countQuestionsInText(rawText);
 
         if (filterIds && filterIds.includes(id)) {
             deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
@@ -330,20 +331,20 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
         itemsArray.push({ author, text: rawText, source: src });
     };
 
-    const parseSection = (sectionText, filterIds, sourceType) => {
+    const parseSection = (sectionText: string, filterIds: number[] | null, sourceType: string) => {
         const lines = sectionText.split('\n');
-        const items = [];
-        let currentItem = null;
+        const items: any[] = [];
+        let currentItem: any = null;
         let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
 
         const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/;
         const tgHeaderARegex = /^.+?,\s*\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*$/;
         const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
 
-        const hasKeycapInRemainingLines = (lines, currentIndex) => {
+        const hasKeycapInRemainingLines = (linesArr: string[], currentIndex: number) => {
             const regex = /(?:\d+\uFE0F?\u20E3|🔟)/;
-            for (let i = currentIndex; i < lines.length; i++) {
-                if (regex.test(lines[i])) {
+            for (let i = currentIndex; i < linesArr.length; i++) {
+                if (regex.test(linesArr[i])) {
                     return true;
                 }
             }
@@ -353,7 +354,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
         const finalizeCurrentItem = () => {
             if (currentItem) {
                 if (currentItem.type === 'telegram') {
-                    const bodyLines = currentItem.bodyLines;
+                    const bodyLines: string[] = currentItem.bodyLines;
                     if (currentItem.author === null) {
                         let firstNonEmptyIdx = -1;
                         for (let i = 0; i < bodyLines.length; i++) {
@@ -365,7 +366,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
                         if (firstNonEmptyIdx !== -1) {
                             const firstLine = bodyLines[firstNonEmptyIdx].trim();
                             if (firstLine.startsWith('@')) {
-                                currentItem.author = window.cleanAuthorName(firstLine, cleaningLog);
+                                currentItem.author = cleanAuthorName(firstLine, cleaningLog);
                                 bodyLines.splice(firstNonEmptyIdx, 1);
                             } else {
                                 currentItem.author = "Питання з чату";
@@ -400,7 +401,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
                 currentCounter++;
 
                 let author = null;
-                const bodyLines = [];
+                const bodyLines: string[] = [];
 
                 if (isHeaderB) {
                     const match = trimmedLine.match(tgHeaderBRegex);
@@ -408,7 +409,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
                         const trailing = match[2] ? match[2].trim() : "";
                         if (trailing) {
                             if (trailing.startsWith('@')) {
-                                author = window.cleanAuthorName(trailing, cleaningLog);
+                                author = cleanAuthorName(trailing, cleaningLog);
                             } else {
                                 bodyLines.push(trailing);
                             }
@@ -438,7 +439,7 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
         const prayersText = parts[1] || "";
 
         if (questionsText.trim()) {
-            const qs = parseSection(questionsText, answeredIds, 'old');
+            const qs = parseSection(questionsText, answeredIds || null, 'old');
             allQuestions = allQuestions.concat(qs);
         }
         if (prayersText.trim()) {
@@ -448,16 +449,16 @@ window.parseAndFilterOldList = function(text, answeredIds, cleaningLog) {
     }
 
     return { questions: allQuestions, prayers: allPrayers, deleted: deletedItems, cleaned: cleaningLog };
-};
+}
 
-window.parseTelegramExportLineByLine = function(text, cleaningLog) {
+export function parseTelegramExportLineByLine(text: string, cleaningLog?: any[]): any {
     cleaningLog = cleaningLog || [];
-    const rawItems = [];
+    const rawItems: any[] = [];
     const lines = text.split('\n');
     const headerARegex = /^.+?, \[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]$/;
     const headerBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*.+?$/;
     const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
-    let currentItem = null;
+    let currentItem: any = null;
 
     lines.forEach(line => {
         const trimmed = line.trim();
@@ -468,14 +469,14 @@ window.parseTelegramExportLineByLine = function(text, cleaningLog) {
                 rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); 
             }
             let author = null;
-            const textLines = [];
+            const textLines: string[] = [];
             if (headerBRegex.test(trimmed)) {
                 const match = trimmed.match(tgHeaderBRegex);
                 if (match) {
                     const trailing = match[2] ? match[2].trim() : "";
                     if (trailing) {
                         if (trailing.startsWith('@')) {
-                            author = window.cleanAuthorName(trailing, cleaningLog);
+                            author = cleanAuthorName(trailing, cleaningLog);
                         } else {
                             textLines.push(trailing);
                         }
@@ -487,10 +488,10 @@ window.parseTelegramExportLineByLine = function(text, cleaningLog) {
             if (trimmed === "") return;
             if (currentItem.author === null) {
                 if (trimmed.startsWith('@')) { 
-                    currentItem.author = window.cleanAuthorName(trimmed, cleaningLog); 
+                    currentItem.author = cleanAuthorName(trimmed, cleaningLog); 
                     return;
                 }
-                if (window.RELATIVE_TIME_LINE_REGEX.test(trimmed)) {
+                if (RELATIVE_TIME_LINE_REGEX.test(trimmed)) {
                     if (cleaningLog) {
                         cleaningLog.push({
                             before: trimmed,
@@ -512,7 +513,7 @@ window.parseTelegramExportLineByLine = function(text, cleaningLog) {
         rawItems.push({ author: currentItem.author || "Питання з чату", text: currentItem.textLines.join('\n').trim(), source: 'new' }); 
     }
 
-    const groupedItems = [];
+    const groupedItems: any = [];
     rawItems.forEach(item => {
         if (groupedItems.length > 0) {
             const lastGroup = groupedItems[groupedItems.length - 1];
@@ -526,9 +527,9 @@ window.parseTelegramExportLineByLine = function(text, cleaningLog) {
     });
     groupedItems.cleaned = cleaningLog;
     return groupedItems;
-};
+}
 
-window.ensureStatsBarRows = function(sheetId = 'vp_ss') {
+export function ensureStatsBarRows(sheetId: string = 'vp_ss'): void {
     const $bar = $(`#statsBar__${sheetId}`);
     if ($bar.length === 0) return;
     if ($bar.find('.stats-row').length === 0) {
@@ -548,31 +549,31 @@ window.ensureStatsBarRows = function(sheetId = 'vp_ss') {
             $('<div class="stats-row total-row"></div>').append($total)
         );
     }
-};
+}
 
-window.processTelegramData = function(sheetId = 'vp_ss') {
-    window.ensureStatsBarRows(sheetId);
-    const oldListText = $(`#oldList__${sheetId}`).val();
-    const answeredInput = $(`#answeredIds__${sheetId}`).val();
-    const telegramText = $(`#newTelegram__${sheetId}`).val();
+export function processTelegramData(sheetId: string = 'vp_ss'): void {
+    ensureStatsBarRows(sheetId);
+    const oldListText = ($(`#oldList__${sheetId}`).val() as string) || '';
+    const answeredInput = ($(`#answeredIds__${sheetId}`).val() as string) || '';
+    const telegramText = ($(`#newTelegram__${sheetId}`).val() as string) || '';
     const answeredIds = answeredInput.split(/[\s,]+/).map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
-    const cleaningLog = [];
-    const preservedData = window.parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
+    const cleaningLog: any[] = [];
+    const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
     
-    let newQuestions;
-    let newPrayers = [];
+    let newQuestions: any[];
+    let newPrayers: any[] = [];
     if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
-        const parsedNew = window.parseAndFilterOldList(telegramText, [], cleaningLog);
-        newQuestions = parsedNew.questions.map(q => ({ ...q, source: 'new' }));
-        newPrayers = parsedNew.prayers.map(p => ({ ...p, source: 'pray' }));
+        const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
+        newQuestions = parsedNew.questions.map((q: any) => ({ ...q, source: 'new' }));
+        newPrayers = parsedNew.prayers.map((p: any) => ({ ...p, source: 'pray' }));
     } else {
-        newQuestions = window.parseTelegramExportLineByLine(telegramText, cleaningLog);
+        newQuestions = parseTelegramExportLineByLine(telegramText, cleaningLog);
     }
     
     // YouTube new items
-    const ytItems = window.syh_collected_by_sheet[sheetId] || [];
-    const newYTQuestions = [];
-    const newYTPrayers = [];
+    const ytItems = syh_collected_by_sheet[sheetId] || [];
+    const newYTQuestions: any[] = [];
+    const newYTPrayers: any[] = [];
 
     ytItems.forEach(item => {
         if (item.type === 'question') {
@@ -587,21 +588,21 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
     
     const oldPeople = preservedData.questions.length;
     let oldQuestionsTotal = 0;
-    preservedData.questions.forEach(q => oldQuestionsTotal += window.countQuestionsInText(q.text));
+    preservedData.questions.forEach((q: any) => oldQuestionsTotal += countQuestionsInText(q.text));
     
     const newLeftPeople = newQuestions.length;
     let newLeftQuestionsTotal = 0;
-    newQuestions.forEach(q => newLeftQuestionsTotal += window.countQuestionsInText(q.text));
+    newQuestions.forEach((q: any) => newLeftQuestionsTotal += countQuestionsInText(q.text));
     const newLeftPrayersTotal = newPrayers.length;
     
     const newYTPeople = ytItems.length;
     let newYTQuestionsTotal = 0;
-    newYTQuestions.forEach(q => newYTQuestionsTotal += window.countQuestionsInText(q.text));
+    newYTQuestions.forEach((q: any) => newYTQuestionsTotal += countQuestionsInText(q.text));
     const newYTPrayersTotal = newYTPrayers.length;
 
     let delPeople = 0;
     let delQuestionsTotal = 0;
-    preservedData.deleted.forEach(d => {
+    preservedData.deleted.forEach((d: any) => {
         if (d.type === 'block') { delPeople++; delQuestionsTotal += d.count; } 
         else if (d.type === 'sub') { delQuestionsTotal += d.count; }
     });
@@ -635,9 +636,7 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
     
     $(`#statsBar__${sheetId}`).show();
 
-    if (typeof window.updateCombinedCounters === 'function') {
-        window.updateCombinedCounters(sheetId);
-    }
+    updateCombinedCounters(sheetId);
     
     const outputDiv = $(`#finalResultDiv__${sheetId}`);
     outputDiv.empty();
@@ -645,7 +644,7 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
         const header = $('<div>').text("❓❓❓ВОПРОСЫ\n\n");
         outputDiv.append(header);
         combinedQuestions.forEach((item, index) => {
-            const emojiNum = window.numberToEmoji(index + 1);
+            const emojiNum = numberToEmoji(index + 1);
             const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
             const block = $('<div>').addClass('q-block').addClass('q-' + item.source);
             block.text(textBlock);
@@ -656,7 +655,7 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
         const header = $('<div>').text("🙏🙏🙏МОЛИТВЫ\n\n");
         outputDiv.append(header);
         combinedPrayers.forEach((item, index) => {
-            const emojiNum = window.numberToEmoji(index + 1);
+            const emojiNum = numberToEmoji(index + 1);
             const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
             const block = $('<div>').addClass('q-block').addClass('q-pray');
             block.text(textBlock);
@@ -666,7 +665,7 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
     const deletedLog = $(`#deletedLog__${sheetId}`);
     deletedLog.empty();
     if (preservedData.deleted.length > 0) {
-        preservedData.deleted.forEach(d => {
+        preservedData.deleted.forEach((d: any) => {
             let msg = '№' + d.originalId + ' (' + d.author + '): ';
             if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
             else msg += 'Видалено підпункт';
@@ -708,7 +707,7 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
     $(`#cleanedLogDetails__${sheetId}`).show();
 
     // 30-денне очищення чекбоксів YouTube
-    chrome.storage.local.get(['syh_yt_checkbox_state'], function(res) {
+    SYH_STORAGE.get(['syh_yt_checkbox_state'], function(res: Record<string, any>) {
         const states = res.syh_yt_checkbox_state;
         if (states && typeof states === 'object') {
             const now = Date.now();
@@ -721,13 +720,13 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
                 }
             }
             if (modified) {
-                chrome.storage.local.set({ syh_yt_checkbox_state: states });
+                SYH_STORAGE.set({ syh_yt_checkbox_state: states });
             }
         }
     });
 
     // Збереження результатів процесингу Telegram в сховище per sheetId
-    chrome.storage.local.set({
+    SYH_STORAGE.set({
         [`tg_finalResultHtml__${sheetId}`]: outputDiv.html(),
         [`tg_statsHtml__${sheetId}`]: $(`#statsBar__${sheetId}`).html(),
         [`tg_statsVisible__${sheetId}`]: $(`#statsBar__${sheetId}`).is(':visible'),
@@ -740,48 +739,42 @@ window.processTelegramData = function(sheetId = 'vp_ss') {
         [`tg_cleanedLogDetailsVisible__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
         [`tg_cleanedLogDetailsOpen__${sheetId}`]: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined
     });
-};
+}
 
 $(document).ready(function() {
     // Реактивне оновлення правої колонки при зміні зібраних коментарів YouTube
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-        chrome.storage.onChanged.addListener(function(changes, areaName) {
-            if (areaName === 'local') {
-                if (changes.syh_yt_collected) {
-                    if (typeof window.loadYTCollected === 'function') {
-                        window.loadYTCollected('vp_ss');
-                    }
-                }
-                SHEET_IDS.forEach(sId => {
-                    if (changes[`syh_collected__${sId}`]) {
-                        if (typeof window.loadYTCollected === 'function') {
-                            window.loadYTCollected(sId);
-                        }
-                    }
-                });
+    SYH_STORAGE.onChanged(function(changes: Record<string, any>, areaName: string) {
+        if (areaName === 'local') {
+            if (changes.syh_yt_collected) {
+                loadYTCollected('vp_ss');
             }
-        });
-    }
+            SHEET_IDS.forEach(sId => {
+                if (changes[`syh_collected__${sId}`]) {
+                    loadYTCollected(sId);
+                }
+            });
+        }
+    });
 
     // Обробники кліків для всіх 4 аркушів
     SHEET_IDS.forEach(sId => {
         $(`#processTelegramBtn__${sId}`).click(function() { 
             try { 
-                window.processTelegramData(sId); 
-            } catch (e) { 
+                processTelegramData(sId); 
+            } catch (e: any) { 
                 alert("❌ Помилка:\n" + e.message); 
                 console.error(e); 
             } 
         });
         
         $(`#copyResultBtn__${sId}`).click(async function() {
-            const plainText = $(`#finalResultDiv__${sId}`).text(); 
+            const plainText = ($(`#finalResultDiv__${sId}`).text() as string); 
             if (!plainText) return;
 
             const $btn = $(this);
             const originalText = $btn.text(); 
 
-            const copyFallback = (txt) => {
+            const copyFallback = (txt: string) => {
                 const $temp = $("<textarea>"); 
                 $("body").append($temp); 
                 $temp.val(txt).select(); 
@@ -805,3 +798,26 @@ $(document).ready(function() {
         });
     });
 });
+
+if (typeof window !== 'undefined') {
+    Object.assign(window, {
+        countQuestionsInText,
+        updateOldInputStats,
+        syh_yt_collected,
+        syh_collected_by_sheet,
+        loadYTCollected,
+        deleteYTCollectedItem,
+        clearAllYTCollected,
+        updateRightColumnStats,
+        updateCombinedCounters,
+        updateNewInputStats,
+        numberToEmoji,
+        RELATIVE_TIME_LINE_REGEX,
+        cleanAuthorName,
+        cleanTelegramHeadersLogged,
+        parseAndFilterOldList,
+        parseTelegramExportLineByLine,
+        ensureStatsBarRows,
+        processTelegramData
+    });
+}

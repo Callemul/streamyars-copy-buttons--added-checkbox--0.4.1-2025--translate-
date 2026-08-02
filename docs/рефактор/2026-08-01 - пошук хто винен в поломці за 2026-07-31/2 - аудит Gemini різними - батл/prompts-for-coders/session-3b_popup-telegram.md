@@ -73,11 +73,11 @@ Chrome Extension MV3, Vite + TS. Сесія 3A (popup_init) вже викона�
 ---
 
 ## Приймання (всі критерії)
-- [ ] 0 штук `window.functionName = ...`
-- [ ] Всі функції — ES-модулі з `import/export`
-- [ ] `popup.html` → `<script type="module">`
-- [ ] 0 прямих `chrome.storage.local.get/set`
-- [ ] Всі 9 storage-викликів через `SYH_STORAGE`
-- [ ] Залежності від popup_init — через `import`, не через `window`
-- [ ] Telegram-функції працюють: імпорт даних, обробка, видалення елементів
-- [ ] Popup працює без помилок у консолі
+- [x] 0 штук `window.functionName = ...`
+- [x] Всі функції — ES-модулі з `import/export`
+- [x] `popup.html` → `<script type="module">`
+- [x] 0 прямих `chrome.storage.local.get/set`
+- [x] Всі 9 storage-викликів через `SYH_STORAGE`
+- [x] Залежності від popup_init — через `import`, не через `window`
+- [x] Telegram-функції працюють: імпорт даних, обробка, видалення елементів
+- [x] Popup працює без помилок у консолі
