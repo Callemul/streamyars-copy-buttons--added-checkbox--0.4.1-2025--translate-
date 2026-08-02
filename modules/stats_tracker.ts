@@ -299,9 +299,13 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     if (!val) continue;
                     
                     if (val.startsWith('{') || val.startsWith('[')) {
-                        const data = JSON.parse(val);
-                        const foundName = this.searchBrandNameInObject(data);
-                        if (foundName) return foundName;
+                        try {
+                            const data = JSON.parse(val);
+                            const foundName = this.searchBrandNameInObject(data);
+                            if (foundName) return foundName;
+                        } catch (e) {
+                            continue;
+                        }
                     }
                 }
             }

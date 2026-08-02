@@ -66,6 +66,16 @@ export function setStudioDropdownVisible(dropdownEl: HTMLElement, visible: boole
     }
 }
 
+let activeStudioDropdownInfo: { dropdown: HTMLElement, metaContainer: HTMLElement } | null = null;
+
+// Global click handler to close dropdowns
+document.addEventListener('click', (e) => {
+    if (activeStudioDropdownInfo && !activeStudioDropdownInfo.metaContainer.contains(e.target as Node)) {
+        setStudioDropdownVisible(activeStudioDropdownInfo.dropdown, false);
+        activeStudioDropdownInfo = null;
+    }
+});
+
 export interface StudioEventCaches {
     videoSheetMap: Record<string, VideoSheetMapEntry>;
     buttonStates: Record<string, 'question' | 'prayer'>;
@@ -192,13 +202,39 @@ export function bindStudioCommentEvents(
         return;
     }
 
+    const getFreshContext = () => {
+        const freshAuthor = getAuthorNameText(threadEl);
+        const freshText = getCommentText(threadEl);
+        let freshVideoTitle = getVideoTitleText(threadEl);
+        let freshVideoHref = getVideoLinkHref(threadEl);
+
+        const isReply = threadEl.hasAttribute('is-reply');
+        if (isReply && !freshVideoTitle) {
+            const parentThread = threadEl.closest('ytcp-comment-thread');
+            if (parentThread) {
+                const parentComment = parentThread.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
+                if (parentComment) {
+                    if (!freshVideoTitle) freshVideoTitle = getVideoTitleText(parentComment);
+                    if (!freshVideoHref)  freshVideoHref  = getVideoLinkHref(parentComment);
+                    if (!freshVideoTitle && !freshVideoHref && parentComment.dataset.syhVideoKey) {
+                        freshVideoHref = parentComment.dataset.syhVideoKey;
+                    }
+                }
+            }
+        }
+        const freshVideoKey = generateVideoKey(freshVideoHref, freshVideoTitle);
+        const freshCommentKey = generateCommentKey(freshVideoTitle, freshAuthor, freshText);
+
+        return { freshAuthor, freshText, freshVideoTitle, freshVideoHref, freshVideoKey, freshCommentKey };
+    };
+
     // Helper: auto-check comment when added to questions/prayers
-    const autoCheck = () => {
+    const autoCheck = (currentCommentKey: string) => {
         if (ui.checkboxEl) {
             ui.checkboxEl.checked = true;
         }
         updateStudioCheckedClass(threadEl, true);
-        caches.checkboxStates[commentKey] = {
+        caches.checkboxStates[currentCommentKey] = {
             checked: true,
             timestamp: Date.now()
         };
@@ -209,7 +245,8 @@ export function bindStudioCommentEvents(
     if (ui.copyBtn.dataset.syhBound !== 'true') {
         ui.copyBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            const formatted = author ? `@${author}\n\n${text}` : text;
+            const ctx = getFreshContext();
+            const formatted = ctx.freshAuthor ? `@${ctx.freshAuthor}\n\n${ctx.freshText}` : ctx.freshText;
             const success = await copyToClipboard(formatted);
 
             const origHtml = ui.copyBtn.innerHTML;
@@ -226,39 +263,41 @@ export function bindStudioCommentEvents(
 
     // Helper for question / prayer click
     const handleAddClick = async (type: 'question' | 'prayer') => {
+        const ctx = getFreshContext();
         // Re-check current video category resolution (in case user changed badge dropdown)
-        const currentRes = resolveCategoryForVideo(videoTitle, videoKey, channelKey, caches.videoSheetMap);
+        const currentRes = resolveCategoryForVideo(ctx.freshVideoTitle, ctx.freshVideoKey, channelKey, caches.videoSheetMap);
         const targetSheetId = currentRes.sheetId;
 
         if (!targetSheetId) {
             // Unresolved sheet category -> block action & highlight/open badge dropdown
             setStudioDropdownVisible(ui.dropdownEl, true);
+            if (ui.metaContainer) activeStudioDropdownInfo = { dropdown: ui.dropdownEl, metaContainer: ui.metaContainer };
             ui.badgeEl.classList.add('syh-badge-highlight');
             setTimeout(() => ui.badgeEl.classList.remove('syh-badge-highlight'), 2000);
             return;
         }
 
-        const formatted = author ? `@${author}\n\n${text}` : text;
+        const formatted = ctx.freshAuthor ? `@${ctx.freshAuthor}\n\n${ctx.freshText}` : ctx.freshText;
         await copyToClipboard(formatted);
 
         // Update button state cache & storage
-        caches.buttonStates[commentKey] = type;
+        caches.buttonStates[ctx.freshCommentKey] = type;
         SYH_STORAGE.set({ [STUDIO_BUTTON_STATE_KEY]: caches.buttonStates });
 
         // Save item to sheet collection
         await saveStudioCollectedItem(targetSheetId, {
-            id: commentKey,
-            author,
-            text,
+            id: ctx.freshCommentKey,
+            author: ctx.freshAuthor,
+            text: ctx.freshText,
             type,
             timestamp: Date.now(),
-            videoId: videoKey,
-            videoTitle
+            videoId: ctx.freshVideoKey,
+            videoTitle: ctx.freshVideoTitle
         });
 
         // Update UI
         updateStudioButtonsUI(ui, targetSheetId, type);
-        autoCheck();
+        autoCheck(ctx.freshCommentKey);
     };
 
     // 2. Question button click
@@ -292,6 +331,11 @@ export function bindStudioCommentEvents(
             e.stopPropagation();
             const isVisible = ui.dropdownEl.style.display === 'block';
             setStudioDropdownVisible(ui.dropdownEl, !isVisible);
+            if (!isVisible && ui.metaContainer) {
+                activeStudioDropdownInfo = { dropdown: ui.dropdownEl, metaContainer: ui.metaContainer };
+            } else {
+                activeStudioDropdownInfo = null;
+            }
         });
         ui.badgeEl.dataset.syhBound = 'true';
     }
@@ -305,32 +349,28 @@ export function bindStudioCommentEvents(
 
             const selectedVal = itemEl.dataset.sheetId;
             const newSheetId: SheetId | null = selectedVal === 'auto_reset' ? null : (selectedVal as SheetId);
-            const autoCat = resolveCategoryForVideo(videoTitle, videoKey, channelKey, {}).sheetId;
+            
+            const ctx = getFreshContext();
+            const autoCat = resolveCategoryForVideo(ctx.freshVideoTitle, ctx.freshVideoKey, channelKey, {}).sheetId;
 
             setStudioDropdownVisible(ui.dropdownEl, false);
+            activeStudioDropdownInfo = null;
 
             // Update storage and videoSheetMap
             caches.videoSheetMap = await setStudioVideoSheetOverride(
-                videoKey,
+                ctx.freshVideoKey,
                 newSheetId,
                 channelKey,
                 channelLabel,
-                videoTitle,
+                ctx.freshVideoTitle,
                 autoCat
             );
 
             // Retroactively update all comments in DOM matching videoKey
-            retroactiveUpdateVideoComments(videoKey, channelKey, caches);
+            retroactiveUpdateVideoComments(ctx.freshVideoKey, channelKey, caches);
         });
         ui.dropdownEl.dataset.syhBound = 'true';
     }
-
-    // Close dropdown on click outside
-    document.addEventListener('click', (e) => {
-        if (ui.metaContainer && !ui.metaContainer.contains(e.target as Node)) {
-            if (ui.dropdownEl) setStudioDropdownVisible(ui.dropdownEl, false);
-        }
-    });
 
     // 5. Checkbox change handler
     if (ui.checkboxEl && ui.checkboxEl.dataset.syhBound !== 'true') {
@@ -339,7 +379,8 @@ export function bindStudioCommentEvents(
             const isChecked = ui.checkboxEl.checked;
             updateStudioCheckedClass(threadEl, isChecked);
 
-            caches.checkboxStates[commentKey] = {
+            const ctx = getFreshContext();
+            caches.checkboxStates[ctx.freshCommentKey] = {
                 checked: isChecked,
                 timestamp: Date.now()
             };
