@@ -7,6 +7,8 @@ export type SyhEventType =
     | 'SHEET_TAB_CHANGED'
     | 'SHEET_DATA_PROCESSED'
     | 'PRAYER_MARKED'
+    | 'ANTI_AFK_TRIGGERED'
+    | 'OPTIONS_UPDATED'
     | 'CONTEXT_INVALIDATED';
 
 export interface SyhEventPayloads {
@@ -18,6 +20,8 @@ export interface SyhEventPayloads {
     SHEET_TAB_CHANGED: { activeSheetId: string };
     SHEET_DATA_PROCESSED: { sheetId: string; totalQuestions: number; totalPrayers: number };
     PRAYER_MARKED: { author: string; text: string; icon: string };
+    ANTI_AFK_TRIGGERED: { timestamp: number };
+    OPTIONS_UPDATED: { options: Record<string, any> };
     CONTEXT_INVALIDATED: void;
 }
 

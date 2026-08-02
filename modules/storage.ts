@@ -36,6 +36,17 @@ export const STORAGE_KEYS = {
     STATS_CHARTS: 'syh:stats:charts'
 } as const;
 
+/**
+ * Type-safe helper to build sheet-specific storage keys
+ */
+export function getSheetStorageKey(sheetId: string, suffix: string): string {
+    return `tg_${suffix}__${sheetId}`;
+}
+
+export function getSheetCollectedStorageKey(sheetId: string): string {
+    return `syh:popup:collected:${sheetId}`;
+}
+
 export function migrateKey(oldKey: string): string {
     if (oldKey.startsWith('syh:')) return oldKey;
 

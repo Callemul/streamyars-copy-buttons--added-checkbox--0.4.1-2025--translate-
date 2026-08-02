@@ -103,6 +103,9 @@ export function checkAndClickAntiAfk(
             try {
                 console.log("[SYH Anti-AFK] AFK таймаут перехоплено! Натискаю 'Stay in the studio'.");
                 (btn as HTMLElement).click();
+                if (typeof SYH_BUS !== 'undefined') {
+                    SYH_BUS.emit('ANTI_AFK_TRIGGERED', { timestamp: Date.now() });
+                }
                 return true;
             } catch (err) {
                 console.warn("[SYH Anti-AFK] Помилка при натисканні кнопки Stay in studio:", err);
@@ -244,6 +247,4 @@ export const SYH_ANTI_AFK = {
     stopAntiAfk
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_ANTI_AFK = SYH_ANTI_AFK;
-}
+// Window pollution assignment removed for modular clean architecture

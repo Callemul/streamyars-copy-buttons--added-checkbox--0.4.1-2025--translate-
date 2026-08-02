@@ -78,7 +78,4 @@ export function cleanupStudioState(): Promise<void> {
     });
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).generateCommentKey = generateCommentKey;
-    (window as any).cleanupStudioState = cleanupStudioState;
-}
+// Pure ESM module export

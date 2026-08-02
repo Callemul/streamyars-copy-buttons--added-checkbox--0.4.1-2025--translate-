@@ -44,6 +44,4 @@ export function getStudioChannelInfo(): StudioChannelInfo {
     };
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).getStudioChannelInfo = getStudioChannelInfo;
-}
+// Pure ESM module export

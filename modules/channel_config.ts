@@ -91,8 +91,4 @@ export function matchCategory(videoTitle: string, channelKey: ChannelKey): Sheet
     return null;
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).ALLOWED_CHANNELS = ALLOWED_CHANNELS;
-    (window as any).detectChannelKey = detectChannelKey;
-    (window as any).matchCategory = matchCategory;
-}
+// Pure ESM Export - Window pollution removed
