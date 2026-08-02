@@ -202,7 +202,7 @@ export function bindStudioCommentEvents(
     };
 
     // Helper: auto-check comment when added to questions/prayers
-    const autoCheck = (currentCommentKey: string) => {
+    const autoCheck = async (currentCommentKey: string) => {
         if (ui.checkboxEl) {
             ui.checkboxEl.checked = true;
         }
@@ -211,7 +211,7 @@ export function bindStudioCommentEvents(
             checked: true,
             timestamp: Date.now()
         };
-        SYH_STORAGE.set({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
+        await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
     };
 
     // 1. Copy button handler
@@ -262,7 +262,7 @@ export function bindStudioCommentEvents(
 
         // Update button state cache & storage
         caches.buttonStates[ctx.freshCommentKey] = type;
-        SYH_STORAGE.set({ [STUDIO_BUTTON_STATE_KEY]: caches.buttonStates });
+        await SYH_STORAGE.setAsync({ [STUDIO_BUTTON_STATE_KEY]: caches.buttonStates });
 
         // Save item to sheet collection
         await saveStudioCollectedItem(targetSheetId, {
@@ -357,7 +357,7 @@ export function bindStudioCommentEvents(
 
     // 5. Checkbox change handler
     if (ui.checkboxEl && ui.checkboxEl.dataset.syhBound !== 'true') {
-        ui.checkboxEl.addEventListener('change', (e) => {
+        ui.checkboxEl.addEventListener('change', async (e) => {
             e.stopPropagation();
             if (!ui.checkboxEl) return;
             const isChecked = ui.checkboxEl.checked;
@@ -368,7 +368,7 @@ export function bindStudioCommentEvents(
                 checked: isChecked,
                 timestamp: Date.now()
             };
-            SYH_STORAGE.set({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
+            await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: caches.checkboxStates });
         });
         ui.checkboxEl.dataset.syhBound = 'true';
     }

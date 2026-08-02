@@ -34,17 +34,17 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Зберігає зібраний коментар у syh_yt_collected через уніфікований CommentService
  */
-export function saveCollectedItem(
+export async function saveCollectedItem(
     item: YTCollectedItem,
     collectedList: YTCollectedItem[]
-): YTCollectedItem[] {
+): Promise<YTCollectedItem[]> {
     const index = collectedList.findIndex(i => i.id === item.id);
     const updated = index >= 0
         ? collectedList.map((i, idx) => idx === index ? item : i)
         : [item, ...collectedList];
 
-    SYH_STORAGE.set({ [STORAGE_KEYS.YT_COLLECTED]: updated });
-    CommentService.saveCollectedComment('vp_ss', item).catch(() => {});
+    await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_COLLECTED]: updated });
+    await CommentService.saveCollectedComment('vp_ss', item).catch(() => {});
     return updated;
 }
 
@@ -72,7 +72,7 @@ export function bindYTEvents(
     const bodyEl = commentNode.querySelector(YT_SELECTORS.commentBody) as HTMLElement | null;
 
     // Спільна функція установки чекбоксу при додаванні
-    const autoCheck = () => {
+    const autoCheck = async () => {
         if (!checkbox) return;
         checkbox.checked = true;
         commentNode.classList.add('syh-yt-comment-checked');
@@ -80,7 +80,7 @@ export function bindYTEvents(
             checked: true,
             timestamp: Date.now()
         };
-        SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
     };
 
     // 1. Клік "Додати до питань"
@@ -105,7 +105,7 @@ export function bindYTEvents(
 
             // Кеш кнопок
             caches.buttonStates[commentId] = 'question';
-            SYH_STORAGE.set({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
+            await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
 
             // Збереження у зібрані
             const item: YTCollectedItem = {
@@ -116,7 +116,7 @@ export function bindYTEvents(
                 timestamp: Date.now(),
                 videoId: getVideoId()
             };
-            caches.collectedList = saveCollectedItem(item, caches.collectedList);
+            caches.collectedList = await saveCollectedItem(item, caches.collectedList);
 
             // Авто-чекбокс
             autoCheck();
@@ -145,7 +145,7 @@ export function bindYTEvents(
 
             // Кеш кнопок
             caches.buttonStates[commentId] = 'prayer';
-            SYH_STORAGE.set({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
+            await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_BUTTON_STATES]: caches.buttonStates });
 
             // Збереження у зібрані
             const item: YTCollectedItem = {
@@ -156,7 +156,7 @@ export function bindYTEvents(
                 timestamp: Date.now(),
                 videoId: getVideoId()
             };
-            caches.collectedList = saveCollectedItem(item, caches.collectedList);
+            caches.collectedList = await saveCollectedItem(item, caches.collectedList);
 
             // Авто-чекбокс
             autoCheck();
@@ -183,7 +183,7 @@ export function bindYTEvents(
 
     // 4. Зміна Checkbox
     if (checkbox) {
-        checkbox.addEventListener('change', (e) => {
+        checkbox.addEventListener('change', async (e) => {
             e.stopPropagation();
             const isChecked = checkbox.checked;
             if (isChecked) {
@@ -195,7 +195,7 @@ export function bindYTEvents(
                 checked: isChecked,
                 timestamp: Date.now()
             };
-            SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
+            await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: caches.checkboxStates });
         });
     }
 

@@ -27,20 +27,16 @@ export function generateVideoKey(videoLinkHref: string | null, videoTitle: strin
 /**
  * Fetch syh_studio_video_sheet_map from storage
  */
-export function getStudioVideoSheetMap(): Promise<Record<string, VideoSheetMapEntry>> {
-    return new Promise((resolve) => {
-        SYH_STORAGE.get([VIDEO_MAP_STORAGE_KEY], (res) => {
-            const map = res[VIDEO_MAP_STORAGE_KEY] || {};
-            resolve(map);
-        });
-    });
+export async function getStudioVideoSheetMap(): Promise<Record<string, VideoSheetMapEntry>> {
+    const res = await SYH_STORAGE.getAsync<Record<string, any>>([VIDEO_MAP_STORAGE_KEY]);
+    return res[VIDEO_MAP_STORAGE_KEY] || {};
 }
 
 /**
  * Save manual override or reset for videoKey to syh_studio_video_sheet_map
  * and log to syh_studio_manual_override_log if manual override set/changed
  */
-export function setStudioVideoSheetOverride(
+export async function setStudioVideoSheetOverride(
     videoKey: string,
     sheetId: SheetId | null,
     channelKey: ChannelKey,
@@ -48,56 +44,46 @@ export function setStudioVideoSheetOverride(
     videoTitle: string,
     autoDetectedSheet: SheetId | null
 ): Promise<Record<string, VideoSheetMapEntry>> {
-    return new Promise((resolve) => {
-        if (!videoKey) {
-            getStudioVideoSheetMap().then(resolve);
-            return;
+    if (!videoKey) {
+        return getStudioVideoSheetMap();
+    }
+
+    const res = await SYH_STORAGE.getAsync<Record<string, any>>([VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY]);
+    const map: Record<string, VideoSheetMapEntry> = res[VIDEO_MAP_STORAGE_KEY] || {};
+    const log: StudioOverrideLogEntry[] = res[MANUAL_OVERRIDE_LOG_KEY] || [];
+
+    if (sheetId === null) {
+        delete map[videoKey];
+    } else {
+        map[videoKey] = {
+            sheetId,
+            source: 'manual',
+            channelKey,
+            videoTitle,
+            updatedAt: Date.now()
+        };
+
+        const logEntry: StudioOverrideLogEntry = {
+            timestamp: new Date().toISOString(),
+            channelKey,
+            channelLabel: channelLabel || channelKey,
+            videoTitle,
+            autoDetectedSheet,
+            assignedSheet: sheetId
+        };
+
+        log.push(logEntry);
+        if (log.length > 500) {
+            log.splice(0, log.length - 500);
         }
+    }
 
-        SYH_STORAGE.get([VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY], (res) => {
-            const map: Record<string, VideoSheetMapEntry> = res[VIDEO_MAP_STORAGE_KEY] || {};
-            const log: StudioOverrideLogEntry[] = res[MANUAL_OVERRIDE_LOG_KEY] || [];
-
-            if (sheetId === null) {
-                // Reset to auto -> remove key from map
-                delete map[videoKey];
-            } else {
-                map[videoKey] = {
-                    sheetId,
-                    source: 'manual',
-                    channelKey,
-                    videoTitle,
-                    updatedAt: Date.now()
-                };
-
-                // Add log entry
-                const logEntry: StudioOverrideLogEntry = {
-                    timestamp: new Date().toISOString(),
-                    channelKey,
-                    channelLabel: channelLabel || channelKey,
-                    videoTitle,
-                    autoDetectedSheet,
-                    assignedSheet: sheetId
-                };
-
-                log.push(logEntry);
-                // Keep last 500 records
-                if (log.length > 500) {
-                    log.splice(0, log.length - 500);
-                }
-            }
-
-            SYH_STORAGE.set(
-                {
-                    [VIDEO_MAP_STORAGE_KEY]: map,
-                    [MANUAL_OVERRIDE_LOG_KEY]: log
-                },
-                () => {
-                    resolve(map);
-                }
-            );
-        });
+    await SYH_STORAGE.setAsync({
+        [VIDEO_MAP_STORAGE_KEY]: map,
+        [MANUAL_OVERRIDE_LOG_KEY]: log
     });
+
+    return map;
 }
 
 // Pure ESM module export

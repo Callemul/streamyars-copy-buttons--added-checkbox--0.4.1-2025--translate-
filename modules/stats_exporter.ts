@@ -104,47 +104,41 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         this.loadChartData(currentBrand);
     },
 
-    loadChartData: function(currentBrand: string): void {
-        const self = this;
+    loadChartData: async function(currentBrand: string): Promise<void> {
         const today = SYH_UTILS.getTodayDateString();
 
-        const storage = SYH_STORAGE;
-        
-        if (storage) {
-            storage.get([STORAGE_KEYS.STATS_CHARTS], function(result: any) {
-                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-                const brandData = db[currentBrand] || {};
-                
-                const select = document.getElementById('syh-compare-select') as HTMLSelectElement | null;
-                const dates = Object.keys(brandData).filter(d => d !== today).sort().reverse();
-                
-                if (select) {
-                    dates.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d;
-                        opt.innerText = d;
-                        select.appendChild(opt);
-                    });
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.STATS_CHARTS]);
+        const db = result?.[STORAGE_KEYS.STATS_CHARTS] || {};
+        const brandData = db[currentBrand] || {};
 
-                    select.onchange = (e: Event) => {
-                        const pastDate = (e.target as HTMLSelectElement).value;
-                        const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
-                        self.renderChart(brandData[today], pastData);
-                    };
-                }
+        const select = document.getElementById('syh-compare-select') as HTMLSelectElement | null;
+        const dates = Object.keys(brandData).filter(d => d !== today).sort().reverse();
 
-                self.renderChart(brandData[today], null);
-
-                const csvBtn = document.getElementById('syh-dl-csv-btn');
-                if (csvBtn) {
-                    csvBtn.onclick = () => self.exportCSV(brandData[today], today, currentBrand);
-                }
-
-                const presBtn = document.getElementById('syh-dl-pres-btn');
-                if (presBtn) {
-                    presBtn.onclick = () => self.exportPresentation(brandData[today], today, currentBrand);
-                }
+        if (select) {
+            dates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d;
+                select.appendChild(opt);
             });
+
+            select.onchange = (e: Event) => {
+                const pastDate = (e.target as HTMLSelectElement).value;
+                const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
+                this.renderChart(brandData[today], pastData);
+            };
+        }
+
+        this.renderChart(brandData[today], null);
+
+        const csvBtn = document.getElementById('syh-dl-csv-btn');
+        if (csvBtn) {
+            csvBtn.onclick = () => this.exportCSV(brandData[today], today, currentBrand);
+        }
+
+        const presBtn = document.getElementById('syh-dl-pres-btn');
+        if (presBtn) {
+            presBtn.onclick = () => this.exportPresentation(brandData[today], today, currentBrand);
         }
     },
 

@@ -66,15 +66,12 @@ export function saveDataToStorage(): void {
 }
 
 export async function loadData(key: string): Promise<unknown> {
-    return new Promise(resolve => {
-        SYH_STORAGE.get([key], (res) => resolve(res[key]));
-    });
+    const res = await SYH_STORAGE.getAsync<Record<string, unknown>>([key]);
+    return res[key];
 }
 
 export async function saveData(key: string, value: unknown): Promise<void> {
-    return new Promise(resolve => {
-        SYH_STORAGE.set({ [key]: value }, resolve);
-    });
+    await SYH_STORAGE.setAsync({ [key]: value });
 }
 
 const SHEET_IDS = getAllSheetIds();

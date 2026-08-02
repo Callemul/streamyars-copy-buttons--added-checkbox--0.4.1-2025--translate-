@@ -72,8 +72,7 @@ export const SYH_MESSAGING: SyhMessagingService = {
                         }
                     });
                 });
-            } catch (e) {
-                console.warn('[SYH Messaging] sendToActiveTab error:', e);
+            } catch {
                 resolve(null);
             }
         });
@@ -112,4 +111,4 @@ export const SYH_MESSAGING: SyhMessagingService = {
             }
         };
     }
-};
+};

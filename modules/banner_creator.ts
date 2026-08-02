@@ -1,4 +1,4 @@
-import { SYH_CONFIG } from './config';
+import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_PARSERS } from './parsers';
 import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
@@ -176,7 +176,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
     ensureCleanStart: async function(): Promise<void> {
         this.log("Перевірка на чистоту старту...");
-        const form = this.SELECTORS?.createBannerForm ? document.querySelector(this.SELECTORS.createBannerForm) : null;
+        const form = resolveSelector(this.SELECTORS?.createBannerForm as any);
         
         if (form) {
             this.log("Форма була відкрита. Закриваю...");
@@ -186,7 +186,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     },
 
     finalCleanup: async function(): Promise<void> {
-        const form = this.SELECTORS?.createBannerForm ? document.querySelector(this.SELECTORS.createBannerForm) : null;
+        const form = resolveSelector(this.SELECTORS?.createBannerForm as any);
         if (form) {
             this.log("Прибирання: Закриваю форму...");
             this.clickCancelButton(form);

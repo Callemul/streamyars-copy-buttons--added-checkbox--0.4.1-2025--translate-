@@ -12,6 +12,7 @@ export interface SyhVideoCopier {
 }
 
 import type { ISyhPlugin } from './plugin_registry';
+import { UiFactory } from './ui_factory';
 
 export const SYH_VIDEO_COPIER_PLUGIN: ISyhPlugin = {
     id: 'syh_video_copier',
@@ -230,10 +231,14 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     },
 
     createSquareButton: function(icon: string, tooltipText: string, onClickCallback: (e: MouseEvent) => void): HTMLButtonElement {
-        const btn = document.createElement('button');
-        btn.innerHTML = icon;
-        btn.title = tooltipText;
-        
+        const btn = UiFactory.createButton({
+            action: 'copier-action',
+            icon: icon,
+            title: tooltipText,
+            className: 'syh-square-btn',
+            onClick: onClickCallback
+        });
+
         btn.style.cssText = `
             width: 32px;
             height: 32px;
@@ -259,7 +264,6 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
             btn.style.borderColor = '#ddd';
         };
 
-        btn.onclick = onClickCallback;
         return btn;
     },
 

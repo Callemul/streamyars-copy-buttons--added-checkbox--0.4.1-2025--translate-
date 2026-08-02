@@ -220,21 +220,15 @@ export class AntiAfkService {
             }, intervalMs);
         };
 
-        if (storage && typeof storage.get === 'function') {
-            storage.get([STORAGE_KEYS.OPTIONS], (data: Record<string, unknown>) => {
-                checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS] as any);
-            });
+        SYH_STORAGE.getAsync<Record<string, unknown>>([STORAGE_KEYS.OPTIONS]).then((data) => {
+            checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS] as any);
+        });
 
-            if (typeof storage.onChanged === 'function') {
-                storage.onChanged((changes: Record<string, { newValue?: unknown }>) => {
-                    if (changes[STORAGE_KEYS.OPTIONS]) {
-                        checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue as any);
-                    }
-                });
+        SYH_STORAGE.onChanged((changes: Record<string, { newValue?: unknown }>) => {
+            if (changes[STORAGE_KEYS.OPTIONS]) {
+                checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue as any);
             }
-        } else {
-            checkOptionsAndRun();
-        }
+        });
     }
 }
 
