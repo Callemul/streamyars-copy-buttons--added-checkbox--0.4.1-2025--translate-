@@ -1,5 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
+import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows } from './popup_telegram';
+import { renderPrayers } from './popup_prayers';
 
 export const db: any = {};
 
@@ -115,17 +117,12 @@ $(document).ready(function() {
             if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS); 
             if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach); 
         }
-
-        if (result[STORAGE_KEYS.YT_COLLECTED]) {
-            (window as any).syh_yt_collected = result[STORAGE_KEYS.YT_COLLECTED];
-        }
         
         SHEET_IDS.forEach(sId => {
             const oldListVal = result[`tg_oldList__${sId}`];
             if (oldListVal) { 
                 $(`#oldList__${sId}`).val(oldListVal); 
-                const updateOld = (window as any).updateOldInputStats;
-                if (typeof updateOld === 'function') updateOld(sId);
+                updateOldInputStats(sId);
             }
 
             const answeredVal = result[`tg_answered__${sId}`];
@@ -136,8 +133,7 @@ $(document).ready(function() {
             const newTgVal = result[`tg_newTelegram__${sId}`];
             if (newTgVal) { 
                 $(`#newTelegram__${sId}`).val(newTgVal); 
-                const updateNew = (window as any).updateNewInputStats;
-                if (typeof updateNew === 'function') updateNew(sId);
+                updateNewInputStats(sId);
             }
 
             const finalHtml = result[`tg_finalResultHtml__${sId}`];
@@ -148,8 +144,7 @@ $(document).ready(function() {
             if (result[`tg_statsVisible__${sId}`]) {
                 const statsHtml = result[`tg_statsHtml__${sId}`];
                 if (statsHtml) $(`#statsBar__${sId}`).html(statsHtml);
-                const ensureRows = (window as any).ensureStatsBarRows;
-                if (typeof ensureRows === 'function') ensureRows(sId);
+                ensureStatsBarRows(sId);
                 $(`#statsBar__${sId}`).show();
             }
 
@@ -199,10 +194,7 @@ $(document).ready(function() {
                 $(`#step3Right__${sId}`).css('flex', `${100 - divPos}%`);
             }
 
-            const loadYT = (window as any).loadYTCollected;
-            if (typeof loadYT === 'function') {
-                loadYT(sId);
-            }
+            loadYTCollected(sId);
         });
 
         if (result.tg_active_tab) {
@@ -237,9 +229,7 @@ $(document).ready(function() {
             $('#textArea2_generatedRuText').val(result.tg_translit_new);
         }
 
-        if (typeof (window as any).renderPrayers === 'function') {
-            (window as any).renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
-        }
+        renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
 
         if (result.tg_scroll_positions) {
             const scrolls = result.tg_scroll_positions;

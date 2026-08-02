@@ -30,18 +30,14 @@ export const syh_collected_by_sheet: Record<string, any[]> = SHEET_REGISTRY.crea
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
-    const keysToGet = [sheetKey];
-    if (sheetId === 'vp_ss') {
-        keysToGet.push(STORAGE_KEYS.YT_COLLECTED);
-    }
+    const keysToGet = [sheetKey, STORAGE_KEYS.YT_COLLECTED];
 
     SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let items = result[sheetKey] || result[`syh_collected__${sheetId}`] || [];
+        let items = result[sheetKey] || [];
         if (sheetId === 'vp_ss') {
-            const oldItems = result[STORAGE_KEYS.YT_COLLECTED] || result.syh_yt_collected || [];
+            const oldItems = result[STORAGE_KEYS.YT_COLLECTED] || [];
             syh_yt_collected.length = 0;
             syh_yt_collected.push(...oldItems);
-            // Тимчасове рішення (TODO п.1): Для vp_ss об'єднуємо старий модуль + новий Studio-модуль
             items = [...oldItems, ...items];
         }
         syh_collected_by_sheet[sheetId] = items;

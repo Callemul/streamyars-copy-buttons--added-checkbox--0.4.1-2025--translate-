@@ -79,15 +79,15 @@ export function init(config?: any, state?: any): void {
         SYH_STORAGE.getAsync([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES]).then((result: Record<string, any>) => {
             SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
             SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
-        });
+        }).catch(e => console.error("[SYH UI] Error loading initial storage cache:", e));
 
         SYH_STORAGE.onChanged((changes: Record<string, any>) => {
             try {
-                if (changes[STORAGE_KEYS.PRAYERS]) {
+                if (changes[STORAGE_KEYS.PRAYERS] && changes[STORAGE_KEYS.PRAYERS].newValue !== undefined) {
                     SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
                     SYH_UI.filterStarredComments();
                 }
-                if (changes[STORAGE_KEYS.CATEGORIES]) {
+                if (changes[STORAGE_KEYS.CATEGORIES] && changes[STORAGE_KEYS.CATEGORIES].newValue !== undefined) {
                     SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
                     SYH_UI.filterBanners();
                 }

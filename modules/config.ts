@@ -19,13 +19,14 @@ export interface SyhConfig {
  * Допоміжний резолвер селекторів з підтримкою масивів-фолбеків
  */
 export function resolveSelector<T extends Element = Element>(
-    selectorValue: SelectorValue, 
+    selectorValue: SelectorValue | null | undefined, 
     root: ParentNode = document
 ): T | null {
     if (!selectorValue) return null;
     const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
 
     for (const sel of selectors) {
+        if (!sel) continue;
         try {
             const el = root.querySelector<T>(sel);
             if (el) return el;
@@ -37,13 +38,14 @@ export function resolveSelector<T extends Element = Element>(
 }
 
 export function resolveSelectorAll<T extends Element = Element>(
-    selectorValue: SelectorValue, 
+    selectorValue: SelectorValue | null | undefined, 
     root: ParentNode = document
 ): T[] {
     if (!selectorValue) return [];
     const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
 
     for (const sel of selectors) {
+        if (!sel) continue;
         try {
             const els = Array.from(root.querySelectorAll<T>(sel));
             if (els.length > 0) return els;

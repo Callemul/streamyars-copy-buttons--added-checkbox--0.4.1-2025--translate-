@@ -143,14 +143,27 @@ export const SYH_STORAGE: StorageAdapter = {
             return;
         }
         try {
-            const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+            const keysArray = Array.isArray(keys) ? keys : [keys];
+            const keyMap = new Map<string, string>();
+            const migratedKeys = keysArray.map(k => {
+                const mk = migrateKey(k);
+                keyMap.set(mk, k);
+                return mk;
+            });
+
             chrome.storage.local.get(migratedKeys, (result) => {
                 if (chrome.runtime.lastError) {
                     console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
                     if (cb) cb({});
                     return;
                 }
-                if (cb) cb(result || {});
+                const output: Record<string, any> = { ...(result || {}) };
+                keyMap.forEach((origKey, migKey) => {
+                    if (origKey !== migKey && output[migKey] !== undefined && output[origKey] === undefined) {
+                        output[origKey] = output[migKey];
+                    }
+                });
+                if (cb) cb(output);
             });
         } catch (e: any) {
             console.error('[SYH Storage] Context invalidated or API failed:', e?.message || e);
