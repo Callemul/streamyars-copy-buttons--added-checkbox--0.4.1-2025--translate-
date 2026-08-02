@@ -25,6 +25,9 @@ export interface SyhEventComments {
     isBound: boolean;
     autoHealObserver?: MutationObserver;
     autoHealContainer?: Element;
+    _clickHandler?: (e: MouseEvent) => void;
+    _contextHandler?: (e: MouseEvent) => void;
+    _changeHandler?: (e: Event) => void;
 
     init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi): void;
     bindEvents(): void;
@@ -65,6 +68,18 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         if (this.autoHealObserver) {
             this.autoHealObserver.disconnect();
             this.autoHealObserver = undefined;
+        }
+        if (this._clickHandler) {
+            document.removeEventListener('click', this._clickHandler, true);
+            this._clickHandler = undefined;
+        }
+        if (this._contextHandler) {
+            document.removeEventListener('contextmenu', this._contextHandler, true);
+            this._contextHandler = undefined;
+        }
+        if (this._changeHandler) {
+            document.removeEventListener('change', this._changeHandler);
+            this._changeHandler = undefined;
         }
         this.isBound = false;
     },
@@ -179,7 +194,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         runAutoHeal();
 
         // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT ТА ФІКС ЛІЧИЛЬНИКІВ) ---
-        document.addEventListener('click', function(e: MouseEvent) {
+        self._clickHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (!target || !self.SELECTORS?.starButton) return;
             const starBtn = target.closest(self.SELECTORS.starButton);
@@ -206,7 +221,8 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     }
                 }
             }
-        }, true);
+        };
+        document.addEventListener('click', self._clickHandler, true);
 
         // --- ПЕРЕХОПЛЮВАЧ СЕРЕДНЬОГО КЛІКУ (КОЛІЩАТКА) ДЛЯ ЗНЯТТЯ ЗІРКИ ---
         document.addEventListener('mousedown', function(e: MouseEvent) {

@@ -303,35 +303,16 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     }
     $(`#cleanedLogDetails__${sheetId}`).show();
 
-    // 30-денне очищення чекбоксів YouTube
-    SYH_STORAGE.get([STORAGE_KEYS.YT_CHECKBOX_STATE], function(res: Record<string, any>) {
-        const states = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || res.syh_yt_checkbox_state;
-        if (states && typeof states === 'object') {
-            const now = Date.now();
-            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-            let modified = false;
-            for (const id in states) {
-                if (states[id] && states[id].timestamp && (now - states[id].timestamp > thirtyDaysMs)) {
-                    delete states[id];
-                    modified = true;
-                }
-            }
-            if (modified) {
-                SYH_STORAGE.set({ [STORAGE_KEYS.YT_CHECKBOX_STATE]: states });
-            }
-        }
-    });
-
     // Збереження результатів процесингу Telegram в сховище per sheetId за допомогою SheetStateService
     SheetStateService.saveSheetState(sheetId, {
         finalResultHtml: outputDiv.html(),
         statsHtml: $(`#statsBar__${sheetId}`).html(),
         statsVisible: $(`#statsBar__${sheetId}`).is(':visible'),
-        deletedLogHtml: deletedLog.html(),
-        deletedLogCount: preservedData.deleted.length,
+        deletedLogHtml: deletedLogDiv.html(),
+        deletedLogCount: delLog.length,
         deletedLogDetailsVisible: $(`#deletedLogDetails__${sheetId}`).is(':visible'),
         deletedLogDetailsOpen: $(`#deletedLogDetails__${sheetId}`).attr('open') !== undefined,
-        cleanedLogHtml: cleanedLog.html(),
+        cleanedLogHtml: cleanedLogDiv.html(),
         cleanedLogCount: cleaningLog.length,
         cleanedLogDetailsVisible: $(`#cleanedLogDetails__${sheetId}`).is(':visible'),
         cleanedLogDetailsOpen: $(`#cleanedLogDetails__${sheetId}`).attr('open') !== undefined

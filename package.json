@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "pack": "npx repomix",
-    "test": "node --experimental-strip-types --import ./tests/ts_loader.js --test tests/utils.test.js tests/storage.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js tests/telegram_parser.test.js tests/plugin_registry.test.js tests/ui_state.test.js tests/sheet_state_service.test.js tests/comment_service.test.js test_parsers.js",
+    "test": "node --experimental-strip-types --import ./tests/ts_loader.js --test tests/utils.test.js tests/storage.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js tests/telegram_parser.test.js tests/plugin_registry.test.js tests/ui_state.test.js tests/sheet_state_service.test.js tests/comment_service.test.js",
     "lint": "eslint --no-error-on-unmatched-pattern --no-warn-ignored \"modules/**/*.ts\" main.ts \"popup/**/*.ts\" \"options/**/*.ts\" \"youtube/**/*.ts\""
   },
   "devDependencies": {
@@ -16,7 +16,8 @@
     "@types/jquery": "^4.0.1",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
-    "typescript": "^7.0.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.65.0",
     "vite": "^5.4.11"
   },
   "dependencies": {

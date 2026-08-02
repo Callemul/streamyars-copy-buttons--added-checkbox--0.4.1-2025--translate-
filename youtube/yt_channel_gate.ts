@@ -20,7 +20,7 @@ export function isAllowedChannel(): boolean {
     const handleEl = document.querySelector<HTMLAnchorElement>('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]');
     if (handleEl) {
         const href = handleEl.getAttribute('href') || '';
-        const match = href.match(/\/(@[^\/?#]+)/);
+        const match = href.match(/\/(@[^/?#]+)/);
         if (match) {
             channelHandle = match[1];
         }

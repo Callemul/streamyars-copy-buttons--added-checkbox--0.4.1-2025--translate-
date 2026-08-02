@@ -144,7 +144,7 @@ export class CommentAssistantService implements CommentAssistantInterface {
     public processAllComments() {
         if (typeof document === 'undefined') return;
         const selector = this.selectors.commentBlock;
-        let comments: NodeListOf<Element> = document.querySelectorAll('[class*="PlatformComment__Wrap"]');
+        let comments: NodeListOf<Element>;
         if (typeof selector === 'string') {
             comments = document.querySelectorAll(selector);
         } else {

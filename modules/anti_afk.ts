@@ -163,7 +163,7 @@ export class AntiAfkService {
 
     public start(
         config?: Record<string, unknown>,
-        storage?: { get: Function; onChanged?: Function },
+        storage?: { get: (...args: any[]) => void; onChanged?: (...args: any[]) => void },
         i18n?: I18nAdapterLike,
         customTargetNode?: Element | Document | null
     ): void {

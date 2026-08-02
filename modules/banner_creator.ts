@@ -58,7 +58,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         const parseBlock = (text: string, defaultCat: string): BannerItem[] => {
             if (!text.trim()) return [];
             let blockCategory = defaultCat;
-            let blockQuestions: string[] = [];
+            let blockQuestions: string[];
             let isStd = false;
 
             const firstLine = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0] || "";
@@ -111,12 +111,12 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
                 }
             }
         } catch (error: any) {
-            alert(error.message);
+            this.UTILS.copyAndShowBanner(error.message, "⚠️ Помилка створення банерів");
             return;
         }
 
         if (bannersToCreate.length === 0) {
-            alert("Питання не знайдені.");
+            this.UTILS.copyAndShowBanner("Перевірте вхідний текст та спробуйте ще раз.", "⚠️ Питання не знайдені");
             return;
         }
 
@@ -159,7 +159,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
             this.UI.filterBanners();
         }
 
-        alert(`Готово! Створено: ${createdCount}.`);
+        this.UTILS.copyAndShowBanner(`Успішно створено банерів: ${createdCount}`, "🎉 Створення завершено!");
     },
 
     clickCancelButton: function(form: Element): void {

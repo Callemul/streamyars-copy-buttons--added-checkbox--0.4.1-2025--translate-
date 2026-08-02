@@ -30,14 +30,42 @@ test('Popup DOM Smoke Test: popup.html contains all critical IDs for 4 sheets', 
 
     const sheets = ['vp_ss', 'oparin', 'molchanov_ss', 'molchanov_preach'];
 
-    for (const sheetId of sheets) {
-        for (const baseId of baseRequiredIds) {
-            const suffixedId = `${baseId}__${sheetId}`;
-            assert.ok(
-                htmlContent.includes(`id="${suffixedId}"`),
-                `popup.html missing required element ID: #${suffixedId}`
-            );
-        }
+    assert.ok(htmlContent.includes('id="sheet-content-template"'), 'popup.html contains reusable sheet template');
+    assert.ok(htmlContent.includes('id="sheet-contents-container"'), 'popup.html contains sheet contents container');
+
+    const requiredJsClasses = [
+        'js-old-list',
+        'js-answered-ids',
+        'js-new-telegram',
+        'js-step3-columns',
+        'js-step3-left',
+        'js-step3-divider',
+        'js-step3-right',
+        'js-clear-yt-collected',
+        'js-yt-collected-list',
+        'js-process-btn',
+        'js-clear-state-btn',
+        'js-stats-bar',
+        'js-count-old',
+        'js-count-del',
+        'js-count-new-left',
+        'js-count-new-yt',
+        'js-count-total',
+        'js-copy-result-btn',
+        'js-final-result-div',
+        'js-deleted-log-details',
+        'js-deleted-log-count',
+        'js-deleted-log',
+        'js-cleaned-log-details',
+        'js-cleaned-log-count',
+        'js-cleaned-log'
+    ];
+
+    for (const cls of requiredJsClasses) {
+        assert.ok(
+            htmlContent.includes(cls),
+            `popup.html template missing required template class: .${cls}`
+        );
     }
 });
 

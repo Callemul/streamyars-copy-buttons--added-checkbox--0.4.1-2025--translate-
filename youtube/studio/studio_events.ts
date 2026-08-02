@@ -86,21 +86,7 @@ export function saveStudioCollectedItem(
     sheetId: SheetId,
     item: { id: string; author: string; text: string; type: 'question' | 'prayer'; timestamp: number; videoId: string; videoTitle: string }
 ): Promise<void> {
-    const storageKey = `syh:popup:collected:${sheetId}`;
-    return new Promise((resolve) => {
-        SYH_STORAGE.get([storageKey], (res) => {
-            const list: any[] = res[storageKey] || [];
-            const index = list.findIndex(i => i.id === item.id);
-            let updated: any[];
-            if (index >= 0) {
-                updated = [...list];
-                updated[index] = item;
-            } else {
-                updated = [item, ...list];
-            }
-            SYH_STORAGE.set({ [storageKey]: updated }, () => resolve());
-        });
-    });
+    return CommentService.saveCollectedComment(sheetId, item);
 }
 
 /**

@@ -146,7 +146,10 @@ SYH_STORAGE.onChanged((changes) => {
         if (!wasEnabled && stateCache.youtubeEnabled) {
             initYouTubeModule();
         } else if (wasEnabled && !stateCache.youtubeEnabled) {
-            if (observer) observer.disconnect();
+            if (unregisterObserver) {
+                unregisterObserver();
+                unregisterObserver = null;
+            }
             // Видаляємо кнопки, якщо модуль вимкнено
             document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
         }
