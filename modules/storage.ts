@@ -1,6 +1,7 @@
 /**
  * StreamYard Helper - Centralized Storage Adapter
- * Модуль керування сховищем із захистом від розриву контексту розширення (zombie context) та fallback до localStorage.
+ * Модуль керування сховищем із захистом від розриву контексту розширення (zombie context).
+ * ВАЖЛИВО: localStorage fallback видалено навмисно — він ламає синхронізацію між контент-скриптом і попапом.
  */
 
 export interface StorageAdapter {
@@ -16,11 +17,13 @@ export const SYH_STORAGE: StorageAdapter = {
      * Перевірка доступності chrome.storage.local
      */
     isChromeStorageAvailable: function(): boolean {
-        return typeof chrome !== 'undefined' && 
-               !!chrome.storage && 
-               !!chrome.storage.local && 
-               !!chrome.runtime && 
-               !!chrome.runtime.id;
+        try {
+            return typeof chrome !== 'undefined' && 
+                   !!chrome.storage && 
+                   !!chrome.storage.local;
+        } catch {
+            return false;
+        }
     },
 
     /**
@@ -34,40 +37,19 @@ export const SYH_STORAGE: StorageAdapter = {
             try {
                 chrome.storage.local.get(keys, (result) => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[SYH Storage] chrome.storage.local.get error:', chrome.runtime.lastError.message);
-                        const res: Record<string, any> = {};
-                        const arr = Array.isArray(keys) ? keys : [keys];
-                        arr.forEach(k => {
-                            try {
-                                const val = localStorage.getItem(k);
-                                res[k] = val !== null ? JSON.parse(val) : undefined;
-                            } catch (e: any) {
-                                console.warn('[SYH Storage] localStorage.getItem error:', e?.message || e);
-                                res[k] = undefined;
-                            }
-                        });
-                        if (cb) cb(res);
+                        console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                        if (cb) cb({});
                         return;
                     }
                     if (cb) cb(result);
                 });
                 return;
             } catch (e: any) {
-                console.warn('[SYH Storage] Fallback to localStorage (get):', e?.message || e);
+                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
             }
         }
-        const res: Record<string, any> = {};
-        const arr = Array.isArray(keys) ? keys : [keys];
-        arr.forEach(k => {
-            try {
-                const val = localStorage.getItem(k);
-                res[k] = val !== null ? JSON.parse(val) : undefined;
-            } catch (e: any) {
-                console.warn('[SYH Storage] localStorage.getItem error:', e?.message || e);
-                res[k] = undefined;
-            }
-        });
-        if (cb) cb(res);
+        console.error('[SYH Storage] chrome.storage not available. get skipped.');
+        if (cb) cb({});
     },
 
     /**
@@ -78,22 +60,16 @@ export const SYH_STORAGE: StorageAdapter = {
             try {
                 chrome.storage.local.set(items, () => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[SYH Storage] chrome.storage.local.set error:', chrome.runtime.lastError.message);
+                        console.error('[SYH Storage] chrome.storage.local.set error:', chrome.runtime.lastError.message);
                     }
                     if (cb) cb();
                 });
                 return;
             } catch (e: any) {
-                console.warn('[SYH Storage] Fallback to localStorage (set):', e?.message || e);
+                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
             }
         }
-        Object.keys(items).forEach(k => {
-            try {
-                localStorage.setItem(k, JSON.stringify(items[k]));
-            } catch (e: any) {
-                console.warn('[SYH Storage] localStorage.setItem error:', e?.message || e);
-            }
-        });
+        console.error('[SYH Storage] chrome.storage not available. Data NOT saved.');
         if (cb) cb();
     },
 
@@ -105,23 +81,16 @@ export const SYH_STORAGE: StorageAdapter = {
             try {
                 chrome.storage.local.remove(keys, () => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[SYH Storage] chrome.storage.local.remove error:', chrome.runtime.lastError.message);
+                        console.error('[SYH Storage] chrome.storage.local.remove error:', chrome.runtime.lastError.message);
                     }
                     if (cb) cb();
                 });
                 return;
             } catch (e: any) {
-                console.warn('[SYH Storage] Fallback to localStorage (remove):', e?.message || e);
+                console.error('[SYH Storage] Fallback to localStorage removed. Error:', e?.message || e);
             }
         }
-        const arr = Array.isArray(keys) ? keys : [keys];
-        arr.forEach(k => {
-            try {
-                localStorage.removeItem(k);
-            } catch (e: any) {
-                console.warn('[SYH Storage] localStorage.removeItem error:', e?.message || e);
-            }
-        });
+        console.error('[SYH Storage] chrome.storage not available. Remove skipped.');
         if (cb) cb();
     },
 
