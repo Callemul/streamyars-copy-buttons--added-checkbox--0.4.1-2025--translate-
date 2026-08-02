@@ -237,6 +237,4 @@ if (document.readyState === 'loading') {
     studioController.init();
 }
 
-if (typeof window !== 'undefined') {
-    (window as any).studioController = studioController;
-}
+export { studioController };

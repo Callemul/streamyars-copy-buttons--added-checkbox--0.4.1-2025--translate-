@@ -28,7 +28,7 @@ export const SYH_UTILS: SyhUtils = {
     },
 
     get storage(): any {
-        return (this && (this as any)._storage) || SYH_STORAGE;
+        return SYH_STORAGE;
     },
 
     isExtensionValid: function(): boolean {

@@ -23,12 +23,9 @@ export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
 }
 
 export const syh_yt_collected: any[] = [];
-export const syh_collected_by_sheet: Record<string, any[]> = {
-    vp_ss: [],
-    oparin: [],
-    molchanov_ss: [],
-    molchanov_preach: []
-};
+import { SHEET_REGISTRY } from '../modules/sheets';
+
+export const syh_collected_by_sheet: Record<string, any[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
@@ -789,25 +786,4 @@ $(document).ready(function() {
     });
 });
 
-if (typeof window !== 'undefined') {
-    Object.assign(window, {
-        countQuestionsInText,
-        updateOldInputStats,
-        syh_yt_collected,
-        syh_collected_by_sheet,
-        loadYTCollected,
-        deleteYTCollectedItem,
-        clearAllYTCollected,
-        updateRightColumnStats,
-        updateCombinedCounters,
-        updateNewInputStats,
-        numberToEmoji,
-        RELATIVE_TIME_LINE_REGEX,
-        cleanAuthorName,
-        cleanTelegramHeadersLogged,
-        parseAndFilterOldList,
-        parseTelegramExportLineByLine,
-        ensureStatsBarRows,
-        processTelegramData
-    });
-}
+// Pure ESM Export — Window pollution removed

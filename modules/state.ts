@@ -1,10 +1,9 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
+import { SYH_UTILS } from './utils';
+
 function getTodayDateString(): string {
-    if (typeof window !== 'undefined' && (window as any).SYH_UTILS && typeof (window as any).SYH_UTILS.getTodayDateString === 'function') {
-        return (window as any).SYH_UTILS.getTodayDateString();
-    }
-    return new Date().toLocaleDateString('sv-SE');
+    return SYH_UTILS.getTodayDateString();
 }
 
 export interface SyhState {
@@ -120,6 +119,4 @@ export const SYH_STATE: SyhState = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_STATE = SYH_STATE;
-}
+// Pure ESM Export

@@ -18,8 +18,7 @@ export const SYH_PARSERS: SyhParsers = {
      */
     parseEmojiNumberedQuestions: function(rawText: string): string[] {
         console.log("Parsing as Emoji-numbered questions with sub-item support.");
-        const MAX_LENGTH = (SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
-                           (typeof window !== 'undefined' && (window as any).SYH_CONFIG && (window as any).SYH_CONFIG.LIMITS && (window as any).SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
+        const MAX_LENGTH = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
         const ELLIPSIS = "...";
 
         const truncate = (text: string): string => {
@@ -79,8 +78,7 @@ export const SYH_PARSERS: SyhParsers = {
     parseStandardNumberedQuestions: function(rawText: string): string[] {
         console.log("Parsing as Standard-numbered questions.");
         const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
-        const maxLen = (typeof SYH_CONFIG !== 'undefined' && SYH_CONFIG && SYH_CONFIG.LIMITS && SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 
-                       (typeof window !== 'undefined' && (window as any).SYH_CONFIG && (window as any).SYH_CONFIG.LIMITS && (window as any).SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH) || 195;
+        const maxLen = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
 
         return formattedText.split('\n')
             .map(line => line.trim())
@@ -120,6 +118,4 @@ export const SYH_PARSERS: SyhParsers = {
     }
 };
 
-if (typeof window !== 'undefined') {
-    (window as any).SYH_PARSERS = SYH_PARSERS;
-}
+// Pure ESM Export

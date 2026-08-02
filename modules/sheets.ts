@@ -47,6 +47,14 @@ class DynamicSheetRegistry {
         });
         return labels;
     }
+
+    public createSheetRecordMap<T>(defaultValueFactory: () => T): Record<string, T> {
+        const record: Record<string, T> = {};
+        this.getAllIds().forEach(id => {
+            record[id] = defaultValueFactory();
+        });
+        return record;
+    }
 }
 
 export const SHEET_REGISTRY = new DynamicSheetRegistry();
