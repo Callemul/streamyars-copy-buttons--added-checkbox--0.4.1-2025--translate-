@@ -39,6 +39,7 @@ class StudioModuleController {
     private channelInfo: StudioChannelInfo | null = null;
     private lastPath: string = '';
     private frameId: number | null = null;
+    private pollInterval: number | null = null;
     private caches: StudioEventCaches = {
         videoSheetMap: {},
         buttonStates: {},
@@ -153,6 +154,11 @@ class StudioModuleController {
         console.log('[SYH Studio] Stopping Studio module (disabled or left /comments/)...');
         this.isInitialized = false;
 
+        if (this.pollInterval !== null) {
+            window.clearInterval(this.pollInterval);
+            this.pollInterval = null;
+        }
+
         if (this.frameId !== null) {
             cancelAnimationFrame(this.frameId);
             this.frameId = null;
@@ -205,7 +211,8 @@ class StudioModuleController {
         window.addEventListener('yt-navigate-finish', () => this.checkPathChange());
 
         // Polling fallback for SPA url changes
-        setInterval(() => {
+        if (this.pollInterval !== null) return;
+        this.pollInterval = window.setInterval(() => {
             this.checkPathChange();
         }, 1000);
     }

@@ -150,6 +150,10 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant.ts';
     }
 
     const observer = new MutationObserver((mutationsList: MutationRecord[]) => {
+        if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
+            observer.disconnect();
+            return;
+        }
         checkAndReattachObserver();
         pendingMutations.push(...mutationsList);
 
