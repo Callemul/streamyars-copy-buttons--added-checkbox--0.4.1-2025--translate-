@@ -23,9 +23,9 @@ Chrome Extension MV3, Vite + TS. Сесії 3A (popup_init) і 3B (popup_telegra
 ## Крок 1: JS → TypeScript + ES модулі
 
 1. `popup_prayers.js` → `popup_prayers.ts`
-2. Всі `window.functionName = function(...)` → `export function functionName(...)`
+2. Всі `window.functionName = function(...)` → `export function functionName(...)` + зберегти `(window as any).functionName = functionName` для сумісності з `popup_init.ts`.
 3. Додати TypeScript типи для параметрів та return values
-4. В `popup.html`: `<script src="popup_prayers.js">` → `<script type="module" src="popup_prayers.ts">`
+4. В `popup.html`: `<script type="module" src="popup_prayers.js">` → `<script type="module" src="popup_prayers.ts">`
 5. Залежності від popup_init: `window.X` → `import { X } from './popup_init'`
 
 ```typescript
@@ -39,20 +39,23 @@ window.deleteYTCollectedItem = function(id) {
 };
 
 // ✅ СТАЛО:
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage.ts';
 
-export async function deleteYTCollectedItem(id: string): Promise<void> {
-    const items = (await SYH_STORAGE.get('syh_yt_collected')) || [];
-    const filtered = items.filter((item: { id: string }) => item.id !== id);
-    await SYH_STORAGE.set('syh_yt_collected', filtered);
+export function deleteYTCollectedItem(id: string): void {
+    SYH_STORAGE.get(['syh_yt_collected'], function(result: Record<string, any>) {
+        const items = result['syh_yt_collected'] || [];
+        const filtered = items.filter((item: { id: string }) => item.id !== id);
+        SYH_STORAGE.set({ 'syh_yt_collected': filtered });
+    });
 }
+(window as any).deleteYTCollectedItem = deleteYTCollectedItem;
 ```
 
 **Верифікація:** `npm run build` + popup відкривається, вкладка молитв/нотаток відображається.
 
 ---
 
-## Крок 2: chrome.storage.local → SYH_STORAGE (16 замін)
+## Крок 2: chrome.storage.local → SYH_STORAGE (17 замін)
 
 Вивчи API в `modules/storage.ts`. Еталон використання: `popup/options.ts` (0 прямих storage calls).
 
@@ -67,12 +70,14 @@ chrome.storage.local.get(['key'], function(result) {
 chrome.storage.local.set({ 'key': newData });
 
 // ✅ СТАЛО:
-const data = await SYH_STORAGE.get('key');
-// ... process
-await SYH_STORAGE.set('key', newData);
+SYH_STORAGE.get(['key'], function(result: Record<string, any>) {
+    const data = result['key'];
+    // ... process
+});
+SYH_STORAGE.set({ 'key': newData });
 ```
 
-> Якщо SYH_STORAGE використовує async/await — callback-стиль перетворити на async функції.
+> `SYH_STORAGE` приймає callback `(keys, cb)` та об'єкт `{ key: val }` (повертає `void`, не Promise).
 > Обробка `chrome.runtime.lastError` автоматично закрита адаптером — окремих перевірок НЕ додавати.
 
 **Верифікація:** `npm run build` + молитви/нотатки зберігаються, редагуються, видаляються.
@@ -80,12 +85,11 @@ await SYH_STORAGE.set('key', newData);
 ---
 
 ## Приймання (всі критерії)
-- [ ] 0 штук `window.functionName = ...`
-- [ ] Всі функції — ES-модулі з `import/export`
-- [ ] `popup.html` → `<script type="module">`
+- [ ] Всі функції — ES-модулі з `export` (+ прив'язка до `window` для сумісності з `popup_init.ts`)
+- [ ] `popup.html` → `<script type="module" src="popup_prayers.ts">`
 - [ ] 0 прямих `chrome.storage.local.get/set`
-- [ ] Всі 16 storage-викликів через `SYH_STORAGE`
-- [ ] Залежності від popup_init — через `import`, не через `window`
+- [ ] Всі 17 storage-викликів через `SYH_STORAGE` (callback API)
+- [ ] Залежності від popup_init — через `import`
 - [ ] Prayer ID (UUID) працює як раніше: створення, редагування, видалення
 - [ ] Popup працює без помилок у консолі
 
