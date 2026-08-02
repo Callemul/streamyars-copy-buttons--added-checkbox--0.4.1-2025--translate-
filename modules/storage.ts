@@ -68,46 +68,44 @@ export function getSheetCollectedStorageKey(sheetId: string): string {
     return `syh:popup:collected:${sheetId}`;
 }
 
+const EXACT_KEY_MIGRATIONS: Readonly<Record<string, string>> = {
+    'syh_yt_collected': STORAGE_KEYS.YT_COLLECTED,
+    'syh_yt_button_states': STORAGE_KEYS.YT_BUTTON_STATES,
+    'syh_yt_checkbox_state': STORAGE_KEYS.YT_CHECKBOX_STATE,
+    'syh_options': STORAGE_KEYS.OPTIONS,
+    'db': STORAGE_KEYS.DB,
+    'syh_prayers': STORAGE_KEYS.PRAYERS,
+    'syh_banner_categories': STORAGE_KEYS.CATEGORIES,
+    'syh_checkbox_state': STORAGE_KEYS.CHECKBOX_STATE,
+    'syh_stream_charts': STORAGE_KEYS.STATS_CHARTS,
+    'syh_installed_at': STORAGE_KEYS.INSTALLED_AT,
+    'syh_version': STORAGE_KEYS.VERSION,
+    'syh_studio_enabled': STORAGE_KEYS.STUDIO_ENABLED,
+    'syh_studio_button_state': STORAGE_KEYS.STUDIO_BUTTON_STATE,
+    'syh_studio_checkbox_state': STORAGE_KEYS.STUDIO_CHECKBOX_STATE,
+    'syh_studio_video_sheet_map': STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP,
+    'syh_studio_manual_override_log': STORAGE_KEYS.STUDIO_OVERRIDE_LOG,
+    'studio_comment_state': 'syh:studio:state'
+};
+
+const PREFIX_MIGRATIONS: ReadonlyArray<[string, (suffix: string) => string]> = [
+    ['syh_telegram_data__', (suffix) => `${STORAGE_KEYS.TELEGRAM_DATA_PREFIX}${suffix}`],
+    ['syh_old_input__', (suffix) => `${STORAGE_KEYS.TELEGRAM_OLD_INPUT_PREFIX}${suffix}`],
+    ['studio_comment_state__', (suffix) => `syh:studio:state:${suffix}`],
+    ['syh_popup_divider_pos__', (suffix) => `syh:popup:divider_pos:${suffix}`],
+    ['syh_collected__', (suffix) => `syh:popup:collected:${suffix}`]
+];
+
 export function migrateKey(oldKey: string): string {
-    if (oldKey.startsWith('syh:')) return oldKey;
+    if (!oldKey || oldKey.startsWith('syh:')) return oldKey;
 
-    if (oldKey === 'syh_yt_collected') return STORAGE_KEYS.YT_COLLECTED;
-    if (oldKey === 'syh_yt_button_states') return STORAGE_KEYS.YT_BUTTON_STATES;
-    if (oldKey === 'syh_yt_checkbox_state') return STORAGE_KEYS.YT_CHECKBOX_STATE;
-    if (oldKey === 'syh_options') return STORAGE_KEYS.OPTIONS;
-    if (oldKey === 'db') return STORAGE_KEYS.DB;
-    if (oldKey === 'syh_prayers') return STORAGE_KEYS.PRAYERS;
-    if (oldKey === 'syh_banner_categories') return STORAGE_KEYS.CATEGORIES;
-    if (oldKey === 'syh_checkbox_state') return STORAGE_KEYS.CHECKBOX_STATE;
-    if (oldKey === 'syh_stream_charts') return STORAGE_KEYS.STATS_CHARTS;
-    if (oldKey === 'syh_installed_at') return STORAGE_KEYS.INSTALLED_AT;
-    if (oldKey === 'syh_version') return STORAGE_KEYS.VERSION;
-    if (oldKey === 'syh_studio_enabled') return STORAGE_KEYS.STUDIO_ENABLED;
-    if (oldKey === 'syh_studio_button_state') return STORAGE_KEYS.STUDIO_BUTTON_STATE;
-    if (oldKey === 'syh_studio_checkbox_state') return STORAGE_KEYS.STUDIO_CHECKBOX_STATE;
-    if (oldKey === 'syh_studio_video_sheet_map') return STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP;
-    if (oldKey === 'syh_studio_manual_override_log') return STORAGE_KEYS.STUDIO_OVERRIDE_LOG;
-    if (oldKey === 'studio_comment_state') return 'syh:studio:state';
+    const exactMatch = EXACT_KEY_MIGRATIONS[oldKey];
+    if (exactMatch) return exactMatch;
 
-    if (oldKey.startsWith('syh_telegram_data__')) {
-        const brand = oldKey.substring('syh_telegram_data__'.length);
-        return `${STORAGE_KEYS.TELEGRAM_DATA_PREFIX}${brand}`;
-    }
-    if (oldKey.startsWith('syh_old_input__')) {
-        const brand = oldKey.substring('syh_old_input__'.length);
-        return `${STORAGE_KEYS.TELEGRAM_OLD_INPUT_PREFIX}${brand}`;
-    }
-    if (oldKey.startsWith('studio_comment_state__')) {
-        const videoId = oldKey.substring('studio_comment_state__'.length);
-        return `syh:studio:state:${videoId}`;
-    }
-    if (oldKey.startsWith('syh_popup_divider_pos__')) {
-        const sId = oldKey.substring('syh_popup_divider_pos__'.length);
-        return `syh:popup:divider_pos:${sId}`;
-    }
-    if (oldKey.startsWith('syh_collected__')) {
-        const sId = oldKey.substring('syh_collected__'.length);
-        return `syh:popup:collected:${sId}`;
+    for (const [prefix, transform] of PREFIX_MIGRATIONS) {
+        if (oldKey.startsWith(prefix)) {
+            return transform(oldKey.substring(prefix.length));
+        }
     }
 
     return oldKey;

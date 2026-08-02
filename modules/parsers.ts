@@ -19,13 +19,15 @@ export interface SyhParsers {
     cleanAuthorName(rawName: string, cleaningLog?: CleaningLogEntry[]): string;
 }
 
+const DEFAULT_MAX_LENGTH = 195;
+
 export const SYH_PARSERS: SyhParsers = {
     /**
      * Парсер для формату з emoji-цифрами, що підтримує підпункти '🔹'.
      */
     parseEmojiNumberedQuestions: function(rawText: string): string[] {
-        console.log("Parsing as Emoji-numbered questions with sub-item support.");
-        const MAX_LENGTH = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
+        if (!rawText) return [];
+        const MAX_LENGTH = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? DEFAULT_MAX_LENGTH;
         const ELLIPSIS = "...";
 
         const truncate = (text: string): string => {
@@ -83,9 +85,9 @@ export const SYH_PARSERS: SyhParsers = {
      * Парсер для старого формату: "1. Текст питання (Автор)"
      */
     parseStandardNumberedQuestions: function(rawText: string): string[] {
-        console.log("Parsing as Standard-numbered questions.");
+        if (!rawText) return [];
         const formattedText = rawText.replace(/(?:^|\s)(\d+\.)/g, '\n$1');
-        const maxLen = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? 195;
+        const maxLen = SYH_CONFIG?.LIMITS?.TEXT_TRUNCATION_LENGTH ?? DEFAULT_MAX_LENGTH;
 
         return formattedText.split('\n')
             .map(line => line.trim())

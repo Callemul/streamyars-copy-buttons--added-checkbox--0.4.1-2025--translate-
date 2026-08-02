@@ -17,20 +17,20 @@ import { SYH_I18N } from './modules/i18n';
 import { SYH_ANTI_AFK } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 
-(function(window: any) {
+(() => {
     'use strict';
 
-    // ЗАПОБІЖНИК ПОДВІЙНОЇ ІН'ЄКЦІЇ (DOUBLE-INJECTION PREVENTION)
-    if (window.SYH_LOADED) {
+    const globalScope = typeof globalThis !== 'undefined' ? globalThis : window;
+
+    // ЗАПОБІЖНИК ПОДВІЙНОЇ ІН'ЄКЦІЇ
+    if ((globalScope as any).__SYH_INITIALIZED__) {
         console.warn("[SYH] Розширення вже запущене на цій сторінці. Повторну ініціалізацію примусово зупинено.");
         return;
     }
-    window.SYH_LOADED = true;
+    (globalScope as any).__SYH_INITIALIZED__ = true;
 
-    const syhVersion = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) 
-        ? chrome.runtime.getManifest().version 
-        : '1.0.0';
-    console.log(`StreamYard Helper v${syhVersion} [Anti-AFK & Stable] Loaded!`);
+    const syhVersion = chrome?.runtime?.getManifest?.()?.version ?? '1.0.0';
+    console.log(`StreamYard Helper v${syhVersion} [Anti-AFK & Modular Architecture] Loaded!`);
 
     
     const { SELECTORS, TIMINGS } = SYH_CONFIG;
@@ -106,10 +106,10 @@ import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
         
         if (bannerStateChanged) {
             SYH_UI.updateMasterCheckboxState();
-            if (window.SYH_UI && typeof window.SYH_UI.filterBanners === 'function') {
-                clearTimeout(window.SYH_UI._filterBannersTimeout);
-                window.SYH_UI._filterBannersTimeout = setTimeout(() => window.SYH_UI.filterBanners(), TIMINGS.FILTER_DEBOUNCE);
-            }
+        if (SYH_UI && typeof SYH_UI.filterBanners === 'function') {
+            clearTimeout(SYH_UI._filterBannersTimeout);
+            SYH_UI._filterBannersTimeout = setTimeout(() => SYH_UI.filterBanners(), TIMINGS.FILTER_DEBOUNCE);
+        }
         }
 
         if (commentStateChanged) {

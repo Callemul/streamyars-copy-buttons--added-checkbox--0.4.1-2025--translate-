@@ -18,24 +18,38 @@ export interface SyhConfig {
 /**
  * Допоміжний резолвер селекторів з підтримкою масивів-фолбеків
  */
-export function resolveSelector(selectorValue: SelectorValue, root: ParentNode = document): Element | null {
-    if (typeof selectorValue === 'string') {
-        return root.querySelector(selectorValue);
-    }
-    for (const sel of selectorValue) {
-        const el = root.querySelector(sel);
-        if (el) return el;
+export function resolveSelector<T extends Element = Element>(
+    selectorValue: SelectorValue, 
+    root: ParentNode = document
+): T | null {
+    if (!selectorValue) return null;
+    const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
+
+    for (const sel of selectors) {
+        try {
+            const el = root.querySelector<T>(sel);
+            if (el) return el;
+        } catch (e) {
+            console.warn(`[SYH Selector] Invalid CSS selector: "${sel}"`, e);
+        }
     }
     return null;
 }
 
-export function resolveSelectorAll(selectorValue: SelectorValue, root: ParentNode = document): Element[] {
-    if (typeof selectorValue === 'string') {
-        return Array.from(root.querySelectorAll(selectorValue));
-    }
-    for (const sel of selectorValue) {
-        const els = Array.from(root.querySelectorAll(sel));
-        if (els.length > 0) return els;
+export function resolveSelectorAll<T extends Element = Element>(
+    selectorValue: SelectorValue, 
+    root: ParentNode = document
+): T[] {
+    if (!selectorValue) return [];
+    const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
+
+    for (const sel of selectors) {
+        try {
+            const els = Array.from(root.querySelectorAll<T>(sel));
+            if (els.length > 0) return els;
+        } catch (e) {
+            console.warn(`[SYH Selector] Invalid CSS selector in queryAll: "${sel}"`, e);
+        }
     }
     return [];
 }
