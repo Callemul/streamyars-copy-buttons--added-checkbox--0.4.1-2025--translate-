@@ -8,13 +8,17 @@ export interface BannerItem {
     isStandard: boolean;
 }
 
+import type { SyhConfig } from './config';
+import type { SyhUtils } from './utils';
+import type { SyhParsers } from './parsers';
+
 export interface SyhBannerCreator {
-    SELECTORS: Record<string, string> | null;
-    UTILS: any;
-    PARSERS: any;
+    SELECTORS: Record<string, any> | null;
+    UTILS: SyhUtils;
+    PARSERS: SyhParsers;
     UI?: any;
 
-    init(config?: any, utils?: any, parsers?: any): void;
+    init(config?: SyhConfig, utils?: SyhUtils, parsers?: SyhParsers): void;
     log(msg: string): void;
     processAndCreateBanners(rawText: string): Promise<void>;
     clickCancelButton(form: Element): void;
@@ -25,11 +29,11 @@ export interface SyhBannerCreator {
 
 export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     SELECTORS: null,
-    UTILS: null,
-    PARSERS: null,
+    UTILS: SYH_UTILS,
+    PARSERS: SYH_PARSERS,
 
-    init: function(config?: any, utils?: any, parsers?: any): void {
-        this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
+    init: function(config?: SyhConfig, utils?: SyhUtils, parsers?: SyhParsers): void {
+        this.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
         this.UTILS = utils || SYH_UTILS;
         this.PARSERS = parsers || SYH_PARSERS;
     },
@@ -43,9 +47,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         let hasStandardFormat = false;
 
         // 1. Очистка Telegram-заголовків (таймкод + нік відправника):
-        const cleaner = (this.UTILS && this.UTILS.cleanTelegramHeaders) 
-            ? this.UTILS.cleanTelegramHeaders 
-            : ((window as any).cleanTelegramHeaders || ((t: string) => t));
+        const cleaner = this.UTILS.cleanTelegramHeaders ? this.UTILS.cleanTelegramHeaders.bind(this.UTILS) : ((t: string) => t);
         const cleanedText = cleaner(rawText);
 
         // 2. Розбиваємо очищений текст на логічні блоки/повідомлення за заголовками секцій

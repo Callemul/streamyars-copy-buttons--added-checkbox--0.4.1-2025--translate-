@@ -166,20 +166,21 @@ export const SYH_UTILS: SyhUtils = {
         const fuzzyTarget = this.toFuzzy(rawTarget);
         const fuzzyTransTarget = this.toFuzzy(transTarget);
 
-        const fullTarget = normTarget + " " + transTarget + " " + layoutTarget + " " + fuzzyTarget + " " + fuzzyTransTarget;
-
+        const fullTarget = `${normTarget} ${transTarget} ${layoutTarget} ${fuzzyTarget} ${fuzzyTransTarget}`;
         const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
 
         return queryWords.every(word => {
             const normWord = this.normalizeText(word);
-            const transWord = this.transliterate(word);
-            const layoutWord = this.switchKeyboardLayout(word);
-            const fuzzyWord = this.toFuzzy(word);
+            if (fullTarget.includes(normWord)) return true;
 
-            return fullTarget.includes(normWord) || 
-                   fullTarget.includes(transWord) || 
-                   fullTarget.includes(layoutWord) ||
-                   (fuzzyWord && fullTarget.includes(fuzzyWord));
+            const transWord = this.transliterate(word);
+            if (fullTarget.includes(transWord)) return true;
+
+            const layoutWord = this.switchKeyboardLayout(word);
+            if (fullTarget.includes(layoutWord)) return true;
+
+            const fuzzyWord = this.toFuzzy(word);
+            return !!fuzzyWord && fullTarget.includes(fuzzyWord);
         });
     },
 
@@ -284,18 +285,10 @@ export const SYH_UTILS: SyhUtils = {
 
     saveBannerCategory: function(text: string, type: string): Promise<void> {
         return new Promise(resolve => {
-            const storageAdapter = SYH_UTILS.storage || SYH_STORAGE;
-
-            if (!storageAdapter) {
-                console.error("SYH_UTILS: Не знайдено адаптер сховища!");
-                resolve();
-                return;
-            }
-
-            storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
+            SYH_STORAGE.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
                 const db = result[STORAGE_KEYS.CATEGORIES] || {};
                 db[text] = type;
-                storageAdapter.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
+                SYH_STORAGE.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
             });
         });
     },

@@ -29,6 +29,17 @@ export function resolveSelector(selectorValue: SelectorValue, root: ParentNode =
     return null;
 }
 
+export function resolveSelectorAll(selectorValue: SelectorValue, root: ParentNode = document): Element[] {
+    if (typeof selectorValue === 'string') {
+        return Array.from(root.querySelectorAll(selectorValue));
+    }
+    for (const sel of selectorValue) {
+        const els = Array.from(root.querySelectorAll(sel));
+        if (els.length > 0) return els;
+    }
+    return [];
+}
+
 export const SYH_CONFIG: SyhConfig = {
     SELECTORS: {
         // Коментарі (з фолбеками)

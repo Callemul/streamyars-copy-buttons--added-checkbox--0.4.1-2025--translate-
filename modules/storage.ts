@@ -88,6 +88,9 @@ export interface StorageAdapter {
     get<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
     set(items: Record<string, any>, cb?: () => void): void;
     remove(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void;
+    getAsync<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
+    setAsync(items: Record<string, any>): Promise<void>;
+    removeAsync(keys: StorageKeyValues | StorageKeyValues[]): Promise<void>;
     onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
 }
 
@@ -164,6 +167,24 @@ export const SYH_STORAGE: StorageAdapter = {
             console.error('[SYH Storage] remove failed:', e?.message || e);
             if (cb) cb();
         }
+    },
+
+    getAsync: function<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T> {
+        return new Promise((resolve) => {
+            this.get(keys as any, (res) => resolve(res as T));
+        });
+    },
+
+    setAsync: function(items: Record<string, any>): Promise<void> {
+        return new Promise((resolve) => {
+            this.set(items, resolve);
+        });
+    },
+
+    removeAsync: function(keys: StorageKeyValues | StorageKeyValues[]): Promise<void> {
+        return new Promise((resolve) => {
+            this.remove(keys as any, resolve);
+        });
     },
 
     onChanged: function(callback: (changes: Record<string, any>, areaName: string) => void): void {

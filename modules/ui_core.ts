@@ -74,37 +74,29 @@ export function init(config?: any, state?: any): void {
 
         SYH_UI.validateSelectorsSyntax();
         
-        const storage = SYH_STORAGE || (window as any).SYH_STORAGE;
+        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES], function(result: Record<string, any>) {
+            SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
+            SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
+        });
 
-        if (storage) {
-            storage.get([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES], function(result: Record<string, any>) {
-                SYH_UI.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
-                SYH_UI.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
-            });
-        } else {
-            console.warn("[SYH] Сховище недоступне під час первинної ініціалізації кешу UI.");
-        }
-
-        if (storage && typeof storage.onChanged === 'function') {
-            storage.onChanged(function(changes: Record<string, any>) {
-                try {
-                    if (changes[STORAGE_KEYS.PRAYERS]) {
-                        SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
-                        if (typeof SYH_UI.filterStarredComments === 'function') {
-                            SYH_UI.filterStarredComments(); 
-                        }
+        SYH_STORAGE.onChanged(function(changes: Record<string, any>) {
+            try {
+                if (changes[STORAGE_KEYS.PRAYERS]) {
+                    SYH_UI.prayersCache = changes[STORAGE_KEYS.PRAYERS].newValue || [];
+                    if (typeof SYH_UI.filterStarredComments === 'function') {
+                        SYH_UI.filterStarredComments(); 
                     }
-                    if (changes[STORAGE_KEYS.CATEGORIES]) {
-                        SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
-                        if (typeof SYH_UI.filterBanners === 'function') {
-                            SYH_UI.filterBanners();
-                        }
-                    }
-                } catch (e) {
-                    console.error("[SYH] Помилка синхронізації сховища в UI:", e);
                 }
-            });
-        }
+                if (changes[STORAGE_KEYS.CATEGORIES]) {
+                    SYH_UI.bannerCategoriesCache = changes[STORAGE_KEYS.CATEGORIES].newValue || {};
+                    if (typeof SYH_UI.filterBanners === 'function') {
+                        SYH_UI.filterBanners();
+                    }
+                }
+            } catch (e) {
+                console.error("[SYH] Помилка синхронізації сховища в UI:", e);
+            }
+        });
     } catch (error) {
         console.error("[SYH] Критичний збій ініціалізації модуля UI Core. Запущено авто-відновлення:", error);
     }

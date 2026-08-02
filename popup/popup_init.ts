@@ -71,9 +71,8 @@ $(document).ready(function() {
             const oldListVal = result[`tg_oldList__${sId}`];
             if (oldListVal) { 
                 $(`#oldList__${sId}`).val(oldListVal); 
-                if (typeof (window as any).updateOldInputStats === 'function') {
-                    (window as any).updateOldInputStats(sId);
-                }
+                const updateOld = (window as any).updateOldInputStats;
+                if (typeof updateOld === 'function') updateOld(sId);
             }
 
             const answeredVal = result[`tg_answered__${sId}`];
@@ -84,9 +83,8 @@ $(document).ready(function() {
             const newTgVal = result[`tg_newTelegram__${sId}`];
             if (newTgVal) { 
                 $(`#newTelegram__${sId}`).val(newTgVal); 
-                if (typeof (window as any).updateNewInputStats === 'function') {
-                    (window as any).updateNewInputStats(sId);
-                }
+                const updateNew = (window as any).updateNewInputStats;
+                if (typeof updateNew === 'function') updateNew(sId);
             }
 
             const finalHtml = result[`tg_finalResultHtml__${sId}`];
@@ -97,7 +95,8 @@ $(document).ready(function() {
             if (result[`tg_statsVisible__${sId}`]) {
                 const statsHtml = result[`tg_statsHtml__${sId}`];
                 if (statsHtml) $(`#statsBar__${sId}`).html(statsHtml);
-                if (typeof (window as any).ensureStatsBarRows === 'function') (window as any).ensureStatsBarRows(sId);
+                const ensureRows = (window as any).ensureStatsBarRows;
+                if (typeof ensureRows === 'function') ensureRows(sId);
                 $(`#statsBar__${sId}`).show();
             }
 
@@ -143,12 +142,13 @@ $(document).ready(function() {
 
             const divPos = result[`syh:popup:divider_pos:${sId}`];
             if (divPos) {
-                $(`#step3Left__${sId}`).css('flex', divPos);
-                $(`#step3Right__${sId}`).css('flex', 100 - divPos);
+                $(`#step3Left__${sId}`).css('flex', `${divPos}%`);
+                $(`#step3Right__${sId}`).css('flex', `${100 - divPos}%`);
             }
 
-            if (typeof (window as any).loadYTCollected === 'function') {
-                (window as any).loadYTCollected(sId);
+            const loadYT = (window as any).loadYTCollected;
+            if (typeof loadYT === 'function') {
+                loadYT(sId);
             }
         });
 
