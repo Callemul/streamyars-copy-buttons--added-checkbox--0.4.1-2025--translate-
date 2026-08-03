@@ -6,13 +6,19 @@ import { RetentionService } from '../modules/retention_service';
 import type { PrayerItem } from '../modules/types';
 export type { PrayerItem };
 
-// Хелпер відправки сигналу зняття зірки до StreamYard в реальному часі через SYH_MESSAGING
+function $(id: string): HTMLElement | null {
+    return document.getElementById(id);
+}
+
+function setStyle(el: HTMLElement, styles: Record<string, string>): void {
+    Object.assign(el.style, styles);
+}
+
 export function sendUnstarMessage(text: string): void {
     if (!text) return;
     SYH_MESSAGING.sendToActiveTab({ action: 'unstar_comment', text: text });
 }
 
-// Хелпер відправки сигналів для списку коментарів
 export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
     if (!prayersList || prayersList.length === 0) return;
     prayersList.forEach(item => {
@@ -22,23 +28,23 @@ export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
     });
 }
 
-// Рендеринг та менеджмент молитовних прохань
 export function renderPrayers(prayersList: PrayerItem[]): void {
-    const outputDiv = $('#prayersResultDiv');
-    outputDiv.empty();
-    
-    // Прибираємо старе попередження про інший ефір, якщо воно було
-    $('#syh-room-warning').remove();
-    outputDiv.removeAttr('contenteditable');
+    const outputDiv = $('prayersResultDiv');
+    if (!outputDiv) return;
+    outputDiv.innerHTML = '';
+
+    const roomWarning = $('syh-room-warning');
+    if (roomWarning) roomWarning.remove();
+    outputDiv.removeAttribute('contenteditable');
 
     if (!prayersList || prayersList.length === 0) {
-        $('#prayersTotalCount').text('0 люд. - 0 прохань');
-        outputDiv.html('<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>');
-        outputDiv.data('raw-text', '');
+        const totalCount = $('prayersTotalCount');
+        if (totalCount) totalCount.textContent = '0 люд. - 0 прохань';
+        outputDiv.innerHTML = '<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
+        outputDiv.setAttribute('data-raw-text', '');
         return;
     }
 
-    // 0. ENSURE UNIQUE IDs FOR PRAYERS
     let needsSaveId = false;
     prayersList.forEach((p, idx) => {
         if (!p.id) {
@@ -50,7 +56,6 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: prayersList });
     }
 
-    // 1. GARBAGE COLLECTION: Автоматично видаляємо молитви старіші за 2 дні та питання старіші за 30 днів
     const cleanedList = RetentionService.filterFreshPrayers(prayersList);
 
     if (cleanedList.length !== prayersList.length) {
@@ -58,17 +63,16 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         prayersList = cleanedList;
     }
 
-    // 2. СИГНАЛІЗАЦІЯ РОЗСИНХРОНІЗАЦІЇ (ROOM ID TRACKING)
     if (SYH_MESSAGING.isExtensionValid() && typeof chrome !== 'undefined' && chrome.tabs?.query) {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (!tabs || !tabs[0] || !tabs[0].url) return;
             try {
                 const url = new URL(tabs[0].url);
                 const currentRoomId = url.pathname.replace(/\//g, '');
-                
+
                 const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
                 const hasForeignPrayers = onlyPrayers.some(p => p.roomId && p.roomId !== currentRoomId);
-                
+
                 if (hasForeignPrayers) {
                     const warningHTML = `
                         <div id="syh-room-warning" style="background: #f39c12; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -81,7 +85,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
                             </div>
                         </div>
                     `;
-                    outputDiv.before(warningHTML);
+                    outputDiv.insertAdjacentHTML('beforebegin', warningHTML);
                 }
             } catch(e) { console.error("[SYH] Room check error", e); }
         });
@@ -95,39 +99,43 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     onlyPrayers.forEach((p) => {
         const cleanAuthor = p.author.replace(/^@+/, '');
         if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
-        
-        grouped[cleanAuthor].push({ 
-            text: p.text, 
+
+        grouped[cleanAuthor].push({
+            text: p.text,
             icon: p.icon || '🙏🙏🙏',
-            id: p.id! 
+            id: p.id!
         });
         totalRequests++;
     });
 
     const authorsCount = Object.keys(grouped).length;
-    $('#prayersTotalCount').text(`${authorsCount} люд. - ${totalRequests} прохань`);
+    const totalCount = $('prayersTotalCount');
+    if (totalCount) totalCount.textContent = `${authorsCount} люд. - ${totalRequests} прохань`;
 
     let fullTextForCopy = "🙏🙏🙏 МОЛИТВЕННЫЕ ПРОСЬБЫ\n\n";
 
     for (const author in grouped) {
         let hasPrayer = false;
         let hasThanks = false;
-        
+
         grouped[author].forEach(item => {
             if (item.icon === '🙏🙏🙏') hasPrayer = true;
             if (item.icon === '❤️❤️❤️') hasThanks = true;
             if (item.icon === '🙏❤️🙏') { hasPrayer = true; hasThanks = true; }
         });
-        
+
         let authorIcon = '🙏🙏🙏';
         if (hasPrayer && hasThanks) authorIcon = '🙏❤️🙏';
         else if (!hasPrayer && hasThanks) authorIcon = '❤️❤️❤️';
 
         fullTextForCopy += `${authorIcon} @${author}\n`;
-        
-        const block = $('<div>').addClass('q-block q-pray').css('position', 'relative');
-        
-        const header = $('<div>').css({
+
+        const block = document.createElement('div');
+        block.className = 'q-block q-pray';
+        block.style.position = 'relative';
+
+        const header = document.createElement('div');
+        setStyle(header, {
             marginBottom: '5px',
             display: 'flex',
             alignItems: 'center',
@@ -136,7 +144,8 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
             width: '100%'
         });
 
-        const leftWrap = $('<div>').css({
+        const leftWrap = document.createElement('div');
+        setStyle(leftWrap, {
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -146,110 +155,123 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
             minWidth: '0'
         });
 
-        const iconSpan = $('<span>')
-            .css({ color: '#0b5394', fontWeight: 'bold', marginRight: '2px', whiteSpace: 'nowrap', flexShrink: '0' })
-            .text(`${authorIcon} @`);
+        const iconSpan = document.createElement('span');
+        setStyle(iconSpan, { color: '#0b5394', fontWeight: 'bold', marginRight: '2px', whiteSpace: 'nowrap', flexShrink: '0' });
+        iconSpan.textContent = `${authorIcon} @`;
 
-        const authorSpan = $('<span>')
-            .addClass('editable-author')
-            .attr('contenteditable', 'true')
-            .css({
-                color: '#0b5394',
-                fontWeight: 'bold',
-                outline: 'none',
-                borderBottom: '1px dashed transparent',
-                whiteSpace: 'nowrap',
-                display: 'inline-block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-            })
-            .text(author);
+        const authorSpan = document.createElement('span');
+        authorSpan.className = 'editable-author';
+        authorSpan.setAttribute('contenteditable', 'true');
+        setStyle(authorSpan, {
+            color: '#0b5394',
+            fontWeight: 'bold',
+            outline: 'none',
+            borderBottom: '1px dashed transparent',
+            whiteSpace: 'nowrap',
+            display: 'inline-block',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+        });
+        authorSpan.textContent = author;
 
         leftWrap.append(iconSpan, authorSpan);
 
-        const rightWrap = $('<div>').css({ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0' });
+        const rightWrap = document.createElement('div');
+        setStyle(rightWrap, { display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0' });
 
-        const editBtn = $('<button>')
-            .addClass('edit-prayer-btn')
-            .attr('title', 'Редагувати автора')
-            .css({ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' })
-            .text('✏️');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-prayer-btn';
+        editBtn.setAttribute('title', 'Редагувати автора');
+        setStyle(editBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
+        editBtn.textContent = '✏️';
 
-        const delBtn = $('<button>')
-            .addClass('del-author-btn')
-            .attr('data-author', author)
-            .attr('title', 'Видалити автора з усіма проханнями')
-            .css({ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' })
-            .text('🗑️');
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del-author-btn';
+        delBtn.setAttribute('data-author', author);
+        delBtn.setAttribute('title', 'Видалити автора з усіма проханнями');
+        setStyle(delBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
+        delBtn.textContent = '🗑️';
 
         rightWrap.append(editBtn, delBtn);
         header.append(leftWrap, rightWrap);
-        block.append(header);
+        block.appendChild(header);
 
         if (grouped[author].length === 1) {
             const item = grouped[author][0];
             fullTextForCopy += `${item.text}\n\n`;
-            
-            const textContainer = $('<div>').css({display: 'flex', alignItems: 'flex-start', gap: '5px'});
-            
-            const textSpan = $('<span>')
-                .addClass('editable-prayer')
-                .attr('contenteditable', 'true')
-                .attr('data-id', item.id)
-                .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
-                .text(item.text);
-            
-            const delBtnSingle = $('<button>')
-                .text('❌')
-                .attr('title', 'Видалити прохання')
-                .attr('data-id', item.id)
-                .addClass('del-prayer-btn')
-                .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
-            textContainer.append(textSpan).append(delBtnSingle);
-            block.append(textContainer);
+            const textContainer = document.createElement('div');
+            setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px' });
+
+            const textSpan = document.createElement('span');
+            textSpan.className = 'editable-prayer';
+            textSpan.setAttribute('contenteditable', 'true');
+            textSpan.setAttribute('data-id', item.id);
+            setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
+            textSpan.textContent = item.text;
+
+            const delBtnSingle = document.createElement('button');
+            delBtnSingle.textContent = '❌';
+            delBtnSingle.setAttribute('title', 'Видалити прохання');
+            delBtnSingle.setAttribute('data-id', item.id);
+            delBtnSingle.className = 'del-prayer-btn';
+            setStyle(delBtnSingle, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
+
+            textContainer.append(textSpan, delBtnSingle);
+            block.appendChild(textContainer);
         } else {
             grouped[author].forEach((item, idx) => {
                 fullTextForCopy += `${idx + 1}) ${item.text}\n`;
-                
-                const textContainer = $('<div>').css({display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px'});
-                
-                const indexSpan = $('<span>').css({color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap'}).text(`${idx + 1}) `);
-                
-                const textSpan = $('<span>')
-                    .addClass('editable-prayer')
-                    .attr('contenteditable', 'true')
-                    .attr('data-id', item.id)
-                    .css({flex: 1, outline: 'none', borderBottom: '1px dashed transparent', padding: '2px'})
-                    .text(item.text);
-                
-                const delBtnItem = $('<button>')
-                    .text('❌')
-                    .attr('title', 'Видалити прохання')
-                    .attr('data-id', item.id)
-                    .addClass('del-prayer-btn')
-                    .css({background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px'});
 
-                textContainer.append(indexSpan).append(textSpan).append(delBtnItem);
-                block.append(textContainer);
+                const textContainer = document.createElement('div');
+                setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px' });
+
+                const indexSpan = document.createElement('span');
+                setStyle(indexSpan, { color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap' });
+                indexSpan.textContent = `${idx + 1}) `;
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'editable-prayer';
+                textSpan.setAttribute('contenteditable', 'true');
+                textSpan.setAttribute('data-id', item.id);
+                setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
+                textSpan.textContent = item.text;
+
+                const delBtnItem = document.createElement('button');
+                delBtnItem.textContent = '❌';
+                delBtnItem.setAttribute('title', 'Видалити прохання');
+                delBtnItem.setAttribute('data-id', item.id);
+                delBtnItem.className = 'del-prayer-btn';
+                setStyle(delBtnItem, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
+
+                textContainer.append(indexSpan, textSpan, delBtnItem);
+                block.appendChild(textContainer);
             });
             fullTextForCopy += `\n`;
         }
-        outputDiv.append(block);
+        outputDiv.appendChild(block);
     }
 
-    outputDiv.data('raw-text', fullTextForCopy.trim());
+    outputDiv.setAttribute('data-raw-text', fullTextForCopy.trim());
 }
 
-$(document).ready(function() {
-    $(document).on('focus', '.editable-prayer', function() {
-        $(this).css('border-bottom', '1px dashed #2b7de9');
-    }).on('blur', '.editable-prayer', function() {
-        $(this).css('border-bottom', '1px dashed transparent');
-        
-        const id = $(this).attr('data-id');
-        const newText = $(this).text().trim();
-        
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('focusin', function(e) {
+        const target = e.target as Element | null;
+        const el = target?.closest('.editable-prayer') as HTMLElement | null;
+        if (!el) return;
+        el.style.borderBottom = '1px dashed #2b7de9';
+    });
+
+    document.addEventListener('focusout', function(e) {
+        const target = e.target as Element | null;
+        const el = target?.closest('.editable-prayer') as HTMLElement | null;
+        if (!el) return;
+        el.style.borderBottom = '1px dashed transparent';
+
+        const id = el.getAttribute('data-id');
+        const newText = el.textContent?.trim() || '';
+
         SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
             const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
             const targetItem = list.find(item => item.id === id);
@@ -260,15 +282,23 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('focus', '.editable-author', function() {
-        $(this).css('border-bottom', '1px dashed #2b7de9');
-        $(this).data('old-val', $(this).text().trim());
-    }).on('blur', '.editable-author', function() {
-        $(this).css('border-bottom', '1px dashed transparent');
-        
-        const oldAuthor = $(this).data('old-val');
-        const newAuthor = $(this).text().trim();
-        
+    document.addEventListener('focusin', function(e) {
+        const target = e.target as Element | null;
+        const el = target?.closest('.editable-author') as HTMLElement | null;
+        if (!el) return;
+        el.style.borderBottom = '1px dashed #2b7de9';
+        el.setAttribute('data-old-val', el.textContent?.trim() || '');
+    });
+
+    document.addEventListener('focusout', function(e) {
+        const target = e.target as Element | null;
+        const el = target?.closest('.editable-author') as HTMLElement | null;
+        if (!el) return;
+        el.style.borderBottom = '1px dashed transparent';
+
+        const oldAuthor = el.getAttribute('data-old-val');
+        const newAuthor = el.textContent?.trim() || '';
+
         if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
             SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
                 const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
@@ -286,113 +316,92 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click', '.edit-prayer-btn', function() {
-        const block = $(this).closest('.q-block');
-        const authorSpan = block.find('.editable-author');
-        authorSpan.focus();
-        
-        const el = authorSpan[0];
-        if (el) {
-            const range = document.createRange();
-            const sel = window.getSelection();
-            if (sel) {
-                range.selectNodeContents(el);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
+    document.addEventListener('click', function(e) {
+        const target = e.target as Element | null;
+
+        const editBtn = target?.closest('.edit-prayer-btn');
+        if (editBtn) {
+            const block = editBtn.closest('.q-block');
+            const authorSpan = block?.querySelector('.editable-author') as HTMLElement | null;
+            if (authorSpan) {
+                authorSpan.focus();
+
+                const range = document.createRange();
+                const sel = window.getSelection();
+                if (sel) {
+                    range.selectNodeContents(authorSpan);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
             }
+            return;
         }
-    });
 
-    $(document).on('click', '.del-author-btn', function() {
-        const authorToDelete = $(this).data('author');
-        if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
-            SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-                let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-                const authorPrayers = list.filter(item => item.author === authorToDelete);
-                
-                sendUnstarMessagesForList(authorPrayers);
-                
-                list = list.filter(item => item.author !== authorToDelete);
-                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
-                    renderPrayers(list);
-                });
-            });
-        }
-    });
-
-    // Примусово очистити ВСЮ базу молитов без зняття зірок
-    $(document).on('click', '#syh-wipe-prayers', function() {
-        if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
-            SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: [] }, function() {
-                renderPrayers([]);
-            });
-        }
-    });
-
-    // Залишити молитви (оновити Room ID)
-    $(document).on('click', '#syh-keep-prayers', function() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (!tabs[0] || !tabs[0].url) return;
-            try {
-                const url = new URL(tabs[0].url);
-                const currentRoomId = url.pathname.replace(/\//g, '');
-                
+        const delAuthorBtn = target?.closest('.del-author-btn');
+        if (delAuthorBtn) {
+            const authorToDelete = delAuthorBtn.getAttribute('data-author') || '';
+            if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
                 SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-                    const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-                    list.forEach(item => {
-                        if (item.type === 'prayer') {
-                            item.roomId = currentRoomId;
-                            item.timestamp = Date.now(); 
-                        }
-                    });
+                    let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
+                    const authorPrayers = list.filter(item => item.author === authorToDelete);
+                    sendUnstarMessagesForList(authorPrayers);
+                    list = list.filter(item => item.author !== authorToDelete);
                     SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                         renderPrayers(list);
                     });
                 });
-            } catch {
-                /* ignore URL parse error */
             }
-        });
-    });
-
-    $(document).on('click', '.del-prayer-btn', function() {
-        const id = $(this).attr('data-id');
-        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-            let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-            const targetItem = list.find(item => item.id === id);
-            if (targetItem) {
-                sendUnstarMessage(targetItem.text);
-            }
-            list = list.filter(item => item.id !== id);
-            SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
-                renderPrayers(list);
-            });
-        });
-    });
-
-    $('#copyPrayersBtn').click(async function() {
-        const text = $('#prayersResultDiv').data('raw-text');
-        if (!text) return;
-
-        const $btn = $(this);
-        const originalText = $btn.text();
-
-        const success = await CommentService.copyToClipboard(text);
-        if (success) {
-            $btn.text("Скопійовано! ✅");
-        } else {
-            $btn.text("Помилка ❌");
+            return;
         }
-        setTimeout(() => $btn.text(originalText), 2000);
-    });
 
-    // Очищення через червону кнопку корзини
-    $('#clearPrayersBtn').click(function() {
-        if (confirm("Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.")) {
+        const wipeBtn = target?.closest('#syh-wipe-prayers');
+        if (wipeBtn) {
+            if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
+                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: [] }, function() {
+                    renderPrayers([]);
+                });
+            }
+            return;
+        }
+
+        const keepBtn = target?.closest('#syh-keep-prayers');
+        if (keepBtn) {
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (!tabs[0] || !tabs[0].url) return;
+                try {
+                    const url = new URL(tabs[0].url);
+                    const currentRoomId = url.pathname.replace(/\//g, '');
+
+                    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                        const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
+                        list.forEach(item => {
+                            if (item.type === 'prayer') {
+                                item.roomId = currentRoomId;
+                                item.timestamp = Date.now();
+                            }
+                        });
+                        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
+                            renderPrayers(list);
+                        });
+                    });
+                } catch {
+                    /* ignore URL parse error */
+                }
+            });
+            return;
+        }
+
+        const delPrayerBtn = target?.closest('.del-prayer-btn');
+        if (delPrayerBtn) {
+            const id = delPrayerBtn.getAttribute('data-id');
             SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
                 let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-                list = list.filter(item => item.type !== 'prayer');
+                const targetItem = list.find(item => item.id === id);
+                if (targetItem) {
+                    sendUnstarMessage(targetItem.text);
+                }
+                list = list.filter(item => item.id !== id);
                 SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                     renderPrayers(list);
                 });
@@ -400,42 +409,74 @@ $(document).ready(function() {
         }
     });
 
-    // 🔄 НОВЕ: ФОНОВЕ ПІДТЯГУВАННЯ ЗІРКОВИХ КОМЕНТАРІВ ЗІ STREAMYARD (ТІЛЬКИ МОЛИТВИ)
-    $('#fetchPrayersBtn').click(async function() {
-        const originalText = $(this).text();
-        $(this).text("⌛...");
+    const copyBtn = $('copyPrayersBtn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async function() {
+            const text = outputDiv.getAttribute('data-raw-text') || '';
+            if (!text) return;
 
-        try {
-            const fetched = await SYH_MESSAGING.sendToActiveTab<PrayerItem[]>({ action: 'FETCH_PRAYERS' });
-            if (fetched && Array.isArray(fetched)) {
-                SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
-                    const list: PrayerItem[] = res[STORAGE_KEYS.PRAYERS] || [];
-                    let addedCount = 0;
+            const btn = this as HTMLElement;
+            const originalText = btn.textContent || '';
 
-                    fetched.forEach(f => {
-                        if (!list.find(p => p.text === f.text)) {
-                            list.push(f);
-                            addedCount++;
-                        }
-                    });
+            const success = await CommentService.copyToClipboard(text);
+            btn.textContent = success ? "Скопійовано! ✅" : "Помилка ❌";
+            setTimeout(() => { btn.textContent = originalText; }, 2000);
+        });
+    }
 
+    const clearBtn = $('clearPrayersBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            if (confirm("Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.")) {
+                SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+                    let list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
+                    list = list.filter(item => item.type !== 'prayer');
                     SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
                         renderPrayers(list);
-                        $('#fetchPrayersBtn').text(originalText);
-                        if (addedCount > 0) {
-                            alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
-                        } else {
-                            alert("[SYH] Зіркових МОЛИТОВ не знайдено (або вони всі вже є в списку).");
-                        }
                     });
                 });
-            } else {
-                $('#fetchPrayersBtn').text(originalText);
-                alert("[SYH] Не вдалося підтягнути молитви з активної вкладки StreamYard.");
             }
-        } catch (err) {
-            console.error("[SYH] Fetch prayers error:", err);
-            $('#fetchPrayersBtn').text(originalText);
-        }
-    });
+        });
+    }
+
+    const fetchBtn = $('fetchPrayersBtn');
+    if (fetchBtn) {
+        fetchBtn.addEventListener('click', async function() {
+            const originalText = this.textContent || '';
+            this.textContent = "⌛...";
+
+            try {
+                const fetched = await SYH_MESSAGING.sendToActiveTab<PrayerItem[]>({ action: 'FETCH_PRAYERS' });
+                if (fetched && Array.isArray(fetched)) {
+                    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
+                        const list: PrayerItem[] = res[STORAGE_KEYS.PRAYERS] || [];
+                        let addedCount = 0;
+
+                        fetched.forEach(f => {
+                            if (!list.find(p => p.text === f.text)) {
+                                list.push(f);
+                                addedCount++;
+                            }
+                        });
+
+                        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
+                            renderPrayers(list);
+                            fetchBtn.textContent = originalText;
+                            if (addedCount > 0) {
+                                alert(`[SYH] Успішно підтягнуто нових молитов: ${addedCount}`);
+                            } else {
+                                alert("[SYH] Зіркових МОЛИТОВ не знайдено (або вони всі вже є в списку).");
+                            }
+                        });
+                    });
+                } else {
+                    fetchBtn.textContent = originalText;
+                    alert("[SYH] Не вдалося підтягнути молитви з активної вкладки StreamYard.");
+                }
+            } catch (err) {
+                console.error("[SYH] Fetch prayers error:", err);
+                fetchBtn.textContent = originalText;
+            }
+        });
+    }
 });

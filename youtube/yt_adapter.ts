@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from '../modules/storage';
+import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
 import type { CommentPayload } from '../modules/comment_service';
 import { extractCommentId, extractCommentData } from './yt_ui';
 import { YT_SELECTORS } from './yt_selectors';
@@ -25,6 +26,58 @@ function getVideoId(): string {
 
 export class YouTubeCommentAdapter implements CommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-yt-events-bound';
+    private channelKeyCache: ChannelKey | null = null;
+    private videoTitleCache: string | null = null;
+
+    private detectChannelKey(): ChannelKey {
+        if (this.channelKeyCache) return this.channelKeyCache;
+
+        let channelName = '';
+        let channelHandle = '';
+
+        const ownerEl = document.querySelector('#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name');
+        if (ownerEl) {
+            channelName = ownerEl.textContent || '';
+        }
+
+        const handleEl = document.querySelector('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]');
+        if (handleEl) {
+            const href = handleEl.getAttribute('href') || '';
+            const match = href.match(/\/(@[^/?#]+)/);
+            if (match) channelHandle = match[1];
+        }
+
+        if (!channelName && !channelHandle) {
+            const headerTitleEl = document.querySelector('#channel-header #text, #header #channel-name');
+            if (headerTitleEl) {
+                channelName = headerTitleEl.textContent || '';
+            }
+        }
+
+        if (!channelName && !channelHandle) {
+            const metaOwner = document.querySelector('meta[name="title"], meta[property="og:title"]');
+            if (metaOwner) {
+                channelName = metaOwner.getAttribute('content') || '';
+            }
+        }
+
+        this.channelKeyCache = detectChannelKey(channelName, channelHandle);
+        return this.channelKeyCache;
+    }
+
+    private getVideoTitle(): string {
+        if (this.videoTitleCache) return this.videoTitleCache;
+
+        const titleEl = document.querySelector('h1#title, ytd-watch-metadata h1, h1[itemprop="name"], #info-contents h1') as HTMLElement | null;
+        let title = titleEl?.textContent?.trim() || '';
+
+        if (!title) {
+            title = document.title.replace(/\s*-\s*YouTube$/, '').trim();
+        }
+
+        this.videoTitleCache = title;
+        return title;
+    }
 
     public getCommentContext(element: Element): CommentContext | null {
         const commentId = extractCommentId(element);
@@ -50,8 +103,13 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
         };
     }
 
-    public getSheetId(): string {
-        return 'vp_ss';
+    public getSheetId(_context: CommentContext, _element: Element): string {
+        const channelKey = this.detectChannelKey();
+        if (channelKey === 'unknown') return 'vp_ss';
+
+        const videoTitle = this.getVideoTitle();
+        const matched = matchCategory(videoTitle, channelKey);
+        return matched || 'vp_ss';
     }
 
     public getButtonStatesKey(): string {

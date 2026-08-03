@@ -155,11 +155,11 @@ All code uses `getSheetCollectedStorageKey(sheetId)` → `syh:popup:collected:${
 
 **Status:** Resolves prior audit issue #4 (vp_ss special case).
 
-### 6.3 Mixed jQuery + Vanilla
+### 6.3 Popup DOM Library Consistency
 
-Popup uses jQuery for DOM readiness and event binding, vanilla DOM for template rendering (`renderSheetTemplates()`). This is functional but inconsistent.
+Popup was previously using jQuery for DOM readiness and event binding alongside vanilla DOM for template rendering (`renderSheetTemplates()`).
 
-**Recommendation:** Standardize on one approach in future maintenance.
+**Status:** **Resolved** — All popup modules (`popup_init.ts`, `popup_telegram.ts`, `popup_prayers.ts`) have been rewritten to use vanilla DOM exclusively. jQuery script import removed from `popup.html:157`. `popup_translit.ts` was already vanilla. All event listeners are inside `DOMContentLoaded` handler per AGENTS.md requirements.
 
 ---
 
@@ -175,33 +175,26 @@ Popup uses jQuery for DOM readiness and event binding, vanilla DOM for template 
 
 ---
 
-## 8. Identified Issues
+## 8. Resolved Issues
 
-| # | Severity | File:Line | Description |
-|---|----------|-----------|-------------|
-| 1 | **Medium** | `manifest.json` | Host permissions use `<all_urls>` instead of scoped origins |
-| 2 | **Low** | `popup/*` | Mixed jQuery + vanilla JS in popup (cosmetic inconsistency) |
-| 3 | **Low** | `YouTubeCommentAdapter:getSheetId()` (`youtube/yt_adapter.ts:53`) | Hardcodes `return 'vp_ss'` — single sheet only, may need future expansion |
-
----
-
-## 9. Recommendations
-
-1. **Narrow host permissions** in `manifest.json` to `youtube.com` and `streamyard.com` only
-2. **Standardize popup JS** — choose jQuery or vanilla consistently
-3. **Make YouTube sheet configurable** — `yt_adapter.ts:53` hardcodes `vp_ss`
+| # | Severity | File:Line | Description | Status |
+|---|----------|-----------|-------------|--------|
+| 1 | **Low** | `youtube/yt_adapter.ts:53` | Hardcoded `return 'vp_ss'` in `YouTubeCommentAdapter.getSheetId()` | **Resolved** — Now uses `detectChannelKey()` + `matchCategory()` with per-instance caching, falls back to `'vp_ss'` for unknown channels |
+| 2 | **Low** | `popup/*` | Mixed jQuery + vanilla JS in popup | **Resolved** — All 3 popup TS modules converted to vanilla DOM. jQuery removed from `popup.html` |
+| 3 | **Info** | `manifest.json:16-20` | `<all_urls>` host permissions (from initial audit) | **Corrected** — Already uses scoped origins (`https://streamyard.com/*`, `*://*.youtube.com/*`, `https://studio.youtube.com/*`). Initial audit finding was incorrect. |
 
 ---
 
-## 10. Verification Results
+## 9. Verification Results
 
 - **ESLint:** 0 errors, 0 warnings
 - **Tests:** 97 passed, 0 failed (11 suites)
+- **Build:** 63 modules transformed, built in 3.25s
+- **Source verification:** Confirmed all 4 critical Sonnet audit issues (#1 double-write, #2 TTL, #3 timers, #4 vp_ss) resolved in actual code by reading `yt_events.ts:22-32`, `comment_service.ts:74-128`, `retention_service.ts:12-16`, `popup_init.ts:279-282`, `popup_telegram.ts:34/74/88`, `storage.ts:69-71/336-350`
+- **Post-task verification:** TASK-1 (`yt_adapter.ts:53`) — dynamic sheet resolution via `detectChannelKey()` + `matchCategory()` with caching; TASK-2 — all popup files vanilla DOM, jQuery removed, no new lint errors, all 97 tests pass, build succeeds
 - **Test coverage:** utils, storage, state, anti_afk, comment_assistant, css_lint, popup_dom, fuzzy_match, channel_config, telegram_parser, plugin_registry, ui_state, sheet_state_service, comment_service, retention_service, dataset_attr, dataset_syntax
 
----
-
-## 11. Appendix — File Inventory
+## 10. Appendix — File Inventory
 
 | Category | Files |
 |----------|-------|

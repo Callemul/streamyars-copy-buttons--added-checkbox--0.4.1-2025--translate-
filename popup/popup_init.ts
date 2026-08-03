@@ -5,9 +5,6 @@ import { renderPrayers } from './popup_prayers';
 
 export const db: Record<string, unknown> = {};
 
-/**
- * Динамічна інсталяція HTML-блоків аркушів із шаблону <template> (Vanilla DOM)
- */
 export function renderSheetTemplates(): void {
     const template = document.getElementById('sheet-content-template') as HTMLTemplateElement | null;
     const container = document.getElementById('sheet-contents-container');
@@ -37,7 +34,6 @@ export function renderSheetTemplates(): void {
         setAttrId('.js-new-telegram', `newTelegram__${sId}`);
         setAttrId('.js-step3-divider', `step3Divider__${sId}`);
         setAttrId('.js-step3-right', `step3Right__${sId}`);
-        setAttrId('.js-tg-total-count-right', `tgTotalCountRight__${sId}`);
         setAttrId('.js-clear-yt-collected', `clearYTCollected__${sId}`);
         setAttrId('.js-yt-collected-list', `ytCollectedList__${sId}`);
         setAttrId('.js-process-btn', `processTelegramBtn__${sId}`);
@@ -76,7 +72,27 @@ export async function saveData(key: string, value: unknown): Promise<void> {
 
 const SHEET_IDS = getAllSheetIds();
 
-$(document).ready(function () {
+function $(id: string): HTMLElement | null {
+    return document.getElementById(id);
+}
+
+function setTextContent(id: string, text: string): void {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
+
+function setElementText(id: string, html: string): void {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+}
+
+function hideElement(id: string): void {
+    const el = document.getElementById(id);
+    if (el && el instanceof HTMLElement) el.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
     renderSheetTemplates();
 
     const keysToLoad = [
@@ -116,108 +132,141 @@ $(document).ready(function () {
     SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
         if (result[STORAGE_KEYS.DB]) {
             Object.assign(db, result[STORAGE_KEYS.DB]);
-            if (db.newTitleSS) $("#sschoolName").val(db.newTitleSS as string);
-            if (db.newTitlePreach) $("#preachNameInput").val(db.newTitlePreach as string);
+            const sschoolName = $(`sschoolName`) as HTMLInputElement | null;
+            if (db.newTitleSS && sschoolName) sschoolName.value = db.newTitleSS as string;
+            const preachName = $(`preachNameInput`) as HTMLInputElement | null;
+            if (db.newTitlePreach && preachName) preachName.value = db.newTitlePreach as string;
         }
 
         SHEET_IDS.forEach(sId => {
+            const oldListEl = $(`oldList__${sId}`) as HTMLTextAreaElement | null;
             const oldListVal = result[POPUP_SHEET_KEYS.oldList(sId)] ?? result[`tg_oldList__${sId}`];
-            if (oldListVal) {
-                $(`#oldList__${sId}`).val(oldListVal);
+            if (oldListVal && oldListEl) {
+                oldListEl.value = oldListVal;
                 updateOldInputStats(sId);
             }
 
+            const answeredEl = $(`answeredIds__${sId}`) as HTMLInputElement | null;
             const answeredVal = result[POPUP_SHEET_KEYS.answered(sId)] ?? result[`tg_answered__${sId}`];
-            if (answeredVal) {
-                $(`#answeredIds__${sId}`).val(answeredVal);
+            if (answeredVal && answeredEl) {
+                answeredEl.value = answeredVal;
             }
 
+            const newTgEl = $(`newTelegram__${sId}`) as HTMLTextAreaElement | null;
             const newTgVal = result[POPUP_SHEET_KEYS.newTelegram(sId)] ?? result[`tg_newTelegram__${sId}`];
-            if (newTgVal) {
-                $(`#newTelegram__${sId}`).val(newTgVal);
+            if (newTgVal && newTgEl) {
+                newTgEl.value = newTgVal;
                 updateNewInputStats(sId);
             }
 
             const finalHtml = result[POPUP_SHEET_KEYS.finalResultHtml(sId)] ?? result[`tg_finalResultHtml__${sId}`];
             if (finalHtml) {
-                $(`#finalResultDiv__${sId}`).html(finalHtml);
+                setElementText(`finalResultDiv__${sId}`, finalHtml);
             }
 
-            if (result[POPUP_SHEET_KEYS.statsVisible(sId)] ?? result[`tg_statsVisible__${sId}`]) {
+            const statsVisible = result[POPUP_SHEET_KEYS.statsVisible(sId)] ?? result[`tg_statsVisible__${sId}`];
+            if (statsVisible) {
                 const statsHtml = result[POPUP_SHEET_KEYS.statsHtml(sId)] ?? result[`tg_statsHtml__${sId}`];
-                if (statsHtml) $(`#statsBar__${sId}`).html(statsHtml);
+                if (statsHtml) setElementText(`statsBar__${sId}`, statsHtml);
                 ensureStatsBarRows(sId);
-                $(`#statsBar__${sId}`).show();
+                const statsBar = $(`statsBar__${sId}`);
+                if (statsBar && statsBar instanceof HTMLElement) statsBar.style.display = '';
             }
 
-            if (result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`]) {
+            const delLogVisible = result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`];
+            if (delLogVisible) {
                 const delHtml = result[POPUP_SHEET_KEYS.deletedLogHtml(sId)] ?? result[`tg_deletedLogHtml__${sId}`];
-                if (delHtml) $(`#deletedLog__${sId}`).html(delHtml);
+                if (delHtml) setElementText(`deletedLog__${sId}`, delHtml);
                 let delCount = result[POPUP_SHEET_KEYS.deletedLogCount(sId)] ?? result[`tg_deletedLogCount__${sId}`];
                 if (delCount === undefined && delHtml) {
-                    delCount = $(`#deletedLog__${sId}`).find('.del-row').length;
+                    const delLogEl = $(`deletedLog__${sId}`);
+                    delCount = delLogEl?.querySelectorAll('.del-row').length;
                 }
-                if (delCount) {
-                    $(`#deletedLogCount__${sId}`).text(`(${delCount})`);
+                if (delCount) setTextContent(`deletedLogCount__${sId}`, `(${delCount})`);
+                const delDetailsEl = $(`deletedLogDetails__${sId}`) as HTMLDetailsElement | null;
+                if (delDetailsEl && (result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`])) {
+                    delDetailsEl.setAttribute('open', 'open');
+                } else if (delDetailsEl) {
+                    delDetailsEl.removeAttribute('open');
                 }
-                if (result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`]) {
-                    $(`#deletedLogDetails__${sId}`).attr('open', 'open');
-                } else {
-                    $(`#deletedLogDetails__${sId}`).removeAttr('open');
-                }
-                $(`#deletedLogDetails__${sId}`).show();
+                const delDetails = $(`deletedLogDetails__${sId}`);
+                if (delDetails && delDetails instanceof HTMLElement) delDetails.style.display = '';
             } else {
-                $(`#deletedLogCount__${sId}`).text('');
+                setTextContent(`deletedLogCount__${sId}`, '');
             }
 
-            if (result[POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId)] ?? result[`tg_cleanedLogDetailsVisible__${sId}`]) {
+            const cleanLogVisible = result[POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId)] ?? result[`tg_cleanedLogDetailsVisible__${sId}`];
+            if (cleanLogVisible) {
                 const cleanHtml = result[POPUP_SHEET_KEYS.cleanedLogHtml(sId)] ?? result[`tg_cleanedLogHtml__${sId}`];
-                if (cleanHtml) $(`#cleanedLog__${sId}`).html(cleanHtml);
+                if (cleanHtml) setElementText(`cleanedLog__${sId}`, cleanHtml);
                 let cleanCount = result[POPUP_SHEET_KEYS.cleanedLogCount(sId)] ?? result[`tg_cleanedLogCount__${sId}`];
                 if (cleanCount === undefined && cleanHtml) {
-                    cleanCount = $(`#cleanedLog__${sId}`).find('.clean-table tr').length - 1;
+                    const cleanLogEl = $(`cleanedLog__${sId}`);
+                    cleanCount = cleanLogEl?.querySelectorAll('.clean-table tr').length ? cleanLogEl!.querySelectorAll('.clean-table tr').length - 1 : 0;
                 }
-                if (cleanCount && cleanCount > 0) {
-                    $(`#cleanedLogCount__${sId}`).text(`(${cleanCount})`);
+                if (cleanCount && cleanCount > 0) setTextContent(`cleanedLogCount__${sId}`, `(${cleanCount})`);
+                const cleanDetailsEl = $(`cleanedLogDetails__${sId}`) as HTMLDetailsElement | null;
+                if (cleanDetailsEl && (result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`])) {
+                    cleanDetailsEl.setAttribute('open', 'open');
+                } else if (cleanDetailsEl) {
+                    cleanDetailsEl.removeAttribute('open');
                 }
-                if (result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`]) {
-                    $(`#cleanedLogDetails__${sId}`).attr('open', 'open');
-                } else {
-                    $(`#cleanedLogDetails__${sId}`).removeAttr('open');
-                }
-                $(`#cleanedLogDetails__${sId}`).show();
+                const cleanDetails = $(`cleanedLogDetails__${sId}`);
+                if (cleanDetails && cleanDetails instanceof HTMLElement) cleanDetails.style.display = '';
             } else {
-                $(`#cleanedLogCount__${sId}`).text('');
+                setTextContent(`cleanedLogCount__${sId}`, '');
             }
 
             const divPos = result[POPUP_SHEET_KEYS.dividerPos(sId)] ?? result[`syh:popup:divider_pos:${sId}`];
             if (divPos) {
-                $(`#step3Left__${sId}`).css('flex', `${divPos}%`);
-                $(`#step3Right__${sId}`).css('flex', `${100 - divPos}%`);
+                const leftEl = $(`step3Left__${sId}`);
+                const rightEl = $(`step3Right__${sId}`);
+                if (leftEl && leftEl instanceof HTMLElement) leftEl.style.flex = `${divPos}%`;
+                if (rightEl && rightEl instanceof HTMLElement) rightEl.style.flex = `${100 - divPos}%`;
             }
 
             loadYTCollected(sId);
         });
 
         if (result.tg_active_tab) {
-            $('.tab-link').removeClass('active').attr('aria-selected', 'false');
-            $('.tab-content').removeClass('active');
-            $(`.tab-link[data-tab="${result.tg_active_tab}"]`).addClass('active').attr('aria-selected', 'true');
-            $('#' + result.tg_active_tab).addClass('active');
+            document.querySelectorAll('.tab-link').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const activeTabLink = document.querySelector<HTMLButtonElement>(`.tab-link[data-tab="${result.tg_active_tab}"]`);
+            if (activeTabLink) {
+                activeTabLink.classList.add('active');
+                activeTabLink.setAttribute('aria-selected', 'true');
+            }
+            const activeTabContent = document.getElementById(result.tg_active_tab);
+            if (activeTabContent) activeTabContent.classList.add('active');
         }
 
         if (result.tg_active_subtab && SHEET_IDS.includes(result.tg_active_subtab)) {
-            $('.subtab-button').removeClass('active').attr('aria-selected', 'false');
-            $('.sheet-content').removeClass('active');
-            $(`.subtab-button[data-sheet="${result.tg_active_subtab}"]`).addClass('active').attr('aria-selected', 'true');
-            $('#sheet-content-' + result.tg_active_subtab).addClass('active');
+            document.querySelectorAll('.subtab-button').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.sheet-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const activeSubtab = document.querySelector<HTMLButtonElement>(`.subtab-button[data-sheet="${result.tg_active_subtab}"]`);
+            if (activeSubtab) {
+                activeSubtab.classList.add('active');
+                activeSubtab.setAttribute('aria-selected', 'true');
+            }
+            const activeSheet = document.getElementById(`sheet-content-${result.tg_active_subtab}`);
+            if (activeSheet) activeSheet.classList.add('active');
         }
 
         if (result.tg_textarea_sizes) {
             const sizes = result.tg_textarea_sizes;
             for (const id in sizes) {
                 const el = document.getElementById(id);
-                if (el) {
+                if (el && el instanceof HTMLElement) {
                     if (sizes[id].width) el.style.width = sizes[id].width;
                     if (sizes[id].height) el.style.height = sizes[id].height;
                 }
@@ -225,10 +274,12 @@ $(document).ready(function () {
         }
 
         if (result.tg_translit_old) {
-            $('#textArea1_oldText').val(result.tg_translit_old);
+            const el = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
+            if (el) el.value = result.tg_translit_old;
         }
         if (result.tg_translit_new) {
-            $('#textArea2_generatedRuText').val(result.tg_translit_new);
+            const el = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
+            if (el) el.value = result.tg_translit_new;
         }
 
         renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
@@ -237,15 +288,22 @@ $(document).ready(function () {
             const scrolls = result.tg_scroll_positions;
             setTimeout(() => {
                 if (scrolls.window !== undefined) window.scrollTo(0, scrolls.window);
-                if (scrolls.prayersResultDiv !== undefined) $('#prayersResultDiv').scrollTop(scrolls.prayersResultDiv);
-                if (scrolls.textArea1_oldText !== undefined) $('#textArea1_oldText').scrollTop(scrolls.textArea1_oldText);
-                if (scrolls.textArea2_generatedRuText !== undefined) $('#textArea2_generatedRuText').scrollTop(scrolls.textArea2_generatedRuText);
+                const prayersResultDiv = $(`prayersResultDiv`) as HTMLElement | null;
+                if (prayersResultDiv) prayersResultDiv.scrollTop = scrolls.prayersResultDiv;
+                const ta1 = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
+                if (ta1) ta1.scrollTop = scrolls.textArea1_oldText;
+                const ta2 = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
+                if (ta2) ta2.scrollTop = scrolls.textArea2_generatedRuText;
 
                 SHEET_IDS.forEach(sId => {
-                    if (scrolls[`finalResultDiv__${sId}`] !== undefined) $(`#finalResultDiv__${sId}`).scrollTop(scrolls[`finalResultDiv__${sId}`]);
-                    if (scrolls[`deletedLog__${sId}`] !== undefined) $(`#deletedLog__${sId}`).scrollTop(scrolls[`deletedLog__${sId}`]);
-                    if (scrolls[`oldList__${sId}`] !== undefined) $(`#oldList__${sId}`).scrollTop(scrolls[`oldList__${sId}`]);
-                    if (scrolls[`newTelegram__${sId}`] !== undefined) $(`#newTelegram__${sId}`).scrollTop(scrolls[`newTelegram__${sId}`]);
+                    const fr = $(`finalResultDiv__${sId}`) as HTMLElement | null;
+                    if (fr) fr.scrollTop = scrolls[`finalResultDiv__${sId}`] || 0;
+                    const dl = $(`deletedLog__${sId}`) as HTMLElement | null;
+                    if (dl) dl.scrollTop = scrolls[`deletedLog__${sId}`] || 0;
+                    const ol = $(`oldList__${sId}`) as HTMLElement | null;
+                    if (ol) ol.scrollTop = scrolls[`oldList__${sId}`] || 0;
+                    const nt = $(`newTelegram__${sId}`) as HTMLElement | null;
+                    if (nt) nt.scrollTop = scrolls[`newTelegram__${sId}`] || 0;
                 });
             }, 100);
         }
@@ -255,22 +313,38 @@ $(document).ready(function () {
         initStep3Resizers();
     });
 
-    $('.tab-link').click(function () {
-        const tabId = $(this).data('tab');
-        $('.tab-link').removeClass('active').attr('aria-selected', 'false');
-        $('.tab-content').removeClass('active');
-        $(this).addClass('active').attr('aria-selected', 'true');
-        $('#' + tabId).addClass('active');
-        SYH_STORAGE.set({ 'tg_active_tab': tabId });
+    document.querySelectorAll('.tab-link').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const tabId = this.getAttribute('data-tab');
+            if (!tabId) return;
+            document.querySelectorAll('.tab-link').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            const tabContent = document.getElementById(tabId);
+            if (tabContent) tabContent.classList.add('active');
+            SYH_STORAGE.set({ 'tg_active_tab': tabId });
+        });
     });
 
-    $('.subtab-button').click(function () {
-        const sheetId = $(this).data('sheet');
-        $('.subtab-button').removeClass('active').attr('aria-selected', 'false');
-        $('.sheet-content').removeClass('active');
-        $(this).addClass('active').attr('aria-selected', 'true');
-        $('#sheet-content-' + sheetId).addClass('active');
-        SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
+    document.querySelectorAll('.subtab-button').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const sheetId = this.getAttribute('data-sheet');
+            if (!sheetId) return;
+            document.querySelectorAll('.subtab-button').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.sheet-content').forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            const sheetContent = document.getElementById(`sheet-content-${sheetId}`);
+            if (sheetContent) sheetContent.classList.add('active');
+            SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
+        });
     });
 
     let translitOldTimer: ReturnType<typeof setTimeout> | null = null;
@@ -282,147 +356,198 @@ $(document).ready(function () {
     const finalResultTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
     SHEET_IDS.forEach(sId => {
-        $(`#oldList__${sId}`).on('input', function () {
-            const val = $(this).val();
-            const existing = oldListTimers.get(sId);
-            if (existing) clearTimeout(existing);
-            oldListTimers.set(sId, setTimeout(() => {
-                SYH_STORAGE.set({
-                    [POPUP_SHEET_KEYS.oldList(sId)]: val,
-                    [`tg_oldList__${sId}`]: val
-                });
-                updateOldInputStats(sId);
-            }, 300));
-        });
-
-        $(`#newTelegram__${sId}`).on('input', function () {
-            const val = $(this).val();
-            const existing = newTelegramTimers.get(sId);
-            if (existing) clearTimeout(existing);
-            newTelegramTimers.set(sId, setTimeout(() => {
-                SYH_STORAGE.set({
-                    [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
-                    [`tg_newTelegram__${sId}`]: val
-                });
-                updateNewInputStats(sId);
-            }, 300));
-        });
-
-        $(`#answeredIds__${sId}`).on('input', function () {
-            const val = $(this).val();
-            const existing = answeredIdsTimers.get(sId);
-            if (existing) clearTimeout(existing);
-            answeredIdsTimers.set(sId, setTimeout(() => {
-                SYH_STORAGE.set({
-                    [POPUP_SHEET_KEYS.answered(sId)]: val,
-                    [`tg_answered__${sId}`]: val
-                });
-            }, 300));
-        });
-
-        $(`#finalResultDiv__${sId}`).on('input blur', function () {
-            const html = $(this).html();
-            const existing = finalResultTimers.get(sId);
-            if (existing) clearTimeout(existing);
-            finalResultTimers.set(sId, setTimeout(() => {
-                SYH_STORAGE.set({
-                    [POPUP_SHEET_KEYS.finalResultHtml(sId)]: html,
-                    [`tg_finalResultHtml__${sId}`]: html
-                });
-            }, 300));
-        });
-
-        $(`#deletedLogDetails__${sId}`).on('toggle', function () {
-            const isOpen = (this as HTMLDetailsElement).open;
-            SYH_STORAGE.set({
-                [POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)]: isOpen,
-                [`tg_deletedLogDetailsOpen__${sId}`]: isOpen
+        const oldListEl = $(`oldList__${sId}`) as HTMLTextAreaElement | null;
+        if (oldListEl) {
+            oldListEl.addEventListener('input', function () {
+                const val = this.value;
+                const existing = oldListTimers.get(sId);
+                if (existing) clearTimeout(existing);
+                oldListTimers.set(sId, setTimeout(() => {
+                    SYH_STORAGE.set({
+                        [POPUP_SHEET_KEYS.oldList(sId)]: val,
+                        [`tg_oldList__${sId}`]: val
+                    });
+                    updateOldInputStats(sId);
+                }, 300));
             });
-        });
+        }
 
-        $(`#cleanedLogDetails__${sId}`).on('toggle', function () {
-            const isOpen = (this as HTMLDetailsElement).open;
-            SYH_STORAGE.set({
-                [POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)]: isOpen,
-                [`tg_cleanedLogDetailsOpen__${sId}`]: isOpen
+        const newTgEl = $(`newTelegram__${sId}`) as HTMLTextAreaElement | null;
+        if (newTgEl) {
+            newTgEl.addEventListener('input', function () {
+                const val = this.value;
+                const existing = newTelegramTimers.get(sId);
+                if (existing) clearTimeout(existing);
+                newTelegramTimers.set(sId, setTimeout(() => {
+                    SYH_STORAGE.set({
+                        [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
+                        [`tg_newTelegram__${sId}`]: val
+                    });
+                    updateNewInputStats(sId);
+                }, 300));
             });
-        });
+        }
 
-        $(`#clearStateBtn__${sId}`).click(function () {
-            if (confirm("Очистити всі поля введення в цьому аркуші?")) {
-                $(`#oldList__${sId}, #answeredIds__${sId}, #newTelegram__${sId}`).val('');
-                $(`#finalResultDiv__${sId}`).empty();
-                $(`#statsBar__${sId}`).hide();
-                $(`#deletedLog__${sId}`).empty();
-                $(`#deletedLogCount__${sId}`).text('');
-                $(`#deletedLogDetails__${sId}`).hide();
-                $(`#cleanedLog__${sId}`).empty();
-                $(`#cleanedLogCount__${sId}`).text('');
-                $(`#cleanedLogDetails__${sId}`).hide();
-                $(`#oldTotalCount__${sId}`).text('');
-                $(`#tgTotalCountAll__${sId}`).text('');
-                SYH_STORAGE.remove([
-                    POPUP_SHEET_KEYS.oldList(sId), `tg_oldList__${sId}`,
-                    POPUP_SHEET_KEYS.answered(sId), `tg_answered__${sId}`,
-                    POPUP_SHEET_KEYS.newTelegram(sId), `tg_newTelegram__${sId}`,
-                    POPUP_SHEET_KEYS.finalResultHtml(sId), `tg_finalResultHtml__${sId}`,
-                    POPUP_SHEET_KEYS.statsHtml(sId), `tg_statsHtml__${sId}`,
-                    POPUP_SHEET_KEYS.statsVisible(sId), `tg_statsVisible__${sId}`,
-                    POPUP_SHEET_KEYS.deletedLogHtml(sId), `tg_deletedLogHtml__${sId}`,
-                    POPUP_SHEET_KEYS.deletedLogCount(sId), `tg_deletedLogCount__${sId}`,
-                    POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId), `tg_deletedLogDetailsVisible__${sId}`,
-                    POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId), `tg_deletedLogDetailsOpen__${sId}`,
-                    POPUP_SHEET_KEYS.cleanedLogHtml(sId), `tg_cleanedLogHtml__${sId}`,
-                    POPUP_SHEET_KEYS.cleanedLogCount(sId), `tg_cleanedLogCount__${sId}`,
-                    POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId), `tg_cleanedLogDetailsVisible__${sId}`,
-                    POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId), `tg_cleanedLogDetailsOpen__${sId}`
-                ]);
-            }
-        });
+        const answeredEl = $(`answeredIds__${sId}`) as HTMLInputElement | null;
+        if (answeredEl) {
+            answeredEl.addEventListener('input', function () {
+                const val = this.value;
+                const existing = answeredIdsTimers.get(sId);
+                if (existing) clearTimeout(existing);
+                answeredIdsTimers.set(sId, setTimeout(() => {
+                    SYH_STORAGE.set({
+                        [POPUP_SHEET_KEYS.answered(sId)]: val,
+                        [`tg_answered__${sId}`]: val
+                    });
+                }, 300));
+            });
+        }
 
-        $(`#clearYTCollected__${sId}`).click(function () {
-            clearAllYTCollected(sId);
-        });
-    });
+        const finalResultEl = $(`finalResultDiv__${sId}`);
+        if (finalResultEl && finalResultEl instanceof HTMLElement) {
+            const handler = function () {
+                const html = this.innerHTML;
+                const existing = finalResultTimers.get(sId);
+                if (existing) clearTimeout(existing);
+                finalResultTimers.set(sId, setTimeout(() => {
+                    SYH_STORAGE.set({
+                        [POPUP_SHEET_KEYS.finalResultHtml(sId)]: html,
+                        [`tg_finalResultHtml__${sId}`]: html
+                    });
+                }, 300));
+            };
+            finalResultEl.addEventListener('input', handler);
+            finalResultEl.addEventListener('blur', handler);
+        }
 
-    $('#textArea1_oldText').on('input', function () {
-        const val = $(this).val();
-        if (translitOldTimer) clearTimeout(translitOldTimer);
-        translitOldTimer = setTimeout(() => {
-            SYH_STORAGE.set({ 'tg_translit_old': val });
-        }, 300);
-    });
+        const delDetailsEl = $(`deletedLogDetails__${sId}`) as HTMLDetailsElement | null;
+        if (delDetailsEl) {
+            delDetailsEl.addEventListener('toggle', function () {
+                const isOpen = this.open;
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)]: isOpen,
+                    [`tg_deletedLogDetailsOpen__${sId}`]: isOpen
+                });
+            });
+        }
 
-    $('#textArea2_generatedRuText').on('input', function () {
-        const val = $(this).val();
-        if (translitNewTimer) clearTimeout(translitNewTimer);
-        translitNewTimer = setTimeout(() => {
-            SYH_STORAGE.set({ 'tg_translit_new': val });
-        }, 300);
-    });
+        const cleanDetailsEl = $(`cleanedLogDetails__${sId}`) as HTMLDetailsElement | null;
+        if (cleanDetailsEl) {
+            cleanDetailsEl.addEventListener('toggle', function () {
+                const isOpen = this.open;
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)]: isOpen,
+                    [`tg_cleanedLogDetailsOpen__${sId}`]: isOpen
+                });
+            });
+        }
 
-    $("#sschoolNameBtn").click(function () {
-        db.newTitleSS = $("#sschoolName").val();
-        saveDataToStorage();
-        alert("Збережено!");
-    });
+        const clearStateBtn = $(`clearStateBtn__${sId}`);
+        if (clearStateBtn) {
+            clearStateBtn.addEventListener('click', function () {
+                if (confirm("Очистити всі поля введення в цьому аркуші?")) {
+                    [`oldList__${sId}`, `answeredIds__${sId}`, `newTelegram__${sId}`].forEach(id => {
+                        const el = $(id) as HTMLTextAreaElement | HTMLInputElement | null;
+                        if (el) el.value = '';
+                    });
+                    const frEl = $(`finalResultDiv__${sId}`);
+                    if (frEl) frEl.innerHTML = '';
+                    hideElement(`statsBar__${sId}`);
+                    const dlEl = $(`deletedLog__${sId}`);
+                    if (dlEl) dlEl.innerHTML = '';
+                    setTextContent(`deletedLogCount__${sId}`, '');
+                    const dldEl = $(`deletedLogDetails__${sId}`);
+                    if (dldEl && dldEl instanceof HTMLElement) dldEl.style.display = 'none';
+                    const clEl = $(`cleanedLog__${sId}`);
+                    if (clEl) clEl.innerHTML = '';
+                    setTextContent(`cleanedLogCount__${sId}`, '');
+                    const cldEl = $(`cleanedLogDetails__${sId}`);
+                    if (cldEl && cldEl instanceof HTMLElement) cldEl.style.display = 'none';
+                    setTextContent(`oldTotalCount__${sId}`, '');
+                    setTextContent(`tgTotalCountAll__${sId}`, '');
+                    SYH_STORAGE.remove([
+                        POPUP_SHEET_KEYS.oldList(sId), `tg_oldList__${sId}`,
+                        POPUP_SHEET_KEYS.answered(sId), `tg_answered__${sId}`,
+                        POPUP_SHEET_KEYS.newTelegram(sId), `tg_newTelegram__${sId}`,
+                        POPUP_SHEET_KEYS.finalResultHtml(sId), `tg_finalResultHtml__${sId}`,
+                        POPUP_SHEET_KEYS.statsHtml(sId), `tg_statsHtml__${sId}`,
+                        POPUP_SHEET_KEYS.statsVisible(sId), `tg_statsVisible__${sId}`,
+                        POPUP_SHEET_KEYS.deletedLogHtml(sId), `tg_deletedLogHtml__${sId}`,
+                        POPUP_SHEET_KEYS.deletedLogCount(sId), `tg_deletedLogCount__${sId}`,
+                        POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId), `tg_deletedLogDetailsVisible__${sId}`,
+                        POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId), `tg_deletedLogDetailsOpen__${sId}`,
+                        POPUP_SHEET_KEYS.cleanedLogHtml(sId), `tg_cleanedLogHtml__${sId}`,
+                        POPUP_SHEET_KEYS.cleanedLogCount(sId), `tg_cleanedLogCount__${sId}`,
+                        POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId), `tg_cleanedLogDetailsVisible__${sId}`,
+                        POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId), `tg_cleanedLogDetailsOpen__${sId}`
+                    ]);
+                }
+            });
+        }
 
-    $("#preachNameBtn").click(function () {
-        db.newTitlePreach = $("#preachNameInput").val();
-        saveDataToStorage();
-        alert("Збережено!");
-    });
-
-    $("#openOptionsPageBtn").click(function () {
-        if (chrome.runtime && chrome.runtime.openOptionsPage) {
-            chrome.runtime.openOptionsPage();
-        } else {
-            window.open(chrome.runtime.getURL('options/options.html'));
+        const clearYTBtn = $(`clearYTCollected__${sId}`);
+        if (clearYTBtn) {
+            clearYTBtn.addEventListener('click', function () {
+                clearAllYTCollected(sId);
+            });
         }
     });
 
+    const ta1 = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
+    if (ta1) {
+        ta1.addEventListener('input', function () {
+            const val = this.value;
+            if (translitOldTimer) clearTimeout(translitOldTimer);
+            translitOldTimer = setTimeout(() => {
+                SYH_STORAGE.set({ 'tg_translit_old': val });
+            }, 300);
+        });
+    }
+
+    const ta2 = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
+    if (ta2) {
+        ta2.addEventListener('input', function () {
+            const val = this.value;
+            if (translitNewTimer) clearTimeout(translitNewTimer);
+            translitNewTimer = setTimeout(() => {
+                SYH_STORAGE.set({ 'tg_translit_new': val });
+            }, 300);
+        });
+    }
+
+    const sschoolNameBtn = $(`sschoolNameBtn`);
+    if (sschoolNameBtn) {
+        sschoolNameBtn.addEventListener('click', function () {
+            const input = $(`sschoolName`) as HTMLInputElement | null;
+            db.newTitleSS = input ? input.value : '';
+            saveDataToStorage();
+            alert("Збережено!");
+        });
+    }
+
+    const preachNameBtn = $(`preachNameBtn`);
+    if (preachNameBtn) {
+        preachNameBtn.addEventListener('click', function () {
+            const input = $(`preachNameInput`) as HTMLInputElement | null;
+            db.newTitlePreach = input ? input.value : '';
+            saveDataToStorage();
+            alert("Збережено!");
+        });
+    }
+
+    const openOptionsBtn = $(`openOptionsPageBtn`);
+    if (openOptionsBtn) {
+        openOptionsBtn.addEventListener('click', function () {
+            if (chrome.runtime && chrome.runtime.openOptionsPage) {
+                chrome.runtime.openOptionsPage();
+            } else {
+                window.open(chrome.runtime.getURL('options/options.html'));
+            }
+        });
+    }
+
     function initResizeObserver() {
-        const textareas = ['textArea1_oldText', 'textArea2_generatedRuText'];
+        const textareas: string[] = ['textArea1_oldText', 'textArea2_generatedRuText'];
         SHEET_IDS.forEach(sId => {
             textareas.push(`oldList__${sId}`, `newTelegram__${sId}`);
         });
@@ -448,63 +573,71 @@ $(document).ready(function () {
         });
         textareas.forEach(id => {
             const el = document.getElementById(id);
-            if (el) resizeObserver.observe(el);
+            if (el && el instanceof HTMLElement) resizeObserver.observe(el);
         });
     }
 
     let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
-    function saveScrollPositions() {
+    function saveScrollPosition() {
         if (scrollTimeout) clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
             const scrolls: Record<string, any> = {
                 window: window.scrollY || document.documentElement.scrollTop,
-                prayersResultDiv: $('#prayersResultDiv').scrollTop() || 0,
-                textArea1_oldText: $('#textArea1_oldText').scrollTop() || 0,
-                textArea2_generatedRuText: $('#textArea2_generatedRuText').scrollTop() || 0
+                prayersResultDiv: ($( `prayersResultDiv`) as HTMLElement | null)?.scrollTop || 0,
+                textArea1_oldText: ($( `textArea1_oldText`) as HTMLElement | null)?.scrollTop || 0,
+                textArea2_generatedRuText: ($( `textArea2_generatedRuText`) as HTMLElement | null)?.scrollTop || 0
             };
             SHEET_IDS.forEach(sId => {
-                scrolls[`finalResultDiv__${sId}`] = $(`#finalResultDiv__${sId}`).scrollTop() || 0;
-                scrolls[`deletedLog__${sId}`] = $(`#deletedLog__${sId}`).scrollTop() || 0;
-                scrolls[`oldList__${sId}`] = $(`#oldList__${sId}`).scrollTop() || 0;
-                scrolls[`newTelegram__${sId}`] = $(`#newTelegram__${sId}`).scrollTop() || 0;
+                scrolls[`finalResultDiv__${sId}`] = ($( `finalResultDiv__${sId}`) as HTMLElement | null)?.scrollTop || 0;
+                scrolls[`deletedLog__${sId}`] = ($( `deletedLog__${sId}`) as HTMLElement | null)?.scrollTop || 0;
+                scrolls[`oldList__${sId}`] = ($( `oldList__${sId}`) as HTMLElement | null)?.scrollTop || 0;
+                scrolls[`newTelegram__${sId}`] = ($( `newTelegram__${sId}`) as HTMLElement | null)?.scrollTop || 0;
             });
             SYH_STORAGE.set({ 'tg_scroll_positions': scrolls });
         }, 150);
     }
-    $(window).on('scroll', saveScrollPositions);
-    $('#prayersResultDiv, #textArea1_oldText, #textArea2_generatedRuText').on('scroll', saveScrollPositions);
-    SHEET_IDS.forEach(sId => {
-        $(`#finalResultDiv__${sId}, #deletedLog__${sId}, #oldList__${sId}, #newTelegram__${sId}`).on('scroll', saveScrollPositions);
+    window.addEventListener('scroll', saveScrollPosition);
+    const scrollTargets: HTMLElement[] = [];
+    ['prayersResultDiv', 'textArea1_oldText', 'textArea2_generatedRuText'].forEach(id => {
+        const el = $(id);
+        if (el && el instanceof HTMLElement) scrollTargets.push(el);
     });
+    SHEET_IDS.forEach(sId => {
+        ['finalResultDiv__' + sId, 'deletedLog__' + sId, 'oldList__' + sId, 'newTelegram__' + sId].forEach(id => {
+            const el = $(id);
+            if (el && el instanceof HTMLElement) scrollTargets.push(el);
+        });
+    });
+    scrollTargets.forEach(el => el.addEventListener('scroll', saveScrollPosition));
 
-    let activeResizer: { sId: string, divider: JQuery, left: JQuery, right: JQuery } | null = null;
+    let activeResizer: { sId: string, divider: HTMLElement, left: HTMLElement, right: HTMLElement } | null = null;
 
-    $(document).on('mousemove', function (e) {
+    document.addEventListener('mousemove', function (e) {
         if (!activeResizer) return;
         const { divider, left, right } = activeResizer;
-        const container = divider.parent();
-        const containerOffset = container.offset();
-        const containerWidth = container.width();
+        const container = divider.parentElement;
+        if (!container) return;
+        const containerRect = container.getBoundingClientRect();
+        const containerWidth = containerRect.width;
+        if (containerWidth <= 0) return;
 
-        if (!containerOffset || !containerWidth || containerWidth <= 0) return;
-
-        const leftWidth = e.pageX - containerOffset.left;
+        const leftWidth = e.clientX - containerRect.left;
         let percent = (leftWidth / containerWidth) * 100;
         if (percent < 15) percent = 15;
         if (percent > 85) percent = 85;
 
-        left.css('flex', `${percent}%`);
-        right.css('flex', `${100 - percent}%`);
+        left.style.flex = `${percent}%`;
+        right.style.flex = `${100 - percent}%`;
     });
 
-    $(document).on('mouseup', function () {
+    document.addEventListener('mouseup', function () {
         if (activeResizer) {
             const { sId, divider, left, right } = activeResizer;
-            divider.removeClass('is-dragging');
-            $('body').css('user-select', '');
+            divider.classList.remove('is-dragging');
+            document.body.style.userSelect = '';
 
-            const flexLeft = parseFloat(left.css('flex')) || parseFloat(left.css('flex-grow')) || 1;
-            const flexRight = parseFloat(right.css('flex')) || parseFloat(right.css('flex-grow')) || 1;
+            const flexLeft = parseFloat(left.style.flex) || 1;
+            const flexRight = parseFloat(right.style.flex) || 1;
             const total = flexLeft + flexRight;
             const posPercent = (flexLeft / total) * 100;
 
@@ -518,18 +651,23 @@ $(document).ready(function () {
 
     function initStep3Resizers() {
         SHEET_IDS.forEach(sId => {
-            const $divider = $(`#step3Divider__${sId}`);
-            const $container = $(`#step3Columns__${sId}`);
-            const $left = $(`#step3Left__${sId}`);
-            const $right = $(`#step3Right__${sId}`);
+            const divider = $(`step3Divider__${sId}`);
+            const container = $(`step3Columns__${sId}`);
+            const left = $(`step3Left__${sId}`);
+            const right = $(`step3Right__${sId}`);
 
-            if (!$divider.length || !$container.length) return;
+            if (!divider || !container || !left || !right) return;
 
-            $divider.on('mousedown', function (e) {
+            divider.addEventListener('mousedown', function (e) {
                 e.preventDefault();
-                activeResizer = { sId, divider: $divider, left: $left, right: $right };
-                $divider.addClass('is-dragging');
-                $('body').css('user-select', 'none');
+                activeResizer = {
+                    sId,
+                    divider: divider as HTMLElement,
+                    left: left as HTMLElement,
+                    right: right as HTMLElement
+                };
+                divider.classList.add('is-dragging');
+                document.body.style.userSelect = 'none';
             });
         });
     }
