@@ -1,6 +1,6 @@
 import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX } from './parsers';
+import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX, PRAYER_SECTION_SPLIT_REGEX, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers';
 import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
 
 export interface BannerItem {
@@ -52,7 +52,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         const cleanedText = cleaner(rawText);
 
         // 2. Розбиваємо очищений текст на логічні блоки/повідомлення за заголовками секцій
-        let messages = cleanedText.split(/(?:^|\r?\n)(?=[❓🙏]|Вопросы к|Вопросы на|Предложения по|Саша, привет|Виталик, привет)/iu).map((m: string) => m.trim()).filter(Boolean);
+        let messages = cleanedText.split(SECTION_HEADER_SPLIT_REGEX).map((m: string) => m.trim()).filter(Boolean);
         if (messages.length === 0) messages = [cleanedText];
 
         const parseBlock = (text: string, defaultCat: string): BannerItem[] => {
@@ -62,10 +62,10 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
             let isStd = false;
 
             const firstLine = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0] || "";
-            const isQuestionStart = /^(?:\d+[.)]|(?:\d+\uFE0F?\u20E3|🔟)|🔹)/.test(firstLine);
+            const isQuestionStart = QUESTION_START_REGEX.test(firstLine);
 
             if (!isQuestionStart && firstLine) {
-                const headerMatch = firstLine.split(/(?:^|\s)(?=\d+[.)])|(?:^|\s)(?=(?:\d+\uFE0F?\u20E3|🔟))|(?=🔹)/);
+                const headerMatch = firstLine.split(QUESTION_SPLIT_REGEX);
                 const headerText = (headerMatch[0] || "").trim().toUpperCase();
                 if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
                     blockCategory = "prayer";
@@ -76,7 +76,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
                 }
             }
 
-            if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
+            if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !STANDARD_NUMBER_START_REGEX.test(text) && !EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
                 this.log("Формат: Суботня Школа (без нумерації)");
                 blockQuestions = this.PARSERS.parseSabbathSchoolUnnumberedQuestions(text);
                 blockCategory = "stream"; 
@@ -94,7 +94,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
         try {
             for (const msg of messages) {
-                const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+                const parts = msg.split(PRAYER_SECTION_SPLIT_REGEX);
                 const questionsText = parts[0] || "";
                 const prayersText = parts[1] || "";
 

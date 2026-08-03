@@ -8,6 +8,7 @@ import {
     SYH_PARSERS, 
     EMOJI_NUMBER_LINE_REGEX, 
     EMOJI_NUMBER_CONTAINS_REGEX,
+    PRAYER_SECTION_SPLIT_REGEX,
     TG_HEADER_A_REGEX,
     TG_HEADER_B_REGEX,
     RELATIVE_TIME_LINE_REGEX
@@ -19,6 +20,11 @@ export {
     EMOJI_NUMBER_LINE_REGEX, 
     EMOJI_NUMBER_CONTAINS_REGEX, 
     TELEGRAM_HEADER_MARKER_REGEX,
+    PRAYER_SECTION_SPLIT_REGEX,
+    QUESTION_START_REGEX,
+    QUESTION_SPLIT_REGEX,
+    STANDARD_NUMBER_START_REGEX,
+    SECTION_HEADER_SPLIT_REGEX,
     TG_HEADER_A_REGEX,
     TG_HEADER_B_REGEX,
     TG_HEADER_CLEANUP_REGEX,
@@ -260,7 +266,7 @@ export function parseAndFilterOldList(
     };
 
     for (const msg of messages) {
-        const parts = msg.split(/(?:^|\r?\n)\s*🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu);
+        const parts = msg.split(PRAYER_SECTION_SPLIT_REGEX);
         const questionsText = parts[0] || "";
         const prayersText = parts[1] || "";
 
