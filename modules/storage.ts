@@ -172,30 +172,60 @@ export const SYH_STORAGE: StorageAdapter = {
         keys: StorageKeyValues | StorageKeyValues[],
         cb: (result: T) => void
     ): void {
-        this.getAsync<T>(keys).then(cb);
+        if (!this.isChromeStorageAvailable()) {
+            if (cb) cb({} as T);
+            return;
+        }
+        try {
+            const keysArray = Array.isArray(keys) ? keys : [keys];
+            chrome.storage.local.get(keysArray, (result) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                    if (cb) cb({} as T);
+                    return;
+                }
+                if (cb) cb((result || {}) as T);
+            });
+        } catch {
+            if (cb) cb({} as T);
+        }
     },
 
     set: function(items: Record<string, any>, cb?: () => void): void {
-        this.setAsync(items).then(() => {
-            if (cb) cb();
-        });
-    },
-
-    remove: function(keys: string | string[], cb?: () => void): void {
         if (!this.isChromeStorageAvailable()) {
             if (cb) cb();
             return;
         }
         try {
-            const migratedKeys = Array.isArray(keys) ? keys.map(migrateKey) : migrateKey(keys);
+            const migratedItems: Record<string, any> = {};
+            for (const [k, v] of Object.entries(items)) {
+                migratedItems[migrateKey(k)] = v;
+            }
+            chrome.storage.local.set(migratedItems, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
+                }
+                if (cb) cb();
+            });
+        } catch {
+            if (cb) cb();
+        }
+    },
+
+    remove: function(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void {
+        if (!this.isChromeStorageAvailable()) {
+            if (cb) cb();
+            return;
+        }
+        try {
+            const migratedKeys = Array.isArray(keys) ? (keys as string[]).map(migrateKey) : migrateKey(keys as string);
             chrome.storage.local.remove(migratedKeys, () => {
                 if (chrome.runtime.lastError) {
                     console.error('[SYH Storage] remove error:', chrome.runtime.lastError.message);
                 }
                 if (cb) cb();
             });
-        } catch (e: any) {
-            console.error('[SYH Storage] remove failed:', e?.message || e);
+        } catch {
             if (cb) cb();
         }
     },

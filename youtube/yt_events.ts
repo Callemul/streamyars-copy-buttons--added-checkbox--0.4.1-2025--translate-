@@ -38,14 +38,10 @@ export async function saveCollectedItem(
     item: YTCollectedItem,
     collectedList: YTCollectedItem[]
 ): Promise<YTCollectedItem[]> {
-    const index = collectedList.findIndex(i => i.id === item.id);
-    const updated = index >= 0
-        ? collectedList.map((i, idx) => idx === index ? item : i)
-        : [item, ...collectedList];
-
-    await SYH_STORAGE.setAsync({ [STORAGE_KEYS.YT_COLLECTED]: updated });
     await CommentService.saveCollectedComment('vp_ss', item).catch(() => {});
-    return updated;
+    const sheetKey = `syh:popup:collected:vp_ss`;
+    const res = await SYH_STORAGE.getAsync<Record<string, YTCollectedItem[]>>([sheetKey]);
+    return res[sheetKey] || collectedList;
 }
 
 /**

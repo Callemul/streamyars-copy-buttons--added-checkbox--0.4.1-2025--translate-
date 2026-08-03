@@ -32,10 +32,14 @@ export class RetentionService {
             if (modified) updates[STORAGE_KEYS.YT_CHECKBOX_STATE] = ytCheckboxes;
         }
 
-        // 2. Очищення Молитов (48 годин)
+        // 2. Очищення Молитов (48 годин) та питання (30 днів)
         const prayers = res[STORAGE_KEYS.PRAYERS];
         if (Array.isArray(prayers)) {
-            const freshPrayers = prayers.filter(p => !p.timestamp || (now - p.timestamp < TWO_DAYS_MS));
+            const freshPrayers = prayers.filter(p => {
+                if (!p.timestamp) return true;
+                const maxAge = p.type === 'prayer' ? TWO_DAYS_MS : THIRTY_DAYS_MS;
+                return (now - p.timestamp < maxAge);
+            });
             if (freshPrayers.length !== prayers.length) {
                 updates[STORAGE_KEYS.PRAYERS] = freshPrayers;
             }
@@ -59,4 +63,4 @@ export class RetentionService {
             console.log('[RetentionService] Automatic data cleanup finished:', Object.keys(updates));
         }
     }
-}
+}

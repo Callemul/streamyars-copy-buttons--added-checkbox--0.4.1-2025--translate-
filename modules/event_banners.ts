@@ -1,8 +1,8 @@
-import { SYH_CONFIG, SyhConfig, SelectorValue } from './config';
+import { SYH_CONFIG, SyhConfig, type SelectorValue } from './config';
 import { SYH_STATE, SyhState } from './state';
 import { SYH_UTILS, SyhUtils } from './utils';
 import { SYH_UI, SyhUi } from './ui_core';
-import { SYH_BANNER_CREATOR, SyhBannerCreator } from './banner_creator';
+import { SYH_BANNER_CREATOR, type SyhBannerCreator } from './banner_creator';
 import type { ISyhPlugin } from './plugin_registry';
 
 export interface SyhEventBanners {

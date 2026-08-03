@@ -49,12 +49,14 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: prayersList });
     }
 
-    // 1. GARBAGE COLLECTION: Автоматично видаляємо записи, старіші за 2 дні (48 годин)
+    // 1. GARBAGE COLLECTION: Автоматично видаляємо молитви старіші за 2 дні та питання старіші за 30 днів
     const now = Date.now();
     const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
     const cleanedList = prayersList.filter(item => {
         if (!item.timestamp) return true;
-        return (now - item.timestamp) < twoDaysMs;
+        const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
+        return (now - item.timestamp) < maxAge;
     });
 
     if (cleanedList.length !== prayersList.length) {

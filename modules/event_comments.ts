@@ -386,12 +386,17 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     saveToDatabase: async function(author: string, text: string, type: string, icon: string): Promise<void> {
         const currentRoomId = window.location.pathname.replace(/\//g, '');
         const now = Date.now();
+        const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
         let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
         
-        list = list.filter(item => !item.timestamp || (now - item.timestamp) < thirtyDaysMs);
+        list = list.filter(item => {
+            if (!item.timestamp) return true;
+            const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
+            return (now - item.timestamp) < maxAge;
+        });
         list = list.filter(item => item.text !== text);
         
         list.push({ 
@@ -412,6 +417,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         }
 
         const now = Date.now();
+        const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
         const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
@@ -419,7 +425,10 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         
         list = list.filter(item => {
             if (item.text === text) return false;
-            if (item.timestamp && (now - item.timestamp) > thirtyDaysMs) return false;
+            if (item.timestamp) {
+                const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
+                if ((now - item.timestamp) > maxAge) return false;
+            }
             return true;
         });
         

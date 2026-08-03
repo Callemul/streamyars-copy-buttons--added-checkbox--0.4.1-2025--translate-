@@ -1,5 +1,5 @@
 // modules/anti_afk.ts
-import { STORAGE_KEYS } from './storage';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 /**
  * ============================================================================
@@ -131,7 +131,7 @@ export function simulateUserActivity(): void {
         });
         (document.body || document.documentElement || document).dispatchEvent(event);
         console.log("[SYH Anti-AFK] Імітація фонової активності користувача виконана.");
-    } catch (err) {
+    } catch {
         // ignore
     }
 }
@@ -200,9 +200,9 @@ export class AntiAfkService {
                         }
                     });
                     this.observer.observe(rootNode, { childList: true, subtree: true });
-            } catch (_err) {
-                console.warn("[SYH Anti-AFK] Помилка старту MutationObserver");
-            }
+                } catch {
+                    console.warn("[SYH Anti-AFK] Помилка старту MutationObserver");
+                }
             }
 
             this.afkTimer = setInterval(() => {
@@ -220,15 +220,26 @@ export class AntiAfkService {
             }, intervalMs);
         };
 
-        SYH_STORAGE.getAsync<Record<string, unknown>>([STORAGE_KEYS.OPTIONS]).then((data) => {
-            checkOptionsAndRun(data?.[STORAGE_KEYS.OPTIONS] as any);
-        });
+        // Синхронний первинний запуск із дефолтними налаштуваннями
+        checkOptionsAndRun();
 
-        SYH_STORAGE.onChanged((changes: Record<string, { newValue?: unknown }>) => {
-            if (changes[STORAGE_KEYS.OPTIONS]) {
-                checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue as any);
+        // Динамічне підтягування налаштувань користувача зі сховища
+        const activeStorage = (storage || SYH_STORAGE) as any;
+        if (activeStorage && typeof activeStorage.get === 'function') {
+            activeStorage.get([STORAGE_KEYS.OPTIONS], (data: Record<string, unknown>) => {
+                if (data?.[STORAGE_KEYS.OPTIONS]) {
+                    checkOptionsAndRun(data[STORAGE_KEYS.OPTIONS] as any);
+                }
+            });
+
+            if (typeof activeStorage.onChanged === 'function') {
+                activeStorage.onChanged((changes: Record<string, { newValue?: unknown }>) => {
+                    if (changes[STORAGE_KEYS.OPTIONS]) {
+                        checkOptionsAndRun(changes[STORAGE_KEYS.OPTIONS].newValue as any);
+                    }
+                });
             }
-        });
+        }
     }
 }
 

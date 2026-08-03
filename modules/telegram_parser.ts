@@ -285,13 +285,15 @@ export function parseTelegramExportLineByLine(text: string, cleaningLog?: Cleani
             if (headerBRegex.test(trimmed)) {
                 const match = trimmed.match(tgHeaderBRegex);
                 if (match) {
+                    const headerAuthorCandidate = match[1] ? match[1].trim() : "";
                     const trailing = match[2] ? match[2].trim() : "";
-                    if (trailing) {
-                        if (trailing.startsWith('@')) {
-                            author = cleanAuthorName(trailing, cleaningLog);
-                        } else {
-                            textLines.push(trailing);
-                        }
+                    if (headerAuthorCandidate && headerAuthorCandidate.startsWith('@')) {
+                        author = cleanAuthorName(headerAuthorCandidate, cleaningLog);
+                    } else if (trailing && trailing.startsWith('@')) {
+                        author = cleanAuthorName(trailing, cleaningLog);
+                    }
+                    if (trailing && !trailing.startsWith('@')) {
+                        textLines.push(trailing);
                     }
                 }
             }
@@ -338,4 +340,4 @@ export function parseTelegramExportLineByLine(text: string, cleaningLog?: Cleani
         groupedItems.push(item);
     });
     return groupedItems;
-}
+}

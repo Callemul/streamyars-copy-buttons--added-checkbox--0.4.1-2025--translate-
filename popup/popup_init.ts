@@ -274,14 +274,15 @@ $(document).ready(function () {
         SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
     });
 
-    let oldListTimer: ReturnType<typeof setTimeout> | null = null;
-    let newTelegramTimer: ReturnType<typeof setTimeout> | null = null;
-    let answeredIdsTimer: ReturnType<typeof setTimeout> | null = null;
-    let finalResultTimer: ReturnType<typeof setTimeout> | null = null;
     let translitOldTimer: ReturnType<typeof setTimeout> | null = null;
     let translitNewTimer: ReturnType<typeof setTimeout> | null = null;
 
     SHEET_IDS.forEach(sId => {
+        let oldListTimer: ReturnType<typeof setTimeout> | null = null;
+        let newTelegramTimer: ReturnType<typeof setTimeout> | null = null;
+        let answeredIdsTimer: ReturnType<typeof setTimeout> | null = null;
+        let finalResultTimer: ReturnType<typeof setTimeout> | null = null;
+
         $(`#oldList__${sId}`).on('input', function () {
             const val = $(this).val();
             if (oldListTimer) clearTimeout(oldListTimer);

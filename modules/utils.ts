@@ -285,10 +285,11 @@ export const SYH_UTILS: SyhUtils = {
 
     saveBannerCategory: function(text: string, type: string): Promise<void> {
         return new Promise(resolve => {
-            SYH_STORAGE.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
+            const storageAdapter = SYH_UTILS.storage;
+            storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
                 const db = result[STORAGE_KEYS.CATEGORIES] || {};
                 db[text] = type;
-                SYH_STORAGE.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
+                storageAdapter.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
             });
         });
     },

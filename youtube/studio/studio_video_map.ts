@@ -17,7 +17,7 @@ export function generateVideoKey(videoLinkHref: string | null, videoTitle: strin
             // Standardize URL / pathname if full URL or relative href
             const url = new URL(videoLinkHref, 'https://studio.youtube.com');
             return url.pathname + url.search;
-        } catch (_e) {
+        } catch {
             return videoLinkHref.trim();
         }
     }

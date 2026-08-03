@@ -297,7 +297,7 @@ class OptionsController {
                 } else {
                     alert('Некоректний формат файлу конфігурації.');
                 }
-            } catch (_err) {
+            } catch {
                 alert('Помилка при зчитуванні JSON файлу.');
             }
         };

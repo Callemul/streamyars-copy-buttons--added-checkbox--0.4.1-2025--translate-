@@ -324,8 +324,8 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     try {
                         const parsed = JSON.parse(val);
                         if (parsed?.name && typeof parsed.name === 'string') return parsed.name;
-                    } catch (_err) {
-                        console.warn("[SYH StatsTracker] Corrupted JSON in localStorage key:", key);
+                    } catch {
+                        console.warn("[SYH StatsTracker] Corrupted JSON in localStorage key:");
                     }
                 } else if (typeof val === 'string' && val.trim().length > 0) {
                     return val.trim();

@@ -38,7 +38,10 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
         let items: YTCollectedItem[] = result[sheetKey] || [];
         if (sheetId === 'vp_ss') {
             const oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
-            items = [...oldItems, ...items];
+            const map = new Map<string, YTCollectedItem>();
+            oldItems.forEach(item => map.set(item.id, item));
+            items.forEach(item => map.set(item.id, item));
+            items = Array.from(map.values());
         }
         syh_collected_by_sheet[sheetId] = items;
 
@@ -77,27 +80,21 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
 
 export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
-    const keysToGet = [sheetKey];
-    if (sheetId === 'vp_ss') {
-        keysToGet.push(STORAGE_KEYS.YT_COLLECTED);
-    }
+    const keysToGet = [sheetKey, STORAGE_KEYS.YT_COLLECTED];
 
     SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let sheetItems: any[] = result[sheetKey] || result[`syh_collected__${sheetId}`] || [];
-        const foundInSheet = sheetItems.some(item => item.id === commentId);
+        let sheetItems: YTCollectedItem[] = result[sheetKey] || [];
+        let oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
 
-        if (foundInSheet) {
-            sheetItems = sheetItems.filter(item => item.id !== commentId);
-            SYH_STORAGE.set({ [sheetKey]: sheetItems }, function() {
-                loadYTCollected(sheetId);
-            });
-        } else if (sheetId === 'vp_ss') {
-            let oldItems: any[] = result[STORAGE_KEYS.YT_COLLECTED] || result.syh_yt_collected || [];
-            oldItems = oldItems.filter(item => item.id !== commentId);
-            SYH_STORAGE.set({ [STORAGE_KEYS.YT_COLLECTED]: oldItems }, function() {
-                loadYTCollected(sheetId);
-            });
-        }
+        sheetItems = sheetItems.filter(item => item.id !== commentId);
+        oldItems = oldItems.filter(item => item.id !== commentId);
+
+        SYH_STORAGE.set({
+            [sheetKey]: sheetItems,
+            [STORAGE_KEYS.YT_COLLECTED]: oldItems
+        }, function() {
+            loadYTCollected(sheetId);
+        });
     });
 }
 

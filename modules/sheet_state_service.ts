@@ -181,7 +181,10 @@ export class SheetStateService {
         let ytCollected: YTCollectedItem[] = res[sheetKey] || [];
         if (sheetId === 'vp_ss') {
             const oldItems: YTCollectedItem[] = res[STORAGE_KEYS.YT_COLLECTED] || [];
-            ytCollected = [...oldItems, ...ytCollected];
+            const map = new Map<string, YTCollectedItem>();
+            oldItems.forEach(item => map.set(item.id, item));
+            ytCollected.forEach(item => map.set(item.id, item));
+            ytCollected = Array.from(map.values());
         }
 
         return {
