@@ -4,9 +4,26 @@
  * Не має залежностей від DOM чи jQuery.
  */
 
-import { SYH_PARSERS, EMOJI_NUMBER_LINE_REGEX, EMOJI_NUMBER_CONTAINS_REGEX } from './parsers';
+import { 
+    SYH_PARSERS, 
+    EMOJI_NUMBER_LINE_REGEX, 
+    EMOJI_NUMBER_CONTAINS_REGEX,
+    TG_HEADER_A_REGEX,
+    TG_HEADER_B_REGEX,
+    RELATIVE_TIME_LINE_REGEX
+} from './parsers';
 import { SYH_UTILS } from './utils';
 import type { CleaningLogEntry, DeletedLogEntry } from './types';
+
+export { 
+    EMOJI_NUMBER_LINE_REGEX, 
+    EMOJI_NUMBER_CONTAINS_REGEX, 
+    TELEGRAM_HEADER_MARKER_REGEX,
+    TG_HEADER_A_REGEX,
+    TG_HEADER_B_REGEX,
+    TG_HEADER_CLEANUP_REGEX,
+    RELATIVE_TIME_LINE_REGEX
+} from './parsers';
 
 export interface TelegramQuestionItem {
     author: string;
@@ -26,8 +43,6 @@ export interface GroupedNewItem {
     text: string;
     source: 'new' | 'pray' | 'yt';
 }
-
-export const RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
 
 export function countQuestionsInText(text: string): number {
     if (!text) return 0;
@@ -150,8 +165,8 @@ export function parseAndFilterOldList(
         let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
 
         const emojiNumberRegex = EMOJI_NUMBER_LINE_REGEX;
-        const tgHeaderARegex = /^.+?,\s*\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*$/;
-        const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
+        const tgHeaderARegex = TG_HEADER_A_REGEX;
+        const tgHeaderBRegex = TG_HEADER_B_REGEX;
 
         const hasKeycapInRemainingLines = (linesArr: string[], currentIndex: number) => {
             for (let i = currentIndex; i < linesArr.length; i++) {
@@ -266,14 +281,13 @@ export function parseTelegramExportLineByLine(text: string, cleaningLog?: Cleani
     cleaningLog = cleaningLog || [];
     const rawItems: { author: string; text: string; source: 'new' }[] = [];
     const lines = text.split('\n');
-    const headerARegex = /^.+?, \[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]$/;
-    const headerBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*.+?$/;
-    const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
+    const headerARegex = TG_HEADER_A_REGEX;
+    const tgHeaderBRegex = TG_HEADER_B_REGEX;
     let currentItem: { author: string | null; textLines: string[] } | null = null;
 
     lines.forEach(line => {
         const trimmed = line.trim();
-        const isHeader = headerARegex.test(trimmed) || headerBRegex.test(trimmed);
+        const isHeader = headerARegex.test(trimmed) || tgHeaderBRegex.test(trimmed);
 
         if (isHeader) {
             if (currentItem && currentItem.textLines.length > 0) {
@@ -281,7 +295,7 @@ export function parseTelegramExportLineByLine(text: string, cleaningLog?: Cleani
             }
             let author: string | null = null;
             const textLines: string[] = [];
-            if (headerBRegex.test(trimmed)) {
+            if (tgHeaderBRegex.test(trimmed)) {
                 const match = trimmed.match(tgHeaderBRegex);
                 if (match) {
                     const headerAuthorCandidate = match[1] ? match[1].trim() : "";

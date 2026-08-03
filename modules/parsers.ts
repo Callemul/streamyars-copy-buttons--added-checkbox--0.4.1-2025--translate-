@@ -14,12 +14,16 @@ export interface CleaningLogEntry {
 }
 
 /**
+ * ЄДИНЕ ДЖЕРЕЛО ПРАВДИ ДЛЯ REGEX-ПАТЕРНІВ ПАРСИНГУ
+ */
+
+/**
  * Регулярний вираз для виявлення рядка, що складається виключно з emoji-цифр (напр. 1️⃣, 🔟)
  */
 export const EMOJI_NUMBER_LINE_REGEX = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/;
 
 /**
- * Регулярний вираз для виявлення наявності хоча б однієї emoji-цифри у тексті
+ * Регулярний вираз для виявлення наявності хоча б однієї emoji-циفري у тексті
  */
 export const EMOJI_NUMBER_CONTAINS_REGEX = /(?:\d+\uFE0F?\u20E3|🔟)/;
 
@@ -27,6 +31,26 @@ export const EMOJI_NUMBER_CONTAINS_REGEX = /(?:\d+\uFE0F?\u20E3|🔟)/;
  * Регулярний вираз для виявлення розділювачів/заголовків у форматованому тексті питань
  */
 export const TELEGRAM_HEADER_MARKER_REGEX = /❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu;
+
+/**
+ * Заголовки експорту Telegram: "Ім'я, [10.07.2026 20:44]"
+ */
+export const TG_HEADER_A_REGEX = /^.+?,\s*\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*$/;
+
+/**
+ * Заголовки експорту Telegram: "[10.07.2026 20:44] @User: Text"
+ */
+export const TG_HEADER_B_REGEX = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
+
+/**
+ * Очищення системних заголовків Telegram з часом
+ */
+export const TG_HEADER_CLEANUP_REGEX = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
+
+/**
+ * Відносні мітки часу Telegram (напр. "щойно", "5 хвилин тому", "2 hours ago")
+ */
+export const RELATIVE_TIME_LINE_REGEX = /^(?:щойно|только\s*что|just\s*now)$|^\d+\s*(?:секунд[аиу]?|сек\.?|хвилин[аиу]?|хв\.?|минут[аыу]?|мин\.?|час(?:а|ів|ов|и|у)?|ч\.?|годин[аи]?|год\.?|hours?|hrs?|minutes?|mins?|seconds?|secs?)\s*(?:тому|назад|ago)?\.{0,3}$/i;
 
 export interface SyhParsers {
     parseEmojiNumberedQuestions(rawText: string): string[];
@@ -138,40 +162,43 @@ export const SYH_PARSERS: SyhParsers = {
         });
     },
 
-    cleanAuthorName: function(rawName: string, cleaningLog?: CleaningLogEntry[]): string {
-        const original = rawName.trim();
-        let name = original;
-        const removedParts: string[] = [];
-
-        if (name.startsWith('@')) {
-            removedParts.push('@');
-            name = name.substring(1);
-        }
-
-        const bulletMatch = name.match(/\s*•.*$/);
-        if (bulletMatch) {
-            removedParts.push(bulletMatch[0].trim());
-            name = name.replace(/\s*•.*$/, '');
-        }
-
-        const suffixMatch = name.match(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/);
-        if (suffixMatch) {
-            removedParts.push(suffixMatch[0]);
-            name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
-        }
-
-        name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2').trim();
-
-        if (cleaningLog && name !== original) {
-            cleaningLog.push({
-                before: original,
-                after: name,
-                removed: removedParts.length > 0 ? removedParts.join(' | ') : 'форматування'
-            });
-        }
-
-        return name;
-    }
+    cleanAuthorName: cleanAuthorName
 };
+
+export function cleanAuthorName(rawName: string, cleaningLog?: CleaningLogEntry[]): string {
+    if (!rawName) return '';
+    const original = rawName.trim();
+    let name = original;
+    const removedParts: string[] = [];
+
+    if (name.startsWith('@')) {
+        removedParts.push('@');
+        name = name.substring(1);
+    }
+
+    const bulletMatch = name.match(/\s*•.*$/);
+    if (bulletMatch) {
+        removedParts.push(bulletMatch[0].trim());
+        name = name.replace(/\s*•.*$/, '');
+    }
+
+    const suffixMatch = name.match(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/);
+    if (suffixMatch) {
+        removedParts.push(suffixMatch[0]);
+        name = name.replace(/-[a-zA-Z0-9а-яА-ЯіІїЇєЄ]+$/, '');
+    }
+
+    name = name.replace(/([a-zа-яіїєґ])([A-ZА-ЯІЇЄҐ])/g, '$1 $2').trim();
+
+    if (cleaningLog && name !== original) {
+        cleaningLog.push({
+            before: original,
+            after: name,
+            removed: removedParts.length > 0 ? removedParts.join(' | ') : 'форматування'
+        });
+    }
+
+    return name;
+}
 
 // Pure ESM Export

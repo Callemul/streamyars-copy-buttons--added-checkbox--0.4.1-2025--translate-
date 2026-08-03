@@ -2,11 +2,10 @@ import { SYH_CONFIG, type SyhConfig, type SelectorValue } from './config';
 import { SYH_STATE, type SyhState } from './state';
 import { SYH_UTILS, type SyhUtils } from './utils';
 import { SYH_UI, type SyhUi } from './ui_core';
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
+import { SYH_DOM_OBSERVER } from './dom_observer';
 import { CommentService } from './comment_service';
-import { RetentionService } from './retention_service';
 import type { ISyhPlugin } from './plugin_registry';
 
 export interface PrayerRecord {
@@ -25,8 +24,7 @@ export interface SyhEventComments {
     UI: SyhUi | null;
     TIMINGS: Record<string, number> | null;
     isBound: boolean;
-    autoHealObserver?: MutationObserver;
-    autoHealContainer?: Element;
+    unregisterAutoHeal?: (() => void) | null;
     _clickHandler?: (e: MouseEvent) => void;
     _contextHandler?: (e: MouseEvent) => void;
     _changeHandler?: (e: Event) => void;
@@ -67,9 +65,9 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     },
 
     destroy: function(): void {
-        if (this.autoHealObserver) {
-            this.autoHealObserver.disconnect();
-            this.autoHealObserver = undefined;
+        if (this.unregisterAutoHeal) {
+            this.unregisterAutoHeal();
+            this.unregisterAutoHeal = null;
         }
         if (this._clickHandler) {
             document.removeEventListener('click', this._clickHandler, true);
@@ -145,33 +143,18 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             });
         };
 
-        const checkAndReattachAutoHeal = (): void => {
-            if (!self.autoHealContainer || self.autoHealContainer === document.body || !self.autoHealContainer.isConnected) {
-                const specificContainer = document.querySelector('[data-testid="chat-container"]')
-                    || document.querySelector('.chat-container');
-
-                if (specificContainer && specificContainer !== self.autoHealContainer) {
-                    console.log("[SYH] Чат-контейнер знайдено. Перепідключаю autoHeal MutationObserver з body до конкретного контейнера.");
-                    if (self.autoHealObserver) self.autoHealObserver.disconnect();
-                    self.autoHealContainer = specificContainer;
-                    self.autoHealObserver?.observe(self.autoHealContainer, {
-                        childList: true,
-                        subtree: true,
-                        attributes: true,
-                        attributeFilter: ['aria-selected', 'class']
-                    });
-                }
-            }
-        };
-
-        if (self.autoHealObserver) {
-            self.autoHealObserver.disconnect();
+        if (self.unregisterAutoHeal) {
+            self.unregisterAutoHeal();
+            self.unregisterAutoHeal = null;
         }
 
+        const commentSelector = Array.isArray(self.SELECTORS?.commentBlock)
+            ? (self.SELECTORS.commentBlock as string[]).join(',')
+            : ((self.SELECTORS?.commentBlock as string) || '[class*="PlatformComment__Wrap"]');
+
         let rafScheduled = false;
-        self.autoHealObserver = new MutationObserver(() => {
+        const triggerAutoHeal = () => {
             if (document.hidden) return;
-            checkAndReattachAutoHeal();
             if (!rafScheduled) {
                 rafScheduled = true;
                 requestAnimationFrame(() => {
@@ -179,18 +162,13 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     runAutoHeal();
                 });
             }
-        });
+        };
 
-        self.autoHealContainer = document.querySelector('[data-testid="chat-container"]')
-            || document.querySelector('.chat-container')
-            || document.body;
-
-        self.autoHealObserver?.observe(self.autoHealContainer, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['aria-selected', 'class']
-        });
+        self.unregisterAutoHeal = SYH_DOM_OBSERVER.register(
+            commentSelector,
+            () => triggerAutoHeal(),
+            () => triggerAutoHeal()
+        );
 
         // Первинна перевірка при ініціалізації
         runAutoHeal();

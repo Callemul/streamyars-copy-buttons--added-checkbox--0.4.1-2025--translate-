@@ -24,6 +24,7 @@
 //   studio_comment_key.ts — cleanupStudioState() (30-денне очищення)
 //   studio_video_map.ts — VIDEO_MAP_STORAGE_KEY
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
 import { getCommentThreads } from './studio_selectors';
 import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
@@ -35,7 +36,7 @@ const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
 class StudioModuleController {
     private enabled: boolean = true;
     private isInitialized: boolean = false;
-    private observer: MutationObserver | null = null;
+    private unregisterObserver: (() => void) | null = null;
     private channelInfo: StudioChannelInfo | null = null;
     private lastPath: string = '';
     private frameId: number | null = null;
@@ -117,37 +118,18 @@ class StudioModuleController {
         // Initial process
         this.scheduleProcessComments(false);
 
-        // Observer for dynamic virtualized comment lists
-        if (!this.observer) {
-            this.observer = new MutationObserver((mutations) => {
-                if (!this.enabled || !this.isCommentsPage()) return;
-
-                let hasCommentNodes = false;
-                for (const mutation of mutations) {
-                    for (const node of Array.from(mutation.addedNodes)) {
-                        if (node.nodeType !== Node.ELEMENT_NODE) continue;
-                        const el = node as Element;
-
-                        if (
-                            (el.matches && (el.matches('.ytcp-comment-thread') || el.matches('#comments-content') || el.matches('#items'))) ||
-                            (el.querySelector && el.querySelector('.ytcp-comment-thread'))
-                        ) {
-                            hasCommentNodes = true;
-                            break;
-                        }
+        // Observer for dynamic virtualized comment lists via central DomObserverService
+        if (!this.unregisterObserver) {
+            this.unregisterObserver = SYH_DOM_OBSERVER.register(
+                '.ytcp-comment-thread, ytcp-comment-thread, ytcp-comment, #comments-content, #items',
+                () => {
+                    if (this.enabled && this.isCommentsPage()) {
+                        this.scheduleProcessComments(false);
                     }
-                    if (hasCommentNodes) break;
                 }
+            );
 
-                if (hasCommentNodes) {
-                    this.scheduleProcessComments(false);
-                }
-            });
-
-            this.observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            SYH_DOM_OBSERVER.start(document.body);
         }
     }
 
@@ -166,9 +148,9 @@ class StudioModuleController {
             this.frameId = null;
         }
 
-        if (this.observer) {
-            this.observer.disconnect();
-            this.observer = null;
+        if (this.unregisterObserver) {
+            this.unregisterObserver();
+            this.unregisterObserver = null;
         }
 
         // Cleanup injected UI elements

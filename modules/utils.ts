@@ -1,4 +1,5 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { TG_HEADER_CLEANUP_REGEX } from './parsers';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string | string[]> | null;
@@ -296,9 +297,8 @@ export const SYH_UTILS: SyhUtils = {
 
     cleanTelegramHeaders: function(text: string | null | undefined, cleaningLog?: any[]): string {
         if (!text) return "";
-        const tgHeaderRegex = /(?:^|\r?\n)\s*\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\](?:[^\r\n:]*:\s*|[^\r\n]*(?=\r?\n|$))/g;
         const removedMatches: string[] = [];
-        const cleaned = text.replace(tgHeaderRegex, (match, offset) => {
+        const cleaned = text.replace(TG_HEADER_CLEANUP_REGEX, (match, offset) => {
             removedMatches.push(match.trim());
             return offset === 0 ? "" : "\n";
         }).trim();
