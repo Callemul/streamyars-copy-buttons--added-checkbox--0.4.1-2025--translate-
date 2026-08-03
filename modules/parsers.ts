@@ -13,6 +13,21 @@ export interface CleaningLogEntry {
     removed: string;
 }
 
+/**
+ * Регулярний вираз для виявлення рядка, що складається виключно з emoji-цифр (напр. 1️⃣, 🔟)
+ */
+export const EMOJI_NUMBER_LINE_REGEX = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/;
+
+/**
+ * Регулярний вираз для виявлення наявності хоча б однієї emoji-цифри у тексті
+ */
+export const EMOJI_NUMBER_CONTAINS_REGEX = /(?:\d+\uFE0F?\u20E3|🔟)/;
+
+/**
+ * Регулярний вираз для виявлення розділювачів/заголовків у форматованому тексті питань
+ */
+export const TELEGRAM_HEADER_MARKER_REGEX = /❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu;
+
 export interface SyhParsers {
     parseEmojiNumberedQuestions(rawText: string): string[];
     parseStandardNumberedQuestions(rawText: string): string[];
@@ -44,7 +59,7 @@ export const SYH_PARSERS: SyhParsers = {
 
         for (const line of lines) {
             // Оновлена регулярка: підтримує всі варіанти цифр у квадратиках
-            if (/^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/.test(line)) {
+            if (EMOJI_NUMBER_LINE_REGEX.test(line)) {
                 if (currentQuestion) groupedQuestions.push(currentQuestion);
                 currentQuestion = { number: line, author: '', textLines: [] };
             } else if (currentQuestion && !currentQuestion.author && line) {

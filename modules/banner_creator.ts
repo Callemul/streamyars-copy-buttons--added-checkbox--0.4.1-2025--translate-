@@ -1,6 +1,6 @@
 import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_PARSERS } from './parsers';
+import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX } from './parsers';
 import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
 
 export interface BannerItem {
@@ -76,11 +76,11 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
                 }
             }
 
-            if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+            if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !/(?:^|\s)\d+[.)]+(?!\d)/.test(text) && !EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
                 this.log("Формат: Суботня Школа (без нумерації)");
                 blockQuestions = this.PARSERS.parseSabbathSchoolUnnumberedQuestions(text);
                 blockCategory = "stream"; 
-            } else if (/(?:\d+\uFE0F?\u20E3|🔟)/.test(text)) {
+            } else if (EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
                 this.log("Формат: Емодзі 1️⃣");
                 blockQuestions = this.PARSERS.parseEmojiNumberedQuestions(text);
             } else {

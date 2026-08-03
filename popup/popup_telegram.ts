@@ -32,17 +32,9 @@ export function getCollectedItemsForSheet(sheetId: string): YTCollectedItem[] {
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
-    const keysToGet = [sheetKey, STORAGE_KEYS.YT_COLLECTED];
 
-    SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
-        let items: YTCollectedItem[] = result[sheetKey] || [];
-        if (sheetId === 'vp_ss') {
-            const oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
-            const map = new Map<string, YTCollectedItem>();
-            oldItems.forEach(item => map.set(item.id, item));
-            items.forEach(item => map.set(item.id, item));
-            items = Array.from(map.values());
-        }
+    SYH_STORAGE.get([sheetKey], function(result: Record<string, any>) {
+        const items: YTCollectedItem[] = result[sheetKey] || [];
         syh_collected_by_sheet[sheetId] = items;
 
         const $list = $(`#ytCollectedList__${sheetId}`);
@@ -80,18 +72,13 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
 
 export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
-    const keysToGet = [sheetKey, STORAGE_KEYS.YT_COLLECTED];
 
-    SYH_STORAGE.get(keysToGet, function(result: Record<string, any>) {
+    SYH_STORAGE.get([sheetKey], function(result: Record<string, any>) {
         let sheetItems: YTCollectedItem[] = result[sheetKey] || [];
-        let oldItems: YTCollectedItem[] = result[STORAGE_KEYS.YT_COLLECTED] || [];
-
         sheetItems = sheetItems.filter(item => item.id !== commentId);
-        oldItems = oldItems.filter(item => item.id !== commentId);
 
         SYH_STORAGE.set({
-            [sheetKey]: sheetItems,
-            [STORAGE_KEYS.YT_COLLECTED]: oldItems
+            [sheetKey]: sheetItems
         }, function() {
             loadYTCollected(sheetId);
         });
@@ -101,11 +88,7 @@ export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_s
 export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
     if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
         const sheetKey = `syh:popup:collected:${sheetId}`;
-        const updateObj: Record<string, any> = { [sheetKey]: [] };
-        if (sheetId === 'vp_ss') {
-            updateObj[STORAGE_KEYS.YT_COLLECTED] = [];
-        }
-        SYH_STORAGE.set(updateObj, function() {
+        SYH_STORAGE.set({ [sheetKey]: [] }, function() {
             loadYTCollected(sheetId);
         });
     }
@@ -314,11 +297,8 @@ $(document).ready(function() {
     // Реактивне оновлення правої колонки при зміні зібраних коментарів YouTube
     SYH_STORAGE.onChanged(function(changes: Record<string, any>, areaName: string) {
         if (areaName === 'local') {
-            if (changes.syh_yt_collected) {
-                loadYTCollected('vp_ss');
-            }
             SHEET_IDS.forEach(sId => {
-                if (changes[`syh_collected__${sId}`]) {
+                if (changes[`syh:popup:collected:${sId}`] || changes[`syh_collected__${sId}`]) {
                     loadYTCollected(sId);
                 }
             });

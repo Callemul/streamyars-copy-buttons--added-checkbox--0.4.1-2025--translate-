@@ -4,7 +4,7 @@
  * Не має залежностей від DOM чи jQuery.
  */
 
-import { SYH_PARSERS } from './parsers';
+import { SYH_PARSERS, EMOJI_NUMBER_LINE_REGEX, EMOJI_NUMBER_CONTAINS_REGEX } from './parsers';
 import { SYH_UTILS } from './utils';
 import type { CleaningLogEntry, DeletedLogEntry } from './types';
 
@@ -149,14 +149,13 @@ export function parseAndFilterOldList(
         let currentItem: any = null;
         let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
 
-        const emojiNumberRegex = /^(?:\d+\uFE0F?\u20E3|🔟)+\s*$/;
+        const emojiNumberRegex = EMOJI_NUMBER_LINE_REGEX;
         const tgHeaderARegex = /^.+?,\s*\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*$/;
         const tgHeaderBRegex = /^\[\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}\]\s*([^:\n]+)(?::\s*(.*))?$/;
 
         const hasKeycapInRemainingLines = (linesArr: string[], currentIndex: number) => {
-            const regex = /(?:\d+\uFE0F?\u20E3|🔟)/;
             for (let i = currentIndex; i < linesArr.length; i++) {
-                if (regex.test(linesArr[i])) {
+                if (EMOJI_NUMBER_CONTAINS_REGEX.test(linesArr[i])) {
                     return true;
                 }
             }

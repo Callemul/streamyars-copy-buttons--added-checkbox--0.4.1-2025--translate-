@@ -333,6 +333,22 @@ export async function migrateStorageIfNeeded(): Promise<void> {
                 }
             }
 
+            // Migrate legacy YT collected items to syh:popup:collected:vp_ss
+            const legacyYtItems = (allData[STORAGE_KEYS.YT_COLLECTED] || allData['syh_yt_collected']) as any[] | undefined;
+            if (Array.isArray(legacyYtItems) && legacyYtItems.length > 0) {
+                const vpSsKey = getSheetCollectedStorageKey('vp_ss');
+                const existingVpSs = (migrated[vpSsKey] || allData[vpSsKey]) as any[] | undefined;
+                const itemMap = new Map<string | any, any>();
+
+                if (Array.isArray(existingVpSs)) {
+                    existingVpSs.forEach(item => { itemMap.set(item?.id ?? item, item); });
+                }
+                legacyYtItems.forEach(item => { itemMap.set(item?.id ?? item, item); });
+
+                migrated[vpSsKey] = Array.from(itemMap.values());
+                if (allData[STORAGE_KEYS.YT_COLLECTED]) keysToRemove.push(STORAGE_KEYS.YT_COLLECTED);
+            }
+
             if (keysToRemove.length > 0) {
                 chrome.storage.local.set(migrated, () => {
                     chrome.storage.local.remove(keysToRemove, () => {

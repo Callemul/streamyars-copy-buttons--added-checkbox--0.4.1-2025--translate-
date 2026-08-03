@@ -1,5 +1,6 @@
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
+import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
 import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine } from './telegram_parser';
+import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers';
 import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
 
 export interface SheetCounterStats {
@@ -76,7 +77,7 @@ export class SheetStateService {
         let newQuestions: TelegramQuestionItem[];
         let newPrayers: TelegramQuestionItem[] = [];
 
-        if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
+        if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
             const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
             newQuestions = parsedNew.questions.map((q) => ({ ...q, source: 'new' as const }));
             newPrayers = parsedNew.prayers.map((p) => ({ ...p, source: 'pray' as const }));
@@ -173,19 +174,8 @@ export class SheetStateService {
             sheetKey
         ];
 
-        if (sheetId === 'vp_ss') {
-            keysToLoad.push(STORAGE_KEYS.YT_COLLECTED);
-        }
-
         const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToLoad);
-        let ytCollected: YTCollectedItem[] = res[sheetKey] || [];
-        if (sheetId === 'vp_ss') {
-            const oldItems: YTCollectedItem[] = res[STORAGE_KEYS.YT_COLLECTED] || [];
-            const map = new Map<string, YTCollectedItem>();
-            oldItems.forEach(item => map.set(item.id, item));
-            ytCollected.forEach(item => map.set(item.id, item));
-            ytCollected = Array.from(map.values());
-        }
+        const ytCollected: YTCollectedItem[] = res[sheetKey] || [];
 
         return {
             oldList: res[k.oldList(sheetId)] || '',
@@ -247,7 +237,7 @@ export class SheetStateService {
         let leftPrayers = 0;
 
         if (telegramText && telegramText.trim()) {
-            if (/❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3|🔟)/iu.test(telegramText)) {
+            if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
                 const parsed = parseAndFilterOldList(telegramText, []);
                 leftPeople = parsed.questions.length;
                 parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));

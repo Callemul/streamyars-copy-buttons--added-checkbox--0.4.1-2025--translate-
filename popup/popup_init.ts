@@ -87,8 +87,7 @@ $(document).ready(function () {
         'tg_textarea_sizes',
         'tg_translit_old',
         'tg_translit_new',
-        'tg_scroll_positions',
-        STORAGE_KEYS.YT_COLLECTED
+        'tg_scroll_positions'
     ];
 
     SHEET_IDS.forEach(sId => {
