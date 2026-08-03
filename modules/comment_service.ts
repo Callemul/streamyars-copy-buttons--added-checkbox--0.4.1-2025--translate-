@@ -1,5 +1,7 @@
-import { SYH_STORAGE } from './storage';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
+
+import { RetentionService } from './retention_service';
 
 export interface CommentPayload {
     id: string;
@@ -10,6 +12,15 @@ export interface CommentPayload {
     videoId?: string;
     videoTitle?: string;
     roomId?: string;
+}
+
+export interface PrayerRecord {
+    author: string;
+    text: string;
+    type: string;
+    icon: string;
+    roomId: string;
+    timestamp: number;
 }
 
 /**
@@ -63,11 +74,14 @@ export class CommentService {
     public static async saveCollectedComment(
         sheetId: string,
         comment: CommentPayload
-    ): Promise<void> {
+    ): Promise<CommentPayload[]> {
         const storageKey = `syh:popup:collected:${sheetId}`;
         const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
         const list = result[storageKey] || [];
-        const index = list.findIndex(item => item.id === comment.id);
+        const index = list.findIndex(item => 
+            item.id === comment.id || 
+            (item.author === comment.author && item.text === comment.text && item.type === comment.type)
+        );
 
         const updated = index >= 0
             ? list.map((item, idx) => idx === index ? comment : item)
@@ -79,5 +93,37 @@ export class CommentService {
             totalQuestions: updated.filter(i => i.type === 'question').length,
             totalPrayers: updated.filter(i => i.type === 'prayer').length
         });
+        return updated;
     }
-}
+
+    /**
+     * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL
+     */
+    public static async savePrayerRecord(record: PrayerRecord): Promise<PrayerRecord[]> {
+        const now = Date.now();
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
+        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+
+        list = RetentionService.filterFreshPrayers(list, now);
+        list = list.filter(item => item.text !== record.text);
+        list.push(record);
+
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
+        return list;
+    }
+
+    /**
+     * Уніфіковане видалення молитви/питання з бази STREAMYARD з урахуванням TTL
+     */
+    public static async removePrayerRecord(text: string): Promise<PrayerRecord[]> {
+        const now = Date.now();
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
+        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+
+        list = list.filter(item => item.text !== text);
+        list = RetentionService.filterFreshPrayers(list, now);
+
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
+        return list;
+    }
+}

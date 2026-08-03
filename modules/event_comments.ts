@@ -5,6 +5,7 @@ import { SYH_UI, type SyhUi } from './ui_core';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
+import { CommentService } from './comment_service';
 import { RetentionService } from './retention_service';
 import type { ISyhPlugin } from './plugin_registry';
 
@@ -388,38 +389,21 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         const currentRoomId = window.location.pathname.replace(/\//g, '');
         const now = Date.now();
 
-        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-        
-        list = RetentionService.filterFreshPrayers(list, now);
-        list = list.filter(item => item.text !== text);
-        
-        list.push({ 
-            author, 
-            text, 
-            type, 
+        await CommentService.savePrayerRecord({
+            author,
+            text,
+            type,
             icon,
             roomId: currentRoomId,
             timestamp: now
         });
-        
-        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
     },
 
     removeFromDatabase: async function(text: string): Promise<void> {
         if (this.UI && this.UI.prayersCache) {
             this.UI.prayersCache = this.UI.prayersCache.filter((item: any) => item.text !== text);
         }
-
-        const now = Date.now();
-
-        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-        
-        list = list.filter(item => item.text !== text);
-        list = RetentionService.filterFreshPrayers(list, now);
-        
-        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
+        await CommentService.removePrayerRecord(text);
     }
 };
 

@@ -36,12 +36,14 @@ export async function copyToClipboard(text: string): Promise<boolean> {
  */
 export async function saveCollectedItem(
     item: YTCollectedItem,
-    collectedList: YTCollectedItem[]
+    collectedList: YTCollectedItem[],
+    sheetId: string = 'vp_ss'
 ): Promise<YTCollectedItem[]> {
-    await CommentService.saveCollectedComment('vp_ss', item).catch(() => {});
-    const sheetKey = `syh:popup:collected:vp_ss`;
-    const res = await SYH_STORAGE.getAsync<Record<string, YTCollectedItem[]>>([sheetKey]);
-    return res[sheetKey] || collectedList;
+    try {
+        return (await CommentService.saveCollectedComment(sheetId, item)) as YTCollectedItem[];
+    } catch {
+        return collectedList;
+    }
 }
 
 /**

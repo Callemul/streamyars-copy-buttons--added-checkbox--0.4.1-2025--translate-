@@ -1,4 +1,6 @@
 // modules/config.ts
+import { SYH_I18N } from './i18n';
+
 export type SelectorValue = string | string[];
 
 export interface SyhConfig {
@@ -87,14 +89,7 @@ export const SYH_CONFIG: SyhConfig = {
         timerDropdownButton: '#banner-timer-dropdown-button', 
         timerOptionOffId: '#banner-timer-dropdown-option-null', 
         get timerOffTextResult(): string {
-            if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
-                try {
-                    return chrome.i18n.getMessage('timerOff') || 'Timer off';
-                } catch {
-                    // ignore
-                }
-            }
-            return 'Timer off';
+            return SYH_I18N.getMessage('timerOff', 'Timer off');
         }
     },
 

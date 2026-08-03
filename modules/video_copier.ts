@@ -13,6 +13,7 @@ export interface SyhVideoCopier {
 
 import type { ISyhPlugin } from './plugin_registry';
 import { UiFactory } from './ui_factory';
+import { SYH_I18N } from './i18n';
 
 export const SYH_VIDEO_COPIER_PLUGIN: ISyhPlugin = {
     id: 'syh_video_copier',
@@ -367,14 +368,7 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
                 await new Promise(r => setTimeout(r, 600));
 
                 const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0')) as HTMLElement[];
-                let downloadText = 'Download';
-                if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
-                    try {
-                        downloadText = chrome.i18n.getMessage('download') || 'Download';
-                    } catch {
-                        // ignore
-                    }
-                }
+                const downloadText = SYH_I18N.getMessage('download', 'Download');
                 const downloadSpan = menuItems.find(el => el.innerText.includes(downloadText) || el.innerText.includes('Download'));
                 if (downloadSpan) {
                     const btn = downloadSpan.closest('button');

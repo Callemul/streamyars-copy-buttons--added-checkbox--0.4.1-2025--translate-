@@ -140,4 +140,18 @@ UI                                   — popup: замінити стрінг-і
 3. **Витягнути спільний `CommentInjector`/`CommentPlatformAdapter`**, звести `youtube/*` і `youtube/studio/*` до тонких адаптерів (п.5) — найбільший виграш у зменшенні коду
 4. **Об'єднати `parsers.ts` + `telegram_parser.ts`** в один домен-модуль з константами для emoji-regex (п.7, п.8)
 5. Довести адопцію `DomObserverService`, `CommentService`, `SYH_I18N` до 100% у решті модулів (п.9, п.6, п.13)
-6. Поступово переводити `SYH_*` синглтони на класи, що інстанціюються в composition root (`main.ts`/content scripts), а не імпортуються як глобальний мутабельний стан — це і дасть реальну тестованість найкрихкішого коду (парсинг + DOM-автоматизація банерів), який зараз взагалі не покритий тестами.
+6. Поступово переводити SYH_* синглтони на класи, що інстанціюються в composition root (main.ts/content scripts), а не імпортуються як глобальний мутабельний стан — це і дасть реальну тестованість найкрихкішого коду (парсинг + DOM-автоматизація банерів), який зараз взагалі не покритий тестами.
+
+📌 Статус виконання робіт (Progress Log)
+
+Крок 1.1: Усунуто подвійний запис коментарів з YouTube у yt_events.ts::saveCollectedItem через використання розширеного CommentService.saveCollectedComment, який повертає оновлений дедуплікований список.
+
+Крок 1.2: Уніфіковано роботу з молитвами та питаннями в CommentService (savePrayerRecord, removePrayerRecord), перевівши event_comments.ts на доменні методи з автоматичним дотриманням TTL через RetentionService (48 годин для молитов, 30 днів для питань).
+
+Крок 1.3: Перевірено та підтверджено використання Map<sheetId, Timer> для ізольованого дебаунсу кожного аркуша в popup_init.ts.
+
+Крок 2: Перевірено відсутність спецкейсів if (sheetId === 'vp_ss') у sheet_state_service.ts та popup_telegram.ts завдяки уніфікованим методам getSheetCollectedStorageKey(sheetId).
+
+Крок 5: Проведено 100% адопцію адаптера SYH_I18N у config.ts, anti_afk.ts та video_copier.ts, видаливши локальне дублювання перевірок chrome.i18n.getMessage.
+
+Крок 6: Розширено юніт-тести в tests/comment_service.test.js.

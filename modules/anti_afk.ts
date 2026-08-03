@@ -1,5 +1,6 @@
 // modules/anti_afk.ts
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_I18N } from './i18n';
 
 /**
  * ============================================================================
@@ -71,20 +72,11 @@ export function checkAndClickAntiAfk(
         'остаться в студии'
     ];
 
-    if (i18n && typeof i18n.getMessage === 'function') {
-        const localized = i18n.getMessage('stayInStudio');
-        if (localized && localized.trim()) {
-            targetTexts.push(localized.trim().toLowerCase());
-        }
-    } else if (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
-        try {
-            const localized = chrome.i18n.getMessage('stayInStudio');
-            if (localized && localized.trim()) {
-                targetTexts.push(localized.trim().toLowerCase());
-            }
-        } catch {
-            // ignore
-        }
+    const localized = i18n && typeof i18n.getMessage === 'function'
+        ? i18n.getMessage('stayInStudio')
+        : SYH_I18N.getMessage('stayInStudio');
+    if (localized && localized.trim()) {
+        targetTexts.push(localized.trim().toLowerCase());
     }
 
     // 4. Пошук відповідності серед усіх елементів

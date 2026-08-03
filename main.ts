@@ -14,6 +14,7 @@ import { SYH_ANTI_AFK_PLUGIN } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
 import { SYH_MESSAGING } from './modules/messaging';
 import { SYH_PLUGINS } from './modules/plugin_registry';
+import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
 (() => {
     'use strict';
@@ -32,8 +33,6 @@ import { SYH_PLUGINS } from './modules/plugin_registry';
 
     
     const { SELECTORS } = SYH_CONFIG;
-
-    import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
     function setupDomRegistration(): void {
         const commentSelector = Array.isArray(SELECTORS.commentBlock) ? SELECTORS.commentBlock[0] : SELECTORS.commentBlock;
