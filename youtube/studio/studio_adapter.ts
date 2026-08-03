@@ -2,7 +2,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import type { SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
-import type { ChannelKey } from '../../modules/channel_config';
 import type { CommentPayload } from '../../modules/comment_service';
 import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref } from './studio_selectors';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
