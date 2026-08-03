@@ -1,7 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { SYH_STATE, SyhState } from './state';
-import { SYH_CONFIG, SyhConfig } from './config';
-import { SYH_UI_STATE, SyhUiState } from './ui_state';
+import { SYH_STATE, type SyhState } from './state';
+import { SYH_CONFIG, type SyhConfig } from './config';
+import { SYH_UI_STATE, type SyhUiState } from './ui_state';
 import { 
     addButtonsToComment, 
     updateCommentVisuals, 

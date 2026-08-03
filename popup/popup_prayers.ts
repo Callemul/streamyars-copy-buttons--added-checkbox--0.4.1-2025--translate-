@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
 import { CommentService } from '../modules/comment_service';
+import { RetentionService } from '../modules/retention_service';
 
 import type { PrayerItem } from '../modules/types';
 export type { PrayerItem };
@@ -50,14 +51,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     }
 
     // 1. GARBAGE COLLECTION: Автоматично видаляємо молитви старіші за 2 дні та питання старіші за 30 днів
-    const now = Date.now();
-    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-    const cleanedList = prayersList.filter(item => {
-        if (!item.timestamp) return true;
-        const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
-        return (now - item.timestamp) < maxAge;
-    });
+    const cleanedList = RetentionService.filterFreshPrayers(prayersList);
 
     if (cleanedList.length !== prayersList.length) {
         SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: cleanedList });

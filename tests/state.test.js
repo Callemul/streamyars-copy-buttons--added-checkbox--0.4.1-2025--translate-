@@ -144,21 +144,25 @@ describe('SYH_STATE tests', () => {
 
     test('8. init коректно обробляє відсутність адаптера сховища', async () => {
         const origChrome = global.chrome;
-        delete global.chrome;
-        delete global.SYH_STORAGE;
-        delete global.window.SYH_STORAGE;
+        try {
+            delete global.chrome;
+            delete global.SYH_STORAGE;
+            delete global.window.SYH_STORAGE;
 
-        let called = false;
-        SYH_STATE.init(() => {
-            called = true;
-        });
+            let called = false;
+            await new Promise(resolve => {
+                SYH_STATE.init(() => {
+                    called = true;
+                    resolve();
+                });
+            });
 
-        assert.strictEqual(called, true);
-
-        // Відновлюємо adapter
-        global.chrome = origChrome;
-        global.SYH_STORAGE = mockStorageAdapter;
-        global.window.SYH_STORAGE = mockStorageAdapter;
+            assert.strictEqual(called, true);
+        } finally {
+            global.chrome = origChrome;
+            global.SYH_STORAGE = mockStorageAdapter;
+            global.window.SYH_STORAGE = mockStorageAdapter;
+        }
     });
 
     test('9. saveState записує правильну структуру (date та data)', () => {

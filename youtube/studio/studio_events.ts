@@ -26,14 +26,14 @@
 //   Селектори DOM            → studio_selectors.ts
 
 import { SYH_STORAGE } from '../../modules/storage';
-import { SheetId } from '../../modules/sheets';
-import { ChannelKey } from '../../modules/channel_config';
+import type { SheetId } from '../../modules/sheets';
+import type { ChannelKey } from '../../modules/channel_config';
 import { CommentService } from '../../modules/comment_service';
 import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref } from './studio_selectors';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
 import { generateVideoKey, setStudioVideoSheetOverride } from './studio_video_map';
 import { generateCommentKey, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
-import { resolveCategoryForVideo, VideoSheetMapEntry } from './studio_category_matcher';
+import { resolveCategoryForVideo, type VideoSheetMapEntry } from './studio_category_matcher';
 
 // Helper to toggle z-index on all relevant ancestor elements up to the scrolling list
 function toggleZIndexStack(startEl: HTMLElement, active: boolean) {

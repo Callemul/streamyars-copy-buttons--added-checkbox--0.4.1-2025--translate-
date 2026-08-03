@@ -5,6 +5,25 @@ const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 export class RetentionService {
     /**
+     * Перевіряє актуальність елемента молитов/питань за типом:
+     * - Молитви (type === 'prayer'): 48 годин
+     * - Питання (type !== 'prayer'): 30 днів
+     */
+    public static isFreshPrayerItem(item: { timestamp?: number; type?: string }, now: number = Date.now()): boolean {
+        if (!item.timestamp) return true;
+        const maxAge = item.type === 'prayer' ? TWO_DAYS_MS : THIRTY_DAYS_MS;
+        return (now - item.timestamp < maxAge);
+    }
+
+    /**
+     * Фільтрує масив молитов/питань, залишаючи тільки актуальні записи
+     */
+    public static filterFreshPrayers<T extends { timestamp?: number; type?: string }>(prayers: T[], now: number = Date.now()): T[] {
+        if (!Array.isArray(prayers)) return [];
+        return prayers.filter(p => RetentionService.isFreshPrayerItem(p, now));
+    }
+
+    /**
      * Очищення застарілих записів у всіх таблицях розширення
      */
     public static async runGlobalCleanup(): Promise<void> {
@@ -32,14 +51,10 @@ export class RetentionService {
             if (modified) updates[STORAGE_KEYS.YT_CHECKBOX_STATE] = ytCheckboxes;
         }
 
-        // 2. Очищення Молитов (48 годин) та питання (30 днів)
+        // 2. Очищення Молитов (48 годин) та питань (30 днів)
         const prayers = res[STORAGE_KEYS.PRAYERS];
         if (Array.isArray(prayers)) {
-            const freshPrayers = prayers.filter(p => {
-                if (!p.timestamp) return true;
-                const maxAge = p.type === 'prayer' ? TWO_DAYS_MS : THIRTY_DAYS_MS;
-                return (now - p.timestamp < maxAge);
-            });
+            const freshPrayers = RetentionService.filterFreshPrayers(prayers, now);
             if (freshPrayers.length !== prayers.length) {
                 updates[STORAGE_KEYS.PRAYERS] = freshPrayers;
             }

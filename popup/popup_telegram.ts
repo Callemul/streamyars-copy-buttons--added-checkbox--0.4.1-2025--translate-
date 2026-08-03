@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage';
 import { getAllSheetIds, SHEET_REGISTRY } from '../modules/sheets';
 import {
     countQuestionsInText,

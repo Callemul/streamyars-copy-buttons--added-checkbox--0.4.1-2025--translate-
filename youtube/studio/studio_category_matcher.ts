@@ -1,6 +1,6 @@
 // youtube/studio/studio_category_matcher.ts
-import { SheetId } from '../../modules/sheets';
-import { matchCategory, ChannelKey } from '../../modules/channel_config';
+import type { SheetId } from '../../modules/sheets';
+import { matchCategory, type ChannelKey } from '../../modules/channel_config';
 
 export interface VideoSheetMapEntry {
     sheetId: SheetId;

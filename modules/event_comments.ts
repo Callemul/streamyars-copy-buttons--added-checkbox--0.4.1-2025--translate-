@@ -1,10 +1,11 @@
-import { SYH_CONFIG, SyhConfig, SelectorValue } from './config';
-import { SYH_STATE, SyhState } from './state';
-import { SYH_UTILS, SyhUtils } from './utils';
-import { SYH_UI, SyhUi } from './ui_core';
+import { SYH_CONFIG, type SyhConfig, type SelectorValue } from './config';
+import { SYH_STATE, type SyhState } from './state';
+import { SYH_UTILS, type SyhUtils } from './utils';
+import { SYH_UI, type SyhUi } from './ui_core';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
+import { RetentionService } from './retention_service';
 import type { ISyhPlugin } from './plugin_registry';
 
 export interface PrayerRecord {
@@ -386,17 +387,11 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     saveToDatabase: async function(author: string, text: string, type: string, icon: string): Promise<void> {
         const currentRoomId = window.location.pathname.replace(/\//g, '');
         const now = Date.now();
-        const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
         let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
         
-        list = list.filter(item => {
-            if (!item.timestamp) return true;
-            const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
-            return (now - item.timestamp) < maxAge;
-        });
+        list = RetentionService.filterFreshPrayers(list, now);
         list = list.filter(item => item.text !== text);
         
         list.push({ 
@@ -417,20 +412,12 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         }
 
         const now = Date.now();
-        const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
         let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
         
-        list = list.filter(item => {
-            if (item.text === text) return false;
-            if (item.timestamp) {
-                const maxAge = item.type === 'prayer' ? twoDaysMs : thirtyDaysMs;
-                if ((now - item.timestamp) > maxAge) return false;
-            }
-            return true;
-        });
+        list = list.filter(item => item.text !== text);
+        list = RetentionService.filterFreshPrayers(list, now);
         
         await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
     }

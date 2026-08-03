@@ -2,7 +2,7 @@
 import { YT_SELECTORS } from './yt_selectors';
 import { addButtonsToYTComment, extractCommentId, restoreButtonState, restoreCheckboxState } from './yt_ui';
 import { bindYTEvents, YTCollectedItem } from './yt_events';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant';
 import { SYH_CONFIG } from '../modules/config';
 import { isAllowedChannel } from './yt_channel_gate';
@@ -104,8 +104,10 @@ function initYouTubeModule() {
         return;
     }
 
+    const vpSsCollectedKey = getSheetCollectedStorageKey('vp_ss');
+
     SYH_STORAGE.get(
-        [STORAGE_KEYS.OPTIONS, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.YT_CHECKBOX_STATE, STORAGE_KEYS.YT_COLLECTED],
+        [STORAGE_KEYS.OPTIONS, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.YT_CHECKBOX_STATE, vpSsCollectedKey],
         (res) => {
             const options = res[STORAGE_KEYS.OPTIONS] || {};
             stateCache.youtubeEnabled = options.youtube_enabled !== false;
@@ -117,7 +119,7 @@ function initYouTubeModule() {
 
             stateCache.buttonStates = res[STORAGE_KEYS.YT_BUTTON_STATES] || {};
             stateCache.checkboxStates = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || {};
-            stateCache.collectedList = res[STORAGE_KEYS.YT_COLLECTED] || [];
+            stateCache.collectedList = res[vpSsCollectedKey] || [];
 
             // 1. Ініціалізація помічника коментарів з селекторами YouTube
             SYH_COMMENT_ASSISTANT.init({
@@ -163,6 +165,11 @@ SYH_STORAGE.onChanged((changes) => {
     if (changes[STORAGE_KEYS.YT_CHECKBOX_STATE] && changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue) {
         stateCache.checkboxStates = changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue;
         processAllYTComments();
+    }
+
+    const vpSsCollectedKey = getSheetCollectedStorageKey('vp_ss');
+    if (changes[vpSsCollectedKey] && changes[vpSsCollectedKey].newValue) {
+        stateCache.collectedList = changes[vpSsCollectedKey].newValue;
     }
 });
 

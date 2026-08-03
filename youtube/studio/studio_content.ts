@@ -24,9 +24,9 @@
 //   studio_comment_key.ts — cleanupStudioState() (30-денне очищення)
 //   studio_video_map.ts — VIDEO_MAP_STORAGE_KEY
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
-import { getStudioChannelInfo, StudioChannelInfo } from './studio_channel';
+import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
 import { getCommentThreads } from './studio_selectors';
-import { bindStudioCommentEvents, StudioEventCaches } from './studio_events';
+import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 

@@ -276,56 +276,60 @@ $(document).ready(function () {
     let translitOldTimer: ReturnType<typeof setTimeout> | null = null;
     let translitNewTimer: ReturnType<typeof setTimeout> | null = null;
 
-    SHEET_IDS.forEach(sId => {
-        let oldListTimer: ReturnType<typeof setTimeout> | null = null;
-        let newTelegramTimer: ReturnType<typeof setTimeout> | null = null;
-        let answeredIdsTimer: ReturnType<typeof setTimeout> | null = null;
-        let finalResultTimer: ReturnType<typeof setTimeout> | null = null;
+    const oldListTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    const newTelegramTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    const answeredIdsTimers = new Map<string, ReturnType<typeof setTimeout>>();
+    const finalResultTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+    SHEET_IDS.forEach(sId => {
         $(`#oldList__${sId}`).on('input', function () {
             const val = $(this).val();
-            if (oldListTimer) clearTimeout(oldListTimer);
-            oldListTimer = setTimeout(() => {
+            const existing = oldListTimers.get(sId);
+            if (existing) clearTimeout(existing);
+            oldListTimers.set(sId, setTimeout(() => {
                 SYH_STORAGE.set({
                     [POPUP_SHEET_KEYS.oldList(sId)]: val,
                     [`tg_oldList__${sId}`]: val
                 });
                 updateOldInputStats(sId);
-            }, 300);
+            }, 300));
         });
 
         $(`#newTelegram__${sId}`).on('input', function () {
             const val = $(this).val();
-            if (newTelegramTimer) clearTimeout(newTelegramTimer);
-            newTelegramTimer = setTimeout(() => {
+            const existing = newTelegramTimers.get(sId);
+            if (existing) clearTimeout(existing);
+            newTelegramTimers.set(sId, setTimeout(() => {
                 SYH_STORAGE.set({
                     [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
                     [`tg_newTelegram__${sId}`]: val
                 });
                 updateNewInputStats(sId);
-            }, 300);
+            }, 300));
         });
 
         $(`#answeredIds__${sId}`).on('input', function () {
             const val = $(this).val();
-            if (answeredIdsTimer) clearTimeout(answeredIdsTimer);
-            answeredIdsTimer = setTimeout(() => {
+            const existing = answeredIdsTimers.get(sId);
+            if (existing) clearTimeout(existing);
+            answeredIdsTimers.set(sId, setTimeout(() => {
                 SYH_STORAGE.set({
                     [POPUP_SHEET_KEYS.answered(sId)]: val,
                     [`tg_answered__${sId}`]: val
                 });
-            }, 300);
+            }, 300));
         });
 
         $(`#finalResultDiv__${sId}`).on('input blur', function () {
             const html = $(this).html();
-            if (finalResultTimer) clearTimeout(finalResultTimer);
-            finalResultTimer = setTimeout(() => {
+            const existing = finalResultTimers.get(sId);
+            if (existing) clearTimeout(existing);
+            finalResultTimers.set(sId, setTimeout(() => {
                 SYH_STORAGE.set({
                     [POPUP_SHEET_KEYS.finalResultHtml(sId)]: html,
                     [`tg_finalResultHtml__${sId}`]: html
                 });
-            }, 300);
+            }, 300));
         });
 
         $(`#deletedLogDetails__${sId}`).on('toggle', function () {
