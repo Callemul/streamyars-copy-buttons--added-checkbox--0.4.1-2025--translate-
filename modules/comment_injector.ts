@@ -1,0 +1,160 @@
+import { CommentService } from './comment_service';
+import { SYH_STORAGE } from './storage';
+import { SYH_BUS } from './event_bus';
+import type {
+    CommentStateCaches,
+    PlatformButtons,
+    CommentPlatformAdapter
+} from './comment_platform_adapter';
+
+export class CommentInjector {
+    constructor(
+        private adapter: CommentPlatformAdapter,
+        private caches: CommentStateCaches
+    ) {}
+
+    public bindCommentEvents(element: Element, _commentKey: string): void {
+        if (this.adapter.isEventsBound(element)) return;
+        this.adapter.markEventsBound(element);
+
+        const ctx = this.adapter.getCommentContext(element);
+        if (!ctx) return;
+
+        const buttons = this.adapter.getButtons(element);
+
+        if (buttons.questionBtn) {
+            buttons.questionBtn.addEventListener('click', (e) => this.handleQuestionClick(e, buttons, element));
+        }
+        if (buttons.prayerBtn) {
+            buttons.prayerBtn.addEventListener('click', (e) => this.handlePrayerClick(e, buttons, element));
+        }
+        if (buttons.copyBtn) {
+            buttons.copyBtn.addEventListener('click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element));
+        }
+        if (buttons.checkboxEl) {
+            buttons.checkboxEl.addEventListener('change', (e) => this.handleCheckboxChange(e, buttons, element));
+        }
+        if (buttons.bodyEl && buttons.checkboxEl) {
+            buttons.bodyEl.addEventListener('contextmenu', (e) => this.handleContextMenu(e, buttons.bodyEl!, buttons.checkboxEl!));
+        }
+    }
+
+    private async handleQuestionClick(
+        e: MouseEvent,
+        buttons: PlatformButtons,
+        element: Element
+    ): Promise<void> {
+        e.stopPropagation();
+        await this.handleAction('question', buttons, element);
+    }
+
+    private async handlePrayerClick(
+        e: MouseEvent,
+        buttons: PlatformButtons,
+        element: Element
+    ): Promise<void> {
+        e.stopPropagation();
+        await this.handleAction('prayer', buttons, element);
+    }
+
+    private async handleAction(
+        type: 'question' | 'prayer',
+        buttons: PlatformButtons,
+        element: Element
+    ): Promise<void> {
+        const ctx = this.adapter.getCommentContext(element);
+        if (!ctx) return;
+        const commentKey = ctx.id;
+
+        const preResult = this.adapter.beforeAction
+            ? await this.adapter.beforeAction(type, ctx, element)
+            : null;
+
+        let sheetId: string | null = null;
+        if (preResult?.sheetId) {
+            sheetId = preResult.sheetId;
+        } else {
+            sheetId = this.adapter.getSheetId(ctx, element);
+        }
+        if (!sheetId) return;
+
+        const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);
+        await CommentService.copyToClipboard(formatted);
+
+        this.adapter.applyButtonState(buttons, type, sheetId);
+
+        this.caches.buttonStates[commentKey] = type;
+        await SYH_STORAGE.setAsync({ [this.adapter.getButtonStatesKey()]: this.caches.buttonStates });
+
+        const item = this.adapter.buildCollectedItem(commentKey, ctx, type);
+        await CommentService.saveCollectedComment(sheetId, item);
+
+        await this.adapter.markChecked(element, commentKey, this.caches);
+
+        const actionResult = { type, context: ctx, sheetId, commentKey };
+        if (this.adapter.afterAction) {
+            await this.adapter.afterAction(actionResult);
+        }
+
+        SYH_BUS.emit('COMMENT_ACTION', {
+            type: type === 'prayer' ? 'prayer' : 'question',
+            author: ctx.author,
+            text: ctx.text
+        });
+    }
+
+    private async handleCopyClick(
+        e: MouseEvent,
+        btn: HTMLElement,
+        element: Element
+    ): Promise<void> {
+        e.stopPropagation();
+        const ctx = this.adapter.getCommentContext(element);
+        if (!ctx) return;
+        const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);
+        const success = await CommentService.copyToClipboard(formatted);
+
+        const origHtml = btn.innerHTML;
+        const origTitle = btn.title;
+        btn.innerHTML = success ? '✓' : '❌';
+        btn.classList.add('syh-copied-flash');
+        setTimeout(() => {
+            btn.innerHTML = origHtml;
+            btn.title = origTitle;
+            btn.classList.remove('syh-copied-flash');
+        }, 1200);
+    }
+
+    private async handleCheckboxChange(
+        e: Event,
+        buttons: PlatformButtons,
+        element: Element
+    ): Promise<void> {
+        e.stopPropagation();
+        const checkbox = buttons.checkboxEl;
+        if (!checkbox) return;
+
+        const ctx = this.adapter.getCommentContext(element);
+        if (!ctx) return;
+
+        const isChecked = checkbox.checked;
+        this.adapter.applyCheckboxState(buttons, isChecked);
+
+        this.caches.checkboxStates[ctx.id] = {
+            checked: isChecked,
+            timestamp: Date.now()
+        };
+        await SYH_STORAGE.setAsync({ [this.adapter.getCheckboxStatesKey()]: this.caches.checkboxStates });
+    }
+
+    private handleContextMenu(
+        e: MouseEvent,
+        bodyEl: HTMLElement,
+        checkbox: HTMLInputElement
+    ): void {
+        e.preventDefault();
+        e.stopPropagation();
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
