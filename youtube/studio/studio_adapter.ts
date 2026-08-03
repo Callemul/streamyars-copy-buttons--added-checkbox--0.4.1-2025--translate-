@@ -79,8 +79,8 @@ export function retroactiveUpdateVideoComments(
 }
 
 export class StudioCommentAdapter implements CommentPlatformAdapter {
-    private static readonly BOUND_ATTR = 'syh-studio-events-bound';
-    private static readonly BUTTON_BOUND_ATTR = 'syh-bound';
+    private static readonly BOUND_ATTR = 'data-syh-studio-events-bound';
+    private static readonly BUTTON_BOUND_ATTR = 'data-syh-bound';
 
     constructor(
         private channelKey: ChannelKey,
@@ -188,11 +188,11 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
     }
 
     public isEventsBound(element: Element): boolean {
-        return (element as HTMLElement).dataset[StudioCommentAdapter.BOUND_ATTR] === 'true';
+        return element.getAttribute(StudioCommentAdapter.BOUND_ATTR) === 'true';
     }
 
     public markEventsBound(element: Element): void {
-        (element as HTMLElement).dataset[StudioCommentAdapter.BOUND_ATTR] = 'true';
+        element.setAttribute(StudioCommentAdapter.BOUND_ATTR, 'true');
     }
 
     public buildCollectedItem(commentKey: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload {
@@ -313,17 +313,17 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         const ui = this.getStudioUI(element);
         if (!ui || !ui.badgeEl || !ui.dropdownEl || !ui.metaContainer) return;
 
-        if (ui.badgeEl.dataset[StudioCommentAdapter.BUTTON_BOUND_ATTR] !== 'true') {
+        if (ui.badgeEl.getAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR) !== 'true') {
             ui.badgeEl.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 const isVisible = ui.dropdownEl!.style.display === 'block';
                 this.toggleDropdown(ui.dropdownEl!, !isVisible, ui.metaContainer!);
             });
-            ui.badgeEl.dataset[StudioCommentAdapter.BUTTON_BOUND_ATTR] = 'true';
+            ui.badgeEl.setAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR, 'true');
         }
 
-        if (ui.dropdownEl.dataset[StudioCommentAdapter.BUTTON_BOUND_ATTR] !== 'true') {
+        if (ui.dropdownEl.getAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR) !== 'true') {
             ui.dropdownEl.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const itemEl = (e.target as HTMLElement).closest<HTMLElement>('.syh-studio-dropdown-item');
@@ -355,7 +355,7 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
 
                 retroactiveUpdateVideoComments(ctx.videoId, this.channelKey, caches);
             });
-            ui.dropdownEl.dataset[StudioCommentAdapter.BUTTON_BOUND_ATTR] = 'true';
+            ui.dropdownEl.setAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR, 'true');
         }
     }
 

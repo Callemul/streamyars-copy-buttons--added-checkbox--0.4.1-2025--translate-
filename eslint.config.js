@@ -36,6 +36,20 @@ export default tseslint.config(
       'prefer-const': 'warn',
       'eqeqeq': ['error', 'always'],
       'no-empty': 'warn',
+      'no-restricted-syntax': [
+        'error',
+        {
+          // dataset['key-with-hyphens'] = ... або ... = dataset['key-with-hyphens']
+          // порушує специфікацію WHATWG DOM (SyntaxError у jsdom і Chrome).
+          // Правильна альтернатива: element.getAttribute('data-key-with-hyphens')
+          //                         element.setAttribute('data-key-with-hyphens', value)
+          selector: "MemberExpression[computed=true][object.property.name='dataset']",
+          message:
+            "Заборонено: dataset[key] (bracket-notation). " +
+            "Використовуй getAttribute / setAttribute з повним 'data-' атрибутом. " +
+            "Причина: дефіси в ключі DOMStringMap кидають SyntaxError (WHATWG DOM spec)."
+        }
+      ],
     }
   }
 );

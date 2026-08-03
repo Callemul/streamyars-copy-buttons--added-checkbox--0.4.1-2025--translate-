@@ -24,7 +24,7 @@ function getVideoId(): string {
 }
 
 export class YouTubeCommentAdapter implements CommentPlatformAdapter {
-    private static readonly BOUND_ATTR = 'syh-yt-events-bound';
+    private static readonly BOUND_ATTR = 'data-syh-yt-events-bound';
 
     public getCommentContext(element: Element): CommentContext | null {
         const commentId = extractCommentId(element);
@@ -99,11 +99,11 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
     }
 
     public isEventsBound(element: Element): boolean {
-        return (element as HTMLElement).dataset[YouTubeCommentAdapter.BOUND_ATTR] === 'true';
+        return element.getAttribute(YouTubeCommentAdapter.BOUND_ATTR) === 'true';
     }
 
     public markEventsBound(element: Element): void {
-        (element as HTMLElement).dataset[YouTubeCommentAdapter.BOUND_ATTR] = 'true';
+        element.setAttribute(YouTubeCommentAdapter.BOUND_ATTR, 'true');
     }
 
     public buildCollectedItem(commentId: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload {
