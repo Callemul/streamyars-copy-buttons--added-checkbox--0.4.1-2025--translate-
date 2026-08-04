@@ -98,6 +98,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const keysToLoad = [
         STORAGE_KEYS.DB,
         STORAGE_KEYS.PRAYERS,
+        STORAGE_KEYS.POPUP_ACTIVE_TAB,
+        STORAGE_KEYS.POPUP_ACTIVE_SUBTAB,
+        STORAGE_KEYS.POPUP_TEXTAREA_SIZES,
+        STORAGE_KEYS.POPUP_TRANSLIT_OLD,
+        STORAGE_KEYS.POPUP_TRANSLIT_NEW,
+        STORAGE_KEYS.POPUP_SCROLL_POSITIONS,
         'tg_active_tab',
         'tg_active_subtab',
         'tg_textarea_sizes',
@@ -228,7 +234,8 @@ document.addEventListener('DOMContentLoaded', function () {
             loadYTCollected(sId);
         });
 
-        if (result.tg_active_tab) {
+        const activeTabVal = result[STORAGE_KEYS.POPUP_ACTIVE_TAB] ?? result.tg_active_tab;
+        if (activeTabVal) {
             document.querySelectorAll('.tab-link').forEach(btn => {
                 btn.classList.remove('active');
                 btn.setAttribute('aria-selected', 'false');
@@ -236,16 +243,17 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            const activeTabLink = document.querySelector<HTMLButtonElement>(`.tab-link[data-tab="${result.tg_active_tab}"]`);
+            const activeTabLink = document.querySelector<HTMLButtonElement>(`.tab-link[data-tab="${activeTabVal}"]`);
             if (activeTabLink) {
                 activeTabLink.classList.add('active');
                 activeTabLink.setAttribute('aria-selected', 'true');
             }
-            const activeTabContent = document.getElementById(result.tg_active_tab);
+            const activeTabContent = document.getElementById(activeTabVal);
             if (activeTabContent) activeTabContent.classList.add('active');
         }
 
-        if (result.tg_active_subtab && SHEET_IDS.includes(result.tg_active_subtab)) {
+        const activeSubtabVal = result[STORAGE_KEYS.POPUP_ACTIVE_SUBTAB] ?? result.tg_active_subtab;
+        if (activeSubtabVal && SHEET_IDS.includes(activeSubtabVal)) {
             document.querySelectorAll('.subtab-button').forEach(btn => {
                 btn.classList.remove('active');
                 btn.setAttribute('aria-selected', 'false');
@@ -253,47 +261,51 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.sheet-content').forEach(content => {
                 content.classList.remove('active');
             });
-            const activeSubtab = document.querySelector<HTMLButtonElement>(`.subtab-button[data-sheet="${result.tg_active_subtab}"]`);
+            const activeSubtab = document.querySelector<HTMLButtonElement>(`.subtab-button[data-sheet="${activeSubtabVal}"]`);
             if (activeSubtab) {
                 activeSubtab.classList.add('active');
                 activeSubtab.setAttribute('aria-selected', 'true');
             }
-            const activeSheet = document.getElementById(`sheet-content-${result.tg_active_subtab}`);
+            const activeSheet = document.getElementById(`sheet-content-${activeSubtabVal}`);
             if (activeSheet) activeSheet.classList.add('active');
         }
 
-        if (result.tg_textarea_sizes) {
-            const sizes = result.tg_textarea_sizes;
-            for (const id in sizes) {
+        const textareaSizes = result[STORAGE_KEYS.POPUP_TEXTAREA_SIZES] ?? result.tg_textarea_sizes;
+        if (textareaSizes) {
+            for (const id in textareaSizes) {
                 const el = document.getElementById(id);
                 if (el && el instanceof HTMLElement) {
-                    if (sizes[id].width) el.style.width = sizes[id].width;
-                    if (sizes[id].height) el.style.height = sizes[id].height;
+                    if (textareaSizes[id].width) el.style.width = textareaSizes[id].width;
+                    if (textareaSizes[id].height) el.style.height = textareaSizes[id].height;
                 }
             }
         }
 
-        if (result.tg_translit_old) {
+        const translitOldVal = result[STORAGE_KEYS.POPUP_TRANSLIT_OLD] ?? result.tg_translit_old;
+        if (translitOldVal) {
             const el = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
-            if (el) el.value = result.tg_translit_old;
+            if (el) el.value = translitOldVal;
         }
-        if (result.tg_translit_new) {
+
+        const translitNewVal = result[STORAGE_KEYS.POPUP_TRANSLIT_NEW] ?? result.tg_translit_new;
+        if (translitNewVal) {
             const el = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
-            if (el) el.value = result.tg_translit_new;
+            if (el) el.value = translitNewVal;
         }
 
         renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
 
-        if (result.tg_scroll_positions) {
-            const scrolls = result.tg_scroll_positions;
+        const scrollPositions = result[STORAGE_KEYS.POPUP_SCROLL_POSITIONS] ?? result.tg_scroll_positions;
+        if (scrollPositions) {
+            const scrolls = scrollPositions;
             setTimeout(() => {
                 if (scrolls.window !== undefined) window.scrollTo(0, scrolls.window);
                 const prayersResultDiv = $(`prayersResultDiv`) as HTMLElement | null;
-                if (prayersResultDiv) prayersResultDiv.scrollTop = scrolls.prayersResultDiv;
+                if (prayersResultDiv) prayersResultDiv.scrollTop = scrolls.prayersResultDiv || 0;
                 const ta1 = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
-                if (ta1) ta1.scrollTop = scrolls.textArea1_oldText;
+                if (ta1) ta1.scrollTop = scrolls.textArea1_oldText || 0;
                 const ta2 = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
-                if (ta2) ta2.scrollTop = scrolls.textArea2_generatedRuText;
+                if (ta2) ta2.scrollTop = scrolls.textArea2_generatedRuText || 0;
 
                 SHEET_IDS.forEach(sId => {
                     const fr = $(`finalResultDiv__${sId}`) as HTMLElement | null;
@@ -326,7 +338,10 @@ document.addEventListener('DOMContentLoaded', function () {
             this.setAttribute('aria-selected', 'true');
             const tabContent = document.getElementById(tabId);
             if (tabContent) tabContent.classList.add('active');
-            SYH_STORAGE.set({ 'tg_active_tab': tabId });
+            SYH_STORAGE.set({
+                [STORAGE_KEYS.POPUP_ACTIVE_TAB]: tabId,
+                'tg_active_tab': tabId
+            });
         });
     });
 
@@ -343,7 +358,10 @@ document.addEventListener('DOMContentLoaded', function () {
             this.setAttribute('aria-selected', 'true');
             const sheetContent = document.getElementById(`sheet-content-${sheetId}`);
             if (sheetContent) sheetContent.classList.add('active');
-            SYH_STORAGE.set({ 'tg_active_subtab': sheetId });
+            SYH_STORAGE.set({
+                [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]: sheetId,
+                'tg_active_subtab': sheetId
+            });
         });
     });
 
@@ -593,7 +611,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 scrolls[`oldList__${sId}`] = ($( `oldList__${sId}`) as HTMLElement | null)?.scrollTop || 0;
                 scrolls[`newTelegram__${sId}`] = ($( `newTelegram__${sId}`) as HTMLElement | null)?.scrollTop || 0;
             });
-            SYH_STORAGE.set({ 'tg_scroll_positions': scrolls });
+            SYH_STORAGE.set({
+                [STORAGE_KEYS.POPUP_SCROLL_POSITIONS]: scrolls,
+                'tg_scroll_positions': scrolls
+            });
         }, 150);
     }
     window.addEventListener('scroll', saveScrollPosition);

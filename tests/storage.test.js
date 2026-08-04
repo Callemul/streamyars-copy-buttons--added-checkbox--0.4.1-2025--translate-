@@ -123,6 +123,11 @@ describe('SYH_STORAGE tests', () => {
         assert.strictEqual(migrateKey('syh_studio_video_sheet_map'), 'syh:studio:video_sheet_map');
         assert.strictEqual(migrateKey('syh_studio_manual_override_log'), 'syh:studio:override_log');
         
+        // Ключі стану попапу
+        assert.strictEqual(migrateKey('tg_active_tab'), 'syh:popup:active_tab');
+        assert.strictEqual(migrateKey('tg_active_subtab'), 'syh:popup:active_subtab');
+        assert.strictEqual(migrateKey('tg_scroll_positions'), 'syh:popup:scroll_positions');
+        
         // Префіксні динамічні ключі
         assert.strictEqual(migrateKey('syh_telegram_data__vp_ss'), 'syh:popup:telegram:data:vp_ss');
         assert.strictEqual(migrateKey('syh_old_input__vp_ss'), 'syh:popup:telegram:oldInput:vp_ss');

@@ -56,7 +56,15 @@ export const STORAGE_KEYS = {
     STUDIO_OVERRIDE_LOG: 'syh:studio:override_log',
 
     // Stats
-    STATS_CHARTS: 'syh:stats:charts'
+    STATS_CHARTS: 'syh:stats:charts',
+
+    // Popup UI State
+    POPUP_ACTIVE_TAB: 'syh:popup:active_tab',
+    POPUP_ACTIVE_SUBTAB: 'syh:popup:active_subtab',
+    POPUP_SCROLL_POSITIONS: 'syh:popup:scroll_positions',
+    POPUP_TEXTAREA_SIZES: 'syh:popup:textarea_sizes',
+    POPUP_TRANSLIT_OLD: 'syh:popup:translit_old',
+    POPUP_TRANSLIT_NEW: 'syh:popup:translit_new',
 } as const;
 
 /**
@@ -105,7 +113,21 @@ const EXACT_KEY_MIGRATIONS: Readonly<Record<string, string>> = {
     'syh_studio_checkbox_state': STORAGE_KEYS.STUDIO_CHECKBOX_STATE,
     'syh_studio_video_sheet_map': STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP,
     'syh_studio_manual_override_log': STORAGE_KEYS.STUDIO_OVERRIDE_LOG,
-    'studio_comment_state': 'syh:studio:state'
+    'studio_comment_state': 'syh:studio:state',
+
+    // Popup state key migrations
+    'tg_active_tab': STORAGE_KEYS.POPUP_ACTIVE_TAB,
+    'syh:popup:legacy:active_tab': STORAGE_KEYS.POPUP_ACTIVE_TAB,
+    'tg_active_subtab': STORAGE_KEYS.POPUP_ACTIVE_SUBTAB,
+    'syh:popup:legacy:active_subtab': STORAGE_KEYS.POPUP_ACTIVE_SUBTAB,
+    'tg_scroll_positions': STORAGE_KEYS.POPUP_SCROLL_POSITIONS,
+    'syh:popup:legacy:scroll_positions': STORAGE_KEYS.POPUP_SCROLL_POSITIONS,
+    'tg_textarea_sizes': STORAGE_KEYS.POPUP_TEXTAREA_SIZES,
+    'syh:popup:legacy:textarea_sizes': STORAGE_KEYS.POPUP_TEXTAREA_SIZES,
+    'tg_translit_old': STORAGE_KEYS.POPUP_TRANSLIT_OLD,
+    'syh:popup:legacy:translit_old': STORAGE_KEYS.POPUP_TRANSLIT_OLD,
+    'tg_translit_new': STORAGE_KEYS.POPUP_TRANSLIT_NEW,
+    'syh:popup:legacy:translit_new': STORAGE_KEYS.POPUP_TRANSLIT_NEW,
 };
 
 const PREFIX_MIGRATIONS: ReadonlyArray<[string, (suffix: string) => string]> = [
@@ -139,6 +161,34 @@ export function migrateKey(oldKey: string): string {
 }
 
 export type StorageKeyValues = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS] | string;
+
+function prepareQueryKeys(keys: StorageKeyValues | StorageKeyValues[]): { origKeys: string[]; queryKeys: string[] } {
+    const origKeys = Array.isArray(keys) ? (keys as string[]) : [keys as string];
+    const keySet = new Set<string>();
+    origKeys.forEach(k => {
+        if (k) {
+            keySet.add(k);
+            const m = migrateKey(k);
+            if (m) keySet.add(m);
+        }
+    });
+    return { origKeys, queryKeys: Array.from(keySet) };
+}
+
+function processGetResult<T>(origKeys: string[], rawResult: Record<string, any>): T {
+    const out: Record<string, any> = { ...rawResult };
+    if (rawResult) {
+        origKeys.forEach(k => {
+            const m = migrateKey(k);
+            const val = rawResult[k] ?? (m ? rawResult[m] : undefined);
+            if (val !== undefined) {
+                out[k] = val;
+                if (m) out[m] = val;
+            }
+        });
+    }
+    return out as T;
+}
 
 export interface StorageAdapter {
     isChromeStorageAvailable(): boolean;
@@ -177,14 +227,14 @@ export const SYH_STORAGE: StorageAdapter = {
             return;
         }
         try {
-            const keysArray = Array.isArray(keys) ? keys : [keys];
-            chrome.storage.local.get(keysArray, (result) => {
+            const { origKeys, queryKeys } = prepareQueryKeys(keys);
+            chrome.storage.local.get(queryKeys, (result) => {
                 if (chrome.runtime.lastError) {
                     console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
                     if (cb) cb({} as T);
                     return;
                 }
-                if (cb) cb((result || {}) as T);
+                if (cb) cb(processGetResult<T>(origKeys, result || {}));
             });
         } catch {
             if (cb) cb({} as T);
@@ -237,14 +287,14 @@ export const SYH_STORAGE: StorageAdapter = {
                 return;
             }
             try {
-                const keysArray = Array.isArray(keys) ? keys : [keys];
-                chrome.storage.local.get(keysArray, (result) => {
+                const { origKeys, queryKeys } = prepareQueryKeys(keys);
+                chrome.storage.local.get(queryKeys, (result) => {
                     if (chrome.runtime.lastError) {
                         console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
                         resolve({} as T);
                         return;
                     }
-                    resolve((result || {}) as T);
+                    resolve(processGetResult<T>(origKeys, result || {}));
                 });
             } catch (e: unknown) {
                 const err = e as Error;
