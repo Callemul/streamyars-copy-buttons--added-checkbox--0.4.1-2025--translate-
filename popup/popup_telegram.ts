@@ -1,5 +1,5 @@
 console.log("[SYH Debug] popup_telegram.ts top-level code executed");
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds, SHEET_REGISTRY } from '../modules/sheets';
 import {
     countQuestionsInText,
@@ -116,12 +116,24 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
 export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
     const sheetKey = `syh:popup:collected:${sheetId}`;
 
-    SYH_STORAGE.get([sheetKey], function(result: Record<string, any>) {
+    SYH_STORAGE.get([sheetKey, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.STUDIO_BUTTON_STATE], function(result: Record<string, any>) {
         let sheetItems: YTCollectedItem[] = result[sheetKey] || [];
         sheetItems = sheetItems.filter(item => item.id !== commentId);
 
+        const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+        const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
+
+        if (ytBtnStates[commentId]) {
+            delete ytBtnStates[commentId];
+        }
+        if (studioBtnStates[commentId]) {
+            delete studioBtnStates[commentId];
+        }
+
         SYH_STORAGE.set({
-            [sheetKey]: sheetItems
+            [sheetKey]: sheetItems,
+            [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
+            [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
         }, function() {
             loadYTCollected(sheetId);
         });
@@ -131,8 +143,25 @@ export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_s
 export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
     if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
         const sheetKey = `syh:popup:collected:${sheetId}`;
-        SYH_STORAGE.set({ [sheetKey]: [] }, function() {
-            loadYTCollected(sheetId);
+        SYH_STORAGE.get([sheetKey, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.STUDIO_BUTTON_STATE], function(result: Record<string, any>) {
+            const items: YTCollectedItem[] = result[sheetKey] || [];
+            const commentIds = items.map(item => item.id);
+
+            const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+            const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
+
+            commentIds.forEach(id => {
+                delete ytBtnStates[id];
+                delete studioBtnStates[id];
+            });
+
+            SYH_STORAGE.set({
+                [sheetKey]: [],
+                [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
+                [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
+            }, function() {
+                loadYTCollected(sheetId);
+            });
         });
     }
 }
