@@ -96,6 +96,8 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         const threadEl = element as HTMLElement;
         const author = getAuthorNameText(threadEl);
         const text = getCommentText(threadEl);
+        if (!author || !text) return null;
+
         let videoTitle = getVideoTitleText(threadEl);
         let videoHref = getVideoLinkHref(threadEl);
 
