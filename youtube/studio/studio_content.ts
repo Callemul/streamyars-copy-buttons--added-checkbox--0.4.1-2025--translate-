@@ -69,6 +69,16 @@ class StudioModuleController {
                 this.caches.videoSheetMap = videoMapChange.newValue || {};
                 this.scheduleProcessComments(true);
             }
+            const buttonStateChange = changes[STUDIO_BUTTON_STATE_KEY];
+            if (buttonStateChange) {
+                this.caches.buttonStates = buttonStateChange.newValue || {};
+                this.scheduleProcessComments(true);
+            }
+            const checkboxStateChange = changes[STUDIO_CHECKBOX_STATE_KEY];
+            if (checkboxStateChange) {
+                this.caches.checkboxStates = checkboxStateChange.newValue || {};
+                this.scheduleProcessComments(true);
+            }
         });
 
         // 4. Initial check & start SPA listeners

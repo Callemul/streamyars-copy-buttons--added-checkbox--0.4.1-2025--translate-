@@ -157,13 +157,13 @@ SYH_STORAGE.onChanged((changes) => {
         }
     }
 
-    if (changes[STORAGE_KEYS.YT_BUTTON_STATES] && changes[STORAGE_KEYS.YT_BUTTON_STATES].newValue) {
-        stateCache.buttonStates = changes[STORAGE_KEYS.YT_BUTTON_STATES].newValue;
+    if (changes[STORAGE_KEYS.YT_BUTTON_STATES]) {
+        stateCache.buttonStates = changes[STORAGE_KEYS.YT_BUTTON_STATES].newValue || {};
         processAllYTComments();
     }
 
-    if (changes[STORAGE_KEYS.YT_CHECKBOX_STATE] && changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue) {
-        stateCache.checkboxStates = changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue;
+    if (changes[STORAGE_KEYS.YT_CHECKBOX_STATE]) {
+        stateCache.checkboxStates = changes[STORAGE_KEYS.YT_CHECKBOX_STATE].newValue || {};
         processAllYTComments();
     }
 
