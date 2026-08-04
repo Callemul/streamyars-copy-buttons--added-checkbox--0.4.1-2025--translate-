@@ -1,3 +1,4 @@
+console.log("[SYH Debug] popup_telegram.ts top-level code executed");
 import { SYH_STORAGE } from '../modules/storage';
 import { getAllSheetIds, SHEET_REGISTRY } from '../modules/sheets';
 import {
@@ -458,7 +459,7 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     });
 }
 
-function initPopupTelegram() {
+export function initPopupTelegramListeners() {
     SYH_STORAGE.onChanged(function(changes: Record<string, any>, areaName: string) {
         if (areaName === 'local') {
             SHEET_IDS.forEach(sId => {
@@ -501,10 +502,4 @@ function initPopupTelegram() {
             });
         }
     });
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPopupTelegram);
-} else {
-    initPopupTelegram();
 }

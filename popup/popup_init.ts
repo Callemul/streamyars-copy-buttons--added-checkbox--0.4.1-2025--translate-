@@ -1,7 +1,8 @@
+console.log("[SYH Debug] popup_init.ts top-level code executed");
 import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
-import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows, clearAllYTCollected } from './popup_telegram';
-import { renderPrayers } from './popup_prayers';
+import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows, clearAllYTCollected, initPopupTelegramListeners } from './popup_telegram';
+import { renderPrayers, initPopupPrayersListeners } from './popup_prayers';
 
 export const db: Record<string, unknown> = {};
 
@@ -94,6 +95,8 @@ function hideElement(id: string): void {
 function initPopup() {
 
     renderSheetTemplates();
+    initPopupTelegramListeners();
+    initPopupPrayersListeners();
 
     const keysToLoad = [
         STORAGE_KEYS.DB,
