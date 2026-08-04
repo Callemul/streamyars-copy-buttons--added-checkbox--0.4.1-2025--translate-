@@ -412,7 +412,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyBtn = $('copyPrayersBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', async function() {
-            const text = outputDiv.getAttribute('data-raw-text') || '';
+            const outputDiv = $('prayersResultDiv');
+            const text = outputDiv ? (outputDiv.getAttribute('data-raw-text') || '') : '';
             if (!text) return;
 
             const btn = this as HTMLElement;
