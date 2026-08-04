@@ -68,24 +68,29 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
             if (!tabs || !tabs[0] || !tabs[0].url) return;
             try {
                 const url = new URL(tabs[0].url);
+                const isStreamYard = url.hostname.includes('streamyard.com');
                 const currentRoomId = url.pathname.replace(/\//g, '');
+                const nonRoomPaths = ['broadcasts', 'destinations', 'plan', 'members', 'billing', 'settings', 'onboarding', 'home', 'login', 'signup', 'logout', ''];
+                const isStudioRoom = isStreamYard && currentRoomId && !nonRoomPaths.includes(currentRoomId.toLowerCase());
 
-                const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
-                const hasForeignPrayers = onlyPrayers.some(p => p.roomId && p.roomId !== currentRoomId);
+                if (isStudioRoom) {
+                    const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
+                    const hasForeignPrayers = onlyPrayers.some(p => p.roomId && p.roomId !== currentRoomId);
 
-                if (hasForeignPrayers) {
-                    const warningHTML = `
-                        <div id="syh-room-warning" style="background: #f39c12; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <span>⚠️ Знайдено молитви з минулого ефіру!</span>
+                    if (hasForeignPrayers) {
+                        const warningHTML = `
+                            <div id="syh-room-warning" style="background: #f39c12; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span>⚠️ Знайдено молитви з минулого ефіру!</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <button id="syh-keep-prayers" style="background: #27ae60; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Залишити як є">✅ Залишити (Це мої)</button>
+                                    <button id="syh-wipe-prayers" style="background: #c0392b; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Видалити старі молитви з пам'яті розширення">🗑️ Очистити все</button>
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                <button id="syh-keep-prayers" style="background: #27ae60; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Залишити як є">✅ Залишити (Це мої)</button>
-                                <button id="syh-wipe-prayers" style="background: #c0392b; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Видалити старі молитви з пам'яті розширення">🗑️ Очистити все</button>
-                            </div>
-                        </div>
-                    `;
-                    outputDiv.insertAdjacentHTML('beforebegin', warningHTML);
+                        `;
+                        outputDiv.insertAdjacentHTML('beforebegin', warningHTML);
+                    }
                 }
             } catch(e) { console.error("[SYH] Room check error", e); }
         });
