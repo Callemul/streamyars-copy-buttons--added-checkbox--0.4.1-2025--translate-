@@ -32,6 +32,7 @@ export function renderSheetTemplates(): void {
         setAttrId('.js-step3-columns', `step3Columns__${sId}`);
         setAttrId('.js-step3-left', `step3Left__${sId}`);
         setAttrId('.js-tg-total-count-left', `tgTotalCountLeft__${sId}`);
+        setAttrId('.js-tg-total-count-right', `tgTotalCountRight__${sId}`);
         setAttrId('.js-new-telegram', `newTelegram__${sId}`);
         setAttrId('.js-step3-divider', `step3Divider__${sId}`);
         setAttrId('.js-step3-right', `step3Right__${sId}`);
