@@ -28,4 +28,33 @@ describe('SheetStateService Tests', () => {
         assert.equal(result.stats.newYTPeople, 2);
         assert.equal(result.stats.totalPeople, 4);
     });
+
+    test('2. computeSheetCounters matches processSheetData counters for new items', () => {
+        const telegramText = `[10.07.2026 20:44] @Alex\nWhat is grace?\n\n[10.07.2026 20:45] @Bob\nWhat is mercy?`;
+        const ytItems = [
+            { id: 'yt_1', author: 'Peter', text: 'How to pray?', type: 'question', timestamp: Date.now(), videoId: 'v1' },
+            { id: 'yt_2', author: 'Anna', text: 'Pray for health', type: 'prayer', timestamp: Date.now(), videoId: 'v1' }
+        ];
+
+        const processResult = SheetStateService.processSheetData({
+            oldListText: '',
+            answeredInput: '',
+            telegramText,
+            ytItems
+        });
+
+        const computeResult = SheetStateService.computeSheetCounters(telegramText, ytItems);
+
+        assert.equal(computeResult.leftPeople, processResult.stats.newLeftPeople);
+        assert.equal(computeResult.leftQuestions, processResult.stats.newLeftQuestionsTotal);
+        assert.equal(computeResult.leftPrayers, processResult.stats.newLeftPrayersTotal);
+
+        assert.equal(computeResult.rightPeople, processResult.stats.newYTPeople);
+        assert.equal(computeResult.rightQuestions, processResult.stats.newYTQuestionsTotal);
+        assert.equal(computeResult.rightPrayers, processResult.stats.newYTPrayersTotal);
+
+        assert.equal(computeResult.totalPeople, computeResult.leftPeople + computeResult.rightPeople);
+        assert.equal(computeResult.totalQuestions, computeResult.leftQuestions + computeResult.rightQuestions);
+        assert.equal(computeResult.totalPrayers, computeResult.leftPrayers + computeResult.rightPrayers);
+    });
 });

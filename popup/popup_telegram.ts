@@ -184,6 +184,55 @@ export function updateCombinedCounters(sheetId: string = 'vp_ss'): void {
     } else {
         if (allEl) { allEl.textContent = ''; allEl.style.display = 'none'; }
     }
+
+    // Update real-time stats bar counters to stay in sync
+    // 1. New Left ("Нові з лівої")
+    let newLeftText = `${stats.leftPeople} люд. - ${stats.leftQuestions} пит.`;
+    if (stats.leftPrayers > 0) newLeftText += ` | Молитви: ${stats.leftPrayers}`;
+    setTextContent(`countNewLeft__${sheetId}`, newLeftText);
+
+    // 2. New YT ("Нові з YouTube")
+    let newYTText = `${stats.rightPeople} люд. - ${stats.rightQuestions} пит.`;
+    if (stats.rightPrayers > 0) newYTText += ` | Молитви: ${stats.rightPrayers}`;
+    setTextContent(`countNewYT__${sheetId}`, newYTText);
+
+    // 3. Old list stats and Total stats
+    const oldListEl = $(`oldList__${sheetId}`) as HTMLTextAreaElement | null;
+    const oldListText = oldListEl?.value || '';
+    const answeredEl = $(`answeredIds__${sheetId}`) as HTMLInputElement | null;
+    const answeredInput = answeredEl?.value || '';
+    const answeredIds = answeredInput
+        .split(/[\s,]+/)
+        .map(s => parseFloat(s.trim()))
+        .filter(n => !isNaN(n));
+    
+    const preservedData = parseAndFilterOldList(oldListText, answeredIds);
+    const oldPeople = preservedData.questions.length;
+    let oldQuestions = 0;
+    preservedData.questions.forEach((q) => oldQuestions += countQuestionsInText(q.text));
+    const oldPrayers = preservedData.prayers.length;
+
+    let delPeople = 0;
+    let delQuestions = 0;
+    preservedData.deleted.forEach(d => {
+        if (d.type === 'block') {
+            delPeople++;
+            delQuestions += d.count;
+        } else if (d.type === 'sub') {
+            delQuestions += d.count;
+        }
+    });
+
+    setTextContent(`countOld__${sheetId}`, `${oldPeople} люд. - ${oldQuestions} пит.`);
+    setTextContent(`countDel__${sheetId}`, `${delPeople} люд. - ${delQuestions} пит.`);
+
+    const totalPeople = oldPeople + stats.leftPeople + stats.rightPeople;
+    const totalQuestions = oldQuestions + stats.leftQuestions + stats.rightQuestions;
+    const totalPrayers = oldPrayers + stats.leftPrayers + stats.rightPrayers;
+
+    let totalText = `${totalPeople} люд. - ${totalQuestions} пит.`;
+    if (totalPrayers > 0) totalText += ` | Молитви: ${totalPrayers}`;
+    setTextContent(`countTotal__${sheetId}`, totalText);
 }
 
 export function updateNewInputStats(sheetId: string = 'vp_ss'): void {
@@ -249,9 +298,7 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
 
     const { questions, prayers, stats, deletedLog: delLog, cleaningLog } = result;
 
-    const oldCountEl = $(`countOld__${sheetId}`);
-    if (oldCountEl) oldCountEl.innerHTML = `Залишилось старих: <b>${stats.oldPeople} люд. - ${stats.oldQuestionsTotal} пит.</b>`;
-
+    setTextContent(`countOld__${sheetId}`, `${stats.oldPeople} люд. - ${stats.oldQuestionsTotal} пит.`);
     setTextContent(`countDel__${sheetId}`, `${stats.delPeople} люд. - ${stats.delQuestionsTotal} пит.`);
 
     let newLeftText = `${stats.newLeftPeople} люд. - ${stats.newLeftQuestionsTotal} пит.`;
