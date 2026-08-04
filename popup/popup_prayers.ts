@@ -260,7 +260,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     outputDiv.setAttribute('data-raw-text', fullTextForCopy.trim());
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function initPopupPrayers() {
     document.addEventListener('focusin', function(e) {
         const target = e.target as Element | null;
         const el = target?.closest('.editable-prayer') as HTMLElement | null;
@@ -485,4 +485,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPopupPrayers);
+} else {
+    initPopupPrayers();
+}

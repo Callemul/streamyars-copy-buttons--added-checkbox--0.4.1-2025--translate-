@@ -91,7 +91,7 @@ function hideElement(id: string): void {
     if (el && el instanceof HTMLElement) el.style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function initPopup() {
 
     renderSheetTemplates();
 
@@ -692,4 +692,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPopup);
+} else {
+    initPopup();
+}

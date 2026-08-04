@@ -458,7 +458,7 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function initPopupTelegram() {
     SYH_STORAGE.onChanged(function(changes: Record<string, any>, areaName: string) {
         if (areaName === 'local') {
             SHEET_IDS.forEach(sId => {
@@ -501,4 +501,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPopupTelegram);
+} else {
+    initPopupTelegram();
+}
