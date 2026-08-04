@@ -37,7 +37,7 @@ export const TELEGRAM_HEADER_MARKER_REGEX = /❓❓❓|🙏+|(?:\d+\uFE0F?\u20E3
  * Розбиває за заголовками привіду типу "🙏 МОЛИТВА" або "🙏 ПРОХАННЯ".
  * Дублікувався попередньо в banner_creator.ts та telegram_parser.ts.
  */
-export const PRAYER_SECTION_SPLIT_REGEX = /(?:^|\r?\n)\s*🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu;
+export const PRAYER_SECTION_SPLIT_REGEX = /(?:^|\r?\n)(?:\s*|\[\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}\]\s*[^:\r\n]+:\s*)🙏+[^\r\n]*(?:МОЛИТ|ПРОХАН)[^\r\n]*/iu;
 
 /**
  * Регулярний вираз для визначення, чи рядок є початком питання.
