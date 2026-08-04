@@ -303,6 +303,10 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         if (threadEl) {
             updateStudioCheckedClass(threadEl, checkboxState);
         }
+        const ui = this.getStudioUI(element);
+        if (ui && ui.checkboxEl) {
+            ui.checkboxEl.checked = checkboxState;
+        }
     }
 
     public bindStudioSpecificEvents(
