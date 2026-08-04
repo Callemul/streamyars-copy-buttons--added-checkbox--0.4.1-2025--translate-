@@ -57,4 +57,20 @@ describe('SheetStateService Tests', () => {
         assert.equal(computeResult.totalQuestions, computeResult.leftQuestions + computeResult.rightQuestions);
         assert.equal(computeResult.totalPrayers, computeResult.leftPrayers + computeResult.rightPrayers);
     });
+
+    test('3. processSheetData with empty text inputs and populated ytItems', () => {
+        const result = SheetStateService.processSheetData({
+            oldListText: '',
+            answeredInput: '',
+            telegramText: '',
+            ytItems: [
+                { id: 'yt_1', author: 'Peter', text: 'How to pray?', type: 'question', timestamp: Date.now(), videoId: 'v1' },
+                { id: 'yt_2', author: 'Anna', text: 'Pray for health', type: 'prayer', timestamp: Date.now(), videoId: 'v1' }
+            ]
+        });
+
+        assert.equal(result.questions.length, 1);
+        assert.equal(result.prayers.length, 1);
+        assert.equal(result.stats.totalPeople, 2);
+    });
 });

@@ -289,6 +289,15 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     const telegramText = newTgEl?.value || '';
     const ytItems = syh_collected_by_sheet[sheetId] || [];
 
+    console.log(`[SYH Debug] processTelegramData for sheet: ${sheetId}`);
+    console.log('[SYH Debug] Inputs:', {
+        oldListTextLength: oldListText.length,
+        answeredInput,
+        telegramTextLength: telegramText.length,
+        ytItemsCount: ytItems.length,
+        ytItemsRaw: JSON.stringify(ytItems)
+    });
+
     const result = SheetStateService.processSheetData({
         oldListText,
         answeredInput,
@@ -297,6 +306,17 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     });
 
     const { questions, prayers, stats, deletedLog: delLog, cleaningLog } = result;
+
+    console.log('[SYH Debug] Processed Result:', {
+        questionsCount: questions.length,
+        prayersCount: prayers.length,
+        questions: JSON.stringify(questions),
+        prayers: JSON.stringify(prayers),
+        stats
+    });
+
+    const debugOutputDiv = $(`finalResultDiv__${sheetId}`);
+    console.log('[SYH Debug] outputDiv found:', !!debugOutputDiv);
 
     setTextContent(`countOld__${sheetId}`, `${stats.oldPeople} люд. - ${stats.oldQuestionsTotal} пит.`);
     setTextContent(`countDel__${sheetId}`, `${stats.delPeople} люд. - ${stats.delQuestionsTotal} пит.`);
