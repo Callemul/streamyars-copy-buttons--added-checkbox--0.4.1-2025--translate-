@@ -226,18 +226,8 @@ ytcp-comment-video-thumbnail {
     border-color: rgba(231, 76, 60, 0.4);
 }
 
-/* Sermon badges (Preach) overrides to distinguish them from СШ */
-.syh-studio-badge.syh-badge-preach.syh-badge-auto {
-    background-color: rgba(39, 174, 96, 0.15);
-    color: #27ae60;
-    border-color: rgba(39, 174, 96, 0.4);
-}
+/* Sermon badges (Preach) use standard blue background, no green background */
 
-.syh-studio-badge.syh-badge-preach.syh-badge-manual {
-    background-color: rgba(39, 174, 96, 0.28);
-    color: #1e7e43;
-    border-color: rgba(39, 174, 96, 0.6);
-}
 
 .syh-badge-highlight {
     animation: syhPulseWarning 0.6s infinite alternate;
@@ -377,3 +367,97 @@ html[dark="true"] .syh-studio-dropdown-reset:hover {
     opacity: 1 !important;
     filter: none !important;
 }
+
+/* --- Header Duplicate Counters (sticky inside #comment-header) --- */
+.syh-header-counters-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 16px;
+    vertical-align: middle;
+    flex-wrap: nowrap;
+}
+
+.syh-header-counter-badge {
+    font-family: Roboto, Noto, Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background-color: rgba(6, 95, 212, 0.08);
+    color: var(--ytcp-primary-text, #030303);
+    border: 1px solid rgba(6, 95, 212, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+    white-space: nowrap;
+}
+
+html[dark] .syh-header-counter-badge,
+html[dark="true"] .syh-header-counter-badge {
+    background-color: rgba(110, 168, 254, 0.12);
+    color: var(--ytcp-primary-text, #ffffff);
+    border-color: rgba(110, 168, 254, 0.35);
+}
+
+.syh-header-sheet-label b {
+    font-weight: 800 !important;
+}
+
+.syh-header-stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+}
+
+.syh-stat-questions {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.syh-stat-questions .syh-counter-num-q {
+    color: #27ae60;
+    font-weight: 800;
+}
+
+.syh-stat-prayers {
+    color: #9b59b6;
+    font-weight: 600;
+}
+
+.syh-stat-prayers .syh-counter-num-p {
+    color: #9b59b6;
+    font-weight: 800;
+}
+
+html[dark] .syh-stat-questions,
+html[dark="true"] .syh-stat-questions,
+html[dark] .syh-stat-questions .syh-counter-num-q,
+html[dark="true"] .syh-stat-questions .syh-counter-num-q {
+    color: #2ecc71;
+}
+
+html[dark] .syh-stat-prayers,
+html[dark="true"] .syh-stat-prayers,
+html[dark] .syh-stat-prayers .syh-counter-num-p,
+html[dark="true"] .syh-stat-prayers .syh-counter-num-p {
+    color: #af7ac5;
+}
+
+.syh-header-counter-unknown {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+html[dark] .syh-header-counter-unknown,
+html[dark="true"] .syh-header-counter-unknown {
+    background-color: rgba(255, 107, 107, 0.15);
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.35);
+}
+
+

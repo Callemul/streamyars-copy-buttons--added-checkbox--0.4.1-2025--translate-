@@ -163,6 +163,15 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
         element.classList.add('syh-yt-comment-checked');
     }
 
+    public async unmarkChecked(element: Element, _commentKey: string, _caches: CommentStateCaches): Promise<void> {
+        const checkbox = element.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
+        if (!checkbox) return;
+
+        checkbox.checked = false;
+        element.classList.remove('syh-yt-comment-checked');
+    }
+
+
     public isEventsBound(element: Element): boolean {
         return element.getAttribute(YouTubeCommentAdapter.BOUND_ATTR) === 'true';
     }

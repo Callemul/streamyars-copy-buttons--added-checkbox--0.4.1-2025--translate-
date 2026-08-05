@@ -26,11 +26,13 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
-import { getCommentThreads } from './studio_selectors';
+import { getCommentThreads, getCommentHeaderLabelElement, getCommentHeaderElement } from './studio_selectors';
 import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 import { getAllSheetIds } from '../../modules/sheets';
+import { renderStudioHeaderCounters, type SheetHeaderStats } from './studio_header_counters';
+import { countQuestionsInText } from '../../modules/telegram_parser';
 import type { CommentPayload } from '../../modules/comment_service';
 
 const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
@@ -45,6 +47,7 @@ class StudioModuleController {
     private pollInterval: number | null = null;
     private scrollHandler: (() => void) | null = null;
     private contextMenuHandler: ((e: MouseEvent) => void) | null = null;
+    private sheetStatsMap: Record<string, SheetHeaderStats> = {};
     private caches: StudioEventCaches = {
         videoSheetMap: {},
         buttonStates: {},
@@ -115,13 +118,25 @@ class StudioModuleController {
                 this.caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
 
                 const collected: CommentPayload[] = [];
+                const sheetStatsMap: Record<string, SheetHeaderStats> = {};
                 sheetIds.forEach((sId) => {
                     const list = res[`syh:popup:collected:${sId}`];
+                    let questions = 0;
+                    let prayers = 0;
                     if (Array.isArray(list)) {
                         collected.push(...list);
+                        list.forEach((item: any) => {
+                            if (item.type === 'question') {
+                                questions += countQuestionsInText(item.text || '');
+                            } else if (item.type === 'prayer') {
+                                prayers += 1;
+                            }
+                        });
                     }
+                    sheetStatsMap[sId] = { questions, prayers };
                 });
                 this.caches.collectedItems = collected;
+                this.sheetStatsMap = sheetStatsMap;
                 resolve();
             });
         });
@@ -236,7 +251,7 @@ class StudioModuleController {
         }
 
         // Cleanup injected UI elements
-        document.querySelectorAll('.syh-studio-btn, .syh-studio-video-meta').forEach((el) => el.remove());
+        document.querySelectorAll('.syh-studio-btn, .syh-studio-video-meta, .syh-header-counters-wrapper').forEach((el) => el.remove());
         document.querySelectorAll('.syh-studio-comment-checked').forEach((el) => el.classList.remove('syh-studio-comment-checked'));
     }
 
@@ -260,6 +275,8 @@ class StudioModuleController {
         const channelKey = this.channelInfo?.key || 'unknown';
         const channelLabel = this.channelInfo?.label || 'Невідомий канал';
 
+        this.updateHeaderCounters();
+
         const threads = getCommentThreads();
         // Process parent comments first so replies can inherit their videoKey
         const sortedThreads = threads.slice().sort((a, b) => {
@@ -270,6 +287,23 @@ class StudioModuleController {
         sortedThreads.forEach((threadEl) => {
             bindStudioCommentEvents(threadEl, channelKey, channelLabel, this.caches, forceUpdate);
         });
+    }
+
+    private updateHeaderCounters(): void {
+        if (!this.enabled || !this.isCommentsPage()) return;
+
+        // Cleanup any legacy badges near 'Спільнота' header
+        document.querySelectorAll('ytcp-entity-page-header .syh-header-counters-wrapper').forEach((el) => el.remove());
+
+        if (!this.channelInfo || this.channelInfo.key === 'unknown') {
+            this.channelInfo = getStudioChannelInfo();
+        }
+
+        const channelKey = this.channelInfo?.key || 'unknown';
+        const headerTarget = getCommentHeaderLabelElement() || getCommentHeaderElement();
+        if (headerTarget) {
+            renderStudioHeaderCounters(headerTarget, channelKey, this.sheetStatsMap);
+        }
     }
 
     private setupSPAListeners(): void {

@@ -203,6 +203,22 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: this.caches.checkboxStates });
     }
 
+    public async unmarkChecked(element: Element, commentKey: string, _caches: CommentStateCaches): Promise<void> {
+        const checkbox = element.querySelector('.syh-studio-checkbox') as HTMLInputElement | null;
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+        const threadEl = element.closest('ytcp-comment, ytcp-comment-thread') as HTMLElement | null;
+        if (threadEl) {
+            updateStudioCheckedClass(threadEl, false);
+        }
+        this.caches.checkboxStates[commentKey] = {
+            checked: false,
+            timestamp: Date.now()
+        };
+        await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: this.caches.checkboxStates });
+    }
+
     public isEventsBound(element: Element): boolean {
         return element.getAttribute(StudioCommentAdapter.BOUND_ATTR) === 'true';
     }

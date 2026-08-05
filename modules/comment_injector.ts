@@ -85,6 +85,34 @@ export class CommentInjector {
         }
         if (!sheetId) return;
 
+        const currentState = this.caches.buttonStates[commentKey];
+        const isUntoggle = currentState === type;
+
+        if (isUntoggle) {
+            // UNTOGGLE (Second press on the SAME active button):
+            delete this.caches.buttonStates[commentKey];
+            await SYH_STORAGE.setAsync({ [this.adapter.getButtonStatesKey()]: this.caches.buttonStates });
+            this.adapter.applyButtonState(buttons, null, sheetId);
+
+            await CommentService.removeCollectedComment(sheetId, commentKey, ctx.author, ctx.text);
+
+            this.adapter.applyCheckboxState(buttons, false);
+            if (this.adapter.unmarkChecked) {
+                await this.adapter.unmarkChecked(element, commentKey, this.caches);
+            } else {
+                this.caches.checkboxStates[commentKey] = {
+                    checked: false,
+                    timestamp: Date.now()
+                };
+                await SYH_STORAGE.setAsync({ [this.adapter.getCheckboxStatesKey()]: this.caches.checkboxStates });
+            }
+
+            if (this.adapter.afterAction) {
+                await this.adapter.afterAction({ type: null, context: ctx, sheetId, commentKey });
+            }
+            return;
+        }
+
         const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);
         await CommentService.copyToClipboard(formatted);
 

@@ -24,7 +24,7 @@ export interface PlatformButtons {
 }
 
 export interface ActionContext {
-    type: 'question' | 'prayer';
+    type: ButtonStateType;
     context: CommentContext;
     sheetId: string;
     commentKey: string;
@@ -39,6 +39,7 @@ export interface CommentPlatformAdapter {
     applyButtonState(buttons: PlatformButtons, state: ButtonStateType, sheetId: string | null): void;
     applyCheckboxState(buttons: PlatformButtons, isChecked: boolean): void;
     markChecked(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
+    unmarkChecked?(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
     beforeAction?(type: 'question' | 'prayer', context: CommentContext, element: Element): Promise<{ sheetId: string } | null>;
     afterAction?(action: ActionContext): Promise<void>;
     isEventsBound(element: Element): boolean;

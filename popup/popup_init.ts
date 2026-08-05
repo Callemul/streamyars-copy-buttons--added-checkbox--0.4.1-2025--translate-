@@ -1,7 +1,6 @@
-console.log("[SYH Debug] popup_init.ts top-level code executed");
 import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
-import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows, clearAllYTCollected, initPopupTelegramListeners } from './popup_telegram';
+import { updateOldInputStats, updateNewInputStats, updateCombinedCounters, clearFinalResult, loadYTCollected, ensureStatsBarRows, clearAllYTCollected, initPopupTelegramListeners } from './popup_telegram';
 import { renderPrayers, initPopupPrayersListeners } from './popup_prayers';
 
 export const db: Record<string, unknown> = {};
@@ -406,6 +405,7 @@ function initPopup() {
                         [`tg_newTelegram__${sId}`]: val
                     });
                     updateNewInputStats(sId);
+                    clearFinalResult(sId);
                 }, 300));
             });
         }
@@ -421,6 +421,8 @@ function initPopup() {
                         [POPUP_SHEET_KEYS.answered(sId)]: val,
                         [`tg_answered__${sId}`]: val
                     });
+                    updateCombinedCounters(sId);
+                    clearFinalResult(sId);
                 }, 300));
             });
         }

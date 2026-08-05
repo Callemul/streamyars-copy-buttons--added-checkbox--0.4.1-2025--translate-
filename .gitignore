@@ -38,4 +38,5 @@ coverage/
 # Agent / AI local workspace metadata
 .gemini/
 .codegraph/
+.codebase-memory/
 

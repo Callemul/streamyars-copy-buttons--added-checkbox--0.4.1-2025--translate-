@@ -97,6 +97,32 @@ export class CommentService {
     }
 
     /**
+     * Уніфіковане видалення зібраного коментаря з відповідного аркуша сховища
+     */
+    public static async removeCollectedComment(
+        sheetId: string,
+        commentId: string,
+        author?: string,
+        text?: string
+    ): Promise<CommentPayload[]> {
+        const storageKey = `syh:popup:collected:${sheetId}`;
+        const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
+        const list = result[storageKey] || [];
+        const updated = list.filter(item => !(
+            item.id === commentId ||
+            (author && text && item.author === author && item.text === text)
+        ));
+
+        await SYH_STORAGE.setAsync({ [storageKey]: updated });
+        SYH_BUS.emit('SHEET_DATA_PROCESSED', {
+            sheetId,
+            totalQuestions: updated.filter(i => i.type === 'question').length,
+            totalPrayers: updated.filter(i => i.type === 'prayer').length
+        });
+        return updated;
+    }
+
+    /**
      * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL
      */
     public static async savePrayerRecord(record: PrayerRecord): Promise<PrayerRecord[]> {

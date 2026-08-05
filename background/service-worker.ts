@@ -60,6 +60,24 @@ class ServiceWorkerMessageRouter {
       console.log(`[Content/Popup Log]:`, message.data);
       return { status: 'logged' };
     });
+
+    this.register('OPEN_SHEET_POPUP', async (message) => {
+      const sheetId = message.sheetId;
+      if (sheetId && typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        await chrome.storage.local.set({
+          [STORAGE_KEYS.POPUP_ACTIVE_TAB]: 'tab-telegram',
+          [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]: sheetId
+        });
+        if (typeof chrome.action !== 'undefined' && typeof chrome.action.openPopup === 'function') {
+          try {
+            await chrome.action.openPopup();
+          } catch (e) {
+            console.log('[SW] chrome.action.openPopup not supported or requires gesture:', e);
+          }
+        }
+      }
+      return { status: 'ok' };
+    });
   }
 
   public listen(): void {

@@ -295,4 +295,121 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
         assert.ok(ctxEmoji);
         assert.equal(ctxEmoji.text, '🙏🙏❤️');
     });
+
+    test('10. studio_header_counters correctly resolves sheets and renders badges for each channel', async () => {
+        const { getSheetsForChannel, renderStudioHeaderCounters } = await import('../youtube/studio/studio_header_counters.ts');
+        const { getCurrentStudioChannelKey } = await import('../youtube/studio/studio_channel.ts');
+
+        assert.deepEqual(getSheetsForChannel('vp'), ['vp_ss', 'oparin']);
+        assert.deepEqual(getSheetsForChannel('slovo'), ['molchanov_ss', 'molchanov_preach']);
+        assert.deepEqual(getSheetsForChannel('unknown'), []);
+
+        // Mock parent DOM element
+        const children = [];
+        const parent = {
+            querySelector: (sel) => children.find(c => c.className === sel.replace('.', '')),
+            appendChild: (child) => { children.push(child); return child; }
+        };
+
+        // Node fake element creation helper
+        global.document = global.document || {
+            createElement: (tag) => ({
+                tagName: tag.toUpperCase(),
+                className: '',
+                innerHTML: '',
+                appendChild: function(c) { this.children = this.children || []; this.children.push(c); }
+            })
+        };
+
+        // Test rendering for channel 'slovo'
+        const statsSlovo = {
+            molchanov_ss: { questions: 5, prayers: 1 },
+            molchanov_preach: { questions: 2, prayers: 0 }
+        };
+        const wrapperSlovo = renderStudioHeaderCounters(parent, 'slovo', statsSlovo);
+
+        assert.ok(wrapperSlovo);
+        assert.ok(wrapperSlovo.innerHTML.includes('Молчанов <b>СШ</b>'));
+        assert.ok(wrapperSlovo.innerHTML.includes('Молчанов <b>проповеди</b>'));
+        assert.ok(wrapperSlovo.innerHTML.includes('❓ <b class="syh-counter-num-q">5</b>'));
+        assert.ok(wrapperSlovo.innerHTML.includes('🙏 <b class="syh-counter-num-p">1</b>'));
+        assert.ok(wrapperSlovo.innerHTML.includes('❓ <b class="syh-counter-num-q">2</b>'));
+        assert.ok(!wrapperSlovo.innerHTML.includes('Нові з YouTube'));
+        assert.ok(!wrapperSlovo.innerHTML.includes('Время перемен'));
+        assert.ok(!wrapperSlovo.innerHTML.includes('Опарин'));
+
+        // Test rendering for channel 'vp'
+        const statsVp = {
+            vp_ss: { questions: 3, prayers: 4 },
+            oparin: { questions: 1, prayers: 0 }
+        };
+        const wrapperVp = renderStudioHeaderCounters(parent, 'vp', statsVp);
+
+        assert.ok(wrapperVp.innerHTML.includes('Время перемен <b>СШ</b>'));
+        assert.ok(wrapperVp.innerHTML.includes('Опарин <b>проповеди</b>'));
+        assert.ok(wrapperVp.innerHTML.includes('❓ <b class="syh-counter-num-q">3</b>'));
+        assert.ok(wrapperVp.innerHTML.includes('🙏 <b class="syh-counter-num-p">4</b>'));
+        assert.ok(wrapperVp.innerHTML.includes('❓ <b class="syh-counter-num-q">1</b>'));
+        assert.ok(!wrapperVp.innerHTML.includes('Молчанов'));
+
+        // Test rendering for unknown channel
+        const wrapperUnknown = renderStudioHeaderCounters(parent, 'unknown', {});
+        assert.ok(wrapperUnknown.innerHTML.includes('Канал не розпізнано'));
+    });
+
+    test('11. CommentInjector untoggles on repeat click, removes collected item, and unchecks checkbox', async () => {
+        let appliedState = 'initial';
+        let appliedCheckbox = null;
+
+        const dummyAdapter = {
+            isEventsBound: () => false,
+            markEventsBound: () => {},
+            getCommentContext: () => ({ id: 'c_toggle_1', author: 'User1', text: 'Prayer request', videoId: 'v1', videoTitle: 'Test' }),
+            getButtons: () => ({
+                questionBtn: null,
+                prayerBtn: null,
+                copyBtn: null,
+                checkboxEl: { checked: true },
+                bodyEl: null
+            }),
+            getSheetId: () => 'vp_ss',
+            getButtonStatesKey: () => 'syh_button_states',
+            getCheckboxStatesKey: () => 'syh_checkbox_states',
+            applyButtonState: (btns, state) => { appliedState = state; },
+            applyCheckboxState: (btns, isChecked) => { appliedCheckbox = isChecked; },
+            markChecked: async () => {},
+            unmarkChecked: async (el, key, caches) => {
+                caches.checkboxStates[key] = { checked: false, timestamp: Date.now() };
+            },
+            buildCollectedItem: (key, ctx, type) => ({ id: key, author: ctx.author, text: ctx.text, type })
+        };
+
+        const caches = { buttonStates: {}, checkboxStates: {} };
+        const injector = new CommentInjector(dummyAdapter, caches);
+
+        let prayerListener;
+        const fakePrayerBtn = {
+            addEventListener: (evt, fn) => { if (evt === 'click') prayerListener = fn; }
+        };
+        dummyAdapter.getButtons = () => ({
+            prayerBtn: fakePrayerBtn,
+            checkboxEl: { checked: true, addEventListener: () => {} }
+        });
+
+        injector.bindCommentEvents({}, 'c_toggle_1');
+
+        // First click -> sets to prayer
+        await prayerListener({ stopPropagation: () => {} });
+        assert.equal(caches.buttonStates['c_toggle_1'], 'prayer');
+        assert.equal(appliedState, 'prayer');
+
+        // Second click on same prayer button -> untoggles!
+        await prayerListener({ stopPropagation: () => {} });
+        assert.equal(caches.buttonStates['c_toggle_1'], undefined);
+        assert.equal(appliedState, null);
+        assert.equal(appliedCheckbox, false);
+        assert.equal(caches.checkboxStates['c_toggle_1'].checked, false);
+    });
 });
+
+

@@ -37,8 +37,20 @@ export const STUDIO_SELECTORS = {
     VIDEO_THUMBNAIL: ['ytcp-comment-video-thumbnail', '.video-thumbnail'],
     VIDEO_TITLE: ['#video-title', '.video-title-text'],
     VIDEO_LINK: ['ytcp-comment-video-thumbnail a#body', '#video-title a', 'a.ytcp-comment-video-thumbnail'],
-    COMMENTS_ITEMS_CONTAINER: ['#comments-content #items', '#iron-list #items', '#comments-section #items', '#items']
+    COMMENTS_ITEMS_CONTAINER: ['#comments-content #items', '#iron-list #items', '#comments-section #items', '#items'],
+    COMMENT_HEADER_SPAN: ['#comment-header span.ytcp-comments-section', '#comment-header span', 'ytcp-comments-section #comment-header span'],
+    COMMENT_HEADER: ['#comment-header', 'ytcp-comments-section #comment-header']
 };
+
+export function getCommentHeaderLabelElement(doc: Document | HTMLElement = document): HTMLElement | null {
+    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT_HEADER_SPAN) ? STUDIO_SELECTORS.COMMENT_HEADER_SPAN.join(',') : STUDIO_SELECTORS.COMMENT_HEADER_SPAN;
+    return doc.querySelector<HTMLElement>(selector);
+}
+
+export function getCommentHeaderElement(doc: Document | HTMLElement = document): HTMLElement | null {
+    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT_HEADER) ? STUDIO_SELECTORS.COMMENT_HEADER.join(',') : STUDIO_SELECTORS.COMMENT_HEADER;
+    return doc.querySelector<HTMLElement>(selector);
+}
 
 export function getChannelNameElement(doc: Document | HTMLElement = document): HTMLElement | null {
     const selector = Array.isArray(STUDIO_SELECTORS.CHANNEL_NAME) ? STUDIO_SELECTORS.CHANNEL_NAME.join(',') : STUDIO_SELECTORS.CHANNEL_NAME;

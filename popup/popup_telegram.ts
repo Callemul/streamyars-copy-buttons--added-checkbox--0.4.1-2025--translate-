@@ -1,5 +1,5 @@
 console.log("[SYH Debug] popup_telegram.ts top-level code executed");
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS } from '../modules/storage';
 import { getAllSheetIds, SHEET_REGISTRY } from '../modules/sheets';
 import {
     countQuestionsInText,
@@ -26,22 +26,38 @@ function showElement(id: string): void {
     if (el && el instanceof HTMLElement) el.style.display = '';
 }
 
+export function clearFinalResult(sheetId: string): void {
+    const frEl = $(`finalResultDiv__${sheetId}`);
+    if (frEl) {
+        frEl.innerHTML = '';
+    }
+    SYH_STORAGE.set({
+        [POPUP_SHEET_KEYS.finalResultHtml(sheetId)]: '',
+        [`tg_finalResultHtml__${sheetId}`]: ''
+    });
+}
+
 export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
     const oldListEl = $(`oldList__${sheetId}`) as HTMLTextAreaElement | null;
     const text = oldListEl?.value || '';
-    if (!text) { setTextContent(`oldTotalCount__${sheetId}`, ''); return; }
-    const parsed = parseAndFilterOldList(text, []);
-    const qPeople = parsed.questions.length;
-    let qQuestions = 0;
-    parsed.questions.forEach((q: TelegramQuestionItem) => qQuestions += countQuestionsInText(q.text));
-    const pCount = parsed.prayers.length;
-    const countEl = $(`oldTotalCount__${sheetId}`);
-    if (countEl) {
-        countEl.textContent = `(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`;
-        countEl.style.color = '#2b7de9';
-        countEl.style.fontWeight = 'bold';
-        countEl.style.fontSize = '12px';
+    if (!text) {
+        setTextContent(`oldTotalCount__${sheetId}`, '');
+    } else {
+        const parsed = parseAndFilterOldList(text, []);
+        const qPeople = parsed.questions.length;
+        let qQuestions = 0;
+        parsed.questions.forEach((q: TelegramQuestionItem) => qQuestions += countQuestionsInText(q.text));
+        const pCount = parsed.prayers.length;
+        const countEl = $(`oldTotalCount__${sheetId}`);
+        if (countEl) {
+            countEl.textContent = `(${qPeople} люд. - ${qQuestions} пит. | Молитви: ${pCount})`;
+            countEl.style.color = '#2b7de9';
+            countEl.style.fontWeight = 'bold';
+            countEl.style.fontSize = '12px';
+        }
     }
+    updateCombinedCounters(sheetId);
+    clearFinalResult(sheetId);
 }
 
 const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
@@ -136,6 +152,7 @@ export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_s
             [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
         }, function() {
             loadYTCollected(sheetId);
+            clearFinalResult(sheetId);
         });
     });
 }
@@ -161,6 +178,7 @@ export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
                 [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
             }, function() {
                 loadYTCollected(sheetId);
+                clearFinalResult(sheetId);
             });
         });
     }
@@ -494,6 +512,7 @@ export function initPopupTelegramListeners() {
             SHEET_IDS.forEach(sId => {
                 if (changes[`syh:popup:collected:${sId}`] || changes[`syh_collected__${sId}`]) {
                     loadYTCollected(sId);
+                    clearFinalResult(sId);
                 }
             });
         }

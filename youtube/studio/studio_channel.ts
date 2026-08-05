@@ -44,4 +44,12 @@ export function getStudioChannelInfo(): StudioChannelInfo {
     };
 }
 
+/**
+ * Helper function to quickly get the current channel key on YouTube Studio page
+ */
+export function getCurrentStudioChannelKey(): ChannelKey {
+    return getStudioChannelInfo().key;
+}
+
 // Pure ESM module export
+
