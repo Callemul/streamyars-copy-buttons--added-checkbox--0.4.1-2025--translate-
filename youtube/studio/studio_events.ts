@@ -20,6 +20,7 @@ import { CommentInjector } from '../../modules/comment_injector';
 import { StudioCommentAdapter, type StudioEventCaches, retroactiveUpdateVideoComments } from './studio_adapter';
 import type { SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
+import { STUDIO_SELECTORS } from './studio_selectors';
 
 export type { StudioEventCaches };
 
@@ -31,6 +32,63 @@ export function saveStudioCollectedItem(
 }
 
 export { retroactiveUpdateVideoComments };
+
+function setupVideoMetadataObserver(
+    threadEl: HTMLElement,
+    videoTitle: string,
+    videoId: string,
+    onLoaded: () => void
+): void {
+    if ((threadEl as any)._syhVideoObserver) {
+        (threadEl as any)._syhVideoObserver.disconnect();
+        delete (threadEl as any)._syhVideoObserver;
+    }
+
+    if (videoTitle && videoId) {
+        return;
+    }
+
+    const titleSelector = STUDIO_SELECTORS.VIDEO_TITLE.join(',');
+    const linkSelector = STUDIO_SELECTORS.VIDEO_LINK.join(',');
+
+    const titleEl = threadEl.querySelector<HTMLElement>(titleSelector) ||
+                    threadEl.closest('.ytcp-comment-thread')?.querySelector<HTMLElement>(titleSelector);
+    const linkEl = threadEl.querySelector<HTMLAnchorElement>(linkSelector) ||
+                   threadEl.closest('.ytcp-comment-thread')?.querySelector<HTMLAnchorElement>(linkSelector);
+
+    if (!titleEl && !linkEl) {
+        return;
+    }
+
+    const observer = new MutationObserver(() => {
+        const currentTitle = (titleEl?.textContent || '').trim();
+        const currentHref = linkEl?.getAttribute('href') || linkEl?.href || '';
+        if (currentTitle || currentHref) {
+            observer.disconnect();
+            delete (threadEl as any)._syhVideoObserver;
+            onLoaded();
+        }
+    });
+
+    const observeOptions = {
+        childList: true,
+        characterData: true,
+        subtree: true
+    };
+
+    if (titleEl) {
+        observer.observe(titleEl, observeOptions);
+    }
+    if (linkEl) {
+        observer.observe(linkEl, {
+            ...observeOptions,
+            attributes: true,
+            attributeFilter: ['href']
+        });
+    }
+
+    (threadEl as any)._syhVideoObserver = observer;
+}
 
 export function bindStudioCommentEvents(
     threadEl: HTMLElement,
@@ -51,10 +109,17 @@ export function bindStudioCommentEvents(
     threadEl.dataset.syhVideoKey = videoKey;
     threadEl.dataset.syhCommentKey = commentKey;
 
+    setupVideoMetadataObserver(threadEl, ctx.videoTitle || '', ctx.videoId || '', () => {
+        bindStudioCommentEvents(threadEl, channelKey, channelLabel, caches, true);
+    });
+
     const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
     const commentKeyChanged = isAlreadyBound && threadEl.dataset.syhCommentKey !== commentKey;
 
-    if (isAlreadyBound && !forceUpdate && !commentKeyChanged) {
+    const isCheckboxOutOfSync = adapter.isCheckboxOutOfSync(threadEl, commentKey);
+    const isButtonOutOfSync = adapter.isButtonOutOfSync(threadEl, commentKey);
+
+    if (isAlreadyBound && !forceUpdate && !commentKeyChanged && !isCheckboxOutOfSync && !isButtonOutOfSync) {
         return;
     }
 

@@ -96,7 +96,8 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
                 item.textContent = '\uD83D\uDD04 Скинути до авто';
                 item.classList.add('syh-studio-dropdown-reset');
             } else {
-                item.textContent = SHEET_LABELS[key];
+                const label = SHEET_LABELS[key];
+                item.innerHTML = formatCategoryLabel(label);
             }
             dropdownEl!.appendChild(item);
         });
@@ -181,13 +182,19 @@ export function updateStudioBadgeUI(
     source: 'auto' | 'manual' | 'unresolved'
 ) {
     if (!badgeEl) return;
-    badgeEl.classList.remove('syh-badge-manual', 'syh-badge-unresolved', 'syh-badge-auto');
+    badgeEl.classList.remove('syh-badge-manual', 'syh-badge-unresolved', 'syh-badge-auto', 'syh-badge-preach');
 
     if (resolvedSheetId && SHEET_LABELS[resolvedSheetId]) {
-        badgeEl.textContent = SHEET_LABELS[resolvedSheetId] + (source === 'manual' ? ' (Ручний)' : '');
+        const label = SHEET_LABELS[resolvedSheetId];
+        badgeEl.innerHTML = formatCategoryLabel(label) + (source === 'manual' ? ' (Ручний)' : '');
         badgeEl.title = source === 'manual'
-            ? `Категорія обрана вручну: ${SHEET_LABELS[resolvedSheetId]} (натисніть для зміни)`
-            : `Категорія визначена автоматично: ${SHEET_LABELS[resolvedSheetId]} (натисніть для зміни)`;
+            ? `Категорія обрана вручну: ${label} (натисніть для зміни)`
+            : `Категорія визначена автоматично: ${label} (натисніть для зміни)`;
+
+        const isPreach = resolvedSheetId === 'oparin' || resolvedSheetId === 'molchanov_preach';
+        if (isPreach) {
+            badgeEl.classList.add('syh-badge-preach');
+        }
 
         if (source === 'manual') {
             badgeEl.classList.add('syh-badge-manual');
@@ -210,6 +217,18 @@ export function updateStudioCheckedClass(threadEl: HTMLElement, isChecked: boole
     } else {
         threadEl.classList.remove('syh-studio-comment-checked');
     }
+}
+
+/**
+ * Formats specific words inside the category labels to make them bold.
+ */
+function formatCategoryLabel(label: string): string {
+    if (label === 'Время перемен СШ') return 'Время перемен <b>СШ</b>';
+    if (label === 'Молчанов СШ') return 'Молчанов <b>СШ</b>';
+    if (label === 'Опарин проповеди') return '<b>Опарин</b> проповеди';
+    if (label === 'Молчанов проповеди') return '<b>Молчанов</b> проповеди';
+    if (label.includes('СШ')) return label.replace('СШ', '<b>СШ</b>');
+    return label;
 }
 
 // Pure ESM module export

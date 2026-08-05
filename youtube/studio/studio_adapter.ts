@@ -365,6 +365,26 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         }
     }
 
+    public isCheckboxOutOfSync(element: HTMLElement, commentKey: string): boolean {
+        const expectedChecked = this.caches.checkboxStates[commentKey]?.checked || false;
+        const ui = this.getStudioUI(element);
+        if (!ui || !ui.checkboxEl) return false;
+        return ui.checkboxEl.checked !== expectedChecked;
+    }
+
+    public isButtonOutOfSync(element: HTMLElement, commentKey: string): boolean {
+        const expectedState = this.caches.buttonStates[commentKey] || null;
+        const ui = this.getStudioUI(element);
+        if (!ui || !ui.questionBtn || !ui.prayerBtn) return false;
+
+        const hasQuestionActive = ui.questionBtn.classList.contains('syh-btn-active');
+        const hasPrayerActive = ui.prayerBtn.classList.contains('syh-btn-active');
+
+        const currentActiveState = hasQuestionActive ? 'question' : (hasPrayerActive ? 'prayer' : null);
+        return currentActiveState !== expectedState;
+    }
+
+
     private toggleDropdown(dropdownEl: HTMLElement, visible: boolean, metaContainer: HTMLElement): void {
         if (visible) {
             document.querySelectorAll('.syh-studio-dropdown').forEach(d => {

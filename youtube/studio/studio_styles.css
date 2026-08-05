@@ -183,7 +183,7 @@ ytcp-comment-video-thumbnail {
 .syh-studio-badge {
     font-family: Roboto, Noto, Arial, sans-serif;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     padding: 3px 8px;
     border-radius: 6px;
     border: 1px solid transparent;
@@ -203,6 +203,11 @@ ytcp-comment-video-thumbnail {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.syh-studio-badge b,
+.syh-studio-dropdown-item b {
+    font-weight: 800 !important;
+}
+
 .syh-badge-auto {
     background-color: rgba(6, 95, 212, 0.15);
     color: #065fd4;
@@ -219,6 +224,19 @@ ytcp-comment-video-thumbnail {
     background-color: rgba(231, 76, 60, 0.15);
     color: #c0392b;
     border-color: rgba(231, 76, 60, 0.4);
+}
+
+/* Sermon badges (Preach) overrides to distinguish them from СШ */
+.syh-studio-badge.syh-badge-preach.syh-badge-auto {
+    background-color: rgba(39, 174, 96, 0.15);
+    color: #27ae60;
+    border-color: rgba(39, 174, 96, 0.4);
+}
+
+.syh-studio-badge.syh-badge-preach.syh-badge-manual {
+    background-color: rgba(39, 174, 96, 0.28);
+    color: #1e7e43;
+    border-color: rgba(39, 174, 96, 0.6);
 }
 
 .syh-badge-highlight {
