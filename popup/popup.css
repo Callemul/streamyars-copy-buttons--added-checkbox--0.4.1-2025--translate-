@@ -199,25 +199,15 @@ body {
     font-weight: 800 !important;
 }
 
-/* Color distinction for subtabs */
-.subtab-button[data-sheet="vp_ss"].active,
-.subtab-button[data-sheet="molchanov_ss"].active {
+/* Permanent color distinction for subtabs */
+.subtab-button[data-sheet="vp_ss"],
+.subtab-button[data-sheet="molchanov_ss"] {
     color: #065fd4 !important;
 }
 
-.subtab-button[data-sheet="oparin"].active,
-.subtab-button[data-sheet="molchanov_preach"].active {
+.subtab-button[data-sheet="oparin"],
+.subtab-button[data-sheet="molchanov_preach"] {
     color: #27ae60 !important;
-}
-
-.subtab-button[data-sheet="vp_ss"]:hover,
-.subtab-button[data-sheet="molchanov_ss"]:hover {
-    color: #065fd4;
-}
-
-.subtab-button[data-sheet="oparin"]:hover,
-.subtab-button[data-sheet="molchanov_preach"]:hover {
-    color: #27ae60;
 }
 
 .sheet-content {
