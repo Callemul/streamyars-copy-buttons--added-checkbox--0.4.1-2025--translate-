@@ -51,16 +51,14 @@ function setupVideoMetadataObserver(
     const titleSelector = STUDIO_SELECTORS.VIDEO_TITLE.join(',');
     const linkSelector = STUDIO_SELECTORS.VIDEO_LINK.join(',');
 
-    const titleEl = threadEl.querySelector<HTMLElement>(titleSelector) ||
-                    threadEl.closest('.ytcp-comment-thread')?.querySelector<HTMLElement>(titleSelector);
-    const linkEl = threadEl.querySelector<HTMLAnchorElement>(linkSelector) ||
-                   threadEl.closest('.ytcp-comment-thread')?.querySelector<HTMLAnchorElement>(linkSelector);
-
-    if (!titleEl && !linkEl) {
-        return;
-    }
+    const parentContainer = threadEl.closest('.ytcp-comment-thread') || threadEl;
 
     const observer = new MutationObserver(() => {
+        const titleEl = threadEl.querySelector<HTMLElement>(titleSelector) ||
+                        parentContainer.querySelector<HTMLElement>(titleSelector);
+        const linkEl = threadEl.querySelector<HTMLAnchorElement>(linkSelector) ||
+                       parentContainer.querySelector<HTMLAnchorElement>(linkSelector);
+
         const currentTitle = (titleEl?.textContent || '').trim();
         const currentHref = linkEl?.getAttribute('href') || linkEl?.href || '';
         if (currentTitle || currentHref) {
@@ -70,22 +68,13 @@ function setupVideoMetadataObserver(
         }
     });
 
-    const observeOptions = {
+    observer.observe(parentContainer, {
         childList: true,
         characterData: true,
-        subtree: true
-    };
-
-    if (titleEl) {
-        observer.observe(titleEl, observeOptions);
-    }
-    if (linkEl) {
-        observer.observe(linkEl, {
-            ...observeOptions,
-            attributes: true,
-            attributeFilter: ['href']
-        });
-    }
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['href']
+    });
 
     (threadEl as any)._syhVideoObserver = observer;
 }
@@ -106,6 +95,16 @@ export function bindStudioCommentEvents(
     const commentKey = ctx.id;
     const videoKey = ctx.videoId || '';
 
+    const previousCommentKey = threadEl.dataset.syhCommentKey;
+    const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
+    const commentKeyChanged = isAlreadyBound && !!previousCommentKey && previousCommentKey !== commentKey;
+
+    if (commentKeyChanged) {
+        threadEl.removeAttribute('data-syh-studio-events-bound');
+        threadEl.removeAttribute('data-syh-bound');
+        delete (threadEl as any)._syhBound;
+    }
+
     threadEl.dataset.syhVideoKey = videoKey;
     threadEl.dataset.syhCommentKey = commentKey;
 
@@ -113,13 +112,12 @@ export function bindStudioCommentEvents(
         bindStudioCommentEvents(threadEl, channelKey, channelLabel, caches, true);
     });
 
-    const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
-    const commentKeyChanged = isAlreadyBound && threadEl.dataset.syhCommentKey !== commentKey;
+    const effectivelyBound = threadEl.dataset.syhStudioEventsBound === 'true';
 
     const isCheckboxOutOfSync = adapter.isCheckboxOutOfSync(threadEl, commentKey);
     const isButtonOutOfSync = adapter.isButtonOutOfSync(threadEl, commentKey);
 
-    if (isAlreadyBound && !forceUpdate && !commentKeyChanged && !isCheckboxOutOfSync && !isButtonOutOfSync) {
+    if (effectivelyBound && !forceUpdate && !isCheckboxOutOfSync && !isButtonOutOfSync) {
         return;
     }
 
@@ -130,11 +128,6 @@ export function bindStudioCommentEvents(
 
     adapter.restoreButtonState(threadEl, commentKey);
     adapter.restoreCheckboxState(threadEl, commentKey);
-
-    if (commentKeyChanged && !forceUpdate) {
-        threadEl.dataset.syhStudioEventsBound = 'true';
-        return;
-    }
 
     injector.bindCommentEvents(threadEl, commentKey);
     adapter.bindStudioSpecificEvents(threadEl, commentKey, caches);

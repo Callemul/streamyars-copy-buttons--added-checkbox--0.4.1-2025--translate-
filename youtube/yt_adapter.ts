@@ -2,7 +2,6 @@ import { STORAGE_KEYS } from '../modules/storage';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
 import type { CommentPayload } from '../modules/comment_service';
 import { extractCommentId, extractCommentData } from './yt_ui';
-import { YT_SELECTORS } from './yt_selectors';
 import type {
     CommentContext,
     CommentStateCaches,
@@ -99,7 +98,7 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
             prayerBtn: element.querySelector('.syh-yt-btn-prayer') as HTMLElement | null,
             copyBtn: element.querySelector('.syh-yt-btn-copy') as HTMLElement | null,
             checkboxEl: element.querySelector('.syh-yt-checkbox') as HTMLInputElement | null,
-            bodyEl: element.querySelector(YT_SELECTORS.commentBody) as HTMLElement | null
+            bodyEl: element as HTMLElement
         };
     }
 
@@ -146,6 +145,14 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
         const checkbox = buttons.checkboxEl;
         if (!checkbox) return;
         checkbox.checked = isChecked;
+        const threadEl = (checkbox.closest('ytd-comment-thread-renderer, ytd-comment-view-model, #comment') || buttons.bodyEl) as HTMLElement | null;
+        if (threadEl) {
+            if (isChecked) {
+                threadEl.classList.add('syh-yt-comment-checked');
+            } else {
+                threadEl.classList.remove('syh-yt-comment-checked');
+            }
+        }
     }
 
     public async markChecked(element: Element, _commentKey: string, _caches: CommentStateCaches): Promise<void> {

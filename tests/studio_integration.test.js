@@ -1,0 +1,298 @@
+import test, { describe } from 'node:test';
+import assert from 'node:assert/strict';
+
+// Global mocks for Node environment
+global.window = global;
+let mockStorageStore = {};
+
+global.chrome = {
+    runtime: { id: 'test-id' },
+    storage: {
+        local: {
+            get: (keys, cb) => {
+                const res = {};
+                const arr = Array.isArray(keys) ? keys : [keys];
+                arr.forEach(k => { res[k] = mockStorageStore[k]; });
+                if (cb) cb(res);
+            },
+            set: (items, cb) => {
+                Object.assign(mockStorageStore, items);
+                if (cb) cb();
+            },
+            remove: (keys, cb) => {
+                const arr = Array.isArray(keys) ? keys : [keys];
+                arr.forEach(k => { delete mockStorageStore[k]; });
+                if (cb) cb();
+            }
+        }
+    }
+};
+
+const { matchCategory } = await import('../modules/channel_config.ts');
+const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
+const { CommentInjector } = await import('../modules/comment_injector.ts');
+const { StudioCommentAdapter } = await import('../youtube/studio/studio_adapter.ts');
+
+describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
+    test('1. matchCategory correctly identifies Oparin videos on VP channel', () => {
+        const title1 = "Что значит служить Богу не от полного сердца?  | Алексей Опарин";
+        assert.equal(matchCategory(title1, 'vp'), 'oparin');
+
+        const title2 = "Не затворили ли мы вотрота Дома Господня?  | Алексей Опарин";
+        assert.equal(matchCategory(title2, 'vp'), 'oparin');
+
+        const title3 = "Проповідь Опарін О.О.";
+        assert.equal(matchCategory(title3, 'vp'), 'oparin');
+    });
+
+    test('2. matchCategory does NOT falsely match words containing "сш" substring (like масштаб, высший)', () => {
+        assert.equal(matchCategory("Масштабные события церкви", 'vp'), null);
+        assert.equal(matchCategory("Высший суд Божией справедливости", 'vp'), null);
+        assert.equal(matchCategory("Сшить новую одежду праведности", 'vp'), null);
+    });
+
+    test('3. matchCategory correctly identifies Sabbath School videos on VP channel', () => {
+        assert.equal(matchCategory("СУББОТНЯЯ ШКОЛА | УРОК 6 Духовные дары | Молчанов, Опарин", 'vp'), 'vp_ss');
+        assert.equal(matchCategory("13 июля. Итоги. Урок субботней школы. Марк 1", 'vp'), 'vp_ss');
+        assert.equal(matchCategory("Урок СШ №5", 'vp'), 'vp_ss');
+    });
+
+    test('4. resolveCategoryForVideo respects manual overrides over auto detection', () => {
+        const videoTitle = "СУББОТНЯЯ ШКОЛА | УРОК 6";
+        const videoKey = "video-123";
+        const map = {
+            "video-123": { sheetId: 'oparin', source: 'manual' }
+        };
+
+        const res = resolveCategoryForVideo(videoTitle, videoKey, 'vp', map);
+        assert.equal(res.sheetId, 'oparin');
+        assert.equal(res.source, 'manual');
+    });
+
+    test('5. CommentInjector cancels action if adapter beforeAction returns null (unresolved category)', async () => {
+        const dummyAdapter = {
+            isEventsBound: () => false,
+            markEventsBound: () => {},
+            getCommentContext: () => ({ id: 'c1', author: 'User', text: 'Question?', videoId: 'v1', videoTitle: 'Test' }),
+            getButtons: () => ({
+                questionBtn: { addEventListener: () => {} },
+                prayerBtn: null,
+                copyBtn: null,
+                checkboxEl: null,
+                bodyEl: null
+            }),
+            beforeAction: async () => null, // Category unresolved -> return null
+            getSheetId: () => 'vp_ss',
+            getButtonStatesKey: () => 'syh_button_states',
+            getCheckboxStatesKey: () => 'syh_checkbox_states',
+            applyButtonState: () => {},
+            markChecked: async () => {},
+            buildCollectedItem: (key, ctx, type) => ({ id: key, author: ctx.author, text: ctx.text, type })
+        };
+
+        const caches = { buttonStates: {}, checkboxStates: {} };
+        const injector = new CommentInjector(dummyAdapter, caches);
+
+        let questionListener;
+        const fakeBtn = {
+            addEventListener: (evt, fn) => { if (evt === 'click') questionListener = fn; }
+        };
+        dummyAdapter.getButtons = () => ({ questionBtn: fakeBtn });
+
+        const fakeElement = {};
+        injector.bindCommentEvents(fakeElement, 'c1');
+
+        assert.equal(typeof questionListener, 'function');
+        // Trigger click — beforeAction returning null should prevent saving to fallback sheetId
+        await questionListener({ stopPropagation: () => {} });
+
+        assert.equal(caches.buttonStates['c1'], undefined);
+    });
+
+    test('6. StudioCommentAdapter getCommentContext extracts title cleanly for reply comments without dataset pollution', () => {
+        const adapter = new StudioCommentAdapter('vp', 'Время перемен', { videoSheetMap: {}, buttonStates: {}, checkboxStates: {} });
+
+        const thread = {
+            tagName: 'YTCP-COMMENT',
+            hasAttribute: (attr) => attr === 'is-reply',
+            querySelector: (sel) => {
+                if (typeof sel === 'string' && (sel.includes('author-text') || sel.includes('name'))) return { textContent: 'John' };
+                if (typeof sel === 'string' && sel.includes('content-text')) return { textContent: 'Some comment text' };
+                return null;
+            },
+            closest: (sel) => {
+                if (sel === '.ytcp-comment-thread') {
+                    return {
+                        querySelector: (subSel) => {
+                            if (typeof subSel === 'string' && (subSel.includes('video-title') || subSel.includes('#video-title'))) {
+                                return { textContent: '  Что значит служить Богу не от полного сердца?  | Алексей Опарин  ' };
+                            }
+                            return null;
+                        }
+                    };
+                }
+                return null;
+            }
+        };
+
+        const ctx = adapter.getCommentContext(thread);
+        assert.ok(ctx);
+        assert.equal(ctx.author, 'John');
+        assert.equal(ctx.text, 'Some comment text');
+        assert.equal(ctx.videoTitle, 'Что значит служить Богу не от полного сердца?  | Алексей Опарин');
+        assert.equal(ctx.videoId, 'Что значит служить Богу не от полного сердца?  | Алексей Опарин');
+    });
+
+    test('7. StudioCommentAdapter fallback to Popup collectedItems when local buttonStates key differs', () => {
+        if (!global.document) {
+            global.document = {
+                createElement: (tag) => ({
+                    tagName: tag.toUpperCase(),
+                    type: tag === 'button' ? 'button' : '',
+                    className: '',
+                    style: {},
+                    dataset: {},
+                    classList: { add: () => {}, remove: () => {}, contains: () => false },
+                    setAttribute: () => {},
+                    getAttribute: () => null,
+                    addEventListener: () => {},
+                    querySelectorAll: () => [],
+                    querySelector: () => null,
+                    appendChild: () => {}
+                }),
+                querySelectorAll: () => [],
+                addEventListener: () => {}
+            };
+        }
+
+        const fakeQuestionBtn = { classList: { contains: () => false }, innerHTML: '', title: '' };
+        const fakePrayerBtn = { classList: { contains: () => false }, innerHTML: '', title: '' };
+
+        const caches = {
+            videoSheetMap: {},
+            buttonStates: {},
+            checkboxStates: {},
+            collectedItems: [
+                { id: 'c-popup-1', author: 'Алексей', text: 'Вопрос по Библии?', type: 'question', timestamp: Date.now() }
+            ]
+        };
+        const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
+
+        const thread = {
+            tagName: 'YTCP-COMMENT',
+            hasAttribute: () => false,
+            querySelector: (sel) => {
+                if (typeof sel === 'string' && (sel.includes('author-text') || sel.includes('name'))) return { textContent: 'Алексей' };
+                if (typeof sel === 'string' && sel.includes('content-text')) return { textContent: 'Вопрос по Библии?' };
+                if (typeof sel === 'string' && (sel.includes('video-title') || sel.includes('#video-title'))) return { textContent: 'Что значит служить Богу...' };
+                if (typeof sel === 'string' && sel.includes('btn-copy')) return { classList: { contains: () => false } };
+                if (typeof sel === 'string' && sel.includes('btn-question')) return fakeQuestionBtn;
+                if (typeof sel === 'string' && sel.includes('btn-prayer')) return fakePrayerBtn;
+                if (typeof sel === 'string' && sel.includes('toolbar')) return {
+                    querySelectorAll: () => [],
+                    querySelector: (sub) => {
+                        if (sub.includes('btn-question')) return fakeQuestionBtn;
+                        if (sub.includes('btn-prayer')) return fakePrayerBtn;
+                        if (sub.includes('btn-copy')) return { classList: { contains: () => false } };
+                        return null;
+                    },
+                    appendChild: () => {}
+                };
+                return null;
+            },
+            closest: () => null
+        };
+
+        const ctx = adapter.getCommentContext(thread);
+        assert.ok(ctx);
+
+        const isOutOfSync = adapter.isButtonOutOfSync(thread, ctx.id);
+        assert.equal(isOutOfSync, true);
+    });
+
+    test('8. StudioCommentAdapter detects stripped syh-studio-comment-checked class on Polymer re-render', () => {
+        const fakeCheckbox = { checked: true };
+        const fakeQuestionBtn = { classList: { contains: () => false } };
+        const fakePrayerBtn = { classList: { contains: () => false } };
+
+        const caches = {
+            videoSheetMap: {},
+            buttonStates: {},
+            checkboxStates: {
+                'studio_c_10_abc_def': { checked: true, timestamp: Date.now() }
+            }
+        };
+        const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
+
+        const thread = {
+            tagName: 'YTCP-COMMENT',
+            classList: { contains: () => false },
+            hasAttribute: () => false,
+            querySelector: (sel) => {
+                if (typeof sel === 'string' && sel.includes('checkbox')) return fakeCheckbox;
+                if (typeof sel === 'string' && sel.includes('btn-question')) return fakeQuestionBtn;
+                if (typeof sel === 'string' && sel.includes('btn-prayer')) return fakePrayerBtn;
+                if (typeof sel === 'string' && sel.includes('metadata')) return {
+                    querySelector: () => null,
+                    querySelectorAll: () => [],
+                    appendChild: () => {}
+                };
+                if (typeof sel === 'string' && sel.includes('toolbar')) return {
+                    querySelectorAll: () => [],
+                    querySelector: (sub) => {
+                        if (sub.includes('btn-question')) return fakeQuestionBtn;
+                        if (sub.includes('btn-prayer')) return fakePrayerBtn;
+                        return null;
+                    },
+                    appendChild: () => {}
+                };
+                return null;
+            },
+            closest: function() { return this; }
+        };
+
+        const isOutOfSync = adapter.isCheckboxOutOfSync(thread, 'studio_c_10_abc_def');
+        assert.equal(isOutOfSync, true);
+    });
+
+    test('9. getCommentText extracts text from emoji alt attributes and single punctuation comments', () => {
+        const adapter = new StudioCommentAdapter('vp', 'Время перемен', { videoSheetMap: {}, buttonStates: {}, checkboxStates: {} });
+
+        // Case A: Single punctuation comment ","
+        const threadComma = {
+            tagName: 'YTCP-COMMENT',
+            hasAttribute: () => false,
+            querySelector: (sel) => {
+                if (typeof sel === 'string' && sel.includes('author-text')) return { textContent: '@Людмила' };
+                if (typeof sel === 'string' && sel.includes('content-text')) return { textContent: ',', childNodes: [{ nodeType: 3, textContent: ',' }] };
+                return null;
+            },
+            closest: () => null
+        };
+        const ctxComma = adapter.getCommentContext(threadComma);
+        assert.ok(ctxComma);
+        assert.equal(ctxComma.text, ',');
+
+        // Case B: Emoji-only comment (where Polymer renders <img alt="🙏">)
+        const threadEmoji = {
+            tagName: 'YTCP-COMMENT',
+            hasAttribute: () => false,
+            querySelector: (sel) => {
+                if (typeof sel === 'string' && sel.includes('author-text')) return { textContent: '@danamitkovetskaya' };
+                if (typeof sel === 'string' && sel.includes('content-text')) return {
+                    textContent: '',
+                    childNodes: [
+                        { nodeType: 1, tagName: 'IMG', alt: '🙏' },
+                        { nodeType: 1, tagName: 'IMG', alt: '🙏' },
+                        { nodeType: 1, tagName: 'IMG', alt: '❤️' }
+                    ]
+                };
+                return null;
+            },
+            closest: () => null
+        };
+        const ctxEmoji = adapter.getCommentContext(threadEmoji);
+        assert.ok(ctxEmoji);
+        assert.equal(ctxEmoji.text, '🙏🙏❤️');
+    });
+});

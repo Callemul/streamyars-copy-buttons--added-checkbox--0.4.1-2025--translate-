@@ -21,6 +21,7 @@ const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;
 
 export interface StudioEventCaches extends CommentStateCaches {
     videoSheetMap: Record<string, VideoSheetMapEntry>;
+    collectedItems?: CommentPayload[];
 }
 
 interface ActiveDropdownInfo {
@@ -30,12 +31,14 @@ interface ActiveDropdownInfo {
 
 let activeStudioDropdownInfo: ActiveDropdownInfo | null = null;
 
-document.addEventListener('click', (e) => {
-    if (activeStudioDropdownInfo && !activeStudioDropdownInfo.metaContainer.contains(e.target as Node)) {
-        activeStudioDropdownInfo.dropdown.style.display = 'none';
-        activeStudioDropdownInfo = null;
-    }
-});
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', (e) => {
+        if (activeStudioDropdownInfo && !activeStudioDropdownInfo.metaContainer.contains(e.target as Node)) {
+            activeStudioDropdownInfo.dropdown.style.display = 'none';
+            activeStudioDropdownInfo = null;
+        }
+    });
+}
 
 interface StudioCommentUIElements {
     copyBtn: HTMLButtonElement;
@@ -82,11 +85,19 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-studio-events-bound';
     private static readonly BUTTON_BOUND_ATTR = 'data-syh-bound';
 
+    private channelKey: ChannelKey;
+    private channelLabel: string;
+    private caches: StudioEventCaches;
+
     constructor(
-        private channelKey: ChannelKey,
-        private channelLabel: string,
-        private caches: StudioEventCaches
-    ) {}
+        channelKey: ChannelKey,
+        channelLabel: string,
+        caches: StudioEventCaches
+    ) {
+        this.channelKey = channelKey;
+        this.channelLabel = channelLabel;
+        this.caches = caches;
+    }
 
     private getStudioUI(element: Element): StudioCommentUIElements | null {
         return injectStudioCommentUI(element as HTMLElement);
@@ -95,8 +106,9 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
     public getCommentContext(element: Element): CommentContext | null {
         const threadEl = element as HTMLElement;
         const author = getAuthorNameText(threadEl);
-        const text = getCommentText(threadEl);
-        if (!author || !text) return null;
+        let text = getCommentText(threadEl);
+        if (!author) return null;
+        if (!text) text = '[comment]';
 
         let videoTitle = getVideoTitleText(threadEl);
         let videoHref = getVideoLinkHref(threadEl);
@@ -109,9 +121,6 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
                 if (parentComment) {
                     if (!videoTitle) videoTitle = getVideoTitleText(parentComment);
                     if (!videoHref) videoHref = getVideoLinkHref(parentComment);
-                    if (!videoTitle && !videoHref && parentComment.dataset.syhVideoKey) {
-                        videoHref = parentComment.dataset.syhVideoKey;
-                    }
                 }
             }
         }
@@ -130,19 +139,20 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
 
     public getButtons(element: Element): PlatformButtons {
         const ui = this.getStudioUI(element);
+        const container = element as HTMLElement;
         if (!ui) return {
             questionBtn: null,
             prayerBtn: null,
             copyBtn: null,
             checkboxEl: null,
-            bodyEl: element.querySelector('#content-text, ytcp-comment-text #content-text, .content-text') as HTMLElement | null
+            bodyEl: container
         };
         return {
             questionBtn: ui.questionBtn,
             prayerBtn: ui.prayerBtn,
             copyBtn: ui.copyBtn,
             checkboxEl: ui.checkboxEl,
-            bodyEl: element.querySelector('#content-text, ytcp-comment-text #content-text, .content-text') as HTMLElement | null
+            bodyEl: container
         };
     }
 
@@ -171,6 +181,10 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         const checkbox = buttons.checkboxEl;
         if (!checkbox) return;
         checkbox.checked = isChecked;
+        const threadEl = (checkbox.closest('ytcp-comment, ytcp-comment-thread') || buttons.questionBtn?.closest('ytcp-comment, ytcp-comment-thread') || buttons.copyBtn?.closest('ytcp-comment, ytcp-comment-thread')) as HTMLElement | null;
+        if (threadEl) {
+            updateStudioCheckedClass(threadEl, isChecked);
+        }
     }
 
     public async markChecked(element: Element, commentKey: string, _caches: CommentStateCaches): Promise<void> {
@@ -272,9 +286,42 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         }
     }
 
+    private getEffectiveButtonState(commentKey: string, ctx: CommentContext | null): 'question' | 'prayer' | null {
+        let state = this.caches.buttonStates[commentKey] || null;
+        if (!state && ctx) {
+            const fallbackKey = generateCommentKey('', ctx.author, ctx.text);
+            state = this.caches.buttonStates[fallbackKey] || null;
+        }
+        if (!state && ctx && this.caches.collectedItems) {
+            const foundInPopup = this.caches.collectedItems.find(item =>
+                item.id === commentKey ||
+                (item.author === ctx.author && item.text === ctx.text)
+            );
+            if (foundInPopup) {
+                state = foundInPopup.type;
+            }
+        }
+        return state;
+    }
+
+    private getEffectiveCheckboxState(commentKey: string, ctx: CommentContext | null): boolean {
+        let checked = this.caches.checkboxStates[commentKey]?.checked || false;
+        if (!checked && ctx) {
+            const fallbackKey = generateCommentKey('', ctx.author, ctx.text);
+            checked = this.caches.checkboxStates[fallbackKey]?.checked || false;
+        }
+        if (!checked && ctx && this.caches.collectedItems) {
+            checked = this.caches.collectedItems.some(item =>
+                item.id === commentKey ||
+                (item.author === ctx.author && item.text === ctx.text)
+            );
+        }
+        return checked;
+    }
+
     public restoreButtonState(element: HTMLElement, commentKey: string): void {
         const ctx = this.getCommentContext(element);
-        const buttonState = this.caches.buttonStates[commentKey] || null;
+        const buttonState = this.getEffectiveButtonState(commentKey, ctx);
 
         let resolvedSheetId: SheetId | null = null;
         let categorySource: 'auto' | 'manual' | 'unresolved' = 'unresolved';
@@ -300,7 +347,8 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
     }
 
     public restoreCheckboxState(element: HTMLElement, commentKey: string): void {
-        const checkboxState = this.caches.checkboxStates[commentKey]?.checked || false;
+        const ctx = this.getCommentContext(element);
+        const checkboxState = this.getEffectiveCheckboxState(commentKey, ctx);
         const threadEl = element.closest('ytcp-comment, ytcp-comment-thread') as HTMLElement | null;
         if (threadEl) {
             updateStudioCheckedClass(threadEl, checkboxState);
@@ -366,14 +414,20 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
     }
 
     public isCheckboxOutOfSync(element: HTMLElement, commentKey: string): boolean {
-        const expectedChecked = this.caches.checkboxStates[commentKey]?.checked || false;
+        const ctx = this.getCommentContext(element);
+        const expectedChecked = this.getEffectiveCheckboxState(commentKey, ctx);
         const ui = this.getStudioUI(element);
         if (!ui || !ui.checkboxEl) return false;
-        return ui.checkboxEl.checked !== expectedChecked;
+
+        const threadEl = element.closest('ytcp-comment, ytcp-comment-thread') as HTMLElement | null;
+        const currentClassChecked = threadEl ? threadEl.classList.contains('syh-studio-comment-checked') : false;
+
+        return ui.checkboxEl.checked !== expectedChecked || currentClassChecked !== expectedChecked;
     }
 
     public isButtonOutOfSync(element: HTMLElement, commentKey: string): boolean {
-        const expectedState = this.caches.buttonStates[commentKey] || null;
+        const ctx = this.getCommentContext(element);
+        const expectedState = this.getEffectiveButtonState(commentKey, ctx);
         const ui = this.getStudioUI(element);
         if (!ui || !ui.questionBtn || !ui.prayerBtn) return false;
 

@@ -41,32 +41,40 @@ export const STUDIO_SELECTORS = {
 };
 
 export function getChannelNameElement(doc: Document | HTMLElement = document): HTMLElement | null {
-    return doc.querySelector<HTMLElement>(STUDIO_SELECTORS.CHANNEL_NAME);
+    const selector = Array.isArray(STUDIO_SELECTORS.CHANNEL_NAME) ? STUDIO_SELECTORS.CHANNEL_NAME.join(',') : STUDIO_SELECTORS.CHANNEL_NAME;
+    return doc.querySelector<HTMLElement>(selector);
 }
 
 export function getCommentThreads(doc: Document | HTMLElement = document): HTMLElement[] {
-    return Array.from(doc.querySelectorAll<HTMLElement>(STUDIO_SELECTORS.COMMENT));
+    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT) ? STUDIO_SELECTORS.COMMENT.join(',') : STUDIO_SELECTORS.COMMENT;
+    return Array.from(doc.querySelectorAll<HTMLElement>(selector));
 }
 
 export function getToolbarElement(thread: HTMLElement): HTMLElement | null {
-    return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.ACTION_TOOLBAR);
+    const selector = Array.isArray(STUDIO_SELECTORS.ACTION_TOOLBAR) ? STUDIO_SELECTORS.ACTION_TOOLBAR.join(',') : STUDIO_SELECTORS.ACTION_TOOLBAR;
+    return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getMetadataElement(thread: HTMLElement): HTMLElement | null {
-    return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.METADATA);
+    const selector = Array.isArray(STUDIO_SELECTORS.METADATA) ? STUDIO_SELECTORS.METADATA.join(',') : STUDIO_SELECTORS.METADATA;
+    return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getVideoThumbnailElement(thread: HTMLElement): HTMLElement | null {
-    return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_THUMBNAIL);
+    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_THUMBNAIL) ? STUDIO_SELECTORS.VIDEO_THUMBNAIL.join(',') : STUDIO_SELECTORS.VIDEO_THUMBNAIL;
+    return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getVideoTitleText(thread: HTMLElement): string {
-    let el = thread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_TITLE);
+    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_TITLE)
+        ? STUDIO_SELECTORS.VIDEO_TITLE.join(',')
+        : STUDIO_SELECTORS.VIDEO_TITLE;
+    let el = thread.querySelector<HTMLElement>(selector);
     let text = el ? (el.textContent || '').trim() : '';
     if (!text && thread.closest) {
         const parentThread = thread.closest('.ytcp-comment-thread');
         if (parentThread) {
-            el = parentThread.querySelector<HTMLElement>(STUDIO_SELECTORS.VIDEO_TITLE);
+            el = parentThread.querySelector<HTMLElement>(selector);
             text = el ? (el.textContent || '').trim() : '';
         }
     }
@@ -74,26 +82,60 @@ export function getVideoTitleText(thread: HTMLElement): string {
 }
 
 export function getVideoLinkHref(thread: HTMLElement): string | null {
-    let a = thread.querySelector<HTMLAnchorElement>(STUDIO_SELECTORS.VIDEO_LINK);
-    let href = a ? (a.getAttribute('href') || a.href) : null;
+    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_LINK)
+        ? STUDIO_SELECTORS.VIDEO_LINK.join(',')
+        : STUDIO_SELECTORS.VIDEO_LINK;
+    let a = thread.querySelector<HTMLAnchorElement>(selector);
+    let href = a ? (typeof a.getAttribute === 'function' ? a.getAttribute('href') : a.href) || a.href : null;
     if (!href && thread.closest) {
         const parentThread = thread.closest('.ytcp-comment-thread');
         if (parentThread) {
-            a = parentThread.querySelector<HTMLAnchorElement>(STUDIO_SELECTORS.VIDEO_LINK);
-            href = a ? (a.getAttribute('href') || a.href) : null;
+            a = parentThread.querySelector<HTMLAnchorElement>(selector);
+            href = a ? (typeof a.getAttribute === 'function' ? a.getAttribute('href') : a.href) || a.href : null;
         }
     }
     return href;
 }
 
 export function getAuthorNameText(thread: HTMLElement): string {
-    const el = thread.querySelector<HTMLElement>(STUDIO_SELECTORS.AUTHOR_NAME);
+    const selector = Array.isArray(STUDIO_SELECTORS.AUTHOR_NAME)
+        ? STUDIO_SELECTORS.AUTHOR_NAME.join(',')
+        : STUDIO_SELECTORS.AUTHOR_NAME;
+    const el = thread.querySelector<HTMLElement>(selector);
     return el ? (el.textContent || '').trim() : '';
 }
 
 export function getCommentText(thread: HTMLElement): string {
-    const el = thread.querySelector<HTMLElement>(STUDIO_SELECTORS.CONTENT_TEXT);
-    return el ? (el.textContent || '').trim() : '';
+    const selector = Array.isArray(STUDIO_SELECTORS.CONTENT_TEXT)
+        ? STUDIO_SELECTORS.CONTENT_TEXT.join(',')
+        : STUDIO_SELECTORS.CONTENT_TEXT;
+    const el = thread.querySelector<HTMLElement>(selector);
+    if (!el) return '';
+
+    let text = '';
+    const children = el.childNodes ? Array.from(el.childNodes) : [];
+    children.forEach((node) => {
+        if (node.nodeType === 3) {
+            text += node.textContent || '';
+        } else if (node.nodeType === 1) {
+            const elem = node as HTMLElement;
+            if (elem.tagName === 'IMG' && (elem as HTMLImageElement).alt) {
+                text += (elem as HTMLImageElement).alt;
+            } else if (typeof elem.querySelector === 'function') {
+                const img = elem.querySelector<HTMLImageElement>('img[alt]');
+                if (img && img.alt) {
+                    text += img.alt;
+                } else {
+                    text += elem.textContent || '';
+                }
+            } else {
+                text += elem.textContent || '';
+            }
+        }
+    });
+
+    const trimmed = text.trim();
+    return trimmed || (el.textContent || '').trim();
 }
 
 export function getCommentTextAreaElement(thread: HTMLElement): HTMLElement | null {

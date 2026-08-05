@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --experimental-strip-types --import ./tests/ts_loader.js --test tests/utils.test.js tests/storage.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js tests/telegram_parser.test.js tests/plugin_registry.test.js tests/ui_state.test.js tests/sheet_state_service.test.js tests/comment_service.test.js tests/retention_service.test.js tests/dataset_attr.test.js tests/dataset_syntax.test.js",
+    "test": "node --experimental-strip-types --import ./tests/ts_loader.js --test tests/utils.test.js tests/storage.test.js tests/state.test.js tests/anti_afk.test.js tests/comment_assistant.test.js tests/css_lint.test.js tests/popup_dom.test.js tests/fuzzy_match.test.js tests/channel_config.test.js tests/telegram_parser.test.js tests/plugin_registry.test.js tests/ui_state.test.js tests/sheet_state_service.test.js tests/comment_service.test.js tests/retention_service.test.js tests/dataset_attr.test.js tests/dataset_syntax.test.js tests/studio_integration.test.js",
     "lint": "eslint --no-error-on-unmatched-pattern --no-warn-ignored \"modules/**/*.ts\" main.ts \"popup/**/*.ts\" \"options/**/*.ts\" \"youtube/**/*.ts\""
   },
   "devDependencies": {

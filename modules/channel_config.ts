@@ -36,12 +36,16 @@ export class ChannelRegistry {
                 {
                     sheetId: SHEET_IDS.VP_SS,
                     matchers: [
-                        (t) => (t.includes('субботн') && t.includes('школ')) || t.includes('сш')
+                        (t) => (t.includes('субботн') && t.includes('школ')) ||
+                               (t.includes('суботн') && t.includes('школ')) ||
+                               /(?:^|[^\p{L}\p{N}])сш(?:[^\p{L}\p{N}]|$)/ui.test(t)
                     ]
                 },
                 {
                     sheetId: SHEET_IDS.OPARIN,
-                    matchers: [(t) => t.includes('опарин')]
+                    matchers: [
+                        (t) => /опарин|опарін/i.test(t)
+                    ]
                 }
             ]
         });
@@ -55,7 +59,9 @@ export class ChannelRegistry {
                 {
                     sheetId: SHEET_IDS.MOLCHANOV_SS,
                     matchers: [
-                        (t) => (t.includes('субботн') && t.includes('школ')) || t.includes('сш')
+                        (t) => (t.includes('субботн') && t.includes('школ')) ||
+                               (t.includes('суботн') && t.includes('школ')) ||
+                               /(?:^|[^\p{L}\p{N}])сш(?:[^\p{L}\p{N}]|$)/ui.test(t)
                     ]
                 },
                 {

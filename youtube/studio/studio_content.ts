@@ -30,6 +30,8 @@ import { getCommentThreads } from './studio_selectors';
 import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
+import { getAllSheetIds } from '../../modules/sheets';
+import type { CommentPayload } from '../../modules/comment_service';
 
 const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
 
@@ -41,10 +43,13 @@ class StudioModuleController {
     private lastPath: string = '';
     private frameId: number | null = null;
     private pollInterval: number | null = null;
+    private scrollHandler: (() => void) | null = null;
+    private contextMenuHandler: ((e: MouseEvent) => void) | null = null;
     private caches: StudioEventCaches = {
         videoSheetMap: {},
         buttonStates: {},
-        checkboxStates: {}
+        checkboxStates: {},
+        collectedItems: []
     };
 
     public async init(): Promise<void> {
@@ -79,6 +84,10 @@ class StudioModuleController {
                 this.caches.checkboxStates = checkboxStateChange.newValue || {};
                 this.scheduleProcessComments(true);
             }
+            const hasCollectedChange = Object.keys(changes).some((k) => k.startsWith('syh:popup:collected:'));
+            if (hasCollectedChange) {
+                this.loadStorageData().then(() => this.scheduleProcessComments(true));
+            }
         });
 
         // 4. Initial check & start SPA listeners
@@ -88,17 +97,33 @@ class StudioModuleController {
     }
 
     private async loadStorageData(): Promise<void> {
+        const sheetIds = getAllSheetIds();
+        const collectedKeys = sheetIds.map((sId) => `syh:popup:collected:${sId}`);
+        const keysToFetch = [
+            STUDIO_ENABLED_KEY,
+            VIDEO_MAP_STORAGE_KEY,
+            STUDIO_BUTTON_STATE_KEY,
+            STUDIO_CHECKBOX_STATE_KEY,
+            ...collectedKeys
+        ];
+
         return new Promise((resolve) => {
-            SYH_STORAGE.get(
-                [STUDIO_ENABLED_KEY, VIDEO_MAP_STORAGE_KEY, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY],
-                (res) => {
-                    this.enabled = res[STUDIO_ENABLED_KEY] ?? true;
-                    this.caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
-                    this.caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
-                    this.caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
-                    resolve();
-                }
-            );
+            SYH_STORAGE.get(keysToFetch, (res) => {
+                this.enabled = res[STUDIO_ENABLED_KEY] ?? true;
+                this.caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
+                this.caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
+                this.caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
+
+                const collected: CommentPayload[] = [];
+                sheetIds.forEach((sId) => {
+                    const list = res[`syh:popup:collected:${sId}`];
+                    if (Array.isArray(list)) {
+                        collected.push(...list);
+                    }
+                });
+                this.caches.collectedItems = collected;
+                resolve();
+            });
         });
     }
 
@@ -141,6 +166,43 @@ class StudioModuleController {
 
             SYH_DOM_OBSERVER.start(document.body);
         }
+
+        // Attach capture scroll listener to capture Polymer iron-list recycling
+        if (!this.scrollHandler) {
+            this.scrollHandler = () => {
+                if (this.enabled && this.isCommentsPage()) {
+                    this.scheduleProcessComments(false);
+                }
+            };
+            window.addEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+        }
+
+        // Attach capture contextmenu handler to bypass YouTube tooltip bugs and handle all RMB clicks
+        if (!this.contextMenuHandler) {
+            this.contextMenuHandler = (e: MouseEvent) => {
+                if (!this.enabled || !this.isCommentsPage()) return;
+                const target = e.target as HTMLElement | null;
+                if (!target) return;
+
+                const threadEl = target.closest('ytcp-comment, ytcp-comment-thread');
+                if (!threadEl) return;
+
+                if (target.closest('button, a, input, select, textarea, .syh-studio-dropdown, .syh-studio-btn, .syh-yt-btn')) {
+                    return;
+                }
+
+                const checkbox = threadEl.querySelector<HTMLInputElement>('.syh-studio-checkbox');
+                if (!checkbox) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+            window.addEventListener('contextmenu', this.contextMenuHandler, { capture: true });
+        }
     }
 
     private stopModule(): void {
@@ -161,6 +223,16 @@ class StudioModuleController {
         if (this.unregisterObserver) {
             this.unregisterObserver();
             this.unregisterObserver = null;
+        }
+
+        if (this.scrollHandler) {
+            window.removeEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+            this.scrollHandler = null;
+        }
+
+        if (this.contextMenuHandler) {
+            window.removeEventListener('contextmenu', this.contextMenuHandler, { capture: true });
+            this.contextMenuHandler = null;
         }
 
         // Cleanup injected UI elements

@@ -8,10 +8,16 @@ import type {
 } from './comment_platform_adapter';
 
 export class CommentInjector {
+    private adapter: CommentPlatformAdapter;
+    private caches: CommentStateCaches;
+
     constructor(
-        private adapter: CommentPlatformAdapter,
-        private caches: CommentStateCaches
-    ) {}
+        adapter: CommentPlatformAdapter,
+        caches: CommentStateCaches
+    ) {
+        this.adapter = adapter;
+        this.caches = caches;
+    }
 
     public bindCommentEvents(element: Element, _commentKey: string): void {
         if (this.adapter.isEventsBound(element)) return;
@@ -66,12 +72,13 @@ export class CommentInjector {
         if (!ctx) return;
         const commentKey = ctx.id;
 
-        const preResult = this.adapter.beforeAction
-            ? await this.adapter.beforeAction(type, ctx, element)
-            : null;
-
         let sheetId: string | null = null;
-        if (preResult?.sheetId) {
+        if (this.adapter.beforeAction) {
+            const preResult = await this.adapter.beforeAction(type, ctx, element);
+            if (!preResult || !preResult.sheetId) {
+                // beforeAction returned null (e.g., category unresolved) - cancel action
+                return;
+            }
             sheetId = preResult.sheetId;
         } else {
             sheetId = this.adapter.getSheetId(ctx, element);
@@ -149,9 +156,13 @@ export class CommentInjector {
 
     private handleContextMenu(
         e: MouseEvent,
-        bodyEl: HTMLElement,
+        _bodyEl: HTMLElement,
         checkbox: HTMLInputElement
     ): void {
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest('button, a, input, select, textarea, .syh-studio-dropdown, .syh-studio-btn, .syh-yt-btn')) {
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
         checkbox.checked = !checkbox.checked;

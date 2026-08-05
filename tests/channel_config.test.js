@@ -66,4 +66,31 @@ describe('channel_config tests', () => {
             "Помилка: Має бути 'molchanov_preach' як дефолт для проповідей Молчанова"
         );
     });
+
+    test('6. matchCategory correctly identifies user reported video title as Oparin', () => {
+        const title = "Что значит служить Богу не от полного сердца?  | Алексей Опарин";
+        assert.strictEqual(
+            matchCategory(title, 'vp'),
+            'oparin',
+            "Помилка: Має бути 'oparin' для відео Опаріна з питанням про серце"
+        );
+    });
+
+    test('7. matchCategory handles Ukrainian spelling for Oparin', () => {
+        const title = "Проповідь Опарін О.О.";
+        assert.strictEqual(
+            matchCategory(title, 'vp'),
+            'oparin',
+            "Помилка: Має бути 'oparin' для україномовного написання Опарін"
+        );
+    });
+
+    test('8. matchCategory does NOT falsely match words containing сш substring (like масштаб)', () => {
+        const title = "Масштабные события церкви";
+        assert.strictEqual(
+            matchCategory(title, 'vp'),
+            null,
+            "Помилка: Не повинно мапитися на vp_ss через підрядок сш у слові масштабні"
+        );
+    });
 });
