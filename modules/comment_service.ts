@@ -123,6 +123,43 @@ export class CommentService {
     }
 
     /**
+     * Уніфіковане очищення всіх зібраних коментарів для конкретного аркуша
+     * та скидання стану їхніх кнопок у YouTube / Studio.
+     */
+    public static async clearAllCollectedForSheet(sheetId: string): Promise<void> {
+        const storageKey = `syh:popup:collected:${sheetId}`;
+        const result = await SYH_STORAGE.getAsync<Record<string, any>>([
+            storageKey,
+            STORAGE_KEYS.YT_BUTTON_STATES,
+            STORAGE_KEYS.STUDIO_BUTTON_STATE
+        ]);
+
+        const items: CommentPayload[] = result[storageKey] || [];
+        const commentIds = items.map(item => item.id);
+
+        const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+        const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
+
+        commentIds.forEach(id => {
+            delete ytBtnStates[id];
+            delete studioBtnStates[id];
+        });
+
+        await SYH_STORAGE.setAsync({
+            [storageKey]: [],
+            [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
+            [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
+        });
+
+        SYH_BUS.emit('SHEET_DATA_PROCESSED', {
+            sheetId,
+            totalQuestions: 0,
+            totalPrayers: 0
+        });
+    }
+
+
+    /**
      * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL
      */
     public static async savePrayerRecord(record: PrayerRecord): Promise<PrayerRecord[]> {

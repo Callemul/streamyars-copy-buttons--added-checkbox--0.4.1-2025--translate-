@@ -149,7 +149,7 @@ body {
 /* Subtab Navigation (4 Pill Buttons inside Telegram/YouTube Tab) */
 .subtabs {
     position: sticky;
-    top: -16px;
+    top: 0;
     z-index: 100;
     background-color: var(--bg);
     margin: -16px -20px 16px -20px;

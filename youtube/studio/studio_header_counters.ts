@@ -2,6 +2,7 @@
 import { SHEET_LABELS, SHEET_IDS, type SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { CommentService } from '../../modules/comment_service';
 
 export interface SheetHeaderStats {
     questions: number;
@@ -100,19 +101,37 @@ export function renderStudioHeaderCounters(
             questions = rawStat;
         }
 
+        const isPreach = sheetId.includes('preach') || sheetId.includes('oparin');
+        const preachClass = isPreach ? ' syh-header-badge-preach' : '';
+
         html += `
-            <span class="syh-header-counter-badge" data-sheet-id="${sheetId}">
+            <span class="syh-header-counter-badge${preachClass}" data-sheet-id="${sheetId}">
                 <span class="syh-header-sheet-label">${formattedLabel}</span>
                 <span class="syh-header-stat-item syh-stat-questions" title="Питання з YouTube">❓ <b class="syh-counter-num-q">${questions}</b></span>
                 <span class="syh-header-stat-item syh-stat-prayers" title="Молитви з YouTube">🙏 <b class="syh-counter-num-p">${prayers}</b></span>
+                <span class="syh-header-stat-item syh-stat-del" title="Видалити зібрані коментарі з YouTube для цієї категорії">🗑️</span>
             </span>
         `.trim();
     });
 
     wrapper.innerHTML = html;
 
-    // Attach click handler on each badge to activate tab in popup
+    // Attach click handlers on each badge & delete button
     wrapper.querySelectorAll<HTMLElement>('.syh-header-counter-badge').forEach((badgeEl) => {
+        const delBtn = badgeEl.querySelector<HTMLElement>('.syh-stat-del');
+        if (delBtn) {
+            delBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sId = badgeEl.dataset.sheetId;
+                if (sId) {
+                    if (confirm("Очистити всі зібрані коментарі з YouTube для цієї категорії?")) {
+                        CommentService.clearAllCollectedForSheet(sId);
+                    }
+                }
+            });
+        }
+
         badgeEl.style.cursor = 'pointer';
         badgeEl.addEventListener('click', (e) => {
             e.preventDefault();

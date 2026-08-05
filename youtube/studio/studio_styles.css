@@ -402,6 +402,18 @@ html[dark="true"] .syh-header-counter-badge {
     border-color: rgba(110, 168, 254, 0.35);
 }
 
+/* Green background for preach category header badges */
+.syh-header-badge-preach {
+    background-color: rgba(39, 174, 96, 0.12);
+    border-color: rgba(39, 174, 96, 0.35);
+}
+
+html[dark] .syh-header-badge-preach,
+html[dark="true"] .syh-header-badge-preach {
+    background-color: rgba(46, 204, 113, 0.18);
+    border-color: rgba(46, 204, 113, 0.45);
+}
+
 .syh-header-sheet-label b {
     font-weight: 800 !important;
 }
@@ -458,6 +470,26 @@ html[dark="true"] .syh-header-counter-unknown {
     background-color: rgba(255, 107, 107, 0.15);
     color: #ff6b6b;
     border-color: rgba(255, 107, 107, 0.35);
+}
+
+.syh-stat-del {
+    cursor: pointer;
+    opacity: 0.65;
+    margin-left: 2px;
+    padding: 1px 3px;
+    border-radius: 4px;
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.syh-stat-del:hover {
+    opacity: 1;
+    transform: scale(1.15);
+    background-color: rgba(231, 76, 60, 0.15);
+}
+
+html[dark] .syh-stat-del:hover,
+html[dark="true"] .syh-stat-del:hover {
+    background-color: rgba(255, 107, 107, 0.25);
 }
 
 

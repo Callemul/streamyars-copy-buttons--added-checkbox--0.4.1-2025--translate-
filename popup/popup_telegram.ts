@@ -159,27 +159,9 @@ export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_s
 
 export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
     if (confirm("Очистити всі зібрані коментарі з YouTube для цього аркуша?")) {
-        const sheetKey = `syh:popup:collected:${sheetId}`;
-        SYH_STORAGE.get([sheetKey, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.STUDIO_BUTTON_STATE], function(result: Record<string, any>) {
-            const items: YTCollectedItem[] = result[sheetKey] || [];
-            const commentIds = items.map(item => item.id);
-
-            const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
-            const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
-
-            commentIds.forEach(id => {
-                delete ytBtnStates[id];
-                delete studioBtnStates[id];
-            });
-
-            SYH_STORAGE.set({
-                [sheetKey]: [],
-                [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
-                [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
-            }, function() {
-                loadYTCollected(sheetId);
-                clearFinalResult(sheetId);
-            });
+        CommentService.clearAllCollectedForSheet(sheetId).then(() => {
+            loadYTCollected(sheetId);
+            clearFinalResult(sheetId);
         });
     }
 }
