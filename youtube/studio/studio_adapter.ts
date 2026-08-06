@@ -1,6 +1,7 @@
 // youtube/studio/studio_adapter.ts
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
-import type { SheetId } from '../../modules/sheets';
+import { STORAGE_KEYS } from '../../modules/storage';
+import { CommentService } from '../../modules/comment_service';
+import { SHEET_IDS, type SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
 import type { CommentPayload } from '../../modules/comment_service';
 import { getAuthorNameText, getCommentText, getVideoTitleText, getVideoLinkHref } from './studio_selectors';
@@ -8,12 +9,12 @@ import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, upda
 import { generateVideoKey, setStudioVideoSheetOverride } from './studio_video_map';
 import { generateCommentKey } from './studio_comment_key';
 import { resolveCategoryForVideo, type VideoSheetMapEntry } from './studio_category_matcher';
-import type {
-    CommentContext,
-    CommentStateCaches,
-    PlatformButtons,
-    ButtonStateType,
-    CommentPlatformAdapter
+import {
+    BaseCommentPlatformAdapter,
+    type CommentContext,
+    type CommentStateCaches,
+    type PlatformButtons,
+    type ButtonStateType
 } from '../../modules/comment_platform_adapter';
 
 const STUDIO_BUTTON_STATES_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
@@ -81,7 +82,7 @@ export function retroactiveUpdateVideoComments(
     });
 }
 
-export class StudioCommentAdapter implements CommentPlatformAdapter {
+export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-studio-events-bound';
     private static readonly BUTTON_BOUND_ATTR = 'data-syh-bound';
 
@@ -94,6 +95,7 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         channelLabel: string,
         caches: StudioEventCaches
     ) {
+        super();
         this.channelKey = channelKey;
         this.channelLabel = channelLabel;
         this.caches = caches;
@@ -158,9 +160,9 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
 
     public getSheetId(_context: CommentContext, element: Element): string {
         const ctx = this.getCommentContext(element);
-        if (!ctx || !ctx.videoId) return 'vp_ss';
+        if (!ctx || !ctx.videoId) return SHEET_IDS.VP_SS;
         const result = resolveCategoryForVideo(ctx.videoTitle || '', ctx.videoId, this.channelKey, this.caches.videoSheetMap);
-        return result.sheetId || 'vp_ss';
+        return result.sheetId || SHEET_IDS.VP_SS;
     }
 
     public getButtonStatesKey(): string {
@@ -196,11 +198,12 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         if (threadEl) {
             updateStudioCheckedClass(threadEl, true);
         }
-        this.caches.checkboxStates[commentKey] = {
-            checked: true,
-            timestamp: Date.now()
-        };
-        await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: this.caches.checkboxStates });
+        await CommentService.saveCheckboxState(
+            STUDIO_CHECKBOX_STATE_KEY,
+            this.caches.checkboxStates,
+            commentKey,
+            true
+        );
     }
 
     public async unmarkChecked(element: Element, commentKey: string, _caches: CommentStateCaches): Promise<void> {
@@ -212,11 +215,12 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         if (threadEl) {
             updateStudioCheckedClass(threadEl, false);
         }
-        this.caches.checkboxStates[commentKey] = {
-            checked: false,
-            timestamp: Date.now()
-        };
-        await SYH_STORAGE.setAsync({ [STUDIO_CHECKBOX_STATE_KEY]: this.caches.checkboxStates });
+        await CommentService.saveCheckboxState(
+            STUDIO_CHECKBOX_STATE_KEY,
+            this.caches.checkboxStates,
+            commentKey,
+            false
+        );
     }
 
     public isEventsBound(element: Element): boolean {
@@ -225,18 +229,6 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
 
     public markEventsBound(element: Element): void {
         element.setAttribute(StudioCommentAdapter.BOUND_ATTR, 'true');
-    }
-
-    public buildCollectedItem(commentKey: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload {
-        return {
-            id: commentKey,
-            author: context.author,
-            text: context.text,
-            type,
-            timestamp: Date.now(),
-            videoId: context.videoId,
-            videoTitle: context.videoTitle
-        };
     }
 
     public async beforeAction(

@@ -1,13 +1,12 @@
 import { STORAGE_KEYS } from '../modules/storage';
+import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
-import type { CommentPayload } from '../modules/comment_service';
 import { extractCommentId, extractCommentData } from './yt_ui';
-import type {
-    CommentContext,
-    CommentStateCaches,
-    PlatformButtons,
-    ButtonStateType,
-    CommentPlatformAdapter
+import {
+    BaseCommentPlatformAdapter,
+    type CommentContext,
+    type PlatformButtons,
+    type ButtonStateType
 } from '../modules/comment_platform_adapter';
 
 const YT_BUTTON_STATES_KEY = STORAGE_KEYS.YT_BUTTON_STATES;
@@ -23,7 +22,7 @@ function getVideoId(): string {
     }
 }
 
-export class YouTubeCommentAdapter implements CommentPlatformAdapter {
+export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-yt-events-bound';
     private channelKeyCache: ChannelKey | null = null;
     private videoTitleCache: string | null = null;
@@ -104,11 +103,11 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
 
     public getSheetId(_context: CommentContext, _element: Element): string {
         const channelKey = this.detectChannelKey();
-        if (channelKey === 'unknown') return 'vp_ss';
+        if (channelKey === 'unknown') return SHEET_IDS.VP_SS;
 
         const videoTitle = this.getVideoTitle();
         const matched = matchCategory(videoTitle, channelKey);
-        return matched || 'vp_ss';
+        return matched || SHEET_IDS.VP_SS;
     }
 
     public getButtonStatesKey(): string {
@@ -155,41 +154,12 @@ export class YouTubeCommentAdapter implements CommentPlatformAdapter {
         }
     }
 
-    public async markChecked(element: Element, _commentKey: string, _caches: CommentStateCaches): Promise<void> {
-        const checkbox = element.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
-        if (!checkbox) return;
-
-        checkbox.checked = true;
-        element.classList.add('syh-yt-comment-checked');
-    }
-
-    public async unmarkChecked(element: Element, _commentKey: string, _caches: CommentStateCaches): Promise<void> {
-        const checkbox = element.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
-        if (!checkbox) return;
-
-        checkbox.checked = false;
-        element.classList.remove('syh-yt-comment-checked');
-    }
-
-
     public isEventsBound(element: Element): boolean {
         return element.getAttribute(YouTubeCommentAdapter.BOUND_ATTR) === 'true';
     }
 
     public markEventsBound(element: Element): void {
         element.setAttribute(YouTubeCommentAdapter.BOUND_ATTR, 'true');
-    }
-
-    public buildCollectedItem(commentId: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload {
-        return {
-            id: commentId,
-            author: context.author,
-            text: context.text,
-            type,
-            timestamp: Date.now(),
-            videoId: context.videoId,
-            videoTitle: context.videoTitle
-        };
     }
 
     public restoreButtonState(

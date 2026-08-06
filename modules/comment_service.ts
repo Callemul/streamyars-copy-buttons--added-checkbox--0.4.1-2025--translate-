@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
 import { SYH_BUS } from './event_bus';
 
 import { RetentionService } from './retention_service';
@@ -43,12 +43,16 @@ export class CommentService {
         if (!text) return false;
 
         try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(text);
                 return true;
             }
         } catch (err) {
             console.warn('[SYH CommentService] Clipboard API error, falling back to execCommand:', err);
+        }
+
+        if (typeof document === 'undefined' || !document.body) {
+            return false;
         }
 
         try {
@@ -75,7 +79,7 @@ export class CommentService {
         sheetId: string,
         comment: CommentPayload
     ): Promise<CommentPayload[]> {
-        const storageKey = `syh:popup:collected:${sheetId}`;
+        const storageKey = getSheetCollectedStorageKey(sheetId);
         const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
         const list = result[storageKey] || [];
         const index = list.findIndex(item => 
@@ -105,7 +109,7 @@ export class CommentService {
         author?: string,
         text?: string
     ): Promise<CommentPayload[]> {
-        const storageKey = `syh:popup:collected:${sheetId}`;
+        const storageKey = getSheetCollectedStorageKey(sheetId);
         const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
         const list = result[storageKey] || [];
         const updated = list.filter(item => !(
@@ -127,7 +131,7 @@ export class CommentService {
      * та скидання стану їхніх кнопок у YouTube / Studio.
      */
     public static async clearAllCollectedForSheet(sheetId: string): Promise<void> {
-        const storageKey = `syh:popup:collected:${sheetId}`;
+        const storageKey = getSheetCollectedStorageKey(sheetId);
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([
             storageKey,
             STORAGE_KEYS.YT_BUTTON_STATES,
@@ -158,6 +162,40 @@ export class CommentService {
         });
     }
 
+    /**
+     * Уніфіковане збереження стану кнопок у сховищі
+     */
+    public static async saveButtonState(
+        storageKey: string,
+        buttonStates: Record<string, 'question' | 'prayer' | null>,
+        commentKey: string,
+        state: 'question' | 'prayer' | null
+    ): Promise<Record<string, 'question' | 'prayer' | null>> {
+        if (state === null) {
+            delete buttonStates[commentKey];
+        } else {
+            buttonStates[commentKey] = state;
+        }
+        await SYH_STORAGE.setAsync({ [storageKey]: buttonStates });
+        return buttonStates;
+    }
+
+    /**
+     * Уніфіковане збереження стану чекбокса у сховищі
+     */
+    public static async saveCheckboxState(
+        storageKey: string,
+        checkboxStates: Record<string, { checked: boolean; timestamp: number }>,
+        commentKey: string,
+        isChecked: boolean
+    ): Promise<Record<string, { checked: boolean; timestamp: number }>> {
+        checkboxStates[commentKey] = {
+            checked: isChecked,
+            timestamp: Date.now()
+        };
+        await SYH_STORAGE.setAsync({ [storageKey]: checkboxStates });
+        return checkboxStates;
+    }
 
     /**
      * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL

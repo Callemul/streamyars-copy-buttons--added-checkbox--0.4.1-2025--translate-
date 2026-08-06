@@ -64,6 +64,24 @@ test('CommentService.saveCollectedComment deduplicates items and returns updated
     assert.equal(list3.length, 1);
 });
 
+test('CommentService.saveButtonState and saveCheckboxState update state and storage correctly', async () => {
+    mockStorageStore = {};
+    const buttonStates = {};
+    const checkboxStates = {};
+
+    await CommentService.saveButtonState('test_btn_key', buttonStates, 'comment_1', 'question');
+    assert.equal(buttonStates['comment_1'], 'question');
+    assert.equal(mockStorageStore['test_btn_key']['comment_1'], 'question');
+
+    await CommentService.saveButtonState('test_btn_key', buttonStates, 'comment_1', null);
+    assert.equal(buttonStates['comment_1'], undefined);
+    assert.equal(mockStorageStore['test_btn_key']['comment_1'], undefined);
+
+    await CommentService.saveCheckboxState('test_cb_key', checkboxStates, 'comment_1', true);
+    assert.equal(checkboxStates['comment_1'].checked, true);
+    assert.equal(mockStorageStore['test_cb_key']['comment_1'].checked, true);
+});
+
 test('CommentService.savePrayerRecord and removePrayerRecord properly update storage', async () => {
     mockStorageStore = {};
     const record = {

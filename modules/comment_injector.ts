@@ -1,5 +1,4 @@
 import { CommentService } from './comment_service';
-import { SYH_STORAGE } from './storage';
 import { SYH_BUS } from './event_bus';
 import type {
     CommentStateCaches,
@@ -92,8 +91,12 @@ export class CommentInjector {
 
         if (isUntoggle) {
             // UNTOGGLE (Second press on the SAME active button):
-            delete this.caches.buttonStates[commentKey];
-            await SYH_STORAGE.setAsync({ [this.adapter.getButtonStatesKey()]: this.caches.buttonStates });
+            await CommentService.saveButtonState(
+                this.adapter.getButtonStatesKey(),
+                this.caches.buttonStates,
+                commentKey,
+                null
+            );
             this.adapter.applyButtonState(buttons, null, sheetId);
 
             await CommentService.removeCollectedComment(sheetId, commentKey, ctx.author, ctx.text);
@@ -102,11 +105,12 @@ export class CommentInjector {
             if (this.adapter.unmarkChecked) {
                 await this.adapter.unmarkChecked(element, commentKey, this.caches);
             } else {
-                this.caches.checkboxStates[commentKey] = {
-                    checked: false,
-                    timestamp: Date.now()
-                };
-                await SYH_STORAGE.setAsync({ [this.adapter.getCheckboxStatesKey()]: this.caches.checkboxStates });
+                await CommentService.saveCheckboxState(
+                    this.adapter.getCheckboxStatesKey(),
+                    this.caches.checkboxStates,
+                    commentKey,
+                    false
+                );
             }
 
             if (this.adapter.afterAction) {
@@ -120,8 +124,12 @@ export class CommentInjector {
 
         this.adapter.applyButtonState(buttons, type, sheetId);
 
-        this.caches.buttonStates[commentKey] = type;
-        await SYH_STORAGE.setAsync({ [this.adapter.getButtonStatesKey()]: this.caches.buttonStates });
+        await CommentService.saveButtonState(
+            this.adapter.getButtonStatesKey(),
+            this.caches.buttonStates,
+            commentKey,
+            type
+        );
 
         const item = this.adapter.buildCollectedItem(commentKey, ctx, type);
         await CommentService.saveCollectedComment(sheetId, item);
@@ -177,11 +185,12 @@ export class CommentInjector {
         const isChecked = checkbox.checked;
         this.adapter.applyCheckboxState(buttons, isChecked);
 
-        this.caches.checkboxStates[ctx.id] = {
-            checked: isChecked,
-            timestamp: Date.now()
-        };
-        await SYH_STORAGE.setAsync({ [this.adapter.getCheckboxStatesKey()]: this.caches.checkboxStates });
+        await CommentService.saveCheckboxState(
+            this.adapter.getCheckboxStatesKey(),
+            this.caches.checkboxStates,
+            ctx.id,
+            isChecked
+        );
     }
 
     private handleContextMenu(

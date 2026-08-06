@@ -23,7 +23,7 @@
 //   studio_selectors.ts — getCommentThreads()
 //   studio_comment_key.ts — cleanupStudioState() (30-денне очищення)
 //   studio_video_map.ts — VIDEO_MAP_STORAGE_KEY
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../../modules/storage';
 import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
 import { getCommentThreads, getCommentHeaderLabelElement, getCommentHeaderElement, STUDIO_SELECTORS } from './studio_selectors';
@@ -114,7 +114,7 @@ class StudioModuleController {
 
     private async loadStorageData(): Promise<void> {
         const sheetIds = getAllSheetIds();
-        const collectedKeys = sheetIds.map((sId) => `syh:popup:collected:${sId}`);
+        const collectedKeys = sheetIds.map((sId) => getSheetCollectedStorageKey(sId));
         const keysToFetch = [
             STUDIO_ENABLED_KEY,
             VIDEO_MAP_STORAGE_KEY,
