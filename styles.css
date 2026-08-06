@@ -325,3 +325,51 @@ div[class*="RightTabButton__AspectRatio"]:has(.syh-collapsed-tab) {
     aspect-ratio: auto !important;
 }
 
+/* ========================================================================= */
+/* КНОПКА КОПІЮВАННЯ НА ВКЛАДЦІ STARRED */
+/* ========================================================================= */
+.syh-starred-tab-copy-btn {
+    position: absolute !important;
+    right: 4px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 18px !important;
+    height: 18px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    z-index: 10 !important;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s ease !important;
+    user-select: none !important;
+    color: inherit !important;
+}
+
+.syh-starred-tab-copy-btn:hover {
+    background: rgba(0, 0, 0, 0.18) !important;
+    transform: translateY(-50%) scale(1.2) !important;
+}
+
+.syh-starred-tab-copy-btn:active {
+    transform: translateY(-50%) scale(0.9) !important;
+}
+
+.syh-starred-tab-copy-btn.syh-copied-anim .syh-starred-copy-icon {
+    display: inline-block !important;
+    animation: syhCheckmarkBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+@keyframes syhCheckmarkBounce {
+    0% { transform: scale(0.5); opacity: 0.5; }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+

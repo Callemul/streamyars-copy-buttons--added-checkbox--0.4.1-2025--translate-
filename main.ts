@@ -40,6 +40,7 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
         const bannerSelector = Array.isArray(SELECTORS.bannerBlock) ? SELECTORS.bannerBlock[0] : SELECTORS.bannerBlock;
         const bannerHeaderSelector = Array.isArray(SELECTORS.bannerHeader) ? SELECTORS.bannerHeader[0] : SELECTORS.bannerHeader;
         const starredHeaderSelector = Array.isArray(SELECTORS.starredHeaderWrap) ? SELECTORS.starredHeaderWrap[0] : SELECTORS.starredHeaderWrap;
+        const starredTabSelector = Array.isArray(SELECTORS.starredTabButton) ? SELECTORS.starredTabButton[0] : SELECTORS.starredTabButton;
         const rightTabSelector = Array.isArray(SELECTORS.rightTabButtons) ? SELECTORS.rightTabButtons[0] : SELECTORS.rightTabButtons;
 
         SYH_DOM_OBSERVER.register(commentSelector, (el) => {
@@ -64,6 +65,10 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
         SYH_DOM_OBSERVER.register(starredHeaderSelector, (el) => {
             SYH_UI.addStarredTabControls(el);
+        });
+
+        SYH_DOM_OBSERVER.register(starredTabSelector, (el) => {
+            SYH_UI.addStarredTabCopyButton(el);
         });
 
         SYH_DOM_OBSERVER.register(rightTabSelector, (el) => {

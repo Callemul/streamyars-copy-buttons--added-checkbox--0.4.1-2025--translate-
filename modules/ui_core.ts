@@ -7,6 +7,7 @@ import {
     updateCommentVisuals, 
     applySavedLabels, 
     addStarredTabControls, 
+    addStarredTabCopyButton,
     bindStarredControls, 
     filterStarredComments, 
     scrollToActiveComment 
@@ -33,6 +34,7 @@ export interface SyhUi extends SyhUiState {
     updateCommentVisuals(commentWrap: Element, type: string): void;
     applySavedLabels(commentNode: Element, text: string): void;
     addStarredTabControls(starredHeaderNode: Element): void;
+    addStarredTabCopyButton(starredTabNode: Element): void;
     bindStarredControls(): void;
     filterStarredComments(): void;
     scrollToActiveComment(): void;
@@ -180,6 +182,7 @@ export const SYH_UI: SyhUi = {
     updateCommentVisuals,
     applySavedLabels,
     addStarredTabControls,
+    addStarredTabCopyButton,
     bindStarredControls,
     filterStarredComments,
     scrollToActiveComment,

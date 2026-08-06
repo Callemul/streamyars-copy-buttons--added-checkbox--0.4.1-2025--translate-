@@ -3,6 +3,7 @@ import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { SYH_STATE } from './state';
 import { UiFactory } from './ui_factory';
+import { CommentService } from './comment_service';
 import type { PrayerItem } from './types';
 
 export function addButtonsToComment(commentNode: Element): void {
@@ -114,6 +115,90 @@ export function addStarredTabControls(starredHeaderNode: Element): void {
         bindStarredControls();
         setTimeout(() => filterStarredComments(), 10);
     }
+}
+
+/**
+ * Додає маленьку кнопку копіювання списків у правому кутку вкладки Starred
+ */
+export function addStarredTabCopyButton(starredTabNode: Element): void {
+    if (!starredTabNode || starredTabNode.querySelector('.syh-starred-tab-copy-btn')) {
+        return;
+    }
+
+    const tabEl = starredTabNode as HTMLElement;
+    if (getComputedStyle(tabEl).position === 'static') {
+        tabEl.style.position = 'relative';
+    }
+    tabEl.style.paddingRight = '28px';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'syh-starred-tab-copy-btn';
+    copyBtn.title = 'Скопіює всі списки зі Starred';
+    copyBtn.setAttribute('aria-label', 'Скопіює всі списки зі Starred');
+    copyBtn.innerHTML = '<span class="syh-starred-copy-icon">📋</span>';
+
+    copyBtn.addEventListener('click', async (e: MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+        const commentList = document.querySelector<HTMLElement>(selectors.starredList);
+        const commentsToCopy: { author: string; text: string }[] = [];
+
+        if (commentList && commentList.children.length > 0) {
+            Array.from(commentList.children).forEach((liChild) => {
+                const li = liChild as HTMLElement;
+                if (li.getAttribute('data-syh-deleted') === 'true') return;
+                if (li.style.display === 'none') return;
+
+                const commentWrap = li.querySelector(selectors.commentBlock) || li;
+                const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
+                const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
+
+                if (originalText.trim()) {
+                    commentsToCopy.push({
+                        author: authorText.trim(),
+                        text: originalText.trim()
+                    });
+                }
+            });
+        }
+
+        if (commentsToCopy.length === 0 && SYH_UI_STATE.prayersCache && SYH_UI_STATE.prayersCache.length > 0) {
+            SYH_UI_STATE.prayersCache.forEach((p) => {
+                if (p.text && p.text.trim()) {
+                    commentsToCopy.push({ author: p.author || '', text: p.text.trim() });
+                }
+            });
+        }
+
+        if (commentsToCopy.length === 0) {
+            SYH_UTILS.copyAndShowBanner('', 'Немає коментарів для копіювання');
+            return;
+        }
+
+        const formattedText = commentsToCopy
+            .map(c => CommentService.formatForClipboard(c.author, c.text))
+            .join('\n\n');
+
+        const success = await CommentService.copyToClipboard(formattedText);
+        if (success) {
+            SYH_UTILS.copyAndShowBanner(formattedText, `Скопійовано коментарів: ${commentsToCopy.length} 📋`);
+        }
+
+        const iconSpan = copyBtn.querySelector('.syh-starred-copy-icon');
+        if (iconSpan) {
+            iconSpan.textContent = '✅';
+            copyBtn.classList.add('syh-copied-anim');
+            setTimeout(() => {
+                iconSpan.textContent = '📋';
+                copyBtn.classList.remove('syh-copied-anim');
+            }, 1800);
+        }
+    });
+
+    tabEl.appendChild(copyBtn);
 }
 
 export function bindStarredControls(): void {

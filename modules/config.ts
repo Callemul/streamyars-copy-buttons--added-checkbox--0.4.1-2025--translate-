@@ -68,6 +68,7 @@ export const SYH_CONFIG: SyhConfig = {
         commentAuthor: ['[class*="PlatformCommentShell__NameText"]', '[data-testid="comment-author"]'],
         commentText: ['[class*="PlatformCommentShell__ContentSpan"]', '[data-testid="comment-content"]'],
         starButton: ['[class*="PlatformComment__StarButton"]', '[aria-label*="star" i]'],
+        starredTabButton: ['#platform-comment-tabs-tab-starredComments', 'button[id*="starredComments"]'],
         starredHeaderWrap: '[class*="StarredCommentList__HeaderWrap"]',
         starredItemWrap: '[class*="StarredCommentList__ItemWrap"]',
         starredList: '[class*="StarredCommentList__List"]',
