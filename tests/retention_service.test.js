@@ -23,4 +23,17 @@ describe('RetentionService Tests', () => {
         assert.equal(filtered.length, 3);
         assert.deepEqual(filtered.map(i => i.id), ['1', '3', '5']);
     });
+
+    test('2. createBackupSnapshot saves backup snapshot to storage', async () => {
+        const snapshot = await RetentionService.createBackupSnapshot();
+        assert.ok(snapshot.timestamp > 0);
+        assert.ok(snapshot.timestampIso);
+        assert.ok(snapshot.data);
+    });
+
+    test('3. runGlobalCleanup creates backup snapshot before cleanup', async () => {
+        await RetentionService.runGlobalCleanup();
+        const snapshot = await RetentionService.createBackupSnapshot();
+        assert.ok(snapshot);
+    });
 });

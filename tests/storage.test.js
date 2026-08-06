@@ -196,4 +196,55 @@ describe('SYH_STORAGE tests', () => {
         assert.strictEqual(removeCalled, false);
     });
 
+    test('10: getAsync(), setAsync(), removeAsync() work correctly with promises', async () => {
+        let store = {};
+
+        global.chrome.storage.local.get = (keys, cb) => {
+            const res = {};
+            const keysArr = Array.isArray(keys) ? keys : [keys];
+            keysArr.forEach(k => { if (store[k] !== undefined) res[k] = store[k]; });
+            cb(res);
+        };
+        global.chrome.storage.local.set = (items, cb) => {
+            Object.assign(store, items);
+            if (cb) cb();
+        };
+        global.chrome.storage.local.remove = (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => delete store[k]);
+            if (cb) cb();
+        };
+
+        await SYH_STORAGE.setAsync({ 'syh:test:key': 42 });
+        const res = await SYH_STORAGE.getAsync('syh:test:key');
+        assert.strictEqual(res['syh:test:key'], 42);
+
+        await SYH_STORAGE.removeAsync('syh:test:key');
+        const emptyRes = await SYH_STORAGE.getAsync('syh:test:key');
+        assert.strictEqual(emptyRes['syh:test:key'], undefined);
+    });
+
+    test('11: updateAsync() atomically modifies storage value', async () => {
+        let store = { 'syh:test:counter': 5 };
+
+        global.chrome.storage.local.get = (keys, cb) => {
+            const res = {};
+            const keysArr = Array.isArray(keys) ? keys : [keys];
+            keysArr.forEach(k => { if (store[k] !== undefined) res[k] = store[k]; });
+            cb(res);
+        };
+        global.chrome.storage.local.set = (items, cb) => {
+            Object.assign(store, items);
+            if (cb) cb();
+        };
+
+        const updated = await SYH_STORAGE.updateAsync('syh:test:counter', (current) => {
+            const val = current['syh:test:counter'] || 0;
+            return { 'syh:test:counter': val + 1 };
+        });
+
+        assert.strictEqual(updated['syh:test:counter'], 6);
+        assert.strictEqual(store['syh:test:counter'], 6);
+    });
+
 });

@@ -27,10 +27,22 @@ export interface SyhStatsExporter {
     showModal(currentBrand: string): void;
     loadChartData(currentBrand: string): void;
     loadChartJs(): Promise<boolean>;
+    prepareChartData(todayData: StreamChartSession): { labels: string[]; datasets: any[]; plugins: any[] };
+    buildChart(ctx: CanvasRenderingContext2D, chartData: { labels: string[]; datasets: any[]; plugins: any[] }): any;
     renderChart(todayData?: StreamChartSession | null, pastData?: StreamChartSession | null): Promise<void>;
     exportCSV(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
     calcStats(arr: number[]): StatsSummary;
+    parseTimeToSeconds(t?: string): number;
+    calculatePhaseStats(dataObj: StreamChartSession): {
+        overall: StatsSummary;
+        initialViewers: number;
+        st1: StatsSummary;
+        st2: StatsSummary;
+        st3: StatsSummary;
+    };
     exportPresentation(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
+    formatSummaryMarkdown(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
+    formatSummaryHTML(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
 }
 
 import { Chart } from 'chart.js/auto';
@@ -58,6 +70,8 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
                         </select>
                         <button id="syh-dl-csv-btn" aria-label="Завантажити аналітику у форматі CSV" class="syh-chart-btn-csv">CSV</button>
                         <button id="syh-dl-pres-btn" aria-label="Завантажити презентацію аналітики в HTML" class="syh-chart-btn-pres">📄 Презентація (HTML)</button>
+                        <button id="syh-copy-md-btn" aria-label="Копіювати звіт у форматі Markdown" class="syh-chart-btn-copy">📋 MD</button>
+                        <button id="syh-copy-html-btn" aria-label="Копіювати звіт у форматі HTML" class="syh-chart-btn-copy">📋 HTML</button>
                     </div>
 
                     <div class="syh-chart-canvas-wrapper">
@@ -140,40 +154,33 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         if (presBtn) {
             presBtn.onclick = () => this.exportPresentation(brandData[today], today, currentBrand);
         }
+
+        const copyMDBtn = document.getElementById('syh-copy-md-btn');
+        if (copyMDBtn) {
+            copyMDBtn.onclick = () => {
+                const md = this.formatSummaryMarkdown(brandData[today], today, currentBrand);
+                if (md) {
+                    SYH_UTILS.copyAndShowBanner(md, 'Markdown звіт скопійовано!');
+                }
+            };
+        }
+
+        const copyHTMLBtn = document.getElementById('syh-copy-html-btn');
+        if (copyHTMLBtn) {
+            copyHTMLBtn.onclick = () => {
+                const html = this.formatSummaryHTML(brandData[today], today, currentBrand);
+                if (html) {
+                    SYH_UTILS.copyAndShowBanner(html, 'HTML звіт скопійовано!');
+                }
+            };
+        }
     },
 
     loadChartJs: async function(): Promise<boolean> {
         return true;
     },
 
-    renderChart: async function(todayData?: StreamChartSession | null, _pastData?: StreamChartSession | null): Promise<void> {
-        if (this.chartInstance) {
-            this.chartInstance.destroy();
-            this.chartInstance = null;
-        }
-
-        const canvas = document.getElementById('syhChartCanvas') as HTMLCanvasElement | null;
-        if (!canvas) return;
-
-        if (!todayData || !todayData.data || todayData.data.length === 0) {
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.clearRect(0, 0, 800, 400);
-                ctx.font = "16px Arial";
-                ctx.fillStyle = "#aaa";
-                ctx.fillText("Немає даних для побудови графіка.", 20, 50);
-            }
-            return;
-        }
-
-        const loaded = await this.loadChartJs();
-        if (!loaded || typeof Chart === 'undefined') {
-            console.warn("[SYH] Chart.js недоступний.");
-            return;
-        }
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+    prepareChartData: function(todayData: StreamChartSession): { labels: string[]; datasets: any[]; plugins: any[] } {
         const labels = todayData.data.map(item => item.time);
         const datasets = [{
             label: 'Глядачі',
@@ -211,9 +218,13 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         if (todayData.phase_questions_start) plugins.push(createLine('Питання', todayData.phase_questions_start, '#f39c12'));
         if (todayData.phase_prayers_start) plugins.push(createLine('Молитви', todayData.phase_prayers_start, '#28a745'));
 
-        this.chartInstance = new Chart(ctx, {
+        return { labels, datasets, plugins };
+    },
+
+    buildChart: function(ctx: CanvasRenderingContext2D, chartData: { labels: string[]; datasets: any[]; plugins: any[] }): any {
+        return new Chart(ctx, {
             type: 'line',
-            data: { labels: labels, datasets: datasets },
+            data: { labels: chartData.labels, datasets: chartData.datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -223,8 +234,41 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
                     y: { type: 'linear', display: true, position: 'left', ticks: { color: '#ccc' } }
                 }
             },
-            plugins: plugins
+            plugins: chartData.plugins
         });
+    },
+
+    renderChart: async function(todayData?: StreamChartSession | null, _pastData?: StreamChartSession | null): Promise<void> {
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+            this.chartInstance = null;
+        }
+
+        const canvas = document.getElementById('syhChartCanvas') as HTMLCanvasElement | null;
+        if (!canvas) return;
+
+        if (!todayData || !todayData.data || todayData.data.length === 0) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.clearRect(0, 0, 800, 400);
+                ctx.font = "16px Arial";
+                ctx.fillStyle = "#aaa";
+                ctx.fillText("Немає даних для побудови графіка.", 20, 50);
+            }
+            return;
+        }
+
+        const loaded = await this.loadChartJs();
+        if (!loaded || typeof Chart === 'undefined') {
+            console.warn("[SYH] Chart.js недоступний.");
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const chartData = this.prepareChartData(todayData);
+        this.chartInstance = this.buildChart(ctx, chartData);
     },
 
     exportCSV: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
@@ -251,41 +295,45 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         return { min, max, avg, median };
     },
 
-    exportPresentation: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
-        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return;
+    parseTimeToSeconds: function(t?: string): number {
+        if (!t || typeof t !== 'string') return 0;
+        const clean = t.replace(/\s/g, '');
+        if (!clean) return 0;
+        
+        const parts = clean.split(':');
+        let sec = 0;
+        
+        const parsedParts = parts.map(part => {
+            const parsed = parseInt(part, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        });
+        
+        parsedParts.reverse().forEach((val, i) => {
+            sec += val * Math.pow(60, i);
+        });
+        
+        return sec;
+    },
 
-        const allViewers = dataObj.data.map(d => d.viewers);
+    calculatePhaseStats: function(dataObj: StreamChartSession): {
+        overall: StatsSummary;
+        initialViewers: number;
+        st1: StatsSummary;
+        st2: StatsSummary;
+        st3: StatsSummary;
+    } {
+        const allViewers = (dataObj?.data || []).map(d => d.viewers);
         const overall = this.calcStats(allViewers);
-        const initialViewers = dataObj.initial_viewers || allViewers[0] || 0;
+        const initialViewers = dataObj?.initial_viewers || allViewers[0] || 0;
 
         const p1: number[] = [], p2: number[] = [], p3: number[] = [];
-        const tQ = dataObj.phase_questions_start || "99:99:99";
-        const tP = dataObj.phase_prayers_start || "99:99:99";
+        const tQ = dataObj?.phase_questions_start || "99:99:99";
+        const tP = dataObj?.phase_prayers_start || "99:99:99";
 
-        const toSec = (t?: string): number => {
-            if (!t || typeof t !== 'string') return 0;
-            const clean = t.replace(/\s/g, '');
-            if (!clean) return 0;
-            
-            const parts = clean.split(':');
-            let sec = 0;
-            
-            const parsedParts = parts.map(part => {
-                const parsed = parseInt(part, 10);
-                return isNaN(parsed) ? 0 : parsed;
-            });
-            
-            parsedParts.reverse().forEach((val, i) => {
-                sec += val * Math.pow(60, i);
-            });
-            
-            return sec;
-        };
-
-        dataObj.data.forEach(d => {
-            const sTime = toSec(d.time);
-            const sQ = toSec(tQ);
-            const sP = toSec(tP);
+        (dataObj?.data || []).forEach(d => {
+            const sTime = this.parseTimeToSeconds(d.time);
+            const sQ = this.parseTimeToSeconds(tQ);
+            const sP = this.parseTimeToSeconds(tP);
 
             if (sTime < sQ) p1.push(d.viewers);
             else if (sTime >= sQ && sTime < sP) p2.push(d.viewers);
@@ -295,6 +343,89 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         const st1 = this.calcStats(p1);
         const st2 = this.calcStats(p2);
         const st3 = this.calcStats(p3);
+
+        return { overall, initialViewers, st1, st2, st3 };
+    },
+
+    formatSummaryMarkdown: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
+        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return "";
+
+        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
+
+        return `# 📊 Підсумкова аналітика ефіру: ${currentBrand}
+**Дата:** ${dateStr}
+**Глядачів на старті:** ${initialViewers}
+
+## 📈 Загальні показники
+- **Пік онлайн:** ${overall.max}
+- **Середній онлайн:** ${overall.avg}
+- **Медіана:** ${overall.median}
+- **Мінімум:** ${overall.min}
+
+## 📑 Розподіл по блоках (Фази)
+| Фаза | Середній онлайн | Пік у фазі | Медіана |
+| --- | --- | --- | --- |
+| 📖 Суботня школа | ${st1.avg} | ${st1.max} | ${st1.median} |
+| ❓ Питання | ${st2.avg} | ${st2.max} | ${st2.median} |
+| 🙏 Молитви | ${st3.avg} | ${st3.max} | ${st3.median} |`;
+    },
+
+    formatSummaryHTML: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
+        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return "";
+
+        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
+
+        return `<div class="syh-summary-report">
+  <h2>📊 Підсумкова аналітика ефіру: ${currentBrand}</h2>
+  <p><strong>Дата:</strong> ${dateStr}</p>
+  <p><strong>Глядачів на старті:</strong> ${initialViewers}</p>
+
+  <h3>📈 Загальні показники</h3>
+  <ul>
+    <li><strong>Пік онлайн:</strong> ${overall.max}</li>
+    <li><strong>Середній онлайн:</strong> ${overall.avg}</li>
+    <li><strong>Медіана:</strong> ${overall.median}</li>
+    <li><strong>Мінімум:</strong> ${overall.min}</li>
+  </ul>
+
+  <h3>📑 Розподіл по блоках (Фази)</h3>
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Фаза</th>
+        <th>Середній онлайн</th>
+        <th>Пік у фазі</th>
+        <th>Медіана</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>📖 Суботня школа</td>
+        <td>${st1.avg}</td>
+        <td>${st1.max}</td>
+        <td>${st1.median}</td>
+      </tr>
+      <tr>
+        <td>❓ Питання</td>
+        <td>${st2.avg}</td>
+        <td>${st2.max}</td>
+        <td>${st2.median}</td>
+      </tr>
+      <tr>
+        <td>🙏 Молитви</td>
+        <td>${st3.avg}</td>
+        <td>${st3.max}</td>
+        <td>${st3.median}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>`;
+    },
+
+    exportPresentation: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
+        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return;
+
+        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
 
         const htmlTemplate = `
 <!DOCTYPE html>

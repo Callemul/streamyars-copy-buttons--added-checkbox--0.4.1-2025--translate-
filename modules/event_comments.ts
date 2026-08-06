@@ -17,6 +17,57 @@ export interface PrayerRecord {
     timestamp: number;
 }
 
+export function getPrayerIcon(buttonNum: number): string {
+    if (buttonNum === 1) return "🙏❤️🙏";
+    if (buttonNum === 2) return "❤️❤️❤️";
+    return "🙏🙏🙏";
+}
+
+export function stripLeadingAt(rawAuthor: string | null | undefined): string {
+    let author = rawAuthor?.trim() || '';
+    while (author.startsWith('@')) author = author.substring(1);
+    return author;
+}
+
+export interface CopyPayload {
+    header: string;
+    textToCopy: string;
+    actionType: 'question' | 'prayer' | 'copy' | null;
+    prayerIcon?: string;
+}
+
+export function formatCopyPayload(
+    action: string | undefined,
+    author: string,
+    commentText: string,
+    buttonNum: number
+): CopyPayload {
+    if (action === 'copy-comment') {
+        return {
+            header: "📄 Комент (без автора)",
+            textToCopy: commentText,
+            actionType: 'copy'
+        };
+    }
+    if (action === 'copy-author-comment') {
+        return {
+            header: "📑 Автор і його ❓ питання",
+            textToCopy: `@${author}\n\n${commentText}`,
+            actionType: 'question'
+        };
+    }
+    if (action === 'copy-prayer') {
+        const prayerIcon = getPrayerIcon(buttonNum);
+        return {
+            header: `📑 Автор і його ${prayerIcon}`,
+            textToCopy: `\n\n\n${prayerIcon} @${author}\n\n${commentText}`,
+            actionType: 'prayer',
+            prayerIcon
+        };
+    }
+    return { header: '', textToCopy: '', actionType: null };
+}
+
 export interface SyhEventComments {
     SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;
@@ -326,11 +377,10 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             const commentBlock = button.closest(self.SELECTORS?.commentBlock || '');
             if (!commentBlock) return;
 
-            let author = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent?.trim() || '';
-            while (author.startsWith('@')) author = author.substring(1);
+            const rawAuthor = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent;
+            const author = stripLeadingAt(rawAuthor);
 
             const commentText = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
-            let textToCopy = '', header = '';
             
             // Встановлюємо таймер-запобіжник для Auto-Heal сканера
             if (action === 'copy-author-comment' || action === 'copy-prayer') {
@@ -338,40 +388,26 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 setTimeout(() => { commentBlock.removeAttribute('data-syh-just-added'); }, 2000);
             }
 
-            if (action === 'copy-comment') { 
-                header = "📄 Комент (без автора)"; 
-                textToCopy = commentText; 
-            }
-            else if (action === 'copy-author-comment') { 
-                header = "📑 Автор і його ❓ питання"; 
-                textToCopy = `@${author}\n\n${commentText}`; 
-                
+            const payload = formatCopyPayload(action, author, commentText, buttonNum);
+
+            if (payload.actionType === 'question') {
                 self.saveToDatabase(author, commentText, "question", "❓");
                 if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'question');
-            }
-            else if (action === 'copy-prayer') { 
-                let prayerIcon = "🙏🙏🙏";
-                if (buttonNum === 1) prayerIcon = "🙏❤️🙏"; 
-                if (buttonNum === 2) prayerIcon = "❤️❤️❤️"; 
-                
-                header = `📑 Автор і його ${prayerIcon}`; 
-                textToCopy = `\n\n\n${prayerIcon} @${author}\n\n${commentText}`; 
-                
-                self.saveToDatabase(author, commentText, "prayer", prayerIcon);
+            } else if (payload.actionType === 'prayer' && payload.prayerIcon) {
+                self.saveToDatabase(author, commentText, "prayer", payload.prayerIcon);
                 if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
-
-                SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: prayerIcon });
+                SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: payload.prayerIcon });
             }
-            
-            if (textToCopy) {
+
+            if (payload.textToCopy) {
                 SYH_BUS.emit('COMMENT_ACTION', {
-                    type: action === 'copy-prayer' ? 'prayer' : (action === 'copy-author-comment' ? 'question' : 'copy'),
+                    type: payload.actionType,
                     author: author,
                     text: commentText
                 });
 
                 if (self.UTILS) {
-                    self.UTILS.copyAndShowBanner(textToCopy, header);
+                    self.UTILS.copyAndShowBanner(payload.textToCopy, payload.header);
                 }
 
                 const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;

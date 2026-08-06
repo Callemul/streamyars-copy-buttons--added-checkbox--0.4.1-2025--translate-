@@ -31,6 +31,18 @@ export interface StorageSchema {
     [STORAGE_KEYS.YT_COLLECTED]?: YTCollectedItem[];
     [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
     [STORAGE_KEYS.COLLAPSED_TABS]?: string[];
+    [STORAGE_KEYS.STUDIO_BUTTON_STATE]?: Record<string, string>;
+    [STORAGE_KEYS.STUDIO_CHECKBOX_STATE]?: Record<string, boolean>;
+    [STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP]?: Record<string, string>;
+    [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]?: Record<string, any>;
+    [STORAGE_KEYS.POPUP_ACTIVE_TAB]?: string;
+    [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]?: Record<string, string>;
+    [STORAGE_KEYS.POPUP_SCROLL_POSITIONS]?: Record<string, number>;
+    [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]?: Record<string, { width?: number; height?: number }>;
+    [STORAGE_KEYS.INSTALLED_AT]?: number;
+    [STORAGE_KEYS.VERSION]?: string;
+    [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: Record<string, any> };
+    [key: string]: any;
 }
 
 export const STORAGE_KEYS = {
@@ -70,6 +82,8 @@ export const STORAGE_KEYS = {
     POPUP_TEXTAREA_SIZES: 'syh:popup:textarea_sizes',
     POPUP_TRANSLIT_OLD: 'syh:popup:translit_old',
     POPUP_TRANSLIT_NEW: 'syh:popup:translit_new',
+    // Retention & Backup
+    AUTO_BACKUP_SNAPSHOT: 'syh:retention:auto_backup_snapshot',
 } as const;
 
 /**

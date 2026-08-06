@@ -6,6 +6,104 @@
 import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage';
 import { RetentionService } from '../modules/retention_service';
 
+/**
+ * Підраховує кількість вибраних (checked) чекбоксів із об'єкта стану
+ */
+export function countCheckedItems(obj: any): number {
+  if (!obj || typeof obj !== 'object') return 0;
+  const target = (obj.data && typeof obj.data === 'object') ? obj.data : obj;
+  let count = 0;
+  for (const key of Object.keys(target)) {
+    if (key === 'date') continue;
+    const val = target[key];
+    if (val === true || (val && typeof val === 'object' && val.checked === true)) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Обчислює та оновлює динамічний бейдж та колір фону іконки розширення
+ */
+export async function updateExtensionBadge(): Promise<void> {
+  if (
+    typeof chrome === 'undefined' ||
+    !chrome.action ||
+    typeof chrome.action.setBadgeText !== 'function' ||
+    !chrome.storage ||
+    !chrome.storage.local
+  ) {
+    return;
+  }
+
+  try {
+    const allData: Record<string, any> = await new Promise((resolve) => {
+      chrome.storage.local.get(null, (result) => resolve(result || {}));
+    });
+
+    let collectedCount = 0;
+    let checkedCount = 0;
+
+    for (const key of Object.keys(allData)) {
+      if (
+        key.startsWith('syh:popup:collected:') ||
+        key === STORAGE_KEYS.YT_COLLECTED ||
+        key === STORAGE_KEYS.PRAYERS
+      ) {
+        const val = allData[key];
+        if (Array.isArray(val)) {
+          collectedCount += val.length;
+        }
+      } else if (
+        key === STORAGE_KEYS.CHECKBOX_STATE ||
+        key === STORAGE_KEYS.YT_CHECKBOX_STATE ||
+        key === STORAGE_KEYS.STUDIO_CHECKBOX_STATE
+      ) {
+        checkedCount += countCheckedItems(allData[key]);
+      }
+    }
+
+    if (checkedCount > 0) {
+      const text = checkedCount > 99 ? '99+' : String(checkedCount);
+      await chrome.action.setBadgeText({ text });
+      if (typeof chrome.action.setBadgeBackgroundColor === 'function') {
+        await chrome.action.setBadgeBackgroundColor({ color: '#E67E22' });
+      }
+    } else if (collectedCount > 0) {
+      const text = collectedCount > 99 ? '99+' : String(collectedCount);
+      await chrome.action.setBadgeText({ text });
+      if (typeof chrome.action.setBadgeBackgroundColor === 'function') {
+        await chrome.action.setBadgeBackgroundColor({ color: '#27AE60' });
+      }
+    } else {
+      await chrome.action.setBadgeText({ text: '' });
+    }
+  } catch (err) {
+    console.error('[Service Worker] Error updating extension badge:', err);
+  }
+}
+
+// Відстеження змін у сховищі chrome.storage.onChanged
+if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local') {
+      const hasRelevantChange = Object.keys(changes).some(
+        (key) =>
+          key.startsWith('syh:popup:collected:') ||
+          key === STORAGE_KEYS.YT_COLLECTED ||
+          key === STORAGE_KEYS.PRAYERS ||
+          key === STORAGE_KEYS.CHECKBOX_STATE ||
+          key === STORAGE_KEYS.YT_CHECKBOX_STATE ||
+          key === STORAGE_KEYS.STUDIO_CHECKBOX_STATE
+      );
+      if (hasRelevantChange) {
+        updateExtensionBadge();
+      }
+    }
+  });
+}
+
 // Подія встановлення або оновлення розширення
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalled) {
   chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails) => {
@@ -14,6 +112,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalle
     if (details.reason === 'install' || details.reason === 'update') {
       await migrateStorageIfNeeded();
       await RetentionService.runGlobalCleanup();
+      await updateExtensionBadge();
     }
 
     if (details.reason === 'install') {
@@ -59,6 +158,11 @@ class ServiceWorkerMessageRouter {
     this.register('BACKGROUND_LOG', (message) => {
       console.log(`[Content/Popup Log]:`, message.data);
       return { status: 'logged' };
+    });
+
+    this.register('UPDATE_BADGE', async () => {
+      await updateExtensionBadge();
+      return { status: 'ok' };
     });
 
     this.register('OPEN_SHEET_POPUP', async (message) => {
@@ -114,3 +218,7 @@ class ServiceWorkerMessageRouter {
 
 export const SW_ROUTER = new ServiceWorkerMessageRouter();
 SW_ROUTER.listen();
+
+// Ініціалізаційне оновлення бейджа при запуску SW
+updateExtensionBadge();
+

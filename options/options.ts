@@ -18,6 +18,32 @@ interface OptionsState {
     compact_secondary_tabs_default: boolean;
 }
 
+export function validateImportedConfig(data: any): boolean {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return false;
+    }
+    const hasDb = 'db' in data || STORAGE_KEYS.DB in data;
+    const hasOptions = 'syh_options' in data || STORAGE_KEYS.OPTIONS in data || 'options' in data;
+    const hasCategories = 'categories' in data || STORAGE_KEYS.CATEGORIES in data;
+    const hasStudioEnabled = 'studio_enabled' in data || STORAGE_KEYS.STUDIO_ENABLED in data;
+
+    if (!hasDb && !hasOptions && !hasCategories && !hasStudioEnabled) {
+        return false;
+    }
+
+    if (hasOptions) {
+        const opts = data.syh_options || data[STORAGE_KEYS.OPTIONS] || data.options;
+        if (opts && (typeof opts !== 'object' || Array.isArray(opts))) return false;
+    }
+
+    if (hasDb) {
+        const db = data.db || data[STORAGE_KEYS.DB];
+        if (db && (typeof db !== 'object' || Array.isArray(db))) return false;
+    }
+
+    return true;
+}
+
 const DEFAULT_OPTIONS: OptionsState = {
     newTitleSS: 'СШ Урок',
     newTitlePreach: 'Проповідь',
@@ -251,13 +277,22 @@ class OptionsController {
     }
 
     private exportConfig(): void {
-        SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS], (result) => {
-            const exportData = {
+        const allKeys = Object.values(STORAGE_KEYS);
+        SYH_STORAGE.get(allKeys, (result) => {
+            const exportData: Record<string, any> = {
+                app: 'StreamYard Helper',
                 timestamp: new Date().toISOString(),
-                version: '1.0.0',
+                version: result[STORAGE_KEYS.VERSION] || '1.0.0',
                 db: result[STORAGE_KEYS.DB] || {},
                 syh_options: result[STORAGE_KEYS.OPTIONS] || DEFAULT_OPTIONS
             };
+
+            for (const key of allKeys) {
+                if (result[key] !== undefined) {
+                    exportData[key] = result[key];
+                }
+            }
+
             const jsonStr = JSON.stringify(exportData, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -268,20 +303,12 @@ class OptionsController {
             a.click();
             URL.revokeObjectURL(url);
 
-            this.showToast('📥 Конфігурацію успішно експортовано');
+            this.showToast('📥 Налаштування та стан успішно експортовано');
         });
     }
 
     private validateImportedConfig(data: any): boolean {
-        if (!data || typeof data !== 'object' || Array.isArray(data)) {
-            return false;
-        }
-        const hasDb = 'db' in data || STORAGE_KEYS.DB in data;
-        const hasOptions = 'syh_options' in data || STORAGE_KEYS.OPTIONS in data;
-        if (!hasDb && !hasOptions) {
-            return false;
-        }
-        return true;
+        return validateImportedConfig(data);
     }
 
     private importConfig(event: Event): void {
@@ -293,13 +320,37 @@ class OptionsController {
         reader.onload = (e) => {
             try {
                 const imported = JSON.parse(e.target?.result as string);
-                if (this.validateImportedConfig(imported)) {
-                    SYH_STORAGE.set({
-                        [STORAGE_KEYS.DB]: imported[STORAGE_KEYS.DB] || imported.db || {},
-                        [STORAGE_KEYS.OPTIONS]: imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || DEFAULT_OPTIONS
-                    }, () => {
+                if (validateImportedConfig(imported)) {
+                    const itemsToSave: Record<string, any> = {};
+
+                    if (imported[STORAGE_KEYS.DB] || imported.db) {
+                        itemsToSave[STORAGE_KEYS.DB] = imported[STORAGE_KEYS.DB] || imported.db;
+                    }
+                    if (imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options) {
+                        itemsToSave[STORAGE_KEYS.OPTIONS] = imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options;
+                    }
+                    if (imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined || imported.studio_enabled !== undefined) {
+                        itemsToSave[STORAGE_KEYS.STUDIO_ENABLED] = imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? imported[STORAGE_KEYS.STUDIO_ENABLED] : imported.studio_enabled;
+                    }
+                    if (imported[STORAGE_KEYS.CATEGORIES] || imported.categories) {
+                        itemsToSave[STORAGE_KEYS.CATEGORIES] = imported[STORAGE_KEYS.CATEGORIES] || imported.categories;
+                    }
+                    if (imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map) {
+                        itemsToSave[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] = imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map;
+                    }
+                    if (imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs) {
+                        itemsToSave[STORAGE_KEYS.COLLAPSED_TABS] = imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs;
+                    }
+
+                    for (const key of Object.keys(imported)) {
+                        if (key.startsWith('syh:')) {
+                            itemsToSave[key] = imported[key];
+                        }
+                    }
+
+                    SYH_STORAGE.set(itemsToSave, () => {
                         this.loadSettings();
-                        this.showToast('📤 Конфігурацію успішно імпортовано!');
+                        this.showToast('📤 Налаштування та стан успішно імпортовано!');
                     });
                 } else {
                     alert('Некоректний формат файлу конфігурації.');
@@ -336,6 +387,8 @@ class OptionsController {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    new OptionsController();
-});
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', () => {
+        new OptionsController();
+    });
+}

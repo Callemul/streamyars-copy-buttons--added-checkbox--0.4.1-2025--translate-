@@ -214,27 +214,46 @@ function restoreSheetDeletedLog(sId: string, result: Record<string, any>): void 
     }
 }
 
+function resolveCleanedLogCount(sId: string, cleanHtml: string | undefined, rawCount: any): number {
+    if (rawCount !== undefined && rawCount !== null) {
+        return Number(rawCount);
+    }
+    if (!cleanHtml) return 0;
+    const cleanLogEl = $(`cleanedLog__${sId}`);
+    const rows = cleanLogEl?.querySelectorAll('.clean-table tr').length;
+    return rows ? Math.max(0, rows - 1) : 0;
+}
+
+function applyCleanedLogState(sId: string, isVisible: boolean, count: number, isOpen: boolean): void {
+    if (isVisible) {
+        if (count > 0) {
+            setTextContent(`cleanedLogCount__${sId}`, `(${count})`);
+        }
+        const cleanDetailsEl = $(`cleanedLogDetails__${sId}`) as HTMLDetailsElement | null;
+        if (cleanDetailsEl) {
+            if (isOpen) {
+                cleanDetailsEl.setAttribute('open', 'open');
+            } else {
+                cleanDetailsEl.removeAttribute('open');
+            }
+            cleanDetailsEl.style.display = '';
+        }
+    } else {
+        setTextContent(`cleanedLogCount__${sId}`, '');
+    }
+}
+
 function restoreSheetCleanedLog(sId: string, result: Record<string, any>): void {
     const cleanLogVisible = result[POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId)] ?? result[`tg_cleanedLogDetailsVisible__${sId}`];
     if (cleanLogVisible) {
         const cleanHtml = result[POPUP_SHEET_KEYS.cleanedLogHtml(sId)] ?? result[`tg_cleanedLogHtml__${sId}`];
         if (cleanHtml) setElementText(`cleanedLog__${sId}`, cleanHtml);
-        let cleanCount = result[POPUP_SHEET_KEYS.cleanedLogCount(sId)] ?? result[`tg_cleanedLogCount__${sId}`];
-        if (cleanCount === undefined && cleanHtml) {
-            const cleanLogEl = $(`cleanedLog__${sId}`);
-            cleanCount = cleanLogEl?.querySelectorAll('.clean-table tr').length ? cleanLogEl!.querySelectorAll('.clean-table tr').length - 1 : 0;
-        }
-        if (cleanCount && cleanCount > 0) setTextContent(`cleanedLogCount__${sId}`, `(${cleanCount})`);
-        const cleanDetailsEl = $(`cleanedLogDetails__${sId}`) as HTMLDetailsElement | null;
-        if (cleanDetailsEl && (result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`])) {
-            cleanDetailsEl.setAttribute('open', 'open');
-        } else if (cleanDetailsEl) {
-            cleanDetailsEl.removeAttribute('open');
-        }
-        const cleanDetails = $(`cleanedLogDetails__${sId}`);
-        if (cleanDetails && cleanDetails instanceof HTMLElement) cleanDetails.style.display = '';
+        const rawCount = result[POPUP_SHEET_KEYS.cleanedLogCount(sId)] ?? result[`tg_cleanedLogCount__${sId}`];
+        const cleanCount = resolveCleanedLogCount(sId, cleanHtml, rawCount);
+        const isOpen = Boolean(result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`]);
+        applyCleanedLogState(sId, true, cleanCount, isOpen);
     } else {
-        setTextContent(`cleanedLogCount__${sId}`, '');
+        applyCleanedLogState(sId, false, 0, false);
     }
 }
 

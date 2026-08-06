@@ -2,9 +2,12 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
 import { CommentService } from '../modules/comment_service';
 import { RetentionService } from '../modules/retention_service';
+import { batchRenderItems } from '../modules/render_utils';
 
 import type { PrayerItem } from '../modules/types';
 export type { PrayerItem };
+
+let activePrayerBatchCancel: (() => void) | null = null;
 
 function $(id: string): HTMLElement | null {
     return document.getElementById(id);
@@ -212,6 +215,12 @@ function buildIndexedPrayerRow(item: { text: string; id: string }, idx: number):
 export function renderPrayers(prayersList: PrayerItem[]): void {
     const outputDiv = $('prayersResultDiv');
     if (!outputDiv) return;
+
+    if (activePrayerBatchCancel) {
+        activePrayerBatchCancel();
+        activePrayerBatchCancel = null;
+    }
+
     outputDiv.innerHTML = '';
 
     const roomWarning = $('syh-room-warning');
@@ -246,38 +255,56 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     checkRoomWarning(prayersList, outputDiv);
 
     const { grouped, totalRequests } = groupPrayersByAuthor(prayersList);
-    const authorsCount = Object.keys(grouped).length;
+    const authorNames = Object.keys(grouped);
+    const authorsCount = authorNames.length;
     const totalCount = $('prayersTotalCount');
     if (totalCount) totalCount.textContent = `${authorsCount} люд. - ${totalRequests} прохань`;
 
     let fullTextForCopy = "🙏🙏🙏 МОЛИТВЕННЫЕ ПРОСЬБЫ\n\n";
 
-    for (const author in grouped) {
+    for (const author of authorNames) {
         const items = grouped[author];
-        const { header, authorIcon } = buildAuthorHeader(author, items);
+        const { authorIcon } = buildAuthorHeader(author, items);
 
         fullTextForCopy += `${authorIcon} @${author}\n`;
-
-        const block = document.createElement('div');
-        block.className = 'q-block q-pray';
-        block.style.position = 'relative';
-        block.appendChild(header);
 
         if (items.length === 1) {
             const item = items[0];
             fullTextForCopy += `${item.text}\n\n`;
-            block.appendChild(buildSinglePrayerRow(item));
         } else {
             items.forEach((item, idx) => {
                 fullTextForCopy += `${idx + 1}) ${item.text}\n`;
-                block.appendChild(buildIndexedPrayerRow(item, idx));
             });
             fullTextForCopy += `\n`;
         }
-        outputDiv.appendChild(block);
     }
 
     outputDiv.setAttribute('data-raw-text', fullTextForCopy.trim());
+
+    activePrayerBatchCancel = batchRenderItems(
+        outputDiv,
+        authorNames,
+        (author) => {
+            const items = grouped[author];
+            const { header } = buildAuthorHeader(author, items);
+
+            const block = document.createElement('div');
+            block.className = 'q-block q-pray';
+            block.style.position = 'relative';
+            block.appendChild(header);
+
+            if (items.length === 1) {
+                const item = items[0];
+                block.appendChild(buildSinglePrayerRow(item));
+            } else {
+                items.forEach((item, idx) => {
+                    block.appendChild(buildIndexedPrayerRow(item, idx));
+                });
+            }
+            return block;
+        },
+        { batchSize: 20, clearContainer: true }
+    );
 }
 
 function bindPrayerFocusListeners(): void {

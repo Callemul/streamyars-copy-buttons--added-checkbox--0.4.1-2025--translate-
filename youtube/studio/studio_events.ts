@@ -103,8 +103,32 @@ export function bindStudioCommentEvents(
     const videoKey = ctx.videoId || '';
 
     const previousCommentKey = threadEl.dataset.syhCommentKey;
+    cleanupRecycledStudioElement(threadEl, previousCommentKey, commentKey);
+
+    threadEl.dataset.syhVideoKey = videoKey;
+    threadEl.dataset.syhCommentKey = commentKey;
+
+    setupVideoMetadataObserver(threadEl, ctx.videoTitle || '', ctx.videoId || '', () => {
+        bindStudioCommentEvents(threadEl, channelKey, channelLabel, caches, true);
+    });
+
+    if (isStudioBindingUpToDate(threadEl, adapter, commentKey, forceUpdate)) {
+        return;
+    }
+
+    applyStudioCommentIntegrations(threadEl, commentKey, adapter, injector, caches);
+}
+
+/**
+ * Очищає прив'язки та стани, якщо Polymer (iron-list) перевикористав DOM-елемент для іншого коментаря.
+ */
+function cleanupRecycledStudioElement(
+    threadEl: HTMLElement,
+    previousCommentKey: string | undefined,
+    currentCommentKey: string
+): void {
     const isAlreadyBound = threadEl.dataset.syhStudioEventsBound === 'true';
-    const commentKeyChanged = isAlreadyBound && !!previousCommentKey && previousCommentKey !== commentKey;
+    const commentKeyChanged = isAlreadyBound && !!previousCommentKey && previousCommentKey !== currentCommentKey;
 
     if (commentKeyChanged) {
         threadEl.removeAttribute('data-syh-studio-events-bound');
@@ -115,23 +139,36 @@ export function bindStudioCommentEvents(
             textNode.removeAttribute('data-syh-original-text');
         }
     }
+}
 
-    threadEl.dataset.syhVideoKey = videoKey;
-    threadEl.dataset.syhCommentKey = commentKey;
-
-    setupVideoMetadataObserver(threadEl, ctx.videoTitle || '', ctx.videoId || '', () => {
-        bindStudioCommentEvents(threadEl, channelKey, channelLabel, caches, true);
-    });
-
+/**
+ * Перевіряє, чи є прив'язка подій та станів коментаря актуальною.
+ */
+function isStudioBindingUpToDate(
+    threadEl: HTMLElement,
+    adapter: StudioCommentAdapter,
+    commentKey: string,
+    forceUpdate: boolean
+): boolean {
     const effectivelyBound = threadEl.dataset.syhStudioEventsBound === 'true';
-
+    if (!effectivelyBound || forceUpdate) {
+        return false;
+    }
     const isCheckboxOutOfSync = adapter.isCheckboxOutOfSync(threadEl, commentKey);
     const isButtonOutOfSync = adapter.isButtonOutOfSync(threadEl, commentKey);
+    return !isCheckboxOutOfSync && !isButtonOutOfSync;
+}
 
-    if (effectivelyBound && !forceUpdate && !isCheckboxOutOfSync && !isButtonOutOfSync) {
-        return;
-    }
-
+/**
+ * Відновлює стани кнопок/чекбоксів та підключає ін'єкційні обробники для коментаря Studio.
+ */
+function applyStudioCommentIntegrations(
+    threadEl: HTMLElement,
+    commentKey: string,
+    adapter: StudioCommentAdapter,
+    injector: CommentInjector,
+    caches: StudioEventCaches
+): void {
     const buttons = adapter.getButtons(threadEl);
     if (!buttons.questionBtn && !buttons.prayerBtn && !buttons.copyBtn) {
         return;

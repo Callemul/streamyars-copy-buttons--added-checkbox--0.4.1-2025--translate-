@@ -369,6 +369,20 @@
     font-weight: bold;
 }
 
+.syh-chart-btn-copy {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.syh-chart-btn-copy:hover {
+    background: #218838;
+}
+
 .syh-chart-canvas-wrapper {
     position: relative;
     height: 400px;

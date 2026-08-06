@@ -65,7 +65,7 @@ function processYTComment(commentNode: Element) {
 function processAllYTComments() {
     if (!stateCache.youtubeEnabled) return;
     const comments = document.querySelectorAll(YT_SELECTORS.commentBlock);
-    comments.forEach(comment => processYTComment(comment));
+    comments.forEach(processYTComment);
 }
 
 /**
@@ -81,11 +81,7 @@ function startObserver() {
         ? YT_SELECTORS.commentBlock.join(',') 
         : YT_SELECTORS.commentBlock;
 
-    unregisterObserver = SYH_DOM_OBSERVER.register(selector, (el) => {
-        if (stateCache.youtubeEnabled) {
-            processYTComment(el);
-        }
-    });
+    unregisterObserver = SYH_DOM_OBSERVER.register(selector, processYTComment);
 
     SYH_DOM_OBSERVER.start(document.body || document.documentElement);
 }
@@ -174,9 +170,7 @@ SYH_STORAGE.onChanged((changes) => {
 });
 
 // Реагування на SPA-навігацію в YouTube
-window.addEventListener('yt-navigate-finish', () => {
-    initYouTubeModule();
-});
+window.addEventListener('yt-navigate-finish', initYouTubeModule);
 
 // Запуск після завантаження DOM
 if (document.readyState === 'loading') {

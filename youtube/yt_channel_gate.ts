@@ -1,12 +1,7 @@
 // youtube/yt_channel_gate.ts
-import { detectChannelKey } from '../modules/channel_config';
+import { detectChannelKey, isAllowedChannelKey } from '../modules/channel_config';
 
-/**
- * Перевіряє, чи поточна сторінка YouTube належить до дозволених каналів (VP / Slovo).
- */
-export function isAllowedChannel(): boolean {
-    if (typeof document === 'undefined') return true;
-
+export function extractDomChannelInfo(): { channelName: string; channelHandle: string } {
     let channelName = '';
     let channelHandle = '';
 
@@ -42,8 +37,18 @@ export function isAllowedChannel(): boolean {
         }
     }
 
+    return { channelName, channelHandle };
+}
+
+/**
+ * Перевіряє, чи поточна сторінка YouTube належить до дозволених каналів (VP / Slovo).
+ */
+export function isAllowedChannel(): boolean {
+    if (typeof document === 'undefined') return true;
+
+    const { channelName, channelHandle } = extractDomChannelInfo();
     const key = detectChannelKey(channelName, channelHandle);
-    const allowed = key === 'vp' || key === 'slovo';
+    const allowed = isAllowedChannelKey(key);
 
     if (!allowed) {
         console.log(`[SYH YT Gate] Channel not allowed. Name: "${channelName.trim()}", Handle: "${channelHandle}". Key: "${key}"`);

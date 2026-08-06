@@ -12,6 +12,8 @@ export interface CommentAssistantInterface {
     hasTrigger(text: string): boolean;
     highlightTriggers(text: string): { highlightedText: string; matchedWords: string[]; matchedCategories?: string[] };
     stripHighlights(text: string): string;
+    findTextNode(commentBlock: HTMLElement | Element): Element | null;
+    getOriginalText(textNode: Element): string;
     processComment(commentBlock: HTMLElement | Element): boolean;
     processAllComments(): void;
 }
@@ -134,47 +136,61 @@ export class CommentAssistantService implements CommentAssistantInterface {
         return text.replace(/<mark class="syh-trigger-highlight[^"]*"[^>]*>(.*?)<\/mark>/gi, '$1');
     }
 
-    public processComment(commentBlock: HTMLElement | Element): boolean {
-        if (!commentBlock) return false;
-
+    public findTextNode(commentBlock: HTMLElement | Element): Element | null {
         const commentTextSelector = this.selectors.commentText;
-        
-        let textNode: Element | null = null;
         if (typeof commentTextSelector === 'string') {
-            textNode = commentBlock.querySelector(commentTextSelector);
-        } else {
-            for (const sel of commentTextSelector) {
-                textNode = commentBlock.querySelector(sel);
-                if (textNode) break;
-            }
+            return commentBlock.querySelector(commentTextSelector);
         }
-        
-        if (!textNode) return false;
+        for (const sel of commentTextSelector) {
+            const textNode = commentBlock.querySelector(sel);
+            if (textNode) return textNode;
+        }
+        return null;
+    }
 
+    public getOriginalText(textNode: Element): string {
         let originalText = textNode.getAttribute('data-syh-original-text');
         if (originalText === null) {
             originalText = textNode.textContent || '';
             textNode.setAttribute('data-syh-original-text', originalText);
         }
+        return originalText;
+    }
 
-        if (this.hasTrigger(originalText)) {
-            const { highlightedText, matchedWords, matchedCategories } = this.highlightTriggers(originalText);
-            if (textNode.innerHTML !== highlightedText) {
-                textNode.innerHTML = highlightedText;
-            }
-            if (textNode.hasAttribute('is-empty')) {
-                textNode.removeAttribute('is-empty');
-            }
-            const primaryCategory = matchedCategories.includes('prayer') ? 'prayer' : (matchedCategories.includes('question') ? 'question' : matchedWords.join(','));
-            commentBlock.setAttribute('data-syh-triggered', primaryCategory);
-            return true;
-        } else {
-            if (textNode.querySelector('mark.syh-trigger-highlight')) {
-                textNode.textContent = originalText;
-            }
-            commentBlock.removeAttribute('data-syh-triggered');
-            return false;
+    private applyHighlight(commentBlock: HTMLElement | Element, textNode: Element, originalText: string): boolean {
+        const { highlightedText, matchedWords, matchedCategories } = this.highlightTriggers(originalText);
+        if (textNode.innerHTML !== highlightedText) {
+            textNode.innerHTML = highlightedText;
         }
+        if (textNode.hasAttribute('is-empty')) {
+            textNode.removeAttribute('is-empty');
+        }
+        const primaryCategory = matchedCategories.includes('prayer')
+            ? 'prayer'
+            : (matchedCategories.includes('question') ? 'question' : matchedWords.join(','));
+        commentBlock.setAttribute('data-syh-triggered', primaryCategory);
+        return true;
+    }
+
+    private removeHighlight(commentBlock: HTMLElement | Element, textNode: Element, originalText: string): boolean {
+        if (textNode.querySelector('mark.syh-trigger-highlight')) {
+            textNode.textContent = originalText;
+        }
+        commentBlock.removeAttribute('data-syh-triggered');
+        return false;
+    }
+
+    public processComment(commentBlock: HTMLElement | Element): boolean {
+        if (!commentBlock) return false;
+
+        const textNode = this.findTextNode(commentBlock);
+        if (!textNode) return false;
+
+        const originalText = this.getOriginalText(textNode);
+
+        return this.hasTrigger(originalText)
+            ? this.applyHighlight(commentBlock, textNode, originalText)
+            : this.removeHighlight(commentBlock, textNode, originalText);
     }
 
     public processAllComments() {
