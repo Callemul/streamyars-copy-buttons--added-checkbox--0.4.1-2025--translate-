@@ -1,7 +1,0 @@
-# AUTOMATIC AUDIT PROTOCOL & RULES FOR CLINE & KILOCODE
-
-Read AGENTS.md at repository root before executing any tasks.
-
-CRITICAL RULE FOR ALL CODE AUDITS / REVIEWS:
-When the user asks for "audit", "аудит", "full review", or "analyze project":
-Use dynamic tools (grep, glob, read) and strictly follow the protocol in AGENTS.md.

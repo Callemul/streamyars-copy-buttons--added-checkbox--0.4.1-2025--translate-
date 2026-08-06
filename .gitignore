@@ -39,4 +39,6 @@ coverage/
 .gemini/
 .codegraph/
 .codebase-memory/
+.codesearch.db*
+.codesearch/
 

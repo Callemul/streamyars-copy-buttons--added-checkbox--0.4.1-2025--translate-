@@ -23,6 +23,7 @@
 
 ## 📐 3. Загальні правила та Команди
 
+- **Codebase Search Directive:** Prefer `codebase-memory` tools (`search_code`, `search_graph`, `get_architecture`) for exploring codebase structure and logic. Fall back to standard file tools if codebase-memory returns insufficient data.
 - **Команди:** `npm run dev` | `npm run build` | `npm run test` | `npm run lint`
 - **Workflow RPI:** Research (`codebase-memory`) → Plan → Implement → Verify (`npm run test && npm run lint`).
 - **Manifest V3:** TypeScript / Vite. `host_permissions` обмежені конкретними доменами. DOM event listeners у попапі — strictly всередині `DOMContentLoaded`.
