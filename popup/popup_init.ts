@@ -190,27 +190,45 @@ function restoreSheetStats(sId: string, result: Record<string, any>): void {
     }
 }
 
+function resolveDeletedLogCount(sId: string, delHtml: string | undefined, rawCount: any): number {
+    if (rawCount !== undefined && rawCount !== null) {
+        return Number(rawCount);
+    }
+    if (!delHtml) return 0;
+    const delLogEl = $(`deletedLog__${sId}`);
+    return delLogEl?.querySelectorAll('.del-row').length || 0;
+}
+
+function applyDeletedLogState(sId: string, isVisible: boolean, count: number, isOpen: boolean): void {
+    if (isVisible) {
+        if (count > 0) {
+            setTextContent(`deletedLogCount__${sId}`, `(${count})`);
+        }
+        const delDetailsEl = $(`deletedLogDetails__${sId}`) as HTMLDetailsElement | null;
+        if (delDetailsEl) {
+            if (isOpen) {
+                delDetailsEl.setAttribute('open', 'open');
+            } else {
+                delDetailsEl.removeAttribute('open');
+            }
+            delDetailsEl.style.display = '';
+        }
+    } else {
+        setTextContent(`deletedLogCount__${sId}`, '');
+    }
+}
+
 function restoreSheetDeletedLog(sId: string, result: Record<string, any>): void {
-    const delLogVisible = result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`];
+    const delLogVisible = Boolean(result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`]);
     if (delLogVisible) {
         const delHtml = result[POPUP_SHEET_KEYS.deletedLogHtml(sId)] ?? result[`tg_deletedLogHtml__${sId}`];
         if (delHtml) setElementText(`deletedLog__${sId}`, delHtml);
-        let delCount = result[POPUP_SHEET_KEYS.deletedLogCount(sId)] ?? result[`tg_deletedLogCount__${sId}`];
-        if (delCount === undefined && delHtml) {
-            const delLogEl = $(`deletedLog__${sId}`);
-            delCount = delLogEl?.querySelectorAll('.del-row').length;
-        }
-        if (delCount) setTextContent(`deletedLogCount__${sId}`, `(${delCount})`);
-        const delDetailsEl = $(`deletedLogDetails__${sId}`) as HTMLDetailsElement | null;
-        if (delDetailsEl && (result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`])) {
-            delDetailsEl.setAttribute('open', 'open');
-        } else if (delDetailsEl) {
-            delDetailsEl.removeAttribute('open');
-        }
-        const delDetails = $(`deletedLogDetails__${sId}`);
-        if (delDetails && delDetails instanceof HTMLElement) delDetails.style.display = '';
+        const rawCount = result[POPUP_SHEET_KEYS.deletedLogCount(sId)] ?? result[`tg_deletedLogCount__${sId}`];
+        const delCount = resolveDeletedLogCount(sId, delHtml, rawCount);
+        const isOpen = Boolean(result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`]);
+        applyDeletedLogState(sId, true, delCount, isOpen);
     } else {
-        setTextContent(`deletedLogCount__${sId}`, '');
+        applyDeletedLogState(sId, false, 0, false);
     }
 }
 

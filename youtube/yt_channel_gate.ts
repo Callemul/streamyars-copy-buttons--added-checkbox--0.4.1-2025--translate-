@@ -1,18 +1,26 @@
 // youtube/yt_channel_gate.ts
 import { detectChannelKey, isAllowedChannelKey } from '../modules/channel_config';
 
+const CHANNEL_NAME_SELECTORS = [
+    '#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name',
+    '#channel-header #text, #header #channel-name'
+];
+
 export function extractDomChannelInfo(): { channelName: string; channelHandle: string } {
     let channelName = '';
     let channelHandle = '';
 
-    // 1. Пошук блоку власника відео (#owner)
-    const ownerEl = document.querySelector('#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name');
-    if (ownerEl) {
-        channelName = ownerEl.textContent || '';
+    for (const sel of CHANNEL_NAME_SELECTORS) {
+        const el = document.querySelector(sel);
+        if (el?.textContent?.trim()) {
+            channelName = el.textContent.trim();
+            break;
+        }
     }
 
-    // 2. Пошук handle посилання (/@handle)
-    const handleEl = document.querySelector<HTMLAnchorElement>('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]');
+    const handleEl = document.querySelector<HTMLAnchorElement>(
+        '#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]'
+    );
     if (handleEl) {
         const href = handleEl.getAttribute('href') || '';
         const match = href.match(/\/(@[^/?#]+)/);
@@ -21,15 +29,6 @@ export function extractDomChannelInfo(): { channelName: string; channelHandle: s
         }
     }
 
-    // 3. Запасний варіант — заголовок сторінки каналу (#channel-header)
-    if (!channelName && !channelHandle) {
-        const headerTitleEl = document.querySelector('#channel-header #text, #header #channel-name');
-        if (headerTitleEl) {
-            channelName = headerTitleEl.textContent || '';
-        }
-    }
-
-    // 4. Запасний варіант — метатеги розпізнавання
     if (!channelName && !channelHandle) {
         const metaOwner = document.querySelector('meta[name="title"], meta[property="og:title"]');
         if (metaOwner) {

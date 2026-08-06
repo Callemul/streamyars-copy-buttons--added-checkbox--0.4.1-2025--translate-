@@ -5,6 +5,12 @@ import { SYH_UTILS } from './utils';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
 import { UiFactory } from './ui_factory';
 
+function getOrCreateTodaySession(db: Record<string, any>, brand: string, today: string): any {
+    if (!db[brand]) db[brand] = {};
+    if (!db[brand][today]) db[brand][today] = { data: [] };
+    return db[brand][today];
+}
+
 export interface SyhStatsTracker {
     intervalId: number | null;
     pendingRAF: number | null;
@@ -233,14 +239,13 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
 
         SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
             const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-            if (!db[self.currentBrand]) db[self.currentBrand] = {};
-            if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
+            const session = getOrCreateTodaySession(db, self.currentBrand, today);
 
             if (phase === 'questions') {
-                db[self.currentBrand][today].phase_questions_start = timerText;
+                session.phase_questions_start = timerText;
                 btnElement.innerText = '✅ Питання';
             } else if (phase === 'prayers') {
-                db[self.currentBrand][today].phase_prayers_start = timerText;
+                session.phase_prayers_start = timerText;
                 btnElement.innerText = '✅ Молитви';
             }
             btnElement.style.opacity = '0.7';
@@ -280,11 +285,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
 
             SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
                 const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
-                
-                if (!db[self.currentBrand]) db[self.currentBrand] = {};
-                if (!db[self.currentBrand][today]) db[self.currentBrand][today] = { data: [] };
-
-                const session = db[self.currentBrand][today];
+                const session = getOrCreateTodaySession(db, self.currentBrand, today);
                 
                 if (session.initial_viewers === undefined && session.data.length === 0) {
                     session.initial_viewers = viewerCount;

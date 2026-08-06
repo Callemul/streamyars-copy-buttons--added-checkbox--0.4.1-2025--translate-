@@ -315,6 +315,48 @@ export function parseTelegramSection(
     return items;
 }
 
+export interface TelegramSheetDOMState {
+    finalResultHtml: string;
+    statsHtml: string;
+    statsVisible: boolean;
+    deletedLogHtml: string;
+    deletedLogCount: number;
+    deletedLogDetailsVisible: boolean;
+    deletedLogDetailsOpen: boolean;
+    cleanedLogHtml: string;
+    cleanedLogCount: number;
+    cleanedLogDetailsVisible: boolean;
+    cleanedLogDetailsOpen: boolean;
+}
+
+export function collectTelegramSheetStateFromDOM(
+    sheetId: string,
+    deletedLogCount: number = 0,
+    cleanedLogCount: number = 0,
+    getElementByIdFn: (id: string) => HTMLElement | null = (id) => typeof document !== 'undefined' ? document.getElementById(id) : null
+): TelegramSheetDOMState {
+    const outputDiv = getElementByIdFn(`finalResultDiv__${sheetId}`);
+    const statsBar = getElementByIdFn(`statsBar__${sheetId}`);
+    const deletedLogDiv = getElementByIdFn(`deletedLog__${sheetId}`);
+    const cleanedLogDiv = getElementByIdFn(`cleanedLog__${sheetId}`);
+    const deletedLogDetails = getElementByIdFn(`deletedLogDetails__${sheetId}`) as HTMLDetailsElement | null;
+    const cleanedLogDetails = getElementByIdFn(`cleanedLogDetails__${sheetId}`) as HTMLDetailsElement | null;
+
+    return {
+        finalResultHtml: outputDiv?.innerHTML || '',
+        statsHtml: statsBar?.innerHTML || '',
+        statsVisible: statsBar ? statsBar.style.display !== 'none' : false,
+        deletedLogHtml: deletedLogDiv?.innerHTML || '',
+        deletedLogCount,
+        deletedLogDetailsVisible: true,
+        deletedLogDetailsOpen: deletedLogDetails?.open || false,
+        cleanedLogHtml: cleanedLogDiv?.innerHTML || '',
+        cleanedLogCount,
+        cleanedLogDetailsVisible: true,
+        cleanedLogDetailsOpen: cleanedLogDetails?.open || false
+    };
+}
+
 export function parseAndFilterOldList(
     text: string,
     answeredIds?: number[] | null,

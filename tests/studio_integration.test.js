@@ -31,7 +31,7 @@ global.chrome = {
 const { matchCategory } = await import('../modules/channel_config.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
 const { CommentInjector } = await import('../modules/comment_injector.ts');
-const { StudioCommentAdapter } = await import('../youtube/studio/studio_adapter.ts');
+const { StudioCommentAdapter, retroactiveUpdateVideoComments } = await import('../youtube/studio/studio_adapter.ts');
 const { YouTubeCommentAdapter } = await import('../youtube/yt_adapter.ts');
 const { CommentService } = await import('../modules/comment_service.ts');
 const { SheetStateService } = await import('../modules/sheet_state_service.ts');
@@ -518,6 +518,96 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
         assert.equal(notifiedValue, true);
 
         unsubscribe();
+    });
+
+    test('15. retroactiveUpdateVideoComments updates matching comment threads in DOM', () => {
+        const createFakeBtn = () => {
+            const added = new Set();
+            return {
+                innerHTML: '',
+                title: '',
+                classList: {
+                    contains: (cls) => added.has(cls),
+                    add: (cls) => added.add(cls),
+                    remove: (cls) => added.delete(cls)
+                }
+            };
+        };
+
+        const fakeQuestionBtn = createFakeBtn();
+        const fakePrayerBtn = createFakeBtn();
+        const fakeCopyBtn = createFakeBtn();
+
+        const fakeThread = {
+            tagName: 'YTCP-COMMENT',
+            dataset: { syhCommentKey: 'c_retro_1' },
+            hasAttribute: () => false,
+            querySelector: (sel) => {
+                const s = typeof sel === 'string' ? sel : '';
+                if (s.includes('author-text')) return { textContent: 'UserRetro' };
+                if (s.includes('content-text')) return { textContent: 'Comment for retro update' };
+                if (s.includes('video-title')) return { textContent: 'Retro Video Title' };
+                if (s.includes('btn-question')) return fakeQuestionBtn;
+                if (s.includes('btn-prayer')) return fakePrayerBtn;
+                if (s.includes('btn-copy')) return fakeCopyBtn;
+                if (s.includes('toolbar')) return {
+                    querySelector: (sub) => {
+                        if (sub.includes('btn-question')) return fakeQuestionBtn;
+                        if (sub.includes('btn-prayer')) return fakePrayerBtn;
+                        if (sub.includes('btn-copy')) return fakeCopyBtn;
+                        return null;
+                    },
+                    querySelectorAll: () => [],
+                    appendChild: () => {}
+                };
+                if (s.includes('metadata')) return { querySelector: () => null, querySelectorAll: () => [], appendChild: () => {} };
+                return null;
+            },
+            closest: () => null
+        };
+
+        global.document.querySelectorAll = (sel) => {
+            if (sel === 'ytcp-comment' || sel.includes('ytcp-comment')) return [fakeThread];
+            return [];
+        };
+
+        const caches = {
+            videoSheetMap: {
+                'Retro Video Title': { sheetId: 'oparin', source: 'manual' }
+            },
+            buttonStates: { 'c_retro_1': 'question' },
+            checkboxStates: {}
+        };
+
+        retroactiveUpdateVideoComments('Retro Video Title', 'vp', caches);
+
+        assert.equal(fakeThread.dataset.syhCommentKey, 'c_retro_1');
+        assert.equal(fakeQuestionBtn.classList.contains('syh-btn-active'), true);
+    });
+
+    test('16. StudioCommentAdapter markChecked and unmarkChecked properly toggle checkbox and storage', async () => {
+        mockStorageStore = {};
+        const fakeCheckbox = { checked: false };
+        const fakeThread = {
+            tagName: 'YTCP-COMMENT',
+            classList: {
+                add: (cls) => { if (cls === 'syh-studio-comment-checked') fakeThread.checkedClass = true; },
+                remove: (cls) => { if (cls === 'syh-studio-comment-checked') fakeThread.checkedClass = false; }
+            },
+            querySelector: (sel) => sel.includes('checkbox') ? fakeCheckbox : null,
+            closest: function() { return this; }
+        };
+
+        const caches = { videoSheetMap: {}, buttonStates: {}, checkboxStates: {} };
+        const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
+
+        await adapter.markChecked(fakeThread, 'c_mark_1', caches);
+        assert.equal(fakeCheckbox.checked, true);
+        assert.equal(fakeThread.checkedClass, true);
+
+        await adapter.unmarkChecked(fakeThread, 'c_mark_1', caches);
+        assert.equal(fakeCheckbox.checked, false);
+        assert.equal(fakeThread.checkedClass, false);
     });
 });
 

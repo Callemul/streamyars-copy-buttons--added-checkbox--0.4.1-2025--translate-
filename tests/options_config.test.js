@@ -27,4 +27,19 @@ describe('options/options.ts validateImportedConfig Tests', () => {
         assert.equal(validateImportedConfig('invalid string'), false);
         assert.equal(validateImportedConfig({ unknown_key: 123 }), false);
     });
+
+    test('4. extractImportedItems extracts db, options, studio_enabled, and syh: prefix keys', async () => {
+        const { OptionsController } = await import('../options/options.ts');
+        const importedData = {
+            db: { newTitleSS: 'SS' },
+            options: { show_copy_buttons: false },
+            'syh:popup:active_tab': 'tab-prayers'
+        };
+        const controller = Object.create(OptionsController.prototype);
+        const extracted = controller.extractImportedItems(importedData);
+
+        assert.deepEqual(extracted['syh:core:db'], { newTitleSS: 'SS' });
+        assert.deepEqual(extracted['syh:core:options'], { show_copy_buttons: false });
+        assert.equal(extracted['syh:popup:active_tab'], 'tab-prayers');
+    });
 });

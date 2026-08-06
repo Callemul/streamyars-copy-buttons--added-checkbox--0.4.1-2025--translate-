@@ -1,14 +1,41 @@
 import assert from 'node:assert';
-import { test, describe } from 'node:test';
+import { test, describe, beforeEach } from 'node:test';
 
-// Мокаємо window для Node.js
+// Мокаємо window та chrome для Node.js
 if (typeof globalThis.window === 'undefined') {
     globalThis.window = globalThis;
 }
 
-const { getPrayerIcon, stripLeadingAt, formatCopyPayload } = await import('../modules/event_comments.ts');
+let mockStorageStore = {};
+
+global.chrome = {
+    runtime: { id: 'test-id' },
+    storage: {
+        local: {
+            get: (keys, cb) => {
+                const res = {};
+                const arr = Array.isArray(keys) ? keys : [keys];
+                arr.forEach(k => { res[k] = mockStorageStore[k]; });
+                if (cb) cb(res);
+            },
+            set: (items, cb) => {
+                Object.assign(mockStorageStore, items);
+                if (cb) cb();
+            }
+        }
+    }
+};
+
+const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_EVENT_COMMENTS } = await import('../modules/event_comments.ts');
 
 describe('SYH_EVENT_COMMENTS Helper Tests', () => {
+    beforeEach(() => {
+        mockStorageStore = {};
+        if (typeof globalThis.window.location === 'undefined') {
+            globalThis.window.location = { pathname: '/studio/test-room' };
+        }
+    });
+
     test('getPrayerIcon returns correct emoji set for button index', () => {
         assert.strictEqual(getPrayerIcon(0), "🙏🙏🙏");
         assert.strictEqual(getPrayerIcon(1), "🙏❤️🙏");
@@ -55,5 +82,42 @@ describe('SYH_EVENT_COMMENTS Helper Tests', () => {
     test('formatCopyPayload returns empty defaults for unknown action', () => {
         const result = formatCopyPayload('unknown', 'John', 'Test', 0);
         assert.deepStrictEqual(result, { header: '', textToCopy: '', actionType: null });
+    });
+
+    test('saveToDatabase and removeFromDatabase manage prayer records in storage', async () => {
+        SYH_EVENT_COMMENTS.init();
+        await SYH_EVENT_COMMENTS.saveToDatabase('John', 'Need prayer for health', 'prayer', '🙏🙏🙏');
+        const stored = mockStorageStore['syh:popup:prayers'];
+        assert.ok(Array.isArray(stored));
+        assert.strictEqual(stored.length, 1);
+        assert.strictEqual(stored[0].author, 'John');
+        assert.strictEqual(stored[0].text, 'Need prayer for health');
+
+        await SYH_EVENT_COMMENTS.removeFromDatabase('Need prayer for health');
+        const storedAfter = mockStorageStore['syh:popup:prayers'];
+        assert.strictEqual(storedAfter.length, 0);
+    });
+
+    test('bindEvents and destroy attach and detach document event listeners', () => {
+        const listeners = [];
+        global.document = {
+            hidden: false,
+            body: {},
+            querySelectorAll: () => [],
+            querySelector: () => null,
+            addEventListener: (type, fn, capture) => listeners.push({ type, fn, capture }),
+            removeEventListener: (type, fn, capture) => {
+                const idx = listeners.findIndex(l => l.type === type && l.fn === fn);
+                if (idx !== -1) listeners.splice(idx, 1);
+            }
+        };
+
+        SYH_EVENT_COMMENTS.init();
+        SYH_EVENT_COMMENTS.bindEvents();
+        assert.ok(SYH_EVENT_COMMENTS.isBound);
+        assert.ok(listeners.length > 0);
+
+        SYH_EVENT_COMMENTS.destroy();
+        assert.strictEqual(SYH_EVENT_COMMENTS.isBound, false);
     });
 });

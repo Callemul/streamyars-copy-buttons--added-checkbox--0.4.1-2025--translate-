@@ -5,7 +5,9 @@ import {
     countQuestionsInText,
     numberToEmoji,
     parseAndFilterOldList,
-    TelegramQuestionItem
+    collectTelegramSheetStateFromDOM,
+    TelegramQuestionItem,
+    TelegramSheetDOMState
 } from '../modules/telegram_parser';
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
@@ -509,49 +511,8 @@ function renderTelegramCleanedLog(cleanedLogDiv: HTMLElement | null, cleaningLog
     showElement(`cleanedLogDetails__${sheetId}`);
 }
 
-export interface TelegramSheetDOMState {
-    finalResultHtml: string;
-    statsHtml: string;
-    statsVisible: boolean;
-    deletedLogHtml: string;
-    deletedLogCount: number;
-    deletedLogDetailsVisible: boolean;
-    deletedLogDetailsOpen: boolean;
-    cleanedLogHtml: string;
-    cleanedLogCount: number;
-    cleanedLogDetailsVisible: boolean;
-    cleanedLogDetailsOpen: boolean;
-}
-
-/**
- * 1. DOM Reader: Зчитування поточного стану елементів інтерфейсу Попапу
- */
-export function collectTelegramSheetStateFromDOM(
-    sheetId: string,
-    deletedLogCount: number = 0,
-    cleanedLogCount: number = 0
-): TelegramSheetDOMState {
-    const outputDiv = $(`finalResultDiv__${sheetId}`);
-    const statsBar = $(`statsBar__${sheetId}`);
-    const deletedLogDiv = $(`deletedLog__${sheetId}`);
-    const cleanedLogDiv = $(`cleanedLog__${sheetId}`);
-    const deletedLogDetails = $(`deletedLogDetails__${sheetId}`) as HTMLDetailsElement | null;
-    const cleanedLogDetails = $(`cleanedLogDetails__${sheetId}`) as HTMLDetailsElement | null;
-
-    return {
-        finalResultHtml: outputDiv?.innerHTML || '',
-        statsHtml: statsBar?.innerHTML || '',
-        statsVisible: statsBar ? statsBar.style.display !== 'none' : false,
-        deletedLogHtml: deletedLogDiv?.innerHTML || '',
-        deletedLogCount,
-        deletedLogDetailsVisible: true,
-        deletedLogDetailsOpen: deletedLogDetails?.open || false,
-        cleanedLogHtml: cleanedLogDiv?.innerHTML || '',
-        cleanedLogCount,
-        cleanedLogDetailsVisible: true,
-        cleanedLogDetailsOpen: cleanedLogDetails?.open || false
-    };
-}
+export type { TelegramSheetDOMState };
+export { collectTelegramSheetStateFromDOM };
 
 /**
  * 2. Storage Writer: Збереження стану шиту у сховище через Single Source of Truth (SheetStateService)

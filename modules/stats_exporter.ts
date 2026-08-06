@@ -33,6 +33,13 @@ export interface SyhStatsExporter {
     exportCSV(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
     calcStats(arr: number[]): StatsSummary;
     parseTimeToSeconds(t?: string): number;
+    getReportStats(dataObj: StreamChartSession | null): {
+        overall: StatsSummary;
+        initialViewers: number;
+        st1: StatsSummary;
+        st2: StatsSummary;
+        st3: StatsSummary;
+    } | null;
     calculatePhaseStats(dataObj: StreamChartSession): {
         overall: StatsSummary;
         initialViewers: number;
@@ -315,6 +322,17 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         return sec;
     },
 
+    getReportStats: function(dataObj: StreamChartSession | null): {
+        overall: StatsSummary;
+        initialViewers: number;
+        st1: StatsSummary;
+        st2: StatsSummary;
+        st3: StatsSummary;
+    } | null {
+        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return null;
+        return this.calculatePhaseStats(dataObj);
+    },
+
     calculatePhaseStats: function(dataObj: StreamChartSession): {
         overall: StatsSummary;
         initialViewers: number;
@@ -348,9 +366,10 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     },
 
     formatSummaryMarkdown: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
-        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return "";
+        const stats = this.getReportStats(dataObj);
+        if (!stats) return "";
 
-        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
+        const { overall, initialViewers, st1, st2, st3 } = stats;
 
         return `# 📊 Підсумкова аналітика ефіру: ${currentBrand}
 **Дата:** ${dateStr}
@@ -371,9 +390,10 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     },
 
     formatSummaryHTML: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
-        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return "";
+        const stats = this.getReportStats(dataObj);
+        if (!stats) return "";
 
-        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
+        const { overall, initialViewers, st1, st2, st3 } = stats;
 
         return `<div class="syh-summary-report">
   <h2>📊 Підсумкова аналітика ефіру: ${currentBrand}</h2>
@@ -423,9 +443,10 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     },
 
     exportPresentation: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
-        if (!dataObj || !dataObj.data || dataObj.data.length === 0) return;
+        const stats = this.getReportStats(dataObj);
+        if (!stats) return;
 
-        const { overall, initialViewers, st1, st2, st3 } = this.calculatePhaseStats(dataObj);
+        const { overall, initialViewers, st1, st2, st3 } = stats;
 
         const htmlTemplate = `
 <!DOCTYPE html>

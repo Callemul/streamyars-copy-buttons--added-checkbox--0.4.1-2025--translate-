@@ -106,47 +106,39 @@ class OptionsController {
         if (clearLogBtn) clearLogBtn.addEventListener('click', () => this.clearStudioLog());
     }
 
+    private populateFormElements(db: any, opts: Partial<OptionsState>, studioEnabled?: boolean): void {
+        const setVal = (id: string, val: string) => {
+            const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+            if (el) el.value = val;
+        };
+        const setCheck = (id: string, val: boolean) => {
+            const el = document.getElementById(id) as HTMLInputElement | null;
+            if (el) el.checked = val;
+        };
+
+        setVal('optSschoolName', db.newTitleSS || DEFAULT_OPTIONS.newTitleSS);
+        setVal('optPreachName', db.newTitlePreach || DEFAULT_OPTIONS.newTitlePreach);
+        setVal('optLanguage', opts.ui_locale || DEFAULT_OPTIONS.ui_locale);
+
+        setCheck('optAntiAfkEnabled', opts.anti_afk_enabled !== undefined ? opts.anti_afk_enabled : DEFAULT_OPTIONS.anti_afk_enabled);
+        setVal('optAntiAfkInterval', String(opts.anti_afk_interval_sec || DEFAULT_OPTIONS.anti_afk_interval_sec));
+
+        setCheck('optAutoHealEnabled', opts.auto_heal_enabled !== undefined ? opts.auto_heal_enabled : DEFAULT_OPTIONS.auto_heal_enabled);
+        setVal('optTruncationLength', String(opts.text_truncation_length || DEFAULT_OPTIONS.text_truncation_length));
+
+        setCheck('optShowCopyButtons', opts.show_copy_buttons !== undefined ? opts.show_copy_buttons : DEFAULT_OPTIONS.show_copy_buttons);
+        setCheck('optCompactSecondaryTabs', opts.compact_secondary_tabs_default !== undefined ? opts.compact_secondary_tabs_default : DEFAULT_OPTIONS.compact_secondary_tabs_default);
+        setCheck('optYouTubeEnabled', opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled);
+
+        const isStudioEnabled = studioEnabled !== undefined ? studioEnabled : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
+        setCheck('optStudioEnabled', isStudioEnabled);
+    }
+
     private loadSettings(): void {
         SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS, STORAGE_KEYS.STUDIO_ENABLED], (result) => {
             const db = result[STORAGE_KEYS.DB] || {};
             const opts: Partial<OptionsState> = result[STORAGE_KEYS.OPTIONS] || {};
-
-            const sschoolInput = document.getElementById('optSschoolName') as HTMLInputElement;
-            if (sschoolInput) sschoolInput.value = db.newTitleSS || DEFAULT_OPTIONS.newTitleSS;
-
-            const preachInput = document.getElementById('optPreachName') as HTMLInputElement;
-            if (preachInput) preachInput.value = db.newTitlePreach || DEFAULT_OPTIONS.newTitlePreach;
-
-            const langSelect = document.getElementById('optLanguage') as HTMLSelectElement;
-            if (langSelect) langSelect.value = opts.ui_locale || DEFAULT_OPTIONS.ui_locale;
-
-            const antiAfkToggle = document.getElementById('optAntiAfkEnabled') as HTMLInputElement;
-            if (antiAfkToggle) antiAfkToggle.checked = opts.anti_afk_enabled !== undefined ? opts.anti_afk_enabled : DEFAULT_OPTIONS.anti_afk_enabled;
-
-            const antiAfkInterval = document.getElementById('optAntiAfkInterval') as HTMLInputElement;
-            if (antiAfkInterval) antiAfkInterval.value = String(opts.anti_afk_interval_sec || DEFAULT_OPTIONS.anti_afk_interval_sec);
-
-            const autoHealToggle = document.getElementById('optAutoHealEnabled') as HTMLInputElement;
-            if (autoHealToggle) autoHealToggle.checked = opts.auto_heal_enabled !== undefined ? opts.auto_heal_enabled : DEFAULT_OPTIONS.auto_heal_enabled;
-
-            const truncLength = document.getElementById('optTruncationLength') as HTMLInputElement;
-            if (truncLength) truncLength.value = String(opts.text_truncation_length || DEFAULT_OPTIONS.text_truncation_length);
-
-            const showCopy = document.getElementById('optShowCopyButtons') as HTMLInputElement;
-            if (showCopy) showCopy.checked = opts.show_copy_buttons !== undefined ? opts.show_copy_buttons : DEFAULT_OPTIONS.show_copy_buttons;
-
-            const compactSecondaryToggle = document.getElementById('optCompactSecondaryTabs') as HTMLInputElement;
-            if (compactSecondaryToggle) compactSecondaryToggle.checked = opts.compact_secondary_tabs_default !== undefined ? opts.compact_secondary_tabs_default : DEFAULT_OPTIONS.compact_secondary_tabs_default;
-
-            const ytToggle = document.getElementById('optYouTubeEnabled') as HTMLInputElement;
-            if (ytToggle) ytToggle.checked = opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled;
-
-            const studioToggle = document.getElementById('optStudioEnabled') as HTMLInputElement;
-            if (studioToggle) {
-                const isStudioEnabled = result[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? result[STORAGE_KEYS.STUDIO_ENABLED] : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
-                studioToggle.checked = isStudioEnabled;
-            }
-
+            this.populateFormElements(db, opts, result[STORAGE_KEYS.STUDIO_ENABLED]);
             this.loadStudioLog();
         });
     }
@@ -311,6 +303,37 @@ class OptionsController {
         return validateImportedConfig(data);
     }
 
+    public extractImportedItems(imported: Record<string, any>): Record<string, any> {
+        const itemsToSave: Record<string, any> = {};
+
+        if (imported[STORAGE_KEYS.DB] || imported.db) {
+            itemsToSave[STORAGE_KEYS.DB] = imported[STORAGE_KEYS.DB] || imported.db;
+        }
+        if (imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options) {
+            itemsToSave[STORAGE_KEYS.OPTIONS] = imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options;
+        }
+        if (imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined || imported.studio_enabled !== undefined) {
+            itemsToSave[STORAGE_KEYS.STUDIO_ENABLED] = imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? imported[STORAGE_KEYS.STUDIO_ENABLED] : imported.studio_enabled;
+        }
+        if (imported[STORAGE_KEYS.CATEGORIES] || imported.categories) {
+            itemsToSave[STORAGE_KEYS.CATEGORIES] = imported[STORAGE_KEYS.CATEGORIES] || imported.categories;
+        }
+        if (imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map) {
+            itemsToSave[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] = imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map;
+        }
+        if (imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs) {
+            itemsToSave[STORAGE_KEYS.COLLAPSED_TABS] = imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs;
+        }
+
+        for (const key of Object.keys(imported)) {
+            if (key.startsWith('syh:')) {
+                itemsToSave[key] = imported[key];
+            }
+        }
+
+        return itemsToSave;
+    }
+
     private importConfig(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
@@ -321,32 +344,7 @@ class OptionsController {
             try {
                 const imported = JSON.parse(e.target?.result as string);
                 if (validateImportedConfig(imported)) {
-                    const itemsToSave: Record<string, any> = {};
-
-                    if (imported[STORAGE_KEYS.DB] || imported.db) {
-                        itemsToSave[STORAGE_KEYS.DB] = imported[STORAGE_KEYS.DB] || imported.db;
-                    }
-                    if (imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options) {
-                        itemsToSave[STORAGE_KEYS.OPTIONS] = imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options;
-                    }
-                    if (imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined || imported.studio_enabled !== undefined) {
-                        itemsToSave[STORAGE_KEYS.STUDIO_ENABLED] = imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? imported[STORAGE_KEYS.STUDIO_ENABLED] : imported.studio_enabled;
-                    }
-                    if (imported[STORAGE_KEYS.CATEGORIES] || imported.categories) {
-                        itemsToSave[STORAGE_KEYS.CATEGORIES] = imported[STORAGE_KEYS.CATEGORIES] || imported.categories;
-                    }
-                    if (imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map) {
-                        itemsToSave[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] = imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map;
-                    }
-                    if (imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs) {
-                        itemsToSave[STORAGE_KEYS.COLLAPSED_TABS] = imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs;
-                    }
-
-                    for (const key of Object.keys(imported)) {
-                        if (key.startsWith('syh:')) {
-                            itemsToSave[key] = imported[key];
-                        }
-                    }
+                    const itemsToSave = this.extractImportedItems(imported);
 
                     SYH_STORAGE.set(itemsToSave, () => {
                         this.loadSettings();

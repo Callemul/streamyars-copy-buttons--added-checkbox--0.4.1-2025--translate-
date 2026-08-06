@@ -446,7 +446,9 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     },
 
     saveToDatabase: async function(author: string, text: string, type: string, icon: string): Promise<void> {
-        const currentRoomId = window.location.pathname.replace(/\//g, '');
+        const currentRoomId = (typeof window !== 'undefined' && window.location?.pathname)
+            ? window.location.pathname.replace(/\//g, '')
+            : '';
         const now = Date.now();
 
         await CommentService.savePrayerRecord({

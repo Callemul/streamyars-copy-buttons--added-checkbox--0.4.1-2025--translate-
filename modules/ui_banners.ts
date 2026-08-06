@@ -9,7 +9,6 @@ import {
     updateTabCounts,
     renderSharedEmptyState
 } from './ui_shared_utils';
-import { SYH_EVENT_BANNERS } from './event_banners';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -118,9 +117,7 @@ export function injectSearchAndFilterContainer(bannerList: Element): void {
         `);
     }
 
-    if (SYH_EVENT_BANNERS && typeof SYH_EVENT_BANNERS.bindBannersFilterControls === 'function') {
-        SYH_EVENT_BANNERS.bindBannersFilterControls();
-    }
+    bindBannersFilterControls();
     setTimeout(() => filterBanners(), 10);
 }
 
