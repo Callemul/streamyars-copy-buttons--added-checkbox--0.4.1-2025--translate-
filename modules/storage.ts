@@ -17,6 +17,7 @@ export interface StoredOptions {
     show_copy_buttons?: boolean;
     youtube_enabled?: boolean;
     studio_enabled?: boolean;
+    compact_secondary_tabs_default?: boolean;
 }
 
 import type { PrayerItem, YTCollectedItem } from './types';
@@ -29,6 +30,7 @@ export interface StorageSchema {
     [STORAGE_KEYS.PRAYERS]?: PrayerItem[];
     [STORAGE_KEYS.YT_COLLECTED]?: YTCollectedItem[];
     [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
+    [STORAGE_KEYS.COLLAPSED_TABS]?: string[];
 }
 
 export const STORAGE_KEYS = {
@@ -40,6 +42,9 @@ export const STORAGE_KEYS = {
     INSTALLED_AT: 'syh:core:installed_at',
     VERSION: 'syh:core:version',
     STUDIO_ENABLED: 'syh:core:studio_enabled',
+
+    // StreamYard UI
+    COLLAPSED_TABS: 'syh:streamyard:collapsed_tabs',
 
     // Youtube
     YT_COLLECTED: 'syh:popup:yt:collected',

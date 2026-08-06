@@ -101,6 +101,7 @@ function initPopup() {
 
     const keysToLoad = [
         STORAGE_KEYS.DB,
+        STORAGE_KEYS.OPTIONS,
         STORAGE_KEYS.PRAYERS,
         STORAGE_KEYS.POPUP_ACTIVE_TAB,
         STORAGE_KEYS.POPUP_ACTIVE_SUBTAB,

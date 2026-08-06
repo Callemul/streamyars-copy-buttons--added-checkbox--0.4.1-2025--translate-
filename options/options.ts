@@ -15,6 +15,7 @@ interface OptionsState {
     show_copy_buttons: boolean;
     youtube_enabled: boolean;
     studio_enabled: boolean;
+    compact_secondary_tabs_default: boolean;
 }
 
 const DEFAULT_OPTIONS: OptionsState = {
@@ -27,7 +28,8 @@ const DEFAULT_OPTIONS: OptionsState = {
     text_truncation_length: SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH,
     show_copy_buttons: true,
     youtube_enabled: true,
-    studio_enabled: true
+    studio_enabled: true,
+    compact_secondary_tabs_default: true
 };
 
 class OptionsController {
@@ -107,6 +109,9 @@ class OptionsController {
             const showCopy = document.getElementById('optShowCopyButtons') as HTMLInputElement;
             if (showCopy) showCopy.checked = opts.show_copy_buttons !== undefined ? opts.show_copy_buttons : DEFAULT_OPTIONS.show_copy_buttons;
 
+            const compactSecondaryToggle = document.getElementById('optCompactSecondaryTabs') as HTMLInputElement;
+            if (compactSecondaryToggle) compactSecondaryToggle.checked = opts.compact_secondary_tabs_default !== undefined ? opts.compact_secondary_tabs_default : DEFAULT_OPTIONS.compact_secondary_tabs_default;
+
             const ytToggle = document.getElementById('optYouTubeEnabled') as HTMLInputElement;
             if (ytToggle) ytToggle.checked = opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled;
 
@@ -129,6 +134,7 @@ class OptionsController {
         const autoHealVal = (document.getElementById('optAutoHealEnabled') as HTMLInputElement)?.checked;
         const truncVal = parseInt((document.getElementById('optTruncationLength') as HTMLInputElement)?.value || '195', 10);
         const showCopyVal = (document.getElementById('optShowCopyButtons') as HTMLInputElement)?.checked;
+        const compactSecondaryVal = (document.getElementById('optCompactSecondaryTabs') as HTMLInputElement)?.checked;
         const youtubeEnabledVal = (document.getElementById('optYouTubeEnabled') as HTMLInputElement)?.checked;
         const studioEnabledVal = (document.getElementById('optStudioEnabled') as HTMLInputElement)?.checked;
 
@@ -146,6 +152,7 @@ class OptionsController {
                 auto_heal_enabled: autoHealVal,
                 text_truncation_length: truncVal,
                 show_copy_buttons: showCopyVal,
+                compact_secondary_tabs_default: compactSecondaryVal,
                 youtube_enabled: youtubeEnabledVal,
                 studio_enabled: studioEnabledVal
             };

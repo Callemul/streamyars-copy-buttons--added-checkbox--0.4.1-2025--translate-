@@ -12,6 +12,7 @@ import { SYH_VIDEO_COPIER_PLUGIN } from './modules/video_copier';
 import { SYH_STATS_TRACKER } from './modules/stats_tracker';
 import { SYH_ANTI_AFK_PLUGIN } from './modules/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from './modules/comment_assistant';
+import { SYH_RIGHT_TABS_COMPACT } from './modules/right_tabs_compact';
 import { SYH_MESSAGING } from './modules/messaging';
 import { SYH_PLUGINS } from './modules/plugin_registry';
 import { SYH_DOM_OBSERVER } from './modules/dom_observer';
@@ -39,6 +40,7 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
         const bannerSelector = Array.isArray(SELECTORS.bannerBlock) ? SELECTORS.bannerBlock[0] : SELECTORS.bannerBlock;
         const bannerHeaderSelector = Array.isArray(SELECTORS.bannerHeader) ? SELECTORS.bannerHeader[0] : SELECTORS.bannerHeader;
         const starredHeaderSelector = Array.isArray(SELECTORS.starredHeaderWrap) ? SELECTORS.starredHeaderWrap[0] : SELECTORS.starredHeaderWrap;
+        const rightTabSelector = Array.isArray(SELECTORS.rightTabButtons) ? SELECTORS.rightTabButtons[0] : SELECTORS.rightTabButtons;
 
         SYH_DOM_OBSERVER.register(commentSelector, (el) => {
             SYH_UI.addButtonsToComment(el);
@@ -63,6 +65,10 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
         SYH_DOM_OBSERVER.register(starredHeaderSelector, (el) => {
             SYH_UI.addStarredTabControls(el);
         });
+
+        SYH_DOM_OBSERVER.register(rightTabSelector, (el) => {
+            SYH_RIGHT_TABS_COMPACT.processTabButton(el as HTMLElement);
+        });
     }
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
@@ -75,6 +81,7 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
         
         SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
         SYH_COMMENT_ASSISTANT.processAllComments();
+        SYH_RIGHT_TABS_COMPACT.init();
 
         // Реєстрація та автоматичний запуск плагінів через SYH_PLUGINS
         SYH_PLUGINS.register(SYH_EVENT_COMMENTS_PLUGIN);

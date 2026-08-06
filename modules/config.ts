@@ -81,6 +81,9 @@ export const SYH_CONFIG: SyhConfig = {
         bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]',
         bannerDeleteButton: ['button:has(svg.lucide-trash2)', 'button:has(svg.lucide-trash-2)', '[data-testid="delete-banner-btn"]'],
 
+        // Права панель StreamYard (вкладки Chat, Banners, Brand, Private Chat, Settings, Recording, Widgets тощо)
+        rightTabButtons: ['button[role="tab"][id*="broadcast-aside-tab-"]', '[data-testid="dropdown-workaround-id"] button', 'button[class*="RightTabButton__StyledButton"]'],
+
         // Форма створення банера
         createBannerButton: '[class*="BannerList__BottomRow"] button',
         createBannerForm: 'form[class*="CreateBannerForm__Form"]',
