@@ -2,6 +2,7 @@ import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKe
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
 import { updateOldInputStats, updateNewInputStats, updateCombinedCounters, clearFinalResult, loadYTCollected, ensureStatsBarRows, clearAllYTCollected, initPopupTelegramListeners } from './popup_telegram';
 import { renderPrayers, initPopupPrayersListeners } from './popup_prayers';
+import { CommentService } from '../modules/comment_service';
 
 export const db: Record<string, unknown> = {};
 
@@ -469,7 +470,7 @@ function initPopup() {
         const clearStateBtn = $(`clearStateBtn__${sId}`);
         if (clearStateBtn) {
             clearStateBtn.addEventListener('click', function () {
-                if (confirm("Очистити всі поля введення в цьому аркуші?")) {
+                if (confirm("Очистити всі поля введення та зібрані коментарі з YouTube у цьому аркуші?")) {
                     [`oldList__${sId}`, `answeredIds__${sId}`, `newTelegram__${sId}`].forEach(id => {
                         const el = $(id) as HTMLTextAreaElement | HTMLInputElement | null;
                         if (el) el.value = '';
@@ -505,6 +506,10 @@ function initPopup() {
                         POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId), `tg_cleanedLogDetailsVisible__${sId}`,
                         POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId), `tg_cleanedLogDetailsOpen__${sId}`
                     ]);
+                    CommentService.clearAllCollectedForSheet(sId).then(() => {
+                        loadYTCollected(sId);
+                        updateCombinedCounters(sId);
+                    });
                 }
             });
         }

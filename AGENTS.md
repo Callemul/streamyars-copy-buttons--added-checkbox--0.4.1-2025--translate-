@@ -26,6 +26,7 @@
 - **Codebase Search Directive:** Prefer `codebase-memory` tools (`search_code`, `search_graph`, `get_architecture`) for exploring codebase structure and logic. Fall back to standard file tools if codebase-memory returns insufficient data.
 - **Команди:** `npm run dev` | `npm run build` | `npm run test` | `npm run lint`
 - **Workflow RPI:** Research (`codebase-memory`) → Plan → Implement → Verify (`npm run test && npm run lint`).
+- 🛑 **ПРАВИЛО SINGLE SOURCE OF TRUTH (ГЛОБАЛЬНО ДЛЯ ВСЬОГО ДОДАТКУ):** Заборонено локально обчислювати, дублювати чи маніпулювати станом будь-яких елементів додатка (кнопки, чекбокси, зібрані коментарі, парсинг Telegram/коментарів, визначення каналів, лічильники статистики) всередині разових UI-обробників або невідповідних модулів. Усі обчислення стану та операції зобов'язані йти ВИКЛЮЧНО через відповідні сервіси та адаптери (`CommentService`, `SheetStateService`, `SYH_STORAGE`, `adapter.getButtonState`, `adapter.getCheckboxState`, `getStudioChannelInfo`). Будь-які зміни логіки підлягають обов'язковій перевірці `npm run test && npm run build`.
 - **Manifest V3:** TypeScript / Vite. `host_permissions` обмежені конкретними доменами. DOM event listeners у попапі — strictly всередині `DOMContentLoaded`.
 
 ---

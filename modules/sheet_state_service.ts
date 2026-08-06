@@ -104,7 +104,7 @@ export class SheetStateService {
         let oldQuestionsTotal = 0;
         preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
 
-        const newLeftPeople = newQuestions.length;
+        const newLeftPeople = newQuestions.length + newPrayers.length;
         let newLeftQuestionsTotal = 0;
         newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
         const newLeftPrayersTotal = newPrayers.length;
@@ -239,7 +239,7 @@ export class SheetStateService {
         if (telegramText && telegramText.trim()) {
             if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
                 const parsed = parseAndFilterOldList(telegramText, []);
-                leftPeople = parsed.questions.length;
+                leftPeople = parsed.questions.length + parsed.prayers.length;
                 parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
                 leftPrayers = parsed.prayers.length;
             } else {

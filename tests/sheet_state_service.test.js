@@ -73,4 +73,24 @@ describe('SheetStateService Tests', () => {
         assert.equal(result.prayers.length, 1);
         assert.equal(result.stats.totalPeople, 2);
     });
+
+    test('4. leftPeople and newLeftPeople include both questions and prayers from Telegram', () => {
+        const telegramText = `❓❓❓ВОПРОСЫ\n1️⃣\n@Alex\nWhat is grace?\n\n🙏🙏🙏МОЛИТВЫ\n1️⃣\n@Maria\nPray for peace`;
+        const processResult = SheetStateService.processSheetData({
+            oldListText: '',
+            answeredInput: '',
+            telegramText,
+            ytItems: []
+        });
+
+        const computeResult = SheetStateService.computeSheetCounters(telegramText, []);
+
+        assert.equal(computeResult.leftPeople, 2); // 1 question author + 1 prayer author
+        assert.equal(computeResult.leftQuestions, 1);
+        assert.equal(computeResult.leftPrayers, 1);
+
+        assert.equal(processResult.stats.newLeftPeople, 2);
+        assert.equal(processResult.stats.newLeftQuestionsTotal, 1);
+        assert.equal(processResult.stats.newLeftPrayersTotal, 1);
+    });
 });

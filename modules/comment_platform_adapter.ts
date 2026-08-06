@@ -37,6 +37,7 @@ export interface CommentPlatformAdapter {
     getButtonStatesKey(): string;
     getCheckboxStatesKey(): string;
     applyButtonState(buttons: PlatformButtons, state: ButtonStateType, sheetId: string | null): void;
+    getButtonState?(context: CommentContext, commentKey: string, caches: CommentStateCaches): ButtonStateType;
     applyCheckboxState(buttons: PlatformButtons, isChecked: boolean): void;
     markChecked(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
     unmarkChecked?(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;

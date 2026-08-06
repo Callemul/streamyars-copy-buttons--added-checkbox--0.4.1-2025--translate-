@@ -302,6 +302,10 @@ export class StudioCommentAdapter implements CommentPlatformAdapter {
         }
     }
 
+    public getButtonState(context: CommentContext, commentKey: string): 'question' | 'prayer' | null {
+        return this.getEffectiveButtonState(commentKey, context);
+    }
+
     private getEffectiveButtonState(commentKey: string, ctx: CommentContext | null): 'question' | 'prayer' | null {
         let state = this.caches.buttonStates[commentKey] || null;
         if (!state && ctx) {

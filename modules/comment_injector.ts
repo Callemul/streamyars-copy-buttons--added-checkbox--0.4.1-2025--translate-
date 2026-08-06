@@ -85,7 +85,9 @@ export class CommentInjector {
         }
         if (!sheetId) return;
 
-        const currentState = this.caches.buttonStates[commentKey];
+        const currentState = this.adapter.getButtonState
+            ? this.adapter.getButtonState(ctx, commentKey, this.caches)
+            : (this.caches.buttonStates[commentKey] || null);
         const isUntoggle = currentState === type;
 
         if (isUntoggle) {

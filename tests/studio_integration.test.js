@@ -410,6 +410,46 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
         assert.equal(appliedCheckbox, false);
         assert.equal(caches.checkboxStates['c_toggle_1'].checked, false);
     });
+
+    test('12. CommentInjector untoggles correctly when adapter provides getButtonState (e.g. fallback resolution)', async () => {
+        let appliedState = 'initial';
+
+        const adapterWithGetState = {
+            isEventsBound: () => false,
+            markEventsBound: () => {},
+            getCommentContext: () => ({ id: 'c_fallback_99', author: 'Author99', text: 'Some text' }),
+            getButtons: () => ({
+                questionBtn: null,
+                prayerBtn: null,
+                copyBtn: null,
+                checkboxEl: null,
+                bodyEl: null
+            }),
+            getSheetId: () => 'vp_ss',
+            getButtonStatesKey: () => 'syh_button_states',
+            getCheckboxStatesKey: () => 'syh_checkbox_states',
+            getButtonState: (ctx, key, caches) => 'question', // State resolved via adapter getButtonState
+            applyButtonState: (btns, state) => { appliedState = state; },
+            applyCheckboxState: () => {},
+            markChecked: async () => {},
+            unmarkChecked: async () => {},
+            buildCollectedItem: (key, ctx, type) => ({ id: key, author: ctx.author, text: ctx.text, type })
+        };
+
+        const caches = { buttonStates: {}, checkboxStates: {} };
+        const injector = new CommentInjector(adapterWithGetState, caches);
+
+        let questionListener;
+        adapterWithGetState.getButtons = () => ({
+            questionBtn: { addEventListener: (evt, fn) => { if (evt === 'click') questionListener = fn; } }
+        });
+
+        injector.bindCommentEvents({}, 'c_fallback_99');
+
+        // Click when adapter.getButtonState returns 'question' -> untoggles to null!
+        await questionListener({ stopPropagation: () => {} });
+        assert.equal(appliedState, null);
+    });
 });
 
 
