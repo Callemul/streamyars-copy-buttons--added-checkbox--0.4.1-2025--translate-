@@ -146,21 +146,23 @@ Studio (studio_content.ts)   → studio_events.ts + studio_ui.ts → CommentServ
 
 ## 📋 ПРІОРИТЕТНІ ЗАВДАННЯ ДЛЯ РЕФАКТОРИНГУ
 
+*(Відстеження прогресу також збережено у файлі [2026-08-06_NEMOTRON_TASKS.md](./2026-08-06_NEMOTRON_TASKS.md))*
+
 ### P0 (Блокуючі нові фіччі)
-1. **Єдиний State Store** — винести всі `buttonStates`, `checkboxStates`, `collectedItems` в централізований `CommentStateService` з одним API: `getState(commentKey)`, `setState(commentKey, state)`, `subscribe(commentKey, callback)`
-2. **Platform Abstraction** — створити `BaseCommentPlatform` абстрактний клас, винести спільну логіку (MutationObserver, UI ін'єкція, event binding, state restore)
-3. **Видалити `SYH_STATE`** — замінити на новий State Store в `ui_comments.ts`
+1. [x] **1. Єдиний State Store** — Централізовано збереження станів у `CommentService` та додано метод реактивної підписки `subscribeToStateChanges`.
+2. [x] **2. Platform Abstraction** — Створено `BaseCommentPlatformAdapter` у `modules/comment_platform_adapter.ts`, від якого успадковано `YouTubeCommentAdapter` та `StudioCommentAdapter`.
+3. [ ] **3. Видалити `SYH_STATE`** — Замінити на новий State Store в `ui_comments.ts`.
 
 ### P1 (Архітектурні)
-4. **Уніфікувати `CommentService`** — винести всю роботу зі storage (buttonStates, checkboxStates, collected) туди
-5. **Data-driven Channel Config** — винести правила в JSON/storage, завантажувати динамічно
-6. **Розділити `sheet_state_service.ts`** на 3 менші класи
-7. **Типізація Event Bus** — визначити `EventMap` interface
+4. [x] **4. Уніфікувати `CommentService`** — Винесено `saveButtonState` та `saveCheckboxState` у `CommentService`, усунуто захардкоджені ключі та використано `getSheetCollectedStorageKey` і `SHEET_IDS.VP_SS`.
+5. [ ] **5. Data-driven Channel Config** — Винести правила в JSON/storage, завантажувати динамічно.
+6. [ ] **6. Розділити `sheet_state_service.ts`** на 3 менші класи.
+7. [x] **7. Типізація Event Bus** — Завершено сувору типізацію `SyhEventPayloads` без `any`.
 
 ### P2 (Якість)
-8. **Integration Tests** для критичних шляхів
-9. **Видалити `any`** в UI адаптерах
-10. **Уніфікувати UI Factory** — спільний інтерфейс кнопок/чекбоксів
+8. [x] **8. Integration Tests** — Додано наскрізні інтеграційні тести `CommentInjector` → `Adapter` → `CommentService` → `SYH_STORAGE` → `SheetStateService`.
+9. [x] **9. Видалити `any`** у викликах DOM елементів у `studio_events.ts`.
+10. [x] **10. Уніфікувати UI Factory** — Створення чекбоксів у YouTube Studio переведено на `UiFactory.createCheckbox`.
 
 ---
 

@@ -163,6 +163,15 @@ export class CommentService {
     }
 
     /**
+     * Підписка на оновлення стану коментарів через шину подій
+     */
+    public static subscribeToStateChanges(
+        callback: (data: { key: string; value: boolean }) => void
+    ): () => void {
+        return SYH_BUS.on('STATE_CHANGED', callback);
+    }
+
+    /**
      * Уніфіковане збереження стану кнопок у сховищі
      */
     public static async saveButtonState(
@@ -177,6 +186,7 @@ export class CommentService {
             buttonStates[commentKey] = state;
         }
         await SYH_STORAGE.setAsync({ [storageKey]: buttonStates });
+        SYH_BUS.emit('STATE_CHANGED', { key: commentKey, value: state !== null });
         return buttonStates;
     }
 
@@ -194,6 +204,7 @@ export class CommentService {
             timestamp: Date.now()
         };
         await SYH_STORAGE.setAsync({ [storageKey]: checkboxStates });
+        SYH_BUS.emit('STATE_CHANGED', { key: commentKey, value: isChecked });
         return checkboxStates;
     }
 

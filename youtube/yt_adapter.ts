@@ -33,12 +33,17 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
         let channelName = '';
         let channelHandle = '';
 
-        const ownerEl = document.querySelector('#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name');
+        const doc = typeof document !== 'undefined' ? document : null;
+        const ownerEl = doc && typeof doc.querySelector === 'function'
+            ? doc.querySelector('#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name')
+            : null;
         if (ownerEl) {
             channelName = ownerEl.textContent || '';
         }
 
-        const handleEl = document.querySelector('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]');
+        const handleEl = doc && typeof doc.querySelector === 'function'
+            ? doc.querySelector('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]')
+            : null;
         if (handleEl) {
             const href = handleEl.getAttribute('href') || '';
             const match = href.match(/\/(@[^/?#]+)/);
@@ -46,14 +51,18 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
         }
 
         if (!channelName && !channelHandle) {
-            const headerTitleEl = document.querySelector('#channel-header #text, #header #channel-name');
+            const headerTitleEl = doc && typeof doc.querySelector === 'function'
+                ? doc.querySelector('#channel-header #text, #header #channel-name')
+                : null;
             if (headerTitleEl) {
                 channelName = headerTitleEl.textContent || '';
             }
         }
 
         if (!channelName && !channelHandle) {
-            const metaOwner = document.querySelector('meta[name="title"], meta[property="og:title"]');
+            const metaOwner = doc && typeof doc.querySelector === 'function'
+                ? doc.querySelector('meta[name="title"], meta[property="og:title"]')
+                : null;
             if (metaOwner) {
                 channelName = metaOwner.getAttribute('content') || '';
             }
@@ -66,11 +75,14 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     private getVideoTitle(): string {
         if (this.videoTitleCache) return this.videoTitleCache;
 
-        const titleEl = document.querySelector('h1#title, ytd-watch-metadata h1, h1[itemprop="name"], #info-contents h1') as HTMLElement | null;
+        const doc = typeof document !== 'undefined' ? document : null;
+        const titleEl = doc && typeof doc.querySelector === 'function'
+            ? (doc.querySelector('h1#title, ytd-watch-metadata h1, h1[itemprop="name"], #info-contents h1') as HTMLElement | null)
+            : null;
         let title = titleEl?.textContent?.trim() || '';
 
-        if (!title) {
-            title = document.title.replace(/\s*-\s*YouTube$/, '').trim();
+        if (!title && doc && typeof doc.title === 'string') {
+            title = doc.title.replace(/\s*-\s*YouTube$/, '').trim();
         }
 
         this.videoTitleCache = title;

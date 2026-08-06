@@ -34,15 +34,21 @@ export function saveStudioCollectedItem(
 
 export { retroactiveUpdateVideoComments };
 
+interface SyhObservedElement extends HTMLElement {
+    _syhVideoObserver?: MutationObserver;
+    _syhBound?: boolean;
+}
+
 function setupVideoMetadataObserver(
     threadEl: HTMLElement,
     videoTitle: string,
     videoId: string,
     onLoaded: () => void
 ): void {
-    if ((threadEl as any)._syhVideoObserver) {
-        (threadEl as any)._syhVideoObserver.disconnect();
-        delete (threadEl as any)._syhVideoObserver;
+    const observedEl = threadEl as SyhObservedElement;
+    if (observedEl._syhVideoObserver) {
+        observedEl._syhVideoObserver.disconnect();
+        delete observedEl._syhVideoObserver;
     }
 
     if (videoTitle && videoId) {
@@ -77,7 +83,7 @@ function setupVideoMetadataObserver(
         attributeFilter: ['href']
     });
 
-    (threadEl as any)._syhVideoObserver = observer;
+    observedEl._syhVideoObserver = observer;
 }
 
 export function bindStudioCommentEvents(
@@ -103,7 +109,7 @@ export function bindStudioCommentEvents(
     if (commentKeyChanged) {
         threadEl.removeAttribute('data-syh-studio-events-bound');
         threadEl.removeAttribute('data-syh-bound');
-        delete (threadEl as any)._syhBound;
+        delete (threadEl as SyhObservedElement)._syhBound;
         const textNode = threadEl.querySelector('#content-text');
         if (textNode) {
             textNode.removeAttribute('data-syh-original-text');

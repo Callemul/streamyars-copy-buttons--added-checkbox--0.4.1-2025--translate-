@@ -32,6 +32,9 @@ const { matchCategory } = await import('../modules/channel_config.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
 const { CommentInjector } = await import('../modules/comment_injector.ts');
 const { StudioCommentAdapter } = await import('../youtube/studio/studio_adapter.ts');
+const { YouTubeCommentAdapter } = await import('../youtube/yt_adapter.ts');
+const { CommentService } = await import('../modules/comment_service.ts');
+const { SheetStateService } = await import('../modules/sheet_state_service.ts');
 
 describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
     test('1. matchCategory correctly identifies Oparin videos on VP channel', () => {
@@ -449,6 +452,72 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
         // Click when adapter.getButtonState returns 'question' -> untoggles to null!
         await questionListener({ stopPropagation: () => {} });
         assert.equal(appliedState, null);
+    });
+
+    test('13. End-to-End Pipeline: CommentInjector -> Adapter -> CommentService -> Storage -> SheetStateService', async () => {
+        mockStorageStore = {};
+        global.document = global.document || {};
+        if (typeof global.document.querySelector !== 'function') {
+            global.document.querySelector = () => null;
+        }
+        const adapter = new YouTubeCommentAdapter();
+        const caches = { buttonStates: {}, checkboxStates: {}, collectedList: [] };
+        const injector = new CommentInjector(adapter, caches);
+
+        let questionBtnListener;
+        adapter.getButtons = () => ({
+            questionBtn: { addEventListener: (evt, fn) => { if (evt === 'click') questionBtnListener = fn; } },
+            prayerBtn: null,
+            copyBtn: null,
+            checkboxEl: null,
+            bodyEl: null
+        });
+
+        const elementNode = {
+            id: 'yt_comment_e2e_1',
+            querySelector: (sel) => {
+                const s = Array.isArray(sel) ? sel.join(',') : String(sel || '');
+                if (s.includes('author')) return { textContent: '@Mariya' };
+                if (s.includes('content-text')) return { textContent: 'Питання про молитву?', getAttribute: () => null };
+                if (s.includes('lc=')) return { getAttribute: (a) => a === 'href' ? '/watch?v=123&lc=yt_comment_e2e_1' : null };
+                return null;
+            },
+            getAttribute: (attr) => attr === 'data-syh-yt-events-bound' ? 'false' : null,
+            setAttribute: () => {}
+        };
+
+        injector.bindCommentEvents(elementNode, 'yt_comment_e2e_1');
+
+        assert.equal(typeof questionBtnListener, 'function');
+        await questionBtnListener({ stopPropagation: () => {} });
+
+        // Verify state saved via CommentService
+        assert.equal(caches.buttonStates['yt_comment_e2e_1'], 'question');
+
+        // Verify storage item loaded via SheetStateService
+        const loadedState = await SheetStateService.loadSheetState('vp_ss');
+        assert.ok(loadedState.ytCollected);
+        assert.equal(loadedState.ytCollected.length, 1);
+        assert.equal(loadedState.ytCollected[0].author, 'Mariya');
+        assert.equal(loadedState.ytCollected[0].text, 'Питання про молитву?');
+    });
+
+    test('14. CommentService.subscribeToStateChanges receives event notifications', async () => {
+        let notifiedKey = null;
+        let notifiedValue = null;
+
+        const unsubscribe = CommentService.subscribeToStateChanges((data) => {
+            notifiedKey = data.key;
+            notifiedValue = data.value;
+        });
+
+        const caches = { buttonStates: {} };
+        await CommentService.saveButtonState('test_key', caches.buttonStates, 'c_sub_1', 'prayer');
+
+        assert.equal(notifiedKey, 'c_sub_1');
+        assert.equal(notifiedValue, true);
+
+        unsubscribe();
     });
 });
 

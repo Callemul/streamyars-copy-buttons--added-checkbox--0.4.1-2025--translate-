@@ -105,16 +105,13 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         badgeWrapper.appendChild(badgeEl);
         badgeWrapper.appendChild(dropdownEl);
 
-        const checkboxWrapper = document.createElement('label');
+        const { wrapper: checkboxWrapper, checkbox: createdCheckbox } = UiFactory.createCheckbox(
+            'studio-comment',
+            'Прочитано (ПКМ по тексту коментаря або клік по чекбоксу)'
+        );
         checkboxWrapper.className = 'syh-studio-checkbox-wrapper';
-        checkboxWrapper.title = 'Прочитано (ПКМ по тексту коментаря або клік по чекбоксу)';
-
-        checkboxEl = document.createElement('input');
-        checkboxEl.type = 'checkbox';
-        checkboxEl.className = 'syh-studio-checkbox';
-        checkboxEl.title = 'Прочитано (ПКМ по тексту коментаря або клік по чекбоксу)';
-
-        checkboxWrapper.appendChild(checkboxEl);
+        createdCheckbox.className = 'syh-studio-checkbox';
+        checkboxEl = createdCheckbox;
 
         metadata.appendChild(badgeWrapper);
         metadata.appendChild(checkboxWrapper);

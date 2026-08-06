@@ -23,13 +23,13 @@ export interface SyhEventPayloads {
     BANNER_ACTION: { action: string; bannerText: string };
     BANNER_CREATED: { text: string; category: string };
     STATE_CHANGED: { key: string; value: boolean };
-    STORAGE_SYNC: { key: string; newValue: any };
+    STORAGE_SYNC: { key: string; newValue: unknown };
     PHASE_CHANGED: { phase: 'questions' | 'prayers'; timestamp: string };
     SHEET_TAB_CHANGED: { activeSheetId: string };
     SHEET_DATA_PROCESSED: { sheetId: string; totalQuestions: number; totalPrayers: number };
     PRAYER_MARKED: { author: string; text: string; icon: string };
     ANTI_AFK_TRIGGERED: { timestamp: number };
-    OPTIONS_UPDATED: { options: Record<string, any> };
+    OPTIONS_UPDATED: { options: Record<string, unknown> };
     CONTEXT_INVALIDATED: void;
     FILTER_BANNERS_REQUESTED: { filter?: string; query?: string };
     FILTER_COMMENTS_REQUESTED: { filter?: string; query?: string };
