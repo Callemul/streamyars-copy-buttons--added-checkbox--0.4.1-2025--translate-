@@ -1,6 +1,6 @@
 import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX, PRAYER_SECTION_SPLIT_REGEX, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers';
+import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX, splitPrayerSection, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers';
 import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
 
 export interface BannerItem {
@@ -91,9 +91,7 @@ export function parseRawTextToBanners(
     if (messages.length === 0) messages = [cleanedText];
 
     for (const msg of messages) {
-        const parts = msg.split(PRAYER_SECTION_SPLIT_REGEX);
-        const questionsText = parts[0] || "";
-        const prayersText = parts[1] || "";
+        const { questionsText, prayersText } = splitPrayerSection(msg);
 
         if (questionsText.trim()) {
             const qItems = parseBlock(questionsText, "stream", parsers, logger);
@@ -220,53 +218,43 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         }
     },
 
-    createSingleBanner: function(text: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            (async () => {
-                try {
-                    let createBtn: HTMLElement | null = this.SELECTORS?.createBannerButton ? document.querySelector(this.SELECTORS.createBannerButton) : null;
-                    if (!createBtn) {
-                        createBtn = await this.UTILS.waitForElement(this.SELECTORS?.createBannerButton, 2000);
-                    }
-                    if (!createBtn) {
-                        throw new Error("Create banner button not found");
-                    }
-                    createBtn.click();
-                    
-                    const form: Element | null = await this.UTILS.waitForElement(this.SELECTORS?.createBannerForm, 2000);
-                    if (!form) {
-                        throw new Error("Create banner form not found");
-                    }
-                    const textarea = form.querySelector('textarea') as HTMLTextAreaElement | null;
-                    const addButton = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
-                    
-                    if (!textarea || !addButton) {
-                        throw new Error("Textarea or submit button not found in form");
-                    }
+    createSingleBanner: async function(text: string): Promise<void> {
+        let createBtn: HTMLElement | null = this.SELECTORS?.createBannerButton ? document.querySelector(this.SELECTORS.createBannerButton) : null;
+        if (!createBtn) {
+            createBtn = await this.UTILS.waitForElement(this.SELECTORS?.createBannerButton, 2000);
+        }
+        if (!createBtn) {
+            throw new Error("Create banner button not found");
+        }
+        createBtn.click();
 
-                    textarea.focus();
-                    textarea.value = text;
-                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                    textarea.blur(); 
-                    
-                    const waitTime = text.length > 50 ? 300 : 150;
-                    await new Promise(r => setTimeout(r, waitTime));
+        const form: Element | null = await this.UTILS.waitForElement(this.SELECTORS?.createBannerForm, 2000);
+        if (!form) {
+            throw new Error("Create banner form not found");
+        }
+        const textarea = form.querySelector('textarea') as HTMLTextAreaElement | null;
+        const addButton = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
-                    if (addButton.disabled) await new Promise(r => setTimeout(r, 200));
-                    addButton.click();
-                    
-                    await this.UTILS.waitForNewBanner(text, 5000);
-                    
-                    if (this.SELECTORS?.createBannerForm && document.querySelector(this.SELECTORS.createBannerForm)) {
-                        this.clickCancelButton(form);
-                    }
+        if (!textarea || !addButton) {
+            throw new Error("Textarea or submit button not found in form");
+        }
 
-                    resolve();
-                } catch (error) {
-                    reject(error);
-                }
-            })();
-        });
+        textarea.focus();
+        textarea.value = text;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        textarea.blur();
+
+        const waitTime = text.length > 50 ? 300 : 150;
+        await new Promise(r => setTimeout(r, waitTime));
+
+        if (addButton.disabled) await new Promise(r => setTimeout(r, 200));
+        addButton.click();
+
+        await this.UTILS.waitForNewBanner(text, 5000);
+
+        if (this.SELECTORS?.createBannerForm && document.querySelector(this.SELECTORS.createBannerForm)) {
+            this.clickCancelButton(form);
+        }
     }
 };
 

@@ -9,6 +9,34 @@ export interface SyhVideoCopier {
     tempIconChange(btn: HTMLElement, tempIcon: string): void;
     injectMasterDownloadButton(): void;
     downloadAllFreshVideos(): Promise<void>;
+    downloadSingleFreshVideo(card: Element, index: number): Promise<void>;
+}
+
+export function isFreshVideoCard(card: Element, now: Date, state: { foundSS: boolean }): boolean {
+    const dateElement = card.querySelector('[data-testid="library-media-subtitle"]') as HTMLElement | null;
+    const titleElement = card.querySelector('span[class*="MediaTitle"]') as HTMLElement | null;
+    
+    if (!dateElement || !titleElement) return false;
+
+    const videoTitle = titleElement.innerText.toUpperCase();
+    const dateString = dateElement.innerText.split(',').slice(0, 2).join(',');
+    const videoDate = new Date(dateString);
+
+    if (isNaN(videoDate.getTime())) return false;
+
+    videoDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.round(Math.abs(now.getTime() - videoDate.getTime()) / (1000 * 60 * 60 * 24));
+    let isFresh = (diffDays <= 5);
+
+    if (isFresh && videoTitle.includes('СУББОТНЯЯ ШКОЛА')) {
+        if (state.foundSS) {
+            isFresh = false;
+        } else {
+            state.foundSS = true;
+        }
+    }
+
+    return isFresh;
 }
 
 import type { ISyhPlugin } from './plugin_registry';
@@ -147,44 +175,19 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     injectListButtons: function(): void {
         const videoCards = document.querySelectorAll('a.media-item-card');
         const now = new Date();
-        now.setHours(0, 0, 0, 0); 
-        let foundSS = false; 
+        now.setHours(0, 0, 0, 0);
+        const state = { foundSS: false };
 
         videoCards.forEach(card => {
-            // ОПТИМІЗАЦІЯ: Якщо картку вже аналізували раніше — миттєво пропускаємо її
             if (card.classList.contains('syh-processed')) return;
 
-            const dateElement = card.querySelector('[data-testid="library-media-subtitle"]') as HTMLElement | null;
-            const titleElement = card.querySelector('span[class*="MediaTitle"]') as HTMLElement | null;
-            
-            if (!dateElement || !titleElement) return;
-
-            const videoTitle = titleElement.innerText.toUpperCase();
-            const dateString = dateElement.innerText.split(',').slice(0,2).join(',');
-            const videoDate = new Date(dateString);
-            
-            if (!isNaN(videoDate.getTime())) {
-                videoDate.setHours(0, 0, 0, 0);
-                const diffDays = Math.round(Math.abs(now.getTime() - videoDate.getTime()) / (1000 * 60 * 60 * 24)); 
-                let isFresh = (diffDays <= 5);
-
-                if (isFresh && videoTitle.includes('СУББОТНЯЯ ШКОЛА')) {
-                    if (foundSS) {
-                        isFresh = false; 
-                    } else {
-                        foundSS = true; 
-                    }
+            if (isFreshVideoCard(card, now, state)) {
+                if (!card.querySelector('.syh-list-controls')) {
+                    this.appendButtonsToCard(card);
                 }
-
-                if (isFresh) {
-                    if (!card.querySelector('.syh-list-controls')) {
-                        this.appendButtonsToCard(card);
-                    }
-                }
-                
-                // Маркуємо картку як оброблену, щоб більше ніколи не зчитувати її властивості повторно
-                card.classList.add('syh-processed');
             }
+
+            card.classList.add('syh-processed');
         });
     },
 
@@ -321,36 +324,13 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
     downloadAllFreshVideos: async function(): Promise<void> {
         const videoCards = document.querySelectorAll('a.media-item-card');
         const now = new Date();
-        now.setHours(0, 0, 0, 0); 
+        now.setHours(0, 0, 0, 0);
+        const state = { foundSS: false };
         const freshCards: Element[] = [];
-        let foundSS = false;
 
         videoCards.forEach(card => {
-            const dateElement = card.querySelector('[data-testid="library-media-subtitle"]') as HTMLElement | null;
-            const titleElement = card.querySelector('span[class*="MediaTitle"]') as HTMLElement | null;
-            
-            if (dateElement && titleElement) {
-                const videoTitle = titleElement.innerText.toUpperCase();
-                const dateString = dateElement.innerText.split(',').slice(0,2).join(',');
-                const videoDate = new Date(dateString);
-                
-                if (!isNaN(videoDate.getTime())) {
-                    videoDate.setHours(0, 0, 0, 0);
-                    const diffDays = Math.round(Math.abs(now.getTime() - videoDate.getTime()) / (1000 * 60 * 60 * 24));
-                    let isFresh = (diffDays <= 5);
-
-                    if (isFresh && videoTitle.includes('СУББОТНЯЯ ШКОЛА')) {
-                        if (foundSS) {
-                            isFresh = false;
-                        } else {
-                            foundSS = true;
-                        }
-                    }
-
-                    if (isFresh) {
-                        freshCards.push(card);
-                    }
-                }
+            if (isFreshVideoCard(card, now, state)) {
+                freshCards.push(card);
             }
         });
 
@@ -364,40 +344,43 @@ export const SYH_VIDEO_COPIER: SyhVideoCopier = {
         for (let i = 0; i < freshCards.length; i++) {
             const card = freshCards[i];
             try {
-                const moreBtn = card.querySelector('button[aria-label="More options"]') as HTMLElement | null;
-                if (moreBtn) moreBtn.click();
-                await new Promise(r => setTimeout(r, 600));
-
-                const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0')) as HTMLElement[];
-                const downloadText = SYH_I18N.getMessage('download', 'Download');
-                const downloadSpan = menuItems.find(el => el.innerText.includes(downloadText) || el.innerText.includes('Download'));
-                if (downloadSpan) {
-                    const btn = downloadSpan.closest('button');
-                    if (btn) btn.click();
-                }
-                
-                await new Promise(r => setTimeout(r, 1200));
-
-                const videoDownloadBtn = document.querySelector('[data-testid="download-row-download-button-video"]') as HTMLElement | null;
-                if (videoDownloadBtn) {
-                    videoDownloadBtn.click();
-                    console.log(`[SYH] Завантаження ${i+1} розпочато.`);
-                    await new Promise(r => setTimeout(r, 1500));
-                }
-
-                const closeBtn = document.querySelector('button[aria-label="Close modal"]') as HTMLElement | null;
-                if (closeBtn) {
-                    closeBtn.click();
-                } else {
-                    document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));
-                }
-
-                await new Promise(r => setTimeout(r, 1000));
-
+                await this.downloadSingleFreshVideo(card, i);
             } catch (err) {
                 console.error(`[SYH] Помилка на відео ${i+1}: `, err);
             }
         }
+    },
+
+    downloadSingleFreshVideo: async function(card: Element, index: number): Promise<void> {
+        const moreBtn = card.querySelector('button[aria-label="More options"]') as HTMLElement | null;
+        if (moreBtn) moreBtn.click();
+        await new Promise(r => setTimeout(r, 600));
+
+        const menuItems = Array.from(document.querySelectorAll('span.ListItemText__StyledText-sc-1i1a88x-0')) as HTMLElement[];
+        const downloadText = SYH_I18N.getMessage('download', 'Download');
+        const downloadSpan = menuItems.find(el => el.innerText.includes(downloadText) || el.innerText.includes('Download'));
+        if (downloadSpan) {
+            const btn = downloadSpan.closest('button');
+            if (btn) btn.click();
+        }
+
+        await new Promise(r => setTimeout(r, 1200));
+
+        const videoDownloadBtn = document.querySelector('[data-testid="download-row-download-button-video"]') as HTMLElement | null;
+        if (videoDownloadBtn) {
+            videoDownloadBtn.click();
+            console.log(`[SYH] Завантаження ${index + 1} розпочато.`);
+            await new Promise(r => setTimeout(r, 1500));
+        }
+
+        const closeBtn = document.querySelector('button[aria-label="Close modal"]') as HTMLElement | null;
+        if (closeBtn) {
+            closeBtn.click();
+        } else {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        }
+
+        await new Promise(r => setTimeout(r, 1000));
     }
 };
 

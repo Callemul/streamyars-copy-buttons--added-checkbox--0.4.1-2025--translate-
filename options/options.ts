@@ -18,6 +18,10 @@ interface OptionsState {
     compact_secondary_tabs_default: boolean;
 }
 
+function isSectionValid(section: any): boolean {
+    return !section || (typeof section === 'object' && !Array.isArray(section));
+}
+
 export function validateImportedConfig(data: any): boolean {
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
         return false;
@@ -31,15 +35,11 @@ export function validateImportedConfig(data: any): boolean {
         return false;
     }
 
-    if (hasOptions) {
-        const opts = data.syh_options || data[STORAGE_KEYS.OPTIONS] || data.options;
-        if (opts && (typeof opts !== 'object' || Array.isArray(opts))) return false;
-    }
+    const opts = data.syh_options || data[STORAGE_KEYS.OPTIONS] || data.options;
+    if (!isSectionValid(opts)) return false;
 
-    if (hasDb) {
-        const db = data.db || data[STORAGE_KEYS.DB];
-        if (db && (typeof db !== 'object' || Array.isArray(db))) return false;
-    }
+    const db = data.db || data[STORAGE_KEYS.DB];
+    if (!isSectionValid(db)) return false;
 
     return true;
 }
@@ -306,24 +306,19 @@ class OptionsController {
     public extractImportedItems(imported: Record<string, any>): Record<string, any> {
         const itemsToSave: Record<string, any> = {};
 
-        if (imported[STORAGE_KEYS.DB] || imported.db) {
-            itemsToSave[STORAGE_KEYS.DB] = imported[STORAGE_KEYS.DB] || imported.db;
-        }
-        if (imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options) {
-            itemsToSave[STORAGE_KEYS.OPTIONS] = imported[STORAGE_KEYS.OPTIONS] || imported.syh_options || imported.options;
-        }
-        if (imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined || imported.studio_enabled !== undefined) {
-            itemsToSave[STORAGE_KEYS.STUDIO_ENABLED] = imported[STORAGE_KEYS.STUDIO_ENABLED] !== undefined ? imported[STORAGE_KEYS.STUDIO_ENABLED] : imported.studio_enabled;
-        }
-        if (imported[STORAGE_KEYS.CATEGORIES] || imported.categories) {
-            itemsToSave[STORAGE_KEYS.CATEGORIES] = imported[STORAGE_KEYS.CATEGORIES] || imported.categories;
-        }
-        if (imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map) {
-            itemsToSave[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] = imported[STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP] || imported.studio_video_sheet_map;
-        }
-        if (imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs) {
-            itemsToSave[STORAGE_KEYS.COLLAPSED_TABS] = imported[STORAGE_KEYS.COLLAPSED_TABS] || imported.collapsed_tabs;
-        }
+        const mapKey = (stdKey: string, ...fallbackKeys: string[]) => {
+            const foundKey = [stdKey, ...fallbackKeys].find(k => k in imported);
+            if (foundKey !== undefined) {
+                itemsToSave[stdKey] = imported[foundKey];
+            }
+        };
+
+        mapKey(STORAGE_KEYS.DB, 'db');
+        mapKey(STORAGE_KEYS.OPTIONS, 'syh_options', 'options');
+        mapKey(STORAGE_KEYS.STUDIO_ENABLED, 'studio_enabled');
+        mapKey(STORAGE_KEYS.CATEGORIES, 'categories');
+        mapKey(STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP, 'studio_video_sheet_map');
+        mapKey(STORAGE_KEYS.COLLAPSED_TABS, 'collapsed_tabs');
 
         for (const key of Object.keys(imported)) {
             if (key.startsWith('syh:')) {

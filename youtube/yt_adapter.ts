@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from '../modules/storage';
 import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
 import { extractCommentId, extractCommentData } from './yt_ui';
+import { extractDomChannelInfo } from './yt_channel_gate';
 import {
     BaseCommentPlatformAdapter,
     type CommentContext,
@@ -30,44 +31,7 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     private detectChannelKey(): ChannelKey {
         if (this.channelKeyCache) return this.channelKeyCache;
 
-        let channelName = '';
-        let channelHandle = '';
-
-        const doc = typeof document !== 'undefined' ? document : null;
-        const ownerEl = doc && typeof doc.querySelector === 'function'
-            ? doc.querySelector('#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name')
-            : null;
-        if (ownerEl) {
-            channelName = ownerEl.textContent || '';
-        }
-
-        const handleEl = doc && typeof doc.querySelector === 'function'
-            ? doc.querySelector('#owner a[href*="/@"], ytd-video-owner-renderer a[href*="/@"], a.yt-simple-endpoint[href*="/@"]')
-            : null;
-        if (handleEl) {
-            const href = handleEl.getAttribute('href') || '';
-            const match = href.match(/\/(@[^/?#]+)/);
-            if (match) channelHandle = match[1];
-        }
-
-        if (!channelName && !channelHandle) {
-            const headerTitleEl = doc && typeof doc.querySelector === 'function'
-                ? doc.querySelector('#channel-header #text, #header #channel-name')
-                : null;
-            if (headerTitleEl) {
-                channelName = headerTitleEl.textContent || '';
-            }
-        }
-
-        if (!channelName && !channelHandle) {
-            const metaOwner = doc && typeof doc.querySelector === 'function'
-                ? doc.querySelector('meta[name="title"], meta[property="og:title"]')
-                : null;
-            if (metaOwner) {
-                channelName = metaOwner.getAttribute('content') || '';
-            }
-        }
-
+        const { channelName, channelHandle } = extractDomChannelInfo();
         this.channelKeyCache = detectChannelKey(channelName, channelHandle);
         return this.channelKeyCache;
     }

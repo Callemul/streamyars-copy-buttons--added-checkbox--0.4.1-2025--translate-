@@ -204,30 +204,29 @@ export function formatStatLabel(people: number, questions: number, prayers: numb
     return str;
 }
 
+function updateBadgeElement(el: HTMLElement | null, text: string, visible: boolean): void {
+    if (!el) return;
+    if (visible) {
+        el.textContent = text;
+        el.style.display = '';
+    } else {
+        el.textContent = '';
+        el.style.display = 'none';
+    }
+}
+
 function updateStep3Badges(sheetId: string, stats: any): void {
     const leftEl = $(`tgTotalCountLeft__${sheetId}`);
-    if (stats.leftPeople > 0) {
-        const leftStr = formatStatLabel(stats.leftPeople, stats.leftQuestions, stats.leftPrayers);
-        if (leftEl) { leftEl.textContent = leftStr; leftEl.style.display = ''; }
-    } else {
-        if (leftEl) { leftEl.textContent = ''; leftEl.style.display = 'none'; }
-    }
+    const leftStr = formatStatLabel(stats.leftPeople, stats.leftQuestions, stats.leftPrayers);
+    updateBadgeElement(leftEl, leftStr, stats.leftPeople > 0);
 
     const rightEl = $(`tgTotalCountRight__${sheetId}`);
-    if (stats.rightPeople > 0) {
-        const rightStr = formatStatLabel(stats.rightPeople, stats.rightQuestions, stats.rightPrayers);
-        if (rightEl) { rightEl.textContent = rightStr; rightEl.style.display = ''; }
-    } else {
-        if (rightEl) { rightEl.textContent = ''; rightEl.style.display = 'none'; }
-    }
+    const rightStr = formatStatLabel(stats.rightPeople, stats.rightQuestions, stats.rightPrayers);
+    updateBadgeElement(rightEl, rightStr, stats.rightPeople > 0);
 
     const allEl = $(`tgTotalCountAll__${sheetId}`);
-    if (stats.totalPeople > 0) {
-        const allStr = formatStatLabel(stats.totalPeople, stats.totalQuestions, stats.totalPrayers, 'Разом: ');
-        if (allEl) { allEl.textContent = `(${allStr})`; allEl.style.display = ''; }
-    } else {
-        if (allEl) { allEl.textContent = ''; allEl.style.display = 'none'; }
-    }
+    const allStr = formatStatLabel(stats.totalPeople, stats.totalQuestions, stats.totalPrayers, 'Разом: ');
+    updateBadgeElement(allEl, `(${allStr})`, stats.totalPeople > 0);
 }
 
 function updateStatsBarSection(sheetId: string, stats: any): void {
@@ -288,43 +287,37 @@ export function updateNewInputStats(sheetId: string = 'vp_ss'): void {
     updateCombinedCounters(sheetId);
 }
 
+function createStatsRow(className: string, ...children: (HTMLElement | null)[]): HTMLElement {
+    const row = document.createElement('div');
+    row.className = `stats-row ${className}`.trim();
+    children.forEach(child => {
+        if (child) row.appendChild(child);
+    });
+    return row;
+}
+
 export function ensureStatsBarRows(sheetId: string = 'vp_ss'): void {
     const bar = $(`statsBar__${sheetId}`);
-    if (!bar || !(bar instanceof HTMLElement)) return;
-    if (bar.querySelector('.stats-row')) return;
+    if (!bar || !(bar instanceof HTMLElement) || bar.querySelector('.stats-row')) return;
 
-    const stats = {
-        old: bar.querySelector('.stat-item.old') as HTMLElement | null,
-        del: bar.querySelector('.stat-item.del') as HTMLElement | null,
-        newLeft: bar.querySelector('.stat-item.new') as HTMLElement | null,
-        total: bar.querySelector('.stat-item.total') as HTMLElement | null
-    };
+    const oldItem = bar.querySelector('.stat-item.old') as HTMLElement | null;
+    const delItem = bar.querySelector('.stat-item.del') as HTMLElement | null;
+    const newLeftItem = bar.querySelector('.stat-item.new') as HTMLElement | null;
+    const totalItem = bar.querySelector('.stat-item.total') as HTMLElement | null;
 
-    let newYT = bar.querySelector('.stat-item.new-yt') as HTMLElement | null;
-    if (!newYT) {
-        newYT = document.createElement('div');
-        newYT.className = 'stat-item new-yt';
-        newYT.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
+    let newYTItem = bar.querySelector('.stat-item.new-yt') as HTMLElement | null;
+    if (!newYTItem) {
+        newYTItem = document.createElement('div');
+        newYTItem.className = 'stat-item new-yt';
+        newYTItem.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
     }
 
-    const row1 = document.createElement('div');
-    row1.className = 'stats-row';
-    if (stats.old) row1.appendChild(stats.old);
-    if (stats.del) row1.appendChild(stats.del);
-
-    const row2 = document.createElement('div');
-    row2.className = 'stats-row new-row';
-    if (stats.newLeft) row2.appendChild(stats.newLeft);
-    if (newYT) row2.appendChild(newYT);
-
-    const row3 = document.createElement('div');
-    row3.className = 'stats-row total-row';
-    if (stats.total) row3.appendChild(stats.total);
+    const row1 = createStatsRow('', oldItem, delItem);
+    const row2 = createStatsRow('new-row', newLeftItem, newYTItem);
+    const row3 = createStatsRow('total-row', totalItem);
 
     bar.innerHTML = '';
-    bar.appendChild(row1);
-    bar.appendChild(row2);
-    bar.appendChild(row3);
+    bar.append(row1, row2, row3);
 }
 
 function ensureNewYTRow(statsBar: HTMLElement, sheetId: string): void {
@@ -426,6 +419,16 @@ function renderTelegramFinalResult(outputDiv: HTMLElement | null, questions: any
     );
 }
 
+function formatDeletedLogMessage(d: any): string {
+    let msg = `№${d.originalId} (${d.author}): `;
+    if (d.type === 'block') {
+        msg += `Видалено повністю (${d.count} пит.)`;
+    } else {
+        msg += 'Видалено підпункт';
+    }
+    return msg;
+}
+
 function renderTelegramDeletedLog(deletedLogDiv: HTMLElement | null, delLog: any[], sheetId: string): void {
     if (!deletedLogDiv) return;
 
@@ -440,12 +443,9 @@ function renderTelegramDeletedLog(deletedLogDiv: HTMLElement | null, delLog: any
             deletedLogDiv,
             delLog,
             (d) => {
-                let msg = '№' + d.originalId + ' (' + d.author + '): ';
-                if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
-                else msg += 'Видалено підпункт';
                 const div = document.createElement('div');
                 div.className = 'del-row';
-                div.textContent = msg;
+                div.textContent = formatDeletedLogMessage(d);
                 return div;
             },
             { batchSize: 25, clearContainer: true }

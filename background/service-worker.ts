@@ -26,6 +26,39 @@ export function countCheckedItems(obj: any): number {
 /**
  * Обчислює та оновлює динамічний бейдж та колір фону іконки розширення
  */
+export function calculateBadgeCounts(allData: Record<string, any>): { collectedCount: number; checkedCount: number } {
+  let collectedCount = 0;
+  let checkedCount = 0;
+
+  for (const key of Object.keys(allData)) {
+    if (
+      key.startsWith('syh:popup:collected:') ||
+      key === STORAGE_KEYS.YT_COLLECTED ||
+      key === STORAGE_KEYS.PRAYERS
+    ) {
+      const val = allData[key];
+      if (Array.isArray(val)) {
+        collectedCount += val.length;
+      }
+    } else if (
+      key === STORAGE_KEYS.CHECKBOX_STATE ||
+      key === STORAGE_KEYS.YT_CHECKBOX_STATE ||
+      key === STORAGE_KEYS.STUDIO_CHECKBOX_STATE
+    ) {
+      checkedCount += countCheckedItems(allData[key]);
+    }
+  }
+
+  return { collectedCount, checkedCount };
+}
+
+export async function applyBadgeTextAndColor(text: string, color?: string): Promise<void> {
+  await chrome.action.setBadgeText({ text });
+  if (color && typeof chrome.action.setBadgeBackgroundColor === 'function') {
+    await chrome.action.setBadgeBackgroundColor({ color });
+  }
+}
+
 export async function updateExtensionBadge(): Promise<void> {
   if (
     typeof chrome === 'undefined' ||
@@ -42,42 +75,16 @@ export async function updateExtensionBadge(): Promise<void> {
       chrome.storage.local.get(null, (result) => resolve(result || {}));
     });
 
-    let collectedCount = 0;
-    let checkedCount = 0;
-
-    for (const key of Object.keys(allData)) {
-      if (
-        key.startsWith('syh:popup:collected:') ||
-        key === STORAGE_KEYS.YT_COLLECTED ||
-        key === STORAGE_KEYS.PRAYERS
-      ) {
-        const val = allData[key];
-        if (Array.isArray(val)) {
-          collectedCount += val.length;
-        }
-      } else if (
-        key === STORAGE_KEYS.CHECKBOX_STATE ||
-        key === STORAGE_KEYS.YT_CHECKBOX_STATE ||
-        key === STORAGE_KEYS.STUDIO_CHECKBOX_STATE
-      ) {
-        checkedCount += countCheckedItems(allData[key]);
-      }
-    }
+    const { collectedCount, checkedCount } = calculateBadgeCounts(allData);
 
     if (checkedCount > 0) {
       const text = checkedCount > 99 ? '99+' : String(checkedCount);
-      await chrome.action.setBadgeText({ text });
-      if (typeof chrome.action.setBadgeBackgroundColor === 'function') {
-        await chrome.action.setBadgeBackgroundColor({ color: '#E67E22' });
-      }
+      await applyBadgeTextAndColor(text, '#E67E22');
     } else if (collectedCount > 0) {
       const text = collectedCount > 99 ? '99+' : String(collectedCount);
-      await chrome.action.setBadgeText({ text });
-      if (typeof chrome.action.setBadgeBackgroundColor === 'function') {
-        await chrome.action.setBadgeBackgroundColor({ color: '#27AE60' });
-      }
+      await applyBadgeTextAndColor(text, '#27AE60');
     } else {
-      await chrome.action.setBadgeText({ text: '' });
+      await applyBadgeTextAndColor('');
     }
   } catch (err) {
     console.error('[Service Worker] Error updating extension badge:', err);

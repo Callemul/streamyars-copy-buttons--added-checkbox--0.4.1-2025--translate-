@@ -8,7 +8,7 @@ import {
     SYH_PARSERS, 
     EMOJI_NUMBER_LINE_REGEX, 
     EMOJI_NUMBER_CONTAINS_REGEX,
-    PRAYER_SECTION_SPLIT_REGEX,
+    splitPrayerSection,
     TG_HEADER_A_REGEX,
     TG_HEADER_B_REGEX,
     RELATIVE_TIME_LINE_REGEX
@@ -79,12 +79,16 @@ export function cleanTelegramHeadersLogged(text: string, cleaningLog?: CleaningL
 /**
  * Helper: Очищення та витягування імені автора з масиву рядків
  */
+function trimLeadingEmptyLines(lines: string[]): string[] {
+    const idx = lines.findIndex(l => l.trim() !== "");
+    return idx === -1 ? [] : lines.slice(idx);
+}
+
 function extractAuthorFromLines(
     lines: string[],
     cleaningLog?: CleaningLogEntry[]
 ): { author: string; contentLines: string[] } | null {
-    const cleanLines = [...lines];
-    while (cleanLines.length > 0 && cleanLines[0].trim() === "") cleanLines.shift();
+    const cleanLines = trimLeadingEmptyLines(lines);
     if (cleanLines.length === 0) return null;
 
     const rawAuthorLine = cleanLines[0].trim();
@@ -99,12 +103,11 @@ function extractAuthorFromLines(
         });
     }
 
-    let contentLines = cleanLines.slice(1);
-    while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
+    let contentLines = trimLeadingEmptyLines(cleanLines.slice(1));
 
     if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
         const timeLine = contentLines[0].trim();
-        contentLines = contentLines.slice(1);
+        contentLines = trimLeadingEmptyLines(contentLines.slice(1));
         if (cleaningLog) {
             cleaningLog.push({
                 before: `${rawAuthorLine}\n${timeLine}`,
@@ -370,9 +373,7 @@ export function parseAndFilterOldList(
     const deletedItems: DeletedLogEntry[] = [];
 
     for (const msg of messages) {
-        const parts = msg.split(PRAYER_SECTION_SPLIT_REGEX);
-        const questionsText = parts[0] || "";
-        const prayersText = parts[1] || "";
+        const { questionsText, prayersText } = splitPrayerSection(msg);
 
         if (questionsText.trim()) {
             const qs = parseTelegramSection(questionsText, answeredIds || null, 'old', allQuestions.length, deletedItems, cleaningLog);

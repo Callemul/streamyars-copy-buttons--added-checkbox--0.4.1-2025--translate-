@@ -61,35 +61,38 @@ export class RetentionService {
     /**
      * Очищення застарілих записів у всіх таблицях розширення
      */
-    public static async runGlobalCleanup(): Promise<void> {
-        // 0. Автоматичний резервний бекап перед очищенням
-        await RetentionService.createBackupSnapshot();
+    public static cleanExpiredTimestampEntries(
+        record: Record<string, any> | undefined,
+        maxAgeMs: number,
+        now: number = Date.now()
+    ): Record<string, any> | null {
+        if (!record || typeof record !== 'object') return null;
+        let modified = false;
+        const cleaned = { ...record };
+        for (const key of Object.keys(cleaned)) {
+            if (cleaned[key]?.timestamp && (now - cleaned[key].timestamp > maxAgeMs)) {
+                delete cleaned[key];
+                modified = true;
+            }
+        }
+        return modified ? cleaned : null;
+    }
 
+    public static async runGlobalCleanup(): Promise<void> {
+        await RetentionService.createBackupSnapshot();
         const now = Date.now();
 
         const res = await SYH_STORAGE.getAsync<Record<string, any>>([
             STORAGE_KEYS.YT_CHECKBOX_STATE,
             STORAGE_KEYS.PRAYERS,
-            STORAGE_KEYS.STUDIO_CHECKBOX_STATE,
-            STORAGE_KEYS.STUDIO_BUTTON_STATE
+            STORAGE_KEYS.STUDIO_CHECKBOX_STATE
         ]);
 
         const updates: Record<string, any> = {};
 
-        // 1. Очищення YT Чекбоксів (30 днів)
-        const ytCheckboxes = res[STORAGE_KEYS.YT_CHECKBOX_STATE];
-        if (ytCheckboxes && typeof ytCheckboxes === 'object') {
-            let modified = false;
-            for (const key of Object.keys(ytCheckboxes)) {
-                if (ytCheckboxes[key]?.timestamp && (now - ytCheckboxes[key].timestamp > THIRTY_DAYS_MS)) {
-                    delete ytCheckboxes[key];
-                    modified = true;
-                }
-            }
-            if (modified) updates[STORAGE_KEYS.YT_CHECKBOX_STATE] = ytCheckboxes;
-        }
+        const freshYtCheckboxes = RetentionService.cleanExpiredTimestampEntries(res[STORAGE_KEYS.YT_CHECKBOX_STATE], THIRTY_DAYS_MS, now);
+        if (freshYtCheckboxes) updates[STORAGE_KEYS.YT_CHECKBOX_STATE] = freshYtCheckboxes;
 
-        // 2. Очищення Молитов (48 годин) та питань (30 днів)
         const prayers = res[STORAGE_KEYS.PRAYERS];
         if (Array.isArray(prayers)) {
             const freshPrayers = RetentionService.filterFreshPrayers(prayers, now);
@@ -98,18 +101,8 @@ export class RetentionService {
             }
         }
 
-        // 3. Очищення Studio станів (30 днів)
-        const studioCheckboxes = res[STORAGE_KEYS.STUDIO_CHECKBOX_STATE];
-        if (studioCheckboxes && typeof studioCheckboxes === 'object') {
-            let modified = false;
-            for (const key of Object.keys(studioCheckboxes)) {
-                if (studioCheckboxes[key]?.timestamp && (now - studioCheckboxes[key].timestamp > THIRTY_DAYS_MS)) {
-                    delete studioCheckboxes[key];
-                    modified = true;
-                }
-            }
-            if (modified) updates[STORAGE_KEYS.STUDIO_CHECKBOX_STATE] = studioCheckboxes;
-        }
+        const freshStudioCheckboxes = RetentionService.cleanExpiredTimestampEntries(res[STORAGE_KEYS.STUDIO_CHECKBOX_STATE], THIRTY_DAYS_MS, now);
+        if (freshStudioCheckboxes) updates[STORAGE_KEYS.STUDIO_CHECKBOX_STATE] = freshStudioCheckboxes;
 
         if (Object.keys(updates).length > 0) {
             await SYH_STORAGE.setAsync(updates);

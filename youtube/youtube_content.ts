@@ -134,23 +134,24 @@ function initYouTubeModule() {
     );
 }
 
-// Підписка на зміни у сховищі (реактивне оновлення налаштувань та станів)
-SYH_STORAGE.onChanged((changes) => {
-    if (changes[STORAGE_KEYS.OPTIONS]) {
-        const newOptions = changes[STORAGE_KEYS.OPTIONS].newValue || {};
-        const wasEnabled = stateCache.youtubeEnabled;
-        stateCache.youtubeEnabled = newOptions.youtube_enabled !== false;
+function handleOptionsChange(newOptions: Record<string, any>): void {
+    const wasEnabled = stateCache.youtubeEnabled;
+    stateCache.youtubeEnabled = newOptions.youtube_enabled !== false;
 
-        if (!wasEnabled && stateCache.youtubeEnabled) {
-            initYouTubeModule();
-        } else if (wasEnabled && !stateCache.youtubeEnabled) {
-            if (unregisterObserver) {
-                unregisterObserver();
-                unregisterObserver = null;
-            }
-            // Видаляємо кнопки, якщо модуль вимкнено
-            document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
+    if (!wasEnabled && stateCache.youtubeEnabled) {
+        initYouTubeModule();
+    } else if (wasEnabled && !stateCache.youtubeEnabled) {
+        if (unregisterObserver) {
+            unregisterObserver();
+            unregisterObserver = null;
         }
+        document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
+    }
+}
+
+function handleStorageChange(changes: Record<string, any>): void {
+    if (changes[STORAGE_KEYS.OPTIONS]) {
+        handleOptionsChange(changes[STORAGE_KEYS.OPTIONS].newValue || {});
     }
 
     if (changes[STORAGE_KEYS.YT_BUTTON_STATES]) {
@@ -164,10 +165,13 @@ SYH_STORAGE.onChanged((changes) => {
     }
 
     const vpSsCollectedKey = getSheetCollectedStorageKey('vp_ss');
-    if (changes[vpSsCollectedKey] && changes[vpSsCollectedKey].newValue) {
+    if (changes[vpSsCollectedKey]?.newValue) {
         stateCache.collectedList = changes[vpSsCollectedKey].newValue;
     }
-});
+}
+
+// Підписка на зміни у сховищі (реактивне оновлення налаштувань та станів)
+SYH_STORAGE.onChanged(handleStorageChange);
 
 // Реагування на SPA-навігацію в YouTube
 window.addEventListener('yt-navigate-finish', initYouTubeModule);

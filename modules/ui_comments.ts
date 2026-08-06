@@ -312,6 +312,16 @@ export function updateListItemOrdering(li: HTMLElement, isVisible: boolean, orde
     }
 }
 
+function incrementCommentCategoryCounts(
+    counts: Record<string, number>,
+    commentType: string
+): void {
+    counts.all++;
+    if (commentType === 'question') counts.question++;
+    else if (commentType === 'prayer') counts.prayer++;
+    else counts.other++;
+}
+
 export function filterCommentListItems(
     commentList: HTMLElement,
     selectors: any,
@@ -333,28 +343,16 @@ export function filterCommentListItems(
 
         const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
         const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
-        
+
         const foundInCache = prayersCache.find((item: PrayerItem) => item.text === originalText);
         const commentType = foundInCache ? foundInCache.type : 'none';
-        
-        updateCommentVisuals(commentWrap, commentType);
-        
-        countAbsolute.all++;
-        if (commentType === 'question') countAbsolute.question++;
-        else if (commentType === 'prayer') countAbsolute.prayer++;
-        else countAbsolute.other++;
-        
-        let matchesSearch = true;
-        if (searchQuery) {
-            const combinedTarget = originalText + " " + authorText;
-            matchesSearch = SYH_UTILS.smartSearch(searchQuery, combinedTarget);
-        }
 
+        updateCommentVisuals(commentWrap, commentType);
+        incrementCommentCategoryCounts(countAbsolute, commentType);
+
+        const matchesSearch = !searchQuery || SYH_UTILS.smartSearch(searchQuery, originalText + " " + authorText);
         if (matchesSearch) {
-            countSearch.all++;
-            if (commentType === 'question') countSearch.question++;
-            else if (commentType === 'prayer') countSearch.prayer++;
-            else countSearch.other++;
+            incrementCommentCategoryCounts(countSearch, commentType);
         }
 
         const isVisible = matchesSearch && evalCategoryMatch(commentType, activeFilter);

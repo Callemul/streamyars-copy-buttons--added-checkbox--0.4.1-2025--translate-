@@ -39,6 +39,22 @@ interface SyhObservedElement extends HTMLElement {
     _syhBound?: boolean;
 }
 
+function hasVideoMetadata(
+    threadEl: HTMLElement,
+    parentContainer: Element,
+    titleSelector: string,
+    linkSelector: string
+): boolean {
+    const titleEl = threadEl.querySelector<HTMLElement>(titleSelector) ||
+                    parentContainer.querySelector<HTMLElement>(titleSelector);
+    const linkEl = threadEl.querySelector<HTMLAnchorElement>(linkSelector) ||
+                   parentContainer.querySelector<HTMLAnchorElement>(linkSelector);
+
+    const currentTitle = (titleEl?.textContent || '').trim();
+    const currentHref = linkEl?.getAttribute('href') || linkEl?.href || '';
+    return Boolean(currentTitle || currentHref);
+}
+
 function setupVideoMetadataObserver(
     threadEl: HTMLElement,
     videoTitle: string,
@@ -61,14 +77,7 @@ function setupVideoMetadataObserver(
     const parentContainer = threadEl.closest('.ytcp-comment-thread') || threadEl;
 
     const observer = new MutationObserver(() => {
-        const titleEl = threadEl.querySelector<HTMLElement>(titleSelector) ||
-                        parentContainer.querySelector<HTMLElement>(titleSelector);
-        const linkEl = threadEl.querySelector<HTMLAnchorElement>(linkSelector) ||
-                       parentContainer.querySelector<HTMLAnchorElement>(linkSelector);
-
-        const currentTitle = (titleEl?.textContent || '').trim();
-        const currentHref = linkEl?.getAttribute('href') || linkEl?.href || '';
-        if (currentTitle || currentHref) {
+        if (hasVideoMetadata(threadEl, parentContainer, titleSelector, linkSelector)) {
             observer.disconnect();
             delete (threadEl as any)._syhVideoObserver;
             onLoaded();

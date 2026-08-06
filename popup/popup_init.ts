@@ -190,6 +190,48 @@ function restoreSheetStats(sId: string, result: Record<string, any>): void {
     }
 }
 
+interface LogRestoreConfig {
+    visibleKey: (sId: string) => string;
+    legacyVisibleKey: string;
+    htmlKey: (sId: string) => string;
+    legacyHtmlKey: string;
+    countKey: (sId: string) => string;
+    legacyCountKey: string;
+    openKey: (sId: string) => string;
+    legacyOpenKey: string;
+    targetHtmlId: string;
+    targetCountId: string;
+    targetDetailsId: string;
+    countResolver: (sId: string, html?: string, rawCount?: any) => number;
+}
+
+function restoreSheetLog(
+    sId: string,
+    result: Record<string, any>,
+    config: LogRestoreConfig
+): void {
+    const isVisible = Boolean(result[config.visibleKey(sId)] ?? result[`${config.legacyVisibleKey}${sId}`]);
+    if (isVisible) {
+        const html = result[config.htmlKey(sId)] ?? result[`${config.legacyHtmlKey}${sId}`];
+        if (html) setElementText(`${config.targetHtmlId}${sId}`, html);
+        const rawCount = result[config.countKey(sId)] ?? result[`${config.legacyCountKey}${sId}`];
+        const count = config.countResolver(sId, html, rawCount);
+        const isOpen = Boolean(result[config.openKey(sId)] ?? result[`${config.legacyOpenKey}${sId}`]);
+
+        if (count > 0) {
+            setTextContent(`${config.targetCountId}${sId}`, `(${count})`);
+        }
+        const detailsEl = $(`${config.targetDetailsId}${sId}`) as HTMLDetailsElement | null;
+        if (detailsEl) {
+            if (isOpen) detailsEl.setAttribute('open', 'open');
+            else detailsEl.removeAttribute('open');
+            detailsEl.style.display = '';
+        }
+    } else {
+        setTextContent(`${config.targetCountId}${sId}`, '');
+    }
+}
+
 function resolveDeletedLogCount(sId: string, delHtml: string | undefined, rawCount: any): number {
     if (rawCount !== undefined && rawCount !== null) {
         return Number(rawCount);
@@ -199,37 +241,21 @@ function resolveDeletedLogCount(sId: string, delHtml: string | undefined, rawCou
     return delLogEl?.querySelectorAll('.del-row').length || 0;
 }
 
-function applyDeletedLogState(sId: string, isVisible: boolean, count: number, isOpen: boolean): void {
-    if (isVisible) {
-        if (count > 0) {
-            setTextContent(`deletedLogCount__${sId}`, `(${count})`);
-        }
-        const delDetailsEl = $(`deletedLogDetails__${sId}`) as HTMLDetailsElement | null;
-        if (delDetailsEl) {
-            if (isOpen) {
-                delDetailsEl.setAttribute('open', 'open');
-            } else {
-                delDetailsEl.removeAttribute('open');
-            }
-            delDetailsEl.style.display = '';
-        }
-    } else {
-        setTextContent(`deletedLogCount__${sId}`, '');
-    }
-}
-
 function restoreSheetDeletedLog(sId: string, result: Record<string, any>): void {
-    const delLogVisible = Boolean(result[POPUP_SHEET_KEYS.deletedLogDetailsVisible(sId)] ?? result[`tg_deletedLogDetailsVisible__${sId}`]);
-    if (delLogVisible) {
-        const delHtml = result[POPUP_SHEET_KEYS.deletedLogHtml(sId)] ?? result[`tg_deletedLogHtml__${sId}`];
-        if (delHtml) setElementText(`deletedLog__${sId}`, delHtml);
-        const rawCount = result[POPUP_SHEET_KEYS.deletedLogCount(sId)] ?? result[`tg_deletedLogCount__${sId}`];
-        const delCount = resolveDeletedLogCount(sId, delHtml, rawCount);
-        const isOpen = Boolean(result[POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)] ?? result[`tg_deletedLogDetailsOpen__${sId}`]);
-        applyDeletedLogState(sId, true, delCount, isOpen);
-    } else {
-        applyDeletedLogState(sId, false, 0, false);
-    }
+    restoreSheetLog(sId, result, {
+        visibleKey: POPUP_SHEET_KEYS.deletedLogDetailsVisible,
+        legacyVisibleKey: 'tg_deletedLogDetailsVisible__',
+        htmlKey: POPUP_SHEET_KEYS.deletedLogHtml,
+        legacyHtmlKey: 'tg_deletedLogHtml__',
+        countKey: POPUP_SHEET_KEYS.deletedLogCount,
+        legacyCountKey: 'tg_deletedLogCount__',
+        openKey: POPUP_SHEET_KEYS.deletedLogDetailsOpen,
+        legacyOpenKey: 'tg_deletedLogDetailsOpen__',
+        targetHtmlId: 'deletedLog__',
+        targetCountId: 'deletedLogCount__',
+        targetDetailsId: 'deletedLogDetails__',
+        countResolver: resolveDeletedLogCount
+    });
 }
 
 function resolveCleanedLogCount(sId: string, cleanHtml: string | undefined, rawCount: any): number {
@@ -242,37 +268,21 @@ function resolveCleanedLogCount(sId: string, cleanHtml: string | undefined, rawC
     return rows ? Math.max(0, rows - 1) : 0;
 }
 
-function applyCleanedLogState(sId: string, isVisible: boolean, count: number, isOpen: boolean): void {
-    if (isVisible) {
-        if (count > 0) {
-            setTextContent(`cleanedLogCount__${sId}`, `(${count})`);
-        }
-        const cleanDetailsEl = $(`cleanedLogDetails__${sId}`) as HTMLDetailsElement | null;
-        if (cleanDetailsEl) {
-            if (isOpen) {
-                cleanDetailsEl.setAttribute('open', 'open');
-            } else {
-                cleanDetailsEl.removeAttribute('open');
-            }
-            cleanDetailsEl.style.display = '';
-        }
-    } else {
-        setTextContent(`cleanedLogCount__${sId}`, '');
-    }
-}
-
 function restoreSheetCleanedLog(sId: string, result: Record<string, any>): void {
-    const cleanLogVisible = result[POPUP_SHEET_KEYS.cleanedLogDetailsVisible(sId)] ?? result[`tg_cleanedLogDetailsVisible__${sId}`];
-    if (cleanLogVisible) {
-        const cleanHtml = result[POPUP_SHEET_KEYS.cleanedLogHtml(sId)] ?? result[`tg_cleanedLogHtml__${sId}`];
-        if (cleanHtml) setElementText(`cleanedLog__${sId}`, cleanHtml);
-        const rawCount = result[POPUP_SHEET_KEYS.cleanedLogCount(sId)] ?? result[`tg_cleanedLogCount__${sId}`];
-        const cleanCount = resolveCleanedLogCount(sId, cleanHtml, rawCount);
-        const isOpen = Boolean(result[POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId)] ?? result[`tg_cleanedLogDetailsOpen__${sId}`]);
-        applyCleanedLogState(sId, true, cleanCount, isOpen);
-    } else {
-        applyCleanedLogState(sId, false, 0, false);
-    }
+    restoreSheetLog(sId, result, {
+        visibleKey: POPUP_SHEET_KEYS.cleanedLogDetailsVisible,
+        legacyVisibleKey: 'tg_cleanedLogDetailsVisible__',
+        htmlKey: POPUP_SHEET_KEYS.cleanedLogHtml,
+        legacyHtmlKey: 'tg_cleanedLogHtml__',
+        countKey: POPUP_SHEET_KEYS.cleanedLogCount,
+        legacyCountKey: 'tg_cleanedLogCount__',
+        openKey: POPUP_SHEET_KEYS.cleanedLogDetailsOpen,
+        legacyOpenKey: 'tg_cleanedLogDetailsOpen__',
+        targetHtmlId: 'cleanedLog__',
+        targetCountId: 'cleanedLogCount__',
+        targetDetailsId: 'cleanedLogDetails__',
+        countResolver: resolveCleanedLogCount
+    });
 }
 
 function restoreSheetDividerPos(sId: string, result: Record<string, any>): void {

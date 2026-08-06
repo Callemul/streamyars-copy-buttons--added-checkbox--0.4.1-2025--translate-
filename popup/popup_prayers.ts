@@ -164,9 +164,21 @@ function buildAuthorHeader(author: string, items: { text: string; icon: string; 
     return { header, authorIcon };
 }
 
-function buildSinglePrayerRow(item: { text: string; id: string }): HTMLElement {
+function buildPrayerRow(item: { text: string; id: string }, idx?: number): HTMLElement {
     const textContainer = document.createElement('div');
-    setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px' });
+    setStyle(textContainer, {
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '5px',
+        ...(idx !== undefined ? { marginBottom: '4px' } : {})
+    });
+
+    if (idx !== undefined) {
+        const indexSpan = document.createElement('span');
+        setStyle(indexSpan, { color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap' });
+        indexSpan.textContent = `${idx + 1}) `;
+        textContainer.appendChild(indexSpan);
+    }
 
     const textSpan = document.createElement('span');
     textSpan.className = 'editable-prayer';
@@ -175,40 +187,14 @@ function buildSinglePrayerRow(item: { text: string; id: string }): HTMLElement {
     setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
     textSpan.textContent = item.text;
 
-    const delBtnSingle = document.createElement('button');
-    delBtnSingle.textContent = '❌';
-    delBtnSingle.setAttribute('title', 'Видалити прохання');
-    delBtnSingle.setAttribute('data-id', item.id);
-    delBtnSingle.className = 'del-prayer-btn';
-    setStyle(delBtnSingle, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '❌';
+    delBtn.setAttribute('title', 'Видалити прохання');
+    delBtn.setAttribute('data-id', item.id);
+    delBtn.className = 'del-prayer-btn';
+    setStyle(delBtn, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
 
-    textContainer.append(textSpan, delBtnSingle);
-    return textContainer;
-}
-
-function buildIndexedPrayerRow(item: { text: string; id: string }, idx: number): HTMLElement {
-    const textContainer = document.createElement('div');
-    setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px' });
-
-    const indexSpan = document.createElement('span');
-    setStyle(indexSpan, { color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap' });
-    indexSpan.textContent = `${idx + 1}) `;
-
-    const textSpan = document.createElement('span');
-    textSpan.className = 'editable-prayer';
-    textSpan.setAttribute('contenteditable', 'true');
-    textSpan.setAttribute('data-id', item.id);
-    setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
-    textSpan.textContent = item.text;
-
-    const delBtnItem = document.createElement('button');
-    delBtnItem.textContent = '❌';
-    delBtnItem.setAttribute('title', 'Видалити прохання');
-    delBtnItem.setAttribute('data-id', item.id);
-    delBtnItem.className = 'del-prayer-btn';
-    setStyle(delBtnItem, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
-
-    textContainer.append(indexSpan, textSpan, delBtnItem);
+    textContainer.append(textSpan, delBtn);
     return textContainer;
 }
 
@@ -295,10 +281,10 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
 
             if (items.length === 1) {
                 const item = items[0];
-                block.appendChild(buildSinglePrayerRow(item));
+                block.appendChild(buildPrayerRow(item));
             } else {
                 items.forEach((item, idx) => {
-                    block.appendChild(buildIndexedPrayerRow(item, idx));
+                    block.appendChild(buildPrayerRow(item, idx));
                 });
             }
             return block;

@@ -123,36 +123,32 @@ class StudioModuleController {
             ...collectedKeys
         ];
 
-        return new Promise((resolve) => {
-            SYH_STORAGE.get(keysToFetch, (res) => {
-                this.enabled = res[STUDIO_ENABLED_KEY] ?? true;
-                this.caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
-                this.caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
-                this.caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
+        const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToFetch);
+        this.enabled = res[STUDIO_ENABLED_KEY] ?? true;
+        this.caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
+        this.caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
+        this.caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
 
-                const collected: CommentPayload[] = [];
-                const sheetStatsMap: Record<string, SheetHeaderStats> = {};
-                sheetIds.forEach((sId) => {
-                    const list = res[`syh:popup:collected:${sId}`];
-                    let questions = 0;
-                    let prayers = 0;
-                    if (Array.isArray(list)) {
-                        collected.push(...list);
-                        list.forEach((item: any) => {
-                            if (item.type === 'question') {
-                                questions += countQuestionsInText(item.text || '');
-                            } else if (item.type === 'prayer') {
-                                prayers += 1;
-                            }
-                        });
+        const collected: CommentPayload[] = [];
+        const sheetStatsMap: Record<string, SheetHeaderStats> = {};
+        sheetIds.forEach((sId) => {
+            const list = res[`syh:popup:collected:${sId}`];
+            let questions = 0;
+            let prayers = 0;
+            if (Array.isArray(list)) {
+                collected.push(...list);
+                list.forEach((item: any) => {
+                    if (item.type === 'question') {
+                        questions += countQuestionsInText(item.text || '');
+                    } else if (item.type === 'prayer') {
+                        prayers += 1;
                     }
-                    sheetStatsMap[sId] = { questions, prayers };
                 });
-                this.caches.collectedItems = collected;
-                this.sheetStatsMap = sheetStatsMap;
-                resolve();
-            });
+            }
+            sheetStatsMap[sId] = { questions, prayers };
         });
+        this.caches.collectedItems = collected;
+        this.sheetStatsMap = sheetStatsMap;
     }
 
     private isCommentsPage(): boolean {

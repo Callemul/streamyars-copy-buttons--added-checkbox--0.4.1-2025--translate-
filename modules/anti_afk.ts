@@ -26,13 +26,7 @@ export interface I18nAdapterLike {
 /**
  * Броньований сканер для виявлення кнопки "Stay in studio"
  */
-export function checkAndClickAntiAfk(
-    docNode: Document | Element | null = typeof document !== 'undefined' ? document : null,
-    i18n?: I18nAdapterLike
-): boolean {
-    if (!docNode) return false;
-
-    // 1. Пошук контейнера модалки за різними варіантами селекторів
+function findModalCandidateButtons(docNode: Document | Element): Element[] {
     const dialogSelectors = [
         'div[role="dialog"][aria-label="Are you still there?"]',
         'div[role="dialog"]',
@@ -41,28 +35,40 @@ export function checkAndClickAntiAfk(
         'div[class*="Dialog"]'
     ];
 
-    let modalButtons: Element[] = [];
     for (const selector of dialogSelectors) {
         const modal = docNode.querySelector(selector);
         if (modal) {
             const buttons = Array.from(modal.querySelectorAll('button, [role="button"], a'));
             if (buttons.length > 0) {
-                modalButtons = buttons;
-                break;
+                return buttons;
             }
         }
     }
 
-    // 2. Броньований Fallback: скануємо абсолютно всі клікабельні елементи сторінки
-    const candidateButtons = modalButtons.length > 0 
-        ? modalButtons 
-        : Array.from(docNode.querySelectorAll('button, [role="button"], div[tabindex="0"], a'));
+    return Array.from(docNode.querySelectorAll('button, [role="button"], div[tabindex="0"], a'));
+}
 
-    if (candidateButtons.length === 0) {
-        return false;
-    }
+function isStayInStudioButton(btn: Element, targetTexts: string[]): boolean {
+    const text = (btn.textContent || '').trim().toLowerCase();
+    const ariaLabel = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
+    const title = (btn.getAttribute('title') || '').trim().toLowerCase();
 
-    // 3. Варіанти пошукових ключів
+    return targetTexts.some(target =>
+        text === target || text.includes(target) ||
+        ariaLabel === target || ariaLabel.includes(target) ||
+        title === target || title.includes(target)
+    ) || /stay in (the )?studio/i.test(text) || /still there/i.test(text);
+}
+
+export function checkAndClickAntiAfk(
+    docNode: Document | Element | null = typeof document !== 'undefined' ? document : null,
+    i18n?: I18nAdapterLike
+): boolean {
+    if (!docNode) return false;
+
+    const candidateButtons = findModalCandidateButtons(docNode);
+    if (candidateButtons.length === 0) return false;
+
     const targetTexts: string[] = [
         'stay in the studio',
         'stay in studio',
@@ -79,19 +85,8 @@ export function checkAndClickAntiAfk(
         targetTexts.push(localized.trim().toLowerCase());
     }
 
-    // 4. Пошук відповідності серед усіх елементів
     for (const btn of candidateButtons) {
-        const text = (btn.textContent || '').trim().toLowerCase();
-        const ariaLabel = (btn.getAttribute('aria-label') || '').trim().toLowerCase();
-        const title = (btn.getAttribute('title') || '').trim().toLowerCase();
-
-        const isMatch = targetTexts.some(target => 
-            text === target || text.includes(target) || 
-            ariaLabel === target || ariaLabel.includes(target) ||
-            title === target || title.includes(target)
-        ) || /stay in (the )?studio/i.test(text) || /still there/i.test(text);
-
-        if (isMatch) {
+        if (isStayInStudioButton(btn, targetTexts)) {
             try {
                 console.log("[SYH Anti-AFK] AFK таймаут перехоплено! Натискаю 'Stay in the studio'.");
                 (btn as HTMLElement).click();

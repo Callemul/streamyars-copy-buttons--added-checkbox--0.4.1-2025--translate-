@@ -145,6 +145,23 @@ export function updateMasterCheckboxState(): void {
     updateMasterCheckboxFromElements('.syh-master-checkbox', allBannerCheckboxes);
 }
 
+function incrementCategoryCounts(
+    counts: Record<string, number>,
+    commentType: string
+): void {
+    counts.all++;
+    if (commentType === 'stream') counts.stream++;
+    else if (commentType === 'audience') counts.audience++;
+    else if (commentType === 'prayer') counts.prayer++;
+}
+
+function matchesActiveFilter(commentType: string, activeFilter: string): boolean {
+    if (activeFilter === 'stream' && commentType !== 'stream') return false;
+    if (activeFilter === 'audience' && commentType !== 'audience') return false;
+    if (activeFilter === 'prayer' && commentType !== 'prayer') return false;
+    return true;
+}
+
 export function filterBannerListItems(
     bannerList: HTMLElement,
     selectors: any,
@@ -165,29 +182,14 @@ export function filterBannerListItems(
         const commentType = categoriesCache[originalText] || 'none';
 
         updateBannerVisuals(bannerWrap, commentType);
+        incrementCategoryCounts(countAbsolute, commentType);
 
-        countAbsolute.all++;
-        if (commentType === 'stream') countAbsolute.stream++;
-        else if (commentType === 'audience') countAbsolute.audience++;
-        else if (commentType === 'prayer') countAbsolute.prayer++;
-
-        let matchesSearch = true;
-        if (searchQuery) {
-            matchesSearch = SYH_UTILS.smartSearch(searchQuery, originalText);
-        }
-
+        const matchesSearch = !searchQuery || SYH_UTILS.smartSearch(searchQuery, originalText);
         if (matchesSearch) {
-            countSearch.all++;
-            if (commentType === 'stream') countSearch.stream++;
-            else if (commentType === 'audience') countSearch.audience++;
-            else if (commentType === 'prayer') countSearch.prayer++;
+            incrementCategoryCounts(countSearch, commentType);
         }
 
-        let isVisible = matchesSearch;
-
-        if (activeFilter === 'stream' && commentType !== 'stream') isVisible = false;
-        if (activeFilter === 'audience' && commentType !== 'audience') isVisible = false;
-        if (activeFilter === 'prayer' && commentType !== 'prayer') isVisible = false;
+        const isVisible = matchesSearch && matchesActiveFilter(commentType, activeFilter);
 
         if (isVisible) {
             if (li.style.display === 'none') li.style.display = '';

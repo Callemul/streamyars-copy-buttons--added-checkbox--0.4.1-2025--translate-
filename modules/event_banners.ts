@@ -201,6 +201,14 @@ export function handleBannerMouseDown(e: MouseEvent): void {
     }
 }
 
+function isAllowedBannerAction(action?: string, type?: string): boolean {
+    if (action === 'create-from-text' || action === 'delete-selected-banners' ||
+        action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
+        return true;
+    }
+    return type === 'banner';
+}
+
 export function handleBannerMouseUp(
     e: MouseEvent,
     instance: SyhEventBanners
@@ -213,12 +221,10 @@ export function handleBannerMouseUp(
     const type = button.dataset.type;
     const buttonNum = e.button;
 
-    if (type !== 'banner' && action !== 'create-from-text' && action !== 'delete-selected-banners' && action !== 'mark-stream' && action !== 'mark-audience' && action !== 'mark-prayer') return;
+    if (!isAllowedBannerAction(action, type) || buttonNum !== 0) return;
 
     e.preventDefault();
     e.stopPropagation();
-
-    if (buttonNum !== 0) return;
 
     if (action === 'create-from-text') {
         handleCreateBannersAction(instance.BANNER_CREATOR);
@@ -237,7 +243,6 @@ export function handleBannerMouseUp(
 
     if (action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
         handleMarkBannerCategoryAction(button, action, instance.SELECTORS, instance.UI, instance.UTILS);
-        return;
     }
 }
 

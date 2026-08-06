@@ -90,6 +90,19 @@ export class CommentAssistantService implements CommentAssistantInterface {
         });
     }
 
+    private resolveTriggerCategory(
+        lowerWord: string,
+        lowerPrayerWords: string[],
+        lowerQuestionWords: string[]
+    ): { categoryClass: string; categoryName: string } {
+        const isPrayer = lowerPrayerWords.includes(lowerWord);
+        const isQuestion = lowerQuestionWords.includes(lowerWord);
+        return {
+            categoryClass: isPrayer ? 'syh-trigger-prayer' : (isQuestion ? 'syh-trigger-question' : ''),
+            categoryName: isPrayer ? 'prayer' : (isQuestion ? 'question' : 'other')
+        };
+    }
+
     public highlightTriggers(text: string): { highlightedText: string; matchedWords: string[]; matchedCategories: string[] } {
         if (!text) return { highlightedText: '', matchedWords: [], matchedCategories: [] };
         
@@ -103,9 +116,7 @@ export class CommentAssistantService implements CommentAssistantInterface {
         this.triggerWords.forEach(word => {
             const rx = this.createTriggerRegExp(word);
             const lowerWord = word.toLowerCase();
-            const isPrayer = lowerPrayerWords.includes(lowerWord);
-            const isQuestion = lowerQuestionWords.includes(lowerWord);
-            const categoryClass = isPrayer ? 'syh-trigger-prayer' : (isQuestion ? 'syh-trigger-question' : '');
+            const { categoryClass, categoryName } = this.resolveTriggerCategory(lowerWord, lowerPrayerWords, lowerQuestionWords);
             
             safeHTML = safeHTML.replace(rx, (match, p1, p2, p3) => {
                 const isFallback = typeof p2 === 'string';
@@ -114,9 +125,8 @@ export class CommentAssistantService implements CommentAssistantInterface {
                 if (!matchedWords.includes(lowerWord)) {
                     matchedWords.push(lowerWord);
                 }
-                const cat = isPrayer ? 'prayer' : (isQuestion ? 'question' : 'other');
-                if (!matchedCategories.includes(cat)) {
-                    matchedCategories.push(cat);
+                if (!matchedCategories.includes(categoryName)) {
+                    matchedCategories.push(categoryName);
                 }
                 const markClasses = `syh-trigger-highlight ${categoryClass}`.trim();
                 const replacement = `<mark class="${markClasses}" data-syh-trigger="${this.escapeHTML(lowerWord)}">${targetWord}</mark>`;

@@ -10,6 +10,10 @@ export function extractDomChannelInfo(): { channelName: string; channelHandle: s
     let channelName = '';
     let channelHandle = '';
 
+    if (typeof document === 'undefined') {
+        return { channelName, channelHandle };
+    }
+
     for (const sel of CHANNEL_NAME_SELECTORS) {
         const el = document.querySelector(sel);
         if (el?.textContent?.trim()) {

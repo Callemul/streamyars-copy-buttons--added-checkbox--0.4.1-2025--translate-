@@ -19,6 +19,7 @@ export interface SyhStatsTracker {
     lastKnownBrand: string;
 
     init(): void;
+    loadStatsDb(callback: (db: Record<string, any>) => void): void;
     setupObservers(): void;
     restoreButtonStates(btnQ: HTMLElement, btnP: HTMLElement): void;
     markPhase(phase: 'questions' | 'prayers', btnElement: HTMLElement): void;
@@ -211,8 +212,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         const today = SYH_UTILS.getTodayDateString();
         const self = this;
         
-        SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
-            const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+        this.loadStatsDb((db) => {
             if (db[self.currentBrand] && db[self.currentBrand][today]) {
                 if (db[self.currentBrand][today].phase_questions_start) {
                     btnQ.innerText = '✅ Питання';
@@ -223,6 +223,13 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     btnP.style.opacity = '0.7';
                 }
             }
+        });
+    },
+
+    loadStatsDb: function(callback: (db: Record<string, any>) => void): void {
+        SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
+            const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+            callback(db);
         });
     },
 
@@ -237,8 +244,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         const today = SYH_UTILS.getTodayDateString();
         const self = this;
 
-        SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
-            const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+        this.loadStatsDb((db) => {
             const session = getOrCreateTodaySession(db, self.currentBrand, today);
 
             if (phase === 'questions') {
@@ -283,8 +289,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
 
             const today = SYH_UTILS.getTodayDateString();
 
-            SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
-                const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
+            self.loadStatsDb((db) => {
                 const session = getOrCreateTodaySession(db, self.currentBrand, today);
                 
                 if (session.initial_viewers === undefined && session.data.length === 0) {

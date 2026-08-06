@@ -442,13 +442,9 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
 </div>`;
     },
 
-    exportPresentation: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
-        const stats = this.getReportStats(dataObj);
-        if (!stats) return;
-
-        const { overall, initialViewers, st1, st2, st3 } = stats;
-
-        const htmlTemplate = `
+function generatePresentationHtml(stats: any, dateStr: string, currentBrand: string): string {
+    const { overall, initialViewers, st1, st2, st3 } = stats;
+    return `
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -514,7 +510,13 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     </div>
 </body>
 </html>`;
+}
 
+    exportPresentation: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void {
+        const stats = this.getReportStats(dataObj);
+        if (!stats) return;
+
+        const htmlTemplate = generatePresentationHtml(stats, dateStr, currentBrand);
         const blob = new Blob([htmlTemplate], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");

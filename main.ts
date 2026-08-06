@@ -76,40 +76,6 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
         });
     }
 
-    // --- ІНІЦІАЛІЗАЦІЯ ---
-    function init(): void {
-        console.log("Initializing SYH modules...");
-
-        SYH_UTILS.init(SYH_CONFIG);
-        SYH_UI.init(SYH_CONFIG, SYH_STATE);
-        SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
-        
-        SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
-        SYH_COMMENT_ASSISTANT.processAllComments();
-        SYH_RIGHT_TABS_COMPACT.init();
-
-        // Реєстрація та автоматичний запуск плагінів через SYH_PLUGINS
-        SYH_PLUGINS.register(SYH_EVENT_COMMENTS_PLUGIN);
-        SYH_PLUGINS.register(SYH_EVENT_BANNERS_PLUGIN);
-        SYH_PLUGINS.register(SYH_ANTI_AFK_PLUGIN);
-        SYH_PLUGINS.register(SYH_VIDEO_COPIER_PLUGIN);
-
-        SYH_PLUGINS.initSupportedPlugins();
-
-        if (SYH_STATS_TRACKER && typeof SYH_STATS_TRACKER.init === 'function') {
-            SYH_STATS_TRACKER.init();
-        }
-
-        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів від Попапу в реальному часі через SYH_MESSAGING
-        SYH_MESSAGING.onMessage((message, sender, sendResponse) => {
-            if (message?.action === 'unstar_comment') {
-                handleUnstarCommentMessage(message.text ? message.text.trim() : "", SELECTORS);
-            } else if (message?.action === 'FETCH_PRAYERS') {
-                return handleFetchPrayersMessage(sendResponse);
-            }
-        });
-    }
-
     function handleUnstarCommentMessage(targetText: string, selectors: Record<string, any>): void {
         if (!targetText) return;
         const commentBlocks = document.querySelectorAll(selectors.commentBlock);
@@ -160,14 +126,29 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
     // --- ІНІЦІАЛІЗАЦІЯ ---
     function init(): void {
+        console.log("Initializing SYH modules...");
 
+        SYH_UTILS.init(SYH_CONFIG);
+        SYH_UI.init(SYH_CONFIG, SYH_STATE);
+        SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
 
-
-        document.querySelectorAll(SELECTORS.commentBlock).forEach((el) => SYH_UI.addButtonsToComment(el as HTMLElement));
-        document.querySelectorAll(SELECTORS.bannerBlock).forEach((el) => SYH_UI.addButtonsToBanner(el as HTMLElement));
-        document.querySelectorAll(SELECTORS.bannerHeader).forEach((el) => SYH_UI.addBannerHeaderControls(el as HTMLElement));
+        SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
+        SYH_COMMENT_ASSISTANT.processAllComments();
+        SYH_RIGHT_TABS_COMPACT.init();
 
         if (SYH_STATE && typeof SYH_STATE.init === 'function') SYH_STATE.init();
+
+        // Реєстрація та автоматичний запуск плагінів через SYH_PLUGINS
+        SYH_PLUGINS.register(SYH_EVENT_COMMENTS_PLUGIN);
+        SYH_PLUGINS.register(SYH_EVENT_BANNERS_PLUGIN);
+        SYH_PLUGINS.register(SYH_ANTI_AFK_PLUGIN);
+        SYH_PLUGINS.register(SYH_VIDEO_COPIER_PLUGIN);
+
+        SYH_PLUGINS.initSupportedPlugins();
+
+        if (SYH_STATS_TRACKER && typeof SYH_STATS_TRACKER.init === 'function') {
+            SYH_STATS_TRACKER.init();
+        }
 
         setupDomRegistration();
 
@@ -178,7 +159,16 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
             || document.body;
 
         SYH_DOM_OBSERVER.start(targetContainer);
-        
+
+        // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів від Попапу в реальному часі через SYH_MESSAGING
+        SYH_MESSAGING.onMessage((message, sender, sendResponse) => {
+            if (message?.action === 'unstar_comment') {
+                handleUnstarCommentMessage(message.text ? message.text.trim() : "", SELECTORS);
+            } else if (message?.action === 'FETCH_PRAYERS') {
+                return handleFetchPrayersMessage(sendResponse);
+            }
+        });
+
         console.log("SYH is running.");
     }
 

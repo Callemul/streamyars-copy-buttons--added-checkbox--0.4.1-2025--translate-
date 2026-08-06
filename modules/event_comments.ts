@@ -68,6 +68,81 @@ export function formatCopyPayload(
     return { header: '', textToCopy: '', actionType: null };
 }
 
+export function handleSyhButtonMouseUp(
+    e: MouseEvent,
+    self: SyhEventComments
+): void {
+    const target = e.target as Element | null;
+    const button = target?.closest('.syh-button[data-type="comment"]') as HTMLElement | null;
+    if (!button) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const action = button.dataset.action;
+    const buttonNum = e.button;
+
+    if (buttonNum !== 0 && action !== 'copy-prayer') return;
+
+    const commentBlock = button.closest(self.SELECTORS?.commentBlock || '');
+    if (!commentBlock) return;
+
+    const rawAuthor = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent;
+    const author = stripLeadingAt(rawAuthor);
+    const commentText = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
+
+    if (action === 'copy-author-comment' || action === 'copy-prayer') {
+        commentBlock.setAttribute('data-syh-just-added', 'true');
+        setTimeout(() => { commentBlock.removeAttribute('data-syh-just-added'); }, 2000);
+    }
+
+    const payload = formatCopyPayload(action, author, commentText, buttonNum);
+    applyCommentActionState(self, payload, author, commentText, commentBlock);
+}
+
+function applyCommentActionState(
+    self: SyhEventComments,
+    payload: CopyPayload,
+    author: string,
+    commentText: string,
+    commentBlock: Element
+): void {
+    if (payload.actionType === 'question') {
+        self.saveToDatabase(author, commentText, "question", "❓");
+        if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'question');
+    } else if (payload.actionType === 'prayer' && payload.prayerIcon) {
+        self.saveToDatabase(author, commentText, "prayer", payload.prayerIcon);
+        if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
+        SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: payload.prayerIcon });
+    }
+
+    if (payload.textToCopy) {
+        SYH_BUS.emit('COMMENT_ACTION', {
+            type: payload.actionType,
+            author: author,
+            text: commentText
+        });
+
+        if (self.UTILS) {
+            self.UTILS.copyAndShowBanner(payload.textToCopy, payload.header);
+        }
+
+        const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
+        if (checkboxNode) {
+            checkboxNode.checked = true;
+            checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
+            CommentService.setStreamYardCheckboxState(commentText, true);
+        }
+
+        commentBlock.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach(cb => cb.checked = true);
+
+        const starBtnNode = commentBlock.querySelector(self.SELECTORS?.starButton || '') as HTMLElement | null;
+        if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
+            starBtnNode.click();
+        }
+    }
+}
+
 export interface SyhEventComments {
     SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;
@@ -362,68 +437,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         document.addEventListener('mousedown', self._syhButtonMouseDownHandler);
 
         self._mouseupHandler = function(e: MouseEvent) {
-            const target = e.target as Element | null;
-            const button = target?.closest('.syh-button[data-type="comment"]') as HTMLElement | null;
-            if (!button) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            const action = button.dataset.action;
-            const buttonNum = e.button;
-
-            if (buttonNum !== 0 && action !== 'copy-prayer') return;
-
-            const commentBlock = button.closest(self.SELECTORS?.commentBlock || '');
-            if (!commentBlock) return;
-
-            const rawAuthor = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent;
-            const author = stripLeadingAt(rawAuthor);
-
-            const commentText = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
-            
-            // Встановлюємо таймер-запобіжник для Auto-Heal сканера
-            if (action === 'copy-author-comment' || action === 'copy-prayer') {
-                commentBlock.setAttribute('data-syh-just-added', 'true');
-                setTimeout(() => { commentBlock.removeAttribute('data-syh-just-added'); }, 2000);
-            }
-
-            const payload = formatCopyPayload(action, author, commentText, buttonNum);
-
-            if (payload.actionType === 'question') {
-                self.saveToDatabase(author, commentText, "question", "❓");
-                if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'question');
-            } else if (payload.actionType === 'prayer' && payload.prayerIcon) {
-                self.saveToDatabase(author, commentText, "prayer", payload.prayerIcon);
-                if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
-                SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: payload.prayerIcon });
-            }
-
-            if (payload.textToCopy) {
-                SYH_BUS.emit('COMMENT_ACTION', {
-                    type: payload.actionType,
-                    author: author,
-                    text: commentText
-                });
-
-                if (self.UTILS) {
-                    self.UTILS.copyAndShowBanner(payload.textToCopy, payload.header);
-                }
-
-                const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
-                if (checkboxNode) {
-                    checkboxNode.checked = true;
-                    checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
-                    CommentService.setStreamYardCheckboxState(commentText, true);
-                }
-
-                commentBlock.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach(cb => cb.checked = true);
-                
-                const starBtnNode = commentBlock.querySelector(self.SELECTORS?.starButton || '') as HTMLElement | null;
-                if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
-                    starBtnNode.click();
-                }
-            }
+            handleSyhButtonMouseUp(e, self);
         };
         document.addEventListener('mouseup', self._mouseupHandler);
     },
