@@ -108,34 +108,37 @@ export function validateSelectorsSyntax(): void {
     }
 }
 
+export function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record<string, any>): string {
+    const type = checkbox.dataset.type;
+    const selCommentBlock = Array.isArray(selectors.commentBlock) ? selectors.commentBlock[0] : selectors.commentBlock;
+    const selCommentText = Array.isArray(selectors.commentText) ? selectors.commentText[0] : selectors.commentText;
+    const selBannerBlock = Array.isArray(selectors.bannerBlock) ? selectors.bannerBlock[0] : selectors.bannerBlock;
+    const selBannerText = Array.isArray(selectors.bannerText) ? selectors.bannerText[0] : selectors.bannerText;
+
+    if (type === 'comment') {
+        const commentBlock = checkbox.closest(selCommentBlock || '[class*="PlatformComment__Wrap"]');
+        return commentBlock?.querySelector(selCommentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
+    }
+    if (type === 'banner') {
+        const bannerBlock = checkbox.closest(selBannerBlock || '[class*="Banner__LiWrap"]');
+        return bannerBlock?.querySelector(selBannerText || '[class*="Banner__BannerText"]')?.textContent || "";
+    }
+    return "";
+}
+
 export function restoreDomCheckboxes(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const itemStates = SYH_UI_STATE.STATE?.itemStates || {};
-    
+
     if (!selectors) {
         console.warn("[SYH_UI] Конфігурація SELECTORS ще не завантажена.");
         return;
     }
 
     console.log("[SYH_UI] Відновлення стану чекбоксів у DOM...");
-    
+
     document.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach((checkbox) => {
-        const type = checkbox.dataset.type;
-        let textKey = "";
-
-        const selCommentBlock = Array.isArray(selectors.commentBlock) ? selectors.commentBlock[0] : selectors.commentBlock;
-        const selCommentText = Array.isArray(selectors.commentText) ? selectors.commentText[0] : selectors.commentText;
-        const selBannerBlock = Array.isArray(selectors.bannerBlock) ? selectors.bannerBlock[0] : selectors.bannerBlock;
-        const selBannerText = Array.isArray(selectors.bannerText) ? selectors.bannerText[0] : selectors.bannerText;
-
-        if (type === 'comment') {
-            const commentBlock = checkbox.closest(selCommentBlock || '[class*="PlatformComment__Wrap"]');
-            textKey = commentBlock?.querySelector(selCommentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
-        } else if (type === 'banner') {
-            const bannerBlock = checkbox.closest(selBannerBlock || '[class*="Banner__LiWrap"]');
-            textKey = bannerBlock?.querySelector(selBannerText || '[class*="Banner__BannerText"]')?.textContent || "";
-        }
-
+        const textKey = getCheckboxTextKey(checkbox, selectors);
         if (textKey) {
             checkbox.checked = !!itemStates[textKey];
         }

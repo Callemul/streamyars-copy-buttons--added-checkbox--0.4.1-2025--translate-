@@ -102,53 +102,64 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
 
         // ДВОСТОРОННЯ СИНХРОНІЗАЦІЯ: Прийом сигналів від Попапу в реальному часі через SYH_MESSAGING
         SYH_MESSAGING.onMessage((message, sender, sendResponse) => {
-            if (message && message.action === 'unstar_comment') {
-                const targetText = message.text ? message.text.trim() : "";
-                if (!targetText) return;
-
-                const commentBlocks = document.querySelectorAll(SELECTORS.commentBlock);
-                for (const block of Array.from(commentBlocks)) {
-                    const textNode = block.querySelector(SELECTORS.commentText);
-                    if (textNode && textNode.textContent?.trim() === targetText) {
-                        const starBtnNode = block.querySelector(SELECTORS.starButton) as HTMLElement | null;
-                        if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
-                            console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
-                            starBtnNode.click();
-                        }
-                        break;
-                    }
-                }
-            } else if (message && message.action === 'FETCH_PRAYERS') {
-                const currentRoomId = window.location.pathname.replace(/\//g, '');
-                const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
-                const newPrayers: any[] = [];
-                const now = Date.now();
-                
-                comments.forEach(block => {
-                    const starBtn = block.querySelector('[class*="PlatformComment__StarButton"]');
-                    if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
-                        let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent?.trim() || "Глядач";
-                        while (author.startsWith('@')) author = author.substring(1);
-                        
-                        const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
-                        
-                        if (text) {
-                            newPrayers.push({
-                                id: 'p_' + now + '_' + Math.random().toString(36).substring(2, 9),
-                                author: author,
-                                text: text,
-                                type: "prayer",
-                                icon: "🙏🙏🙏",
-                                roomId: currentRoomId,
-                                timestamp: now
-                            });
-                        }
-                    }
-                });
-                if (sendResponse) sendResponse(newPrayers);
-                return true;
+            if (message?.action === 'unstar_comment') {
+                handleUnstarCommentMessage(message.text ? message.text.trim() : "", SELECTORS);
+            } else if (message?.action === 'FETCH_PRAYERS') {
+                return handleFetchPrayersMessage(sendResponse);
             }
         });
+    }
+
+    function handleUnstarCommentMessage(targetText: string, selectors: Record<string, any>): void {
+        if (!targetText) return;
+        const commentBlocks = document.querySelectorAll(selectors.commentBlock);
+        for (const block of Array.from(commentBlocks)) {
+            const textNode = block.querySelector(selectors.commentText);
+            if (textNode && textNode.textContent?.trim() === targetText) {
+                const starBtnNode = block.querySelector(selectors.starButton) as HTMLElement | null;
+                if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
+                    console.log("[SYH] Отримано сигнал від Попапу. Автоматично знімаю зірку з:", targetText);
+                    starBtnNode.click();
+                }
+                break;
+            }
+        }
+    }
+
+    function handleFetchPrayersMessage(sendResponse?: (response?: unknown) => void): boolean {
+        const currentRoomId = window.location.pathname.replace(/\//g, '');
+        const comments = document.querySelectorAll('[class*="PlatformComment__Wrap"][data-syh-type="prayer"]');
+        const newPrayers: any[] = [];
+        const now = Date.now();
+
+        comments.forEach(block => {
+            const starBtn = block.querySelector('[class*="PlatformCommentShell__StarButton"]');
+            if (starBtn && starBtn.getAttribute('aria-selected') === 'true') {
+                let author = block.querySelector('[class*="PlatformCommentShell__NameText"]')?.textContent?.trim() || "Глядач";
+                while (author.startsWith('@')) author = author.substring(1);
+
+                const text = block.querySelector('[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
+
+                if (text) {
+                    newPrayers.push({
+                        id: 'p_' + now + '_' + Math.random().toString(36).substring(2, 9),
+                        author: author,
+                        text: text,
+                        type: "prayer",
+                        icon: "🙏🙏🙏",
+                        roomId: currentRoomId,
+                        timestamp: now
+                    });
+                }
+            }
+        });
+
+        if (sendResponse) sendResponse(newPrayers);
+        return true;
+    }
+
+    // --- ІНІЦІАЛІЗАЦІЯ ---
+    function init(): void {
 
 
 

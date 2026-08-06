@@ -294,6 +294,24 @@ export function buildSortedCommentTexts(prayersCache: PrayerItem[], activeFilter
     return sortedTexts;
 }
 
+export function evalCategoryMatch(commentType: string, activeFilter: string): boolean {
+    if (activeFilter === 'prayer' && commentType !== 'prayer') return false;
+    if (activeFilter === 'question' && commentType !== 'question') return false;
+    if (activeFilter === 'other' && commentType !== 'none') return false;
+    return true;
+}
+
+export function updateListItemOrdering(li: HTMLElement, isVisible: boolean, orderIndex: number): void {
+    if (isVisible) {
+        if (li.style.display === 'none') li.style.display = '';
+        const targetOrder = orderIndex !== -1 ? orderIndex : 9999;
+        if (parseInt(li.style.order || '0', 10) !== targetOrder) li.style.order = String(targetOrder);
+    } else {
+        if (li.style.display !== 'none') li.style.display = 'none';
+        if (parseInt(li.style.order || '0', 10) !== 9999) li.style.order = '9999';
+    }
+}
+
 export function filterCommentListItems(
     commentList: HTMLElement,
     selectors: any,
@@ -339,21 +357,12 @@ export function filterCommentListItems(
             else countSearch.other++;
         }
 
-        let isVisible = matchesSearch;
-
-        if (activeFilter === 'prayer' && commentType !== 'prayer') isVisible = false;
-        if (activeFilter === 'question' && commentType !== 'question') isVisible = false;
-        if (activeFilter === 'other' && commentType !== 'none') isVisible = false;
+        const isVisible = matchesSearch && evalCategoryMatch(commentType, activeFilter);
+        const exactOrder = sortedTexts.indexOf(originalText);
+        updateListItemOrdering(li, isVisible, exactOrder);
 
         if (isVisible) {
-            if (li.style.display === 'none') li.style.display = '';
-            const exactOrder = sortedTexts.indexOf(originalText);
-            const targetOrder = exactOrder !== -1 ? exactOrder : 9999;
-            if (parseInt(li.style.order || '0') !== targetOrder) li.style.order = String(targetOrder);
             visibleCount++;
-        } else {
-            if (li.style.display !== 'none') li.style.display = 'none';
-            if (parseInt(li.style.order || '0') !== 9999) li.style.order = '9999'; 
         }
     });
 
