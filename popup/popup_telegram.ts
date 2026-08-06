@@ -308,6 +308,169 @@ export function ensureStatsBarRows(sheetId: string = 'vp_ss'): void {
     bar.appendChild(row3);
 }
 
+function ensureNewYTRow(statsBar: HTMLElement, sheetId: string): void {
+    const newYTCountEl = $(`countNewYT__${sheetId}`);
+    if (!newYTCountEl && statsBar.querySelector('.stats-row.new-row')) {
+        const span = document.createElement('span');
+        span.className = 'stat-item new-yt';
+        span.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
+        const newRow = statsBar.querySelector('.stats-row.new-row');
+        if (newRow) newRow.appendChild(span);
+    } else if (!newYTCountEl) {
+        const row = document.createElement('div');
+        row.className = 'stats-row new-row';
+        const spanNew = document.createElement('span');
+        spanNew.className = 'stat-item new';
+        spanNew.innerHTML = `Нові з лівої: <b id="countNewLeft__${sheetId}">0</b>`;
+        const spanYT = document.createElement('span');
+        spanYT.className = 'stat-item new-yt';
+        spanYT.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
+        row.appendChild(spanNew);
+        row.appendChild(spanYT);
+        const totalRow = statsBar.querySelector('.total-row');
+        if (totalRow) statsBar.insertBefore(row, totalRow);
+    }
+}
+
+function updateTelegramStatsUI(sheetId: string, stats: any): void {
+    setTextContent(`countOld__${sheetId}`, `${stats.oldPeople} люд. - ${stats.oldQuestionsTotal} пит.`);
+    setTextContent(`countDel__${sheetId}`, `${stats.delPeople} люд. - ${stats.delQuestionsTotal} пит.`);
+
+    let newLeftText = `${stats.newLeftPeople} люд. - ${stats.newLeftQuestionsTotal} пит.`;
+    if (stats.newLeftPrayersTotal > 0) newLeftText += ` | Молитви: ${stats.newLeftPrayersTotal}`;
+    setTextContent(`countNewLeft__${sheetId}`, newLeftText);
+
+    const statsBar = $(`statsBar__${sheetId}`);
+    if (statsBar) {
+        ensureNewYTRow(statsBar, sheetId);
+    }
+
+    let newYTText = `${stats.newYTPeople} люд. - ${stats.newYTQuestionsTotal} пит.`;
+    if (stats.newYTPrayersTotal > 0) newYTText += ` | Молитви: ${stats.newYTPrayersTotal}`;
+    setTextContent(`countNewYT__${sheetId}`, newYTText);
+
+    let totalText = `${stats.totalPeople} люд. - ${stats.totalQuestions} пит.`;
+    if (stats.totalPrayers > 0) totalText += ` | Молитви: ${stats.totalPrayers}`;
+    setTextContent(`countTotal__${sheetId}`, totalText);
+
+    showElement(`statsBar__${sheetId}`);
+    updateCombinedCounters(sheetId);
+}
+
+function renderTelegramFinalResult(outputDiv: HTMLElement | null, questions: any[], prayers: any[]): void {
+    if (!outputDiv) return;
+    outputDiv.innerHTML = '';
+    if (questions.length > 0) {
+        const header = document.createElement('div');
+        header.textContent = "❓❓❓ВОПРОСЫ\n\n";
+        outputDiv.appendChild(header);
+        questions.forEach((item, index) => {
+            const emojiNum = numberToEmoji(index + 1);
+            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
+            const block = document.createElement('div');
+            block.className = 'q-block q-' + item.source;
+            block.textContent = textBlock;
+            outputDiv.appendChild(block);
+        });
+    }
+    if (prayers.length > 0) {
+        const header = document.createElement('div');
+        header.textContent = "🙏🙏🙏МОЛИТВЫ\n\n";
+        outputDiv.appendChild(header);
+        prayers.forEach((item, index) => {
+            const emojiNum = numberToEmoji(index + 1);
+            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
+            const block = document.createElement('div');
+            block.className = 'q-block q-pray';
+            block.textContent = textBlock;
+            outputDiv.appendChild(block);
+        });
+    }
+}
+
+function renderTelegramDeletedLog(deletedLogDiv: HTMLElement | null, delLog: any[], sheetId: string): void {
+    if (!deletedLogDiv) return;
+    deletedLogDiv.innerHTML = '';
+    if (delLog.length > 0) {
+        delLog.forEach((d) => {
+            let msg = '№' + d.originalId + ' (' + d.author + '): ';
+            if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
+            else msg += 'Видалено підпункт';
+            const div = document.createElement('div');
+            div.className = 'del-row';
+            div.textContent = msg;
+            deletedLogDiv.appendChild(div);
+        });
+        setTextContent(`deletedLogCount__${sheetId}`, `(${delLog.length})`);
+    } else {
+        const div = document.createElement('div');
+        div.className = 'del-empty-msg';
+        div.style.color = '#9ca3af';
+        div.style.padding = '6px';
+        div.style.fontStyle = 'italic';
+        div.textContent = 'Видалень немає';
+        deletedLogDiv.appendChild(div);
+        setTextContent(`deletedLogCount__${sheetId}`, '(0)');
+    }
+    showElement(`deletedLogDetails__${sheetId}`);
+}
+
+function renderTelegramCleanedLog(cleanedLogDiv: HTMLElement | null, cleaningLog: any[], sheetId: string): void {
+    if (!cleanedLogDiv) return;
+    cleanedLogDiv.innerHTML = '';
+    if (cleaningLog.length > 0) {
+        const table = document.createElement('table');
+        table.className = 'clean-table';
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = '<th>До очищення</th><th>Після очищення</th><th>Що прибрано</th>';
+        table.appendChild(headerRow);
+        cleaningLog.forEach(entry => {
+            const tr = document.createElement('tr');
+            const td1 = document.createElement('td'); td1.className = 'clean-before'; td1.textContent = entry.before || '';
+            const td2 = document.createElement('td'); td2.className = 'clean-after'; td2.textContent = entry.after || '';
+            const td3 = document.createElement('td'); td3.className = 'clean-diff'; td3.textContent = entry.removed || '';
+            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+            table.appendChild(tr);
+        });
+        cleanedLogDiv.appendChild(table);
+        setTextContent(`cleanedLogCount__${sheetId}`, `(${cleaningLog.length})`);
+    } else {
+        const div = document.createElement('div');
+        div.className = 'clean-empty-msg';
+        div.style.color = '#9ca3af';
+        div.style.padding = '6px';
+        div.style.fontStyle = 'italic';
+        div.textContent = 'Очищених фраз чи нікнеймів немає';
+        cleanedLogDiv.appendChild(div);
+        setTextContent(`cleanedLogCount__${sheetId}`, '(0)');
+    }
+    showElement(`cleanedLogDetails__${sheetId}`);
+}
+
+function saveTelegramSheetState(
+    sheetId: string,
+    outputDiv: HTMLElement | null,
+    statsBar: HTMLElement | null,
+    deletedLogDiv: HTMLElement | null,
+    deletedLogCount: number,
+    cleanedLogDiv: HTMLElement | null,
+    cleanedLogCount: number
+): void {
+    SheetStateService.saveSheetState(sheetId, {
+        finalResultHtml: outputDiv?.innerHTML || '',
+        statsHtml: statsBar?.innerHTML || '',
+        statsVisible: statsBar ? statsBar.style.display !== 'none' : false,
+        deletedLogHtml: deletedLogDiv?.innerHTML || '',
+        deletedLogCount,
+        deletedLogDetailsVisible: true,
+        deletedLogDetailsOpen: ($( `deletedLogDetails__${sheetId}`) as HTMLDetailsElement | null)?.open || false,
+        cleanedLogHtml: cleanedLogDiv?.innerHTML || '',
+        cleanedLogCount,
+        cleanedLogDetailsVisible: true,
+        cleanedLogDetailsOpen: ($( `cleanedLogDetails__${sheetId}`) as HTMLDetailsElement | null)?.open || false
+    });
+}
+
 export function processTelegramData(sheetId: string = 'vp_ss'): void {
     ensureStatsBarRows(sheetId);
     const oldListEl = $(`oldList__${sheetId}`) as HTMLTextAreaElement | null;
@@ -348,144 +511,19 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
     const debugOutputDiv = $(`finalResultDiv__${sheetId}`);
     console.log('[SYH Debug] outputDiv found:', !!debugOutputDiv);
 
-    setTextContent(`countOld__${sheetId}`, `${stats.oldPeople} люд. - ${stats.oldQuestionsTotal} пит.`);
-    setTextContent(`countDel__${sheetId}`, `${stats.delPeople} люд. - ${stats.delQuestionsTotal} пит.`);
-
-    let newLeftText = `${stats.newLeftPeople} люд. - ${stats.newLeftQuestionsTotal} пит.`;
-    if (stats.newLeftPrayersTotal > 0) newLeftText += ` | Молитви: ${stats.newLeftPrayersTotal}`;
-    setTextContent(`countNewLeft__${sheetId}`, newLeftText);
-
-    const statsBar = $(`statsBar__${sheetId}`);
-    const newYTCountEl = $(`countNewYT__${sheetId}`);
-    if (statsBar && !newYTCountEl && statsBar.querySelector('.stats-row.new-row')) {
-        const span = document.createElement('span');
-        span.className = 'stat-item new-yt';
-        span.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
-        const newRow = statsBar.querySelector('.stats-row.new-row');
-        if (newRow) newRow.appendChild(span);
-    } else if (statsBar && !newYTCountEl) {
-        const row = document.createElement('div');
-        row.className = 'stats-row new-row';
-        const spanNew = document.createElement('span');
-        spanNew.className = 'stat-item new';
-        spanNew.innerHTML = `Нові з лівої: <b id="countNewLeft__${sheetId}">0</b>`;
-        const spanYT = document.createElement('span');
-        spanYT.className = 'stat-item new-yt';
-        spanYT.innerHTML = `Нові з YouTube: <b id="countNewYT__${sheetId}">0</b>`;
-        row.appendChild(spanNew);
-        row.appendChild(spanYT);
-        const totalRow = statsBar.querySelector('.total-row');
-        if (totalRow) statsBar.insertBefore(row, totalRow);
-    }
-
-    let newYTText = `${stats.newYTPeople} люд. - ${stats.newYTQuestionsTotal} пит.`;
-    if (stats.newYTPrayersTotal > 0) newYTText += ` | Молитви: ${stats.newYTPrayersTotal}`;
-    setTextContent(`countNewYT__${sheetId}`, newYTText);
-
-    let totalText = `${stats.totalPeople} люд. - ${stats.totalQuestions} пит.`;
-    if (stats.totalPrayers > 0) totalText += ` | Молитви: ${stats.totalPrayers}`;
-    setTextContent(`countTotal__${sheetId}`, totalText);
-
-    showElement(`statsBar__${sheetId}`);
-    updateCombinedCounters(sheetId);
+    updateTelegramStatsUI(sheetId, stats);
 
     const outputDiv = $(`finalResultDiv__${sheetId}`);
-    if (outputDiv) outputDiv.innerHTML = '';
-    if (questions.length > 0) {
-        const header = document.createElement('div');
-        header.textContent = "❓❓❓ВОПРОСЫ\n\n";
-        if (outputDiv) outputDiv.appendChild(header);
-        questions.forEach((item, index) => {
-            const emojiNum = numberToEmoji(index + 1);
-            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
-            const block = document.createElement('div');
-            block.className = 'q-block q-' + item.source;
-            block.textContent = textBlock;
-            if (outputDiv) outputDiv.appendChild(block);
-        });
-    }
-    if (prayers.length > 0) {
-        const header = document.createElement('div');
-        header.textContent = "🙏🙏🙏МОЛИТВЫ\n\n";
-        if (outputDiv) outputDiv.appendChild(header);
-        prayers.forEach((item, index) => {
-            const emojiNum = numberToEmoji(index + 1);
-            const textBlock = emojiNum + '\n' + item.author + '\n' + item.text + '\n\n';
-            const block = document.createElement('div');
-            block.className = 'q-block q-pray';
-            block.textContent = textBlock;
-            if (outputDiv) outputDiv.appendChild(block);
-        });
-    }
+    renderTelegramFinalResult(outputDiv, questions, prayers);
 
     const deletedLogDiv = $(`deletedLog__${sheetId}`);
-    if (deletedLogDiv) deletedLogDiv.innerHTML = '';
-    if (delLog.length > 0) {
-        delLog.forEach((d) => {
-            let msg = '№' + d.originalId + ' (' + d.author + '): ';
-            if (d.type === 'block') msg += 'Видалено повністю (' + d.count + ' пит.)';
-            else msg += 'Видалено підпункт';
-            const div = document.createElement('div');
-            div.className = 'del-row';
-            div.textContent = msg;
-            if (deletedLogDiv) deletedLogDiv.appendChild(div);
-        });
-        setTextContent(`deletedLogCount__${sheetId}`, `(${delLog.length})`);
-    } else {
-        const div = document.createElement('div');
-        div.className = 'del-empty-msg';
-        div.style.color = '#9ca3af';
-        div.style.padding = '6px';
-        div.style.fontStyle = 'italic';
-        div.textContent = 'Видалень немає';
-        if (deletedLogDiv) deletedLogDiv.appendChild(div);
-        setTextContent(`deletedLogCount__${sheetId}`, '(0)');
-    }
-    showElement(`deletedLogDetails__${sheetId}`);
+    renderTelegramDeletedLog(deletedLogDiv, delLog, sheetId);
 
     const cleanedLogDiv = $(`cleanedLog__${sheetId}`);
-    if (cleanedLogDiv) cleanedLogDiv.innerHTML = '';
-    if (cleaningLog.length > 0) {
-        const table = document.createElement('table');
-        table.className = 'clean-table';
-        const headerRow = document.createElement('tr');
-        headerRow.innerHTML = '<th>До очищення</th><th>Після очищення</th><th>Що прибрано</th>';
-        table.appendChild(headerRow);
-        cleaningLog.forEach(entry => {
-            const tr = document.createElement('tr');
-            const td1 = document.createElement('td'); td1.className = 'clean-before'; td1.textContent = entry.before || '';
-            const td2 = document.createElement('td'); td2.className = 'clean-after'; td2.textContent = entry.after || '';
-            const td3 = document.createElement('td'); td3.className = 'clean-diff'; td3.textContent = entry.removed || '';
-            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
-            table.appendChild(tr);
-        });
-        if (cleanedLogDiv) cleanedLogDiv.appendChild(table);
-        setTextContent(`cleanedLogCount__${sheetId}`, `(${cleaningLog.length})`);
-    } else {
-        const div = document.createElement('div');
-        div.className = 'clean-empty-msg';
-        div.style.color = '#9ca3af';
-        div.style.padding = '6px';
-        div.style.fontStyle = 'italic';
-        div.textContent = 'Очищених фраз чи нікнеймів немає';
-        if (cleanedLogDiv) cleanedLogDiv.appendChild(div);
-        setTextContent(`cleanedLogCount__${sheetId}`, '(0)');
-    }
-    showElement(`cleanedLogDetails__${sheetId}`);
+    renderTelegramCleanedLog(cleanedLogDiv, cleaningLog, sheetId);
 
-    SheetStateService.saveSheetState(sheetId, {
-        finalResultHtml: outputDiv?.innerHTML || '',
-        statsHtml: statsBar?.innerHTML || '',
-        statsVisible: statsBar ? statsBar.style.display !== 'none' : false,
-        deletedLogHtml: deletedLogDiv?.innerHTML || '',
-        deletedLogCount: delLog.length,
-        deletedLogDetailsVisible: true,
-        deletedLogDetailsOpen: ($( `deletedLogDetails__${sheetId}`) as HTMLDetailsElement | null)?.open || false,
-        cleanedLogHtml: cleanedLogDiv?.innerHTML || '',
-        cleanedLogCount: cleaningLog.length,
-        cleanedLogDetailsVisible: true,
-        cleanedLogDetailsOpen: ($( `cleanedLogDetails__${sheetId}`) as HTMLDetailsElement | null)?.open || false
-    });
+    const statsBar = $(`statsBar__${sheetId}`);
+    saveTelegramSheetState(sheetId, outputDiv, statsBar, deletedLogDiv, delLog.length, cleanedLogDiv, cleaningLog.length);
 }
 
 export function initPopupTelegramListeners() {

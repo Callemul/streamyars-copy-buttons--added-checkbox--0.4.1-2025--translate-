@@ -1,888 +1,808 @@
-ded checkbox) 0.6-2026.01.11> npx fallow
-Need to install the following packages:
-fallow@3.14.0
-Ok to proceed? (y) y
+% very high  (1-15 / 16-30 / 31-60 / >60 LOC)      
+  Parameters:    94% low · 5% medium · 0% high · 0% very high  (0-2 / 3-4 / 5-6 / >=7 params)
 
-                                                                                  
-■ Metrics: dead files 2.2% (2 of 90) · dead exports 0.0% (0 of 281) · MI 88.6 (good) · 4 churn hotspots · 1 circular dependency
-  90 files analyzed
-  84 entry points detected (65 plugin, 19 package.json)
-  20 refactoring targets — start with modules/event_comments.ts (complexity)
-Tip: run `fallow explain <issue label>`; spaces and hyphens both work, e.g. `fallow explain unused files`.
-
-Next: fallow dupes --trace dup:01d08471  (see sibling locations and an extract-function suggestion)
-
-
-── Dead Code ──────────────────────────────────────
-
-── Unused Code ─────────────────────────────────────
-
-● Unused files (2)
-  test_parsers.js
-  utils.ts
-  Files not reachable from any entry point — https://docs.fallow.tools/explanations/dead-code#unused-files
-
-── Structure ─────────────────────────────────────
-
-● Circular dependencies (1)
-  modules\event_banners.ts
-    → modules\ui_core.ts → modules\ui_banners.ts → modules\event_banners.ts       
-
-  Import cycles that can cause initialization failures and prevent tree-shaking — https://docs.fallow.tools/explanations/dead-code#circular-dependencies
-
-✗ 2 files · 1 circular dependency (0.22s)
-
-── Duplication ────────────────────────────────────
-note: skipped 18 files matching default duplicates ignores (use --explain-skipped for the list)
-note: module wiring excluded from clone detection (--no-ignore-imports to include it)
-
-● Duplicates (22 clone groups)
-
-     44 lines  2 instances  dup:0a389c03
-    test_parsers.js:319-348
-    test_parsers.js:357-400
-
-     37 lines  2 instances  dup:f3a28a4c
-    modules/ui_banners.ts:261-297
-    modules/ui_comments.ts:421-457
-
-     27 lines  2 instances  dup:6d3c7bf6
-    popup/popup_init.ts:72-89
-    popup/popup_telegram.ts:1-27
-
-     23 lines  2 instances  dup:34042b11
-    youtube/yt_adapter.ts:42-60
-    youtube/yt_channel_gate.ts:21-43
-
-     22 lines  2 instances  dup:f0975d58
-    modules/video_copier.ts:162-183
-    modules/video_copier.ts:333-352
-
-     17 lines  2 instances  dup:ab7f1533
-    youtube/yt_adapter.ts:33-45
-    youtube/yt_channel_gate.ts:10-26
-
-     15 lines  2 instances  dup:7bd1ae38
-    modules/event_banners.ts:285-299
-    modules/ui_comments.ts:246-260
-
-     15 lines  2 instances  dup:ae481b7b
-    modules/sheet_state_service.ts:177-191
-    modules/sheet_state_service.ts:234-248
-
-     15 lines  2 instances  dup:65f941fa
-    modules/stats_tracker.ts:192-206
-    modules/stats_tracker.ts:218-223
-
-     15 lines  2 instances  dup:fee7cf67
-    modules/ui_banners.ts:248-262
-    modules/ui_comments.ts:408-422
-
-  ... and 12 more clone groups
-  Identical code blocks detected via suffix-array analysis — https://docs.fallow.tools/explanations/duplication#clone-groups
-
-● Clone families (4 with multiple groups)
-
-  2 groups, 22 lines across modules/stats_tracker.ts
-    → Extract shared function (7 lines) from stats_tracker.ts, stats_tracker.ts   
-    → Extract shared function (15 lines) from stats_tracker.ts, stats_tracker.ts  
-
-  2 groups, 20 lines across modules/storage.ts
-    → Extract shared function (12 lines) from storage.ts, storage.ts
-    → Extract shared function (8 lines) from storage.ts, storage.ts
-
-  4 groups, 75 lines across modules/ui_banners.ts, modules/ui_comments.ts
-    → Extract 4 shared clone groups (75 lines) from ui_banners.ts, ui_comments.ts into modules
-
-  2 groups, 40 lines across youtube/yt_adapter.ts, youtube/yt_channel_gate.ts     
-    → Extract shared function (17 lines) from yt_adapter.ts, yt_channel_gate.ts   
-    → Extract shared function (23 lines) from yt_adapter.ts, yt_channel_gate.ts   
-
-  Groups of related clones across the same files — https://docs.fallow.tools/explanations/duplication#clone-families
-
-✗ 591 lines (3.7%) duplicated across 19 files (0.09s)
-
-── Complexity ─────────────────────────────────────
-
-■ Metrics: 18,943 LOC · dead files 2.2% · dead exports 0.0% · avg cyclomatic 3.0 · p90 cyclomatic 7 · maintainability 88.6 (good) · 4 churn hotspots (since 6 months) · 1 circular dep
-
-  Function size: 75% low · 13% medium · 8% high · 4% very high  (1-15 / 16-30 / 31-60 / >60 LOC)
-
-● Large functions (10 shown, 54 total)
-  popup\popup_init.ts
-    :96 initPopup  612 lines
+● Large functions (10 shown, 51 total)
   tests\studio_integration.test.js
-    :36 <arrow>  418 lines
-  modules\event_comments.ts
-    :87 bindEvents  278 lines
-  popup\popup_prayers.ts
-    :31 renderPrayers  231 lines
-    :263 initPopupPrayersListeners  226 lines
-  modules\telegram_parser.ts
-    :73 parseAndFilterOldList  212 lines
-  modules\event_banners.ts
-    :46 bindEvents  189 lines
-  popup\popup_init.ts
-    :143 <anonymous>  189 lines
+    :39 <arrow>  484 lines
   tests\storage.test.js
     :20 <arrow>  180 lines
-  popup\popup_telegram.ts
-    :311 processTelegramData  179 lines
+  tests\state.test.js
+    :57 <arrow>  163 lines
+  test_parsers.js
+    :129 testCategoryDetection  158 lines
+  main.ts
+    :20 <arrow>  157 lines
+  modules\stats_tracker.ts
+    :49 setupObservers  142 lines
+  tests\utils.test.js
+    :10 <arrow>  123 lines
+  modules\stats_exporter.ts
+    :254 exportPresentation  120 lines
+  modules\banner_creator.ts
+    :46 processAndCreateBanners  118 lines
+  youtube\studio\studio_header_counters.ts
+    :56 renderStudioHeaderCounters  118 lines
   Functions exceeding 60 lines of code (very high risk): https://docs.fallow.tools/explanations/health#unit-size
-  use --top 54 to see all
+  use --top 51 to see all
 
-● High complexity functions (142)
+● High complexity functions (149)
   CRAP scores are estimated from export references; run `fallow health --coverage <coverage-final.json>` for exact scores.
-  popup/popup_init.ts
-    :152 <arrow> CRITICAL
-          54 cyclomatic   71 cognitive   89 lines
-         2970.0 CRAP
-  popup/popup_telegram.ts
-    :311 processTelegramData CRITICAL
-          43 cyclomatic   41 cognitive  179 lines
-         1892.0 CRAP
-  modules/event_banners.ts
-    :80 <anonymous> CRITICAL
-          42 cyclomatic   39 cognitive  126 lines
-         423.0 CRAP
-  modules/ui_comments.ts
-    :274 filterStarredComments CRITICAL
-          35 cyclomatic   66 cognitive  163 lines
-          39.1 CRAP
   modules/event_comments.ts
-    :270 <anonymous> CRITICAL
-          33 cyclomatic   36 cognitive   79 lines
+    :313 <anonymous> CRITICAL
+          33 cyclomatic   35 cognitive   79 lines  
          1122.0 CRAP
-  modules/ui_banners.ts
-    :155 filterBanners CRITICAL
-          31 cyclomatic   58 cognitive  122 lines
-          34.2 CRAP
-  popup/popup_init.ts
-    :143 <anonymous> CRITICAL
-          31 cyclomatic   47 cognitive  189 lines
-         992.0 CRAP
   modules/ui_comments.ts
-    :316 <arrow> CRITICAL
-          28 cyclomatic   34 cognitive   50 lines
+    :309 <arrow> CRITICAL
+          28 cyclomatic   34 cognitive   50 lines  
          197.3 CRAP
   options/options.ts
     :84 <arrow> CRITICAL
-          26 cyclomatic   33 cognitive   42 lines
+          26 cyclomatic   33 cognitive   42 lines  
          702.0 CRAP
   modules/stats_tracker.ts
     :53 injectHeaderButtons CRITICAL
-          25 cyclomatic   47 cognitive  114 lines
+          25 cyclomatic   47 cognitive  115 lines  
          650.0 CRAP
+  youtube/yt_adapter.ts
+    :30 detectChannelKey CRITICAL
+          24 cyclomatic   28 cognitive   44 lines  
+         148.4 CRAP
   popup/popup_telegram.ts
     :185 updateCombinedCounters CRITICAL
-          23 cyclomatic   31 cognitive   82 lines
+          23 cyclomatic   31 cognitive   82 lines  
          552.0 CRAP
-  modules/info_modal.ts
-    :139 parseMarkdown CRITICAL
-          22 cyclomatic   44 cognitive  114 lines
-         506.0 CRAP
   modules/telegram_parser.ts
-    :294 <arrow> CRITICAL
-          22 cyclomatic   47 cognitive   50 lines
+    :302 <arrow> CRITICAL
+          22 cyclomatic   47 cognitive   50 lines  
          126.5 CRAP
   modules/ui_banners.ts
-    :176 <arrow> CRITICAL
-          22 cyclomatic   24 cognitive   40 lines
+    :148 <arrow> CRITICAL
+          22 cyclomatic   24 cognitive   40 lines  
          126.5 CRAP
   modules/anti_afk.ts
     :29 checkAndClickAntiAfk HIGH
-          21 cyclomatic   27 cognitive   81 lines
+          21 cyclomatic   27 cognitive   81 lines  
+  modules/ui_shared_utils.ts
+    :91 renderSharedEmptyState HIGH
+          21 cyclomatic   39 cognitive   59 lines  
   modules/banner_creator.ts
     :58 parseBlock CRITICAL
-          20 cyclomatic   16 cognitive   36 lines
-         106.4 CRAP
+          20 cyclomatic   16 cognitive   36 lines  
+         420.0 CRAP
   modules/telegram_parser.ts
-    :85 processOldItem CRITICAL
-          20 cyclomatic   24 cognitive   81 lines
+    :73 processOldTelegramItem CRITICAL
+          20 cyclomatic   24 cognitive   82 lines  
          106.4 CRAP
   modules/banner_creator.ts
-    :46 processAndCreateBanners HIGH
-          19 cyclomatic   25 cognitive  118 lines
-          97.0 CRAP
-  popup/popup_prayers.ts
-    :31 renderPrayers CRITICAL
-          19 cyclomatic   20 cognitive  231 lines
+    :46 processAndCreateBanners CRITICAL
+          19 cyclomatic   25 cognitive  118 lines  
          380.0 CRAP
   modules/parsers.ts
     :95 parseEmojiNumberedQuestions HIGH
-          18 cyclomatic   27 cognitive   55 lines
+          18 cyclomatic   27 cognitive   55 lines  
           88.0 CRAP
   modules/retention_service.ts
     :29 runGlobalCleanup HIGH
-          18 cyclomatic   24 cognitive   52 lines
+          18 cyclomatic   24 cognitive   52 lines  
           88.0 CRAP
   modules/ui_banners.ts
-    :61 addBannerHeaderControls HIGH
-          18 cyclomatic   28 cognitive   61 lines
+    :63 addBannerHeaderControls HIGH
+          18 cyclomatic   28 cognitive   61 lines  
   youtube/yt_channel_gate.ts
     :7 isAllowedChannel CRITICAL
-          18 cyclomatic   21 cognitive   49 lines
+          18 cyclomatic   21 cognitive   49 lines  
          342.0 CRAP
+  popup/popup_init.ts
+    :217 restoreSheetCleanedLog CRITICAL
+          17 cyclomatic   24 cognitive   23 lines  
+         306.0 CRAP
   tests/anti_afk.test.js
     :50 matches HIGH
-          17 cyclomatic   16 cognitive   24 lines
+          17 cyclomatic   16 cognitive   24 lines  
           79.4 CRAP
   tests/studio_integration.test.js
-    :184 querySelector HIGH
-          17 cyclomatic   16 cognitive   19 lines
+    :187 querySelector HIGH
+          17 cyclomatic   16 cognitive   19 lines  
           79.4 CRAP
   youtube/studio/studio_events.ts
-    :83 bindStudioCommentEvents CRITICAL
-          17 cyclomatic   13 cognitive   65 lines
+    :89 bindStudioCommentEvents CRITICAL
+          17 cyclomatic   13 cognitive   65 lines  
          306.0 CRAP
   modules/stats_exporter.ts
     :254 exportPresentation CRITICAL
-          17 cyclomatic   14 cognitive  120 lines
+          17 cyclomatic   14 cognitive  120 lines  
          306.0 CRAP
   modules/dom_observer.ts
     :67 processMutations CRITICAL
-          16 cyclomatic   37 cognitive   31 lines
+          16 cyclomatic   37 cognitive   31 lines  
          272.0 CRAP
   modules/telegram_parser.ts
-    :216 <arrow> HIGH
-          16 cyclomatic   29 cognitive   47 lines
+    :212 <arrow> HIGH
+          16 cyclomatic   29 cognitive   47 lines  
           71.3 CRAP
+  modules/event_banners.ts
+    :204 <anonymous> CRITICAL
+          16 cyclomatic   10 cognitive   36 lines  
+         272.0 CRAP
   modules/banner_creator.ts
-    :198 <arrow> HIGH
-          16 cyclomatic   11 cognitive   44 lines
-          71.3 CRAP
+    :198 <arrow> CRITICAL
+          16 cyclomatic   11 cognitive   44 lines  
+         272.0 CRAP
   modules/ui_core.ts
     :122 <arrow> HIGH
-          16 cyclomatic   11 cognitive   21 lines
+          16 cyclomatic   11 cognitive   21 lines  
           71.3 CRAP
   modules/storage.ts
-    :368 <arrow> HIGH
-          15 cyclomatic   19 cognitive   54 lines
+    :371 <arrow> HIGH
+          15 cyclomatic   19 cognitive   54 lines  
           63.6 CRAP
   modules/ui_comments.ts
-    :72 addStarredTabControls HIGH
-          15 cyclomatic   26 cognitive   47 lines
-  youtube/yt_adapter.ts
-    :30 detectChannelKey CRITICAL
-          15 cyclomatic   17 cognitive   35 lines
+    :75 addStarredTabControls HIGH
+          15 cyclomatic   26 cognitive   47 lines  
+  popup/popup_init.ts
+    :193 restoreSheetDeletedLog CRITICAL
+          15 cyclomatic   20 cognitive   23 lines  
          240.0 CRAP
   options/options.ts
     :128 saveSettings CRITICAL
-          15 cyclomatic    5 cognitive   41 lines
+          15 cyclomatic    5 cognitive   41 lines  
          240.0 CRAP
   modules/comment_assistant.ts
     :137 processComment HIGH
-          14 cyclomatic   24 cognitive   42 lines
+          14 cyclomatic   24 cognitive   42 lines  
           56.3 CRAP
   youtube/youtube_content.ts
     :142 <arrow> CRITICAL
-          14 cyclomatic   16 cognitive   33 lines
+          14 cyclomatic   16 cognitive   33 lines  
          210.0 CRAP
   modules/event_banners.ts
-    :125 <arrow> HIGH
-          14 cyclomatic    9 cognitive   17 lines
-          56.3 CRAP
+    :55 <arrow> CRITICAL
+          14 cyclomatic    9 cognitive   17 lines  
+         210.0 CRAP
+  popup/popup_telegram.ts
+    :450 saveTelegramSheetState CRITICAL
+          14 cyclomatic    7 cognitive   23 lines  
+         210.0 CRAP
   main.ts
     :104 <arrow> CRITICAL
-          13 cyclomatic   21 cognitive   48 lines
+          13 cyclomatic   21 cognitive   48 lines  
          182.0 CRAP
   modules/comment_injector.ts
     :65 handleAction
-          13 cyclomatic   17 cognitive   85 lines
+          13 cyclomatic   17 cognitive   85 lines  
           49.5 CRAP
   modules/fuzzy_match.ts
     :41 fuzzyIncludes
-          13 cyclomatic   20 cognitive   28 lines
-  modules/event_banners.ts
-    :207 <anonymous>
-          13 cyclomatic    9 cognitive   27 lines
-          49.5 CRAP
-  youtube/yt_ui.ts
-    :15 extractCommentId CRITICAL
-          13 cyclomatic   13 cognitive   38 lines
-         182.0 CRAP
-  modules/event_comments.ts
-    :105 <arrow> CRITICAL
-          13 cyclomatic   15 cognitive   16 lines
-         182.0 CRAP
+          13 cyclomatic   20 cognitive   28 lines  
   modules/comment_assistant.ts
     :36 init
-          13 cyclomatic    6 cognitive   17 lines
+          13 cyclomatic    6 cognitive   17 lines  
           49.5 CRAP
   modules/event_comments.ts
-    :124 <arrow> CRITICAL
-          12 cyclomatic   18 cognitive   20 lines
+    :154 <arrow> CRITICAL
+          12 cyclomatic   18 cognitive   20 lines  
          156.0 CRAP
-    :177 <anonymous> CRITICAL
-          12 cyclomatic   26 cognitive   28 lines
+    :209 <anonymous> CRITICAL
+          12 cyclomatic   26 cognitive   28 lines  
          156.0 CRAP
   tests/css_lint.test.js
     :14 checkCssFile
-          12 cyclomatic   18 cognitive   32 lines
+          12 cyclomatic   18 cognitive   32 lines  
           43.1 CRAP
+  modules/event_banners.ts
+    :241 <anonymous> CRITICAL
+          12 cyclomatic    7 cognitive   25 lines  
+         156.0 CRAP
   modules/stats_exporter.ts
     :149 renderChart CRITICAL
-          12 cyclomatic   11 cognitive   80 lines
+          12 cyclomatic   11 cognitive   80 lines  
+         156.0 CRAP
+  modules/event_comments.ts
+    :135 <arrow> CRITICAL
+          12 cyclomatic   14 cognitive   16 lines  
          156.0 CRAP
   modules/sheet_state_service.ts
-    :174 loadSheetState
-          12 cyclomatic   11 cognitive   44 lines
+    :130 loadSheetState
+          12 cyclomatic   11 cognitive   44 lines  
           43.1 CRAP
   youtube/studio/studio_adapter.ts
     :262 afterAction
-          12 cyclomatic   11 cognitive   34 lines
+          12 cyclomatic   11 cognitive   34 lines  
           43.1 CRAP
   tests/popup_dom.test.js
     :72 <arrow>
-          11 cyclomatic   17 cognitive   27 lines
+          11 cyclomatic   17 cognitive   27 lines  
           37.1 CRAP
   youtube/studio/studio_selectors.ts
     :96 getVideoLinkHref
-          11 cyclomatic   17 cognitive   15 lines
+          11 cyclomatic   17 cognitive   15 lines  
   popup/popup_prayers.ts
-    :324 <anonymous> CRITICAL
-          11 cyclomatic   15 cognitive   92 lines
+    :212 renderPrayers CRITICAL
+          11 cyclomatic   13 cognitive   70 lines  
+         132.0 CRAP
+    :346 <anonymous> CRITICAL
+          11 cyclomatic   15 cognitive   91 lines  
          132.0 CRAP
   modules/stats_tracker.ts
-    :317 getBrandFromLocalStorage CRITICAL
-          11 cyclomatic   15 cognitive   22 lines
+    :318 getBrandFromLocalStorage CRITICAL
+          11 cyclomatic   15 cognitive   22 lines  
          132.0 CRAP
   modules/anti_afk.ts
     :164 checkOptionsAndRun
-          11 cyclomatic    8 cognitive   50 lines
+          11 cyclomatic    8 cognitive   50 lines  
           37.1 CRAP
   youtube/studio/studio_selectors.ts
     :129 <arrow>
-          11 cyclomatic   15 cognitive   19 lines
+          11 cyclomatic   15 cognitive   19 lines  
           37.1 CRAP
   modules/event_banners.ts
-    :270 <anonymous>
-          11 cyclomatic   15 cognitive   43 lines
-          37.1 CRAP
-  modules/event_comments.ts
-    :228 <anonymous> CRITICAL
-          11 cyclomatic   14 cognitive   27 lines
+    :123 handleMarkBannerCategoryAction CRITICAL   
+          11 cyclomatic    5 cognitive   20 lines  
          132.0 CRAP
   tests/studio_integration.test.js
-    :231 querySelector
-          11 cyclomatic   10 cognitive   20 lines
+    :234 querySelector
+          11 cyclomatic   10 cognitive   20 lines  
           37.1 CRAP
   youtube/studio/studio_adapter.ts
     :60 <arrow>
-          11 cyclomatic    9 cognitive   23 lines
+          11 cyclomatic    9 cognitive   23 lines  
           37.1 CRAP
     :472 toggleZIndexStack
-          11 cyclomatic   12 cognitive   13 lines
+          11 cyclomatic   12 cognitive   13 lines  
           37.1 CRAP
   modules/video_copier.ts
     :153 <arrow> CRITICAL
-          10 cyclomatic   16 cognitive   36 lines
+          10 cyclomatic   16 cognitive   36 lines  
          110.0 CRAP
   background/service-worker.ts
     :86 <arrow> CRITICAL
-          10 cyclomatic   11 cognitive   26 lines
+          10 cyclomatic   11 cognitive   26 lines  
          110.0 CRAP
   youtube/studio/studio_events.ts
-    :57 observer CRITICAL
+    :63 observer CRITICAL
           10 cyclomatic    6 cognitive   14 lines
          110.0 CRAP
   popup/popup_init.ts
-    :381 <arrow> CRITICAL
-          10 cyclomatic    9 cognitive  144 lines
+    :449 <arrow> CRITICAL
+          10 cyclomatic    9 cognitive  104 lines  
          110.0 CRAP
   modules/stats_tracker.ts
-    :243 <arrow> CRITICAL
-          10 cyclomatic    9 cognitive   48 lines
+    :244 <arrow> CRITICAL
+          10 cyclomatic    9 cognitive   48 lines  
          110.0 CRAP
   youtube/studio/studio_header_counters.ts
     :29 formatCategoryLabel
-          10 cyclomatic    9 cognitive   10 lines
+          10 cyclomatic    9 cognitive   10 lines  
           31.6 CRAP
   youtube/studio/studio_content.ts
     :81 <arrow> CRITICAL
-          10 cyclomatic    9 cognitive   27 lines
+          10 cyclomatic    9 cognitive   27 lines  
          110.0 CRAP
   modules/event_comments.ts
-    :208 <anonymous> CRITICAL
-          10 cyclomatic   13 cognitive   18 lines
+    :242 <anonymous> CRITICAL
+          10 cyclomatic   13 cognitive   18 lines  
          110.0 CRAP
-    :350 <anonymous> CRITICAL
-          10 cyclomatic    5 cognitive   14 lines
+    :265 <anonymous> CRITICAL
+          10 cyclomatic   13 cognitive   27 lines  
          110.0 CRAP
   modules/ui_comments.ts
-    :141 <arrow>
-          10 cyclomatic    8 cognitive   59 lines
+    :144 <arrow>
+          10 cyclomatic    8 cognitive   59 lines  
           31.6 CRAP
   popup/popup_telegram.ts
     :272 ensureStatsBarRows CRITICAL
-          10 cyclomatic    9 cognitive   38 lines
+          10 cyclomatic    9 cognitive   38 lines  
          110.0 CRAP
   youtube/studio/studio_adapter.ts
     :319 getEffectiveCheckboxState
-          10 cyclomatic    6 cognitive   14 lines
+          10 cyclomatic    6 cognitive   14 lines  
           31.6 CRAP
   modules/video_copier.ts
     :321 downloadAllFreshVideos HIGH
-           9 cyclomatic   16 cognitive   81 lines
+           9 cyclomatic   16 cognitive   81 lines  
           90.0 CRAP
   youtube/studio/studio_adapter.ts
     :108 getCommentContext
-           9 cyclomatic   17 cognitive   33 lines
+           9 cyclomatic   17 cognitive   33 lines  
   popup/popup_prayers.ts
-    :67 <anonymous> HIGH
-           9 cyclomatic    7 cognitive   30 lines
+    :33 <anonymous> HIGH
+           9 cyclomatic    7 cognitive   30 lines  
           90.0 CRAP
   popup/popup_init.ts
-    :315 <arrow> HIGH
-           9 cyclomatic    8 cognitive   10 lines
+    :343 <arrow> HIGH
+           9 cyclomatic    8 cognitive   10 lines  
           90.0 CRAP
-    :473 <anonymous> HIGH
-           9 cyclomatic   13 cognitive   43 lines
+    :399 clearSheetState HIGH
+           9 cyclomatic   13 cognitive   43 lines  
           90.0 CRAP
-    :620 <arrow> HIGH
-           9 cyclomatic    4 cognitive    6 lines
+    :657 <arrow> HIGH
+           9 cyclomatic    4 cognitive    6 lines  
           90.0 CRAP
   modules/stats_tracker.ts
-    :268 <arrow> HIGH
-           9 cyclomatic    8 cognitive   22 lines
+    :269 <arrow> HIGH
+           9 cyclomatic    8 cognitive   22 lines  
           90.0 CRAP
   main.ts
     :80 init HIGH
-           9 cyclomatic    5 cognitive   93 lines
+           9 cyclomatic    5 cognitive   93 lines  
+          90.0 CRAP
+  modules/event_banners.ts
+    :106 handleCopyBannerAction HIGH
+           9 cyclomatic    4 cognitive   16 lines  
           90.0 CRAP
   youtube/studio/studio_content.ts
     :280 processVisibleComments HIGH
-           9 cyclomatic    6 cognitive   24 lines
+           9 cyclomatic    6 cognitive   24 lines  
           90.0 CRAP
     :305 updateHeaderCounters HIGH
            9 cyclomatic    7 cognitive   16 lines
           90.0 CRAP
+  modules/event_comments.ts
+    :73 destroy HIGH
+           9 cyclomatic    8 cognitive   35 lines  
+          90.0 CRAP
+    :397 <anonymous> HIGH
+           9 cyclomatic    4 cognitive   12 lines  
+          90.0 CRAP
   modules/telegram_parser.ts
-    :186 finalizeCurrentItem HIGH
-           8 cyclomatic   26 cognitive   29 lines
+    :182 finalizeCurrentItem HIGH
+           8 cyclomatic   26 cognitive   29 lines  
   modules/video_copier.ts
     :328 <arrow> HIGH
-           8 cyclomatic   16 cognitive   28 lines
+           8 cyclomatic   16 cognitive   28 lines  
+          72.0 CRAP
+  popup/popup_init.ts
+    :303 restoreTextareaSizesUI HIGH
+           8 cyclomatic   16 cognitive   12 lines  
           72.0 CRAP
   options/options.ts
     :182 <arrow> HIGH
-           8 cyclomatic    6 cognitive   32 lines
+           8 cyclomatic    6 cognitive   32 lines  
           72.0 CRAP
     :275 validateImportedConfig HIGH
-           8 cyclomatic    6 cognitive   11 lines
+           8 cyclomatic    6 cognitive   11 lines  
           72.0 CRAP
     :293 <arrow> HIGH
-           8 cyclomatic    5 cognitive   18 lines
+           8 cyclomatic    5 cognitive   18 lines  
           72.0 CRAP
   background/service-worker.ts
     :64 <arrow> HIGH
-           8 cyclomatic    8 cognitive   17 lines
+           8 cyclomatic    8 cognitive   17 lines  
           72.0 CRAP
   popup/popup_init.ts
-    :306 <arrow> HIGH
-           8 cyclomatic    7 cognitive   20 lines
+    :334 <arrow> HIGH
+           8 cyclomatic    7 cognitive   20 lines  
           72.0 CRAP
-    :613 <arrow> HIGH
-           8 cyclomatic    4 cognitive   18 lines
+    :650 <arrow> HIGH
+           8 cyclomatic    4 cognitive   18 lines  
           72.0 CRAP
   main.ts
     :127 <arrow> HIGH
-           8 cyclomatic    8 cognitive   21 lines
+           8 cyclomatic    8 cognitive   21 lines  
+          72.0 CRAP
+  modules/event_banners.ts
+    :29 handleDeleteSelectedBannersAction HIGH     
+           8 cyclomatic   10 cognitive   76 lines  
+          72.0 CRAP
+    :174 <anonymous> HIGH
+           8 cyclomatic    8 cognitive   22 lines  
           72.0 CRAP
   modules/event_comments.ts
-    :59 init HIGH
-           8 cyclomatic    9 cognitive    7 lines
+    :65 init HIGH
+           8 cyclomatic    9 cognitive    7 lines  
           72.0 CRAP
   youtube/youtube_content.ts
     :111 <arrow> HIGH
-           8 cyclomatic    6 cognitive   27 lines
+           8 cyclomatic    6 cognitive   27 lines  
+          72.0 CRAP
+  popup/popup_telegram.ts
+    :474 processTelegramData HIGH
+           8 cyclomatic    4 cognitive   54 lines  
           72.0 CRAP
   options/options.ts
     :63 initEvents HIGH
            7 cyclomatic    6 cognitive   19 lines
           56.0 CRAP
     :225 lines HIGH
-           7 cyclomatic    5 cognitive    7 lines
+           7 cyclomatic    5 cognitive    7 lines  
+          56.0 CRAP
+  popup/popup_init.ts
+    :182 restoreSheetStats HIGH
+           7 cyclomatic    8 cognitive   10 lines  
+          56.0 CRAP
+    :241 restoreSheetDividerPos HIGH
+           7 cyclomatic    8 cognitive    9 lines  
+          56.0 CRAP
+    :316 restoreTranslitStateUI HIGH
+           7 cyclomatic    8 cognitive   13 lines  
           56.0 CRAP
   modules/stats_tracker.ts
-    :195 <arrow> HIGH
-           7 cyclomatic    8 cognitive   13 lines
+    :196 <arrow> HIGH
+           7 cyclomatic    8 cognitive   13 lines  
           56.0 CRAP
-    :221 <arrow> HIGH
-           7 cyclomatic    6 cognitive   16 lines
+    :222 <arrow> HIGH
+           7 cyclomatic    6 cognitive   16 lines  
           56.0 CRAP
-    :340 searchBrandNameInObject HIGH
-           7 cyclomatic    3 cognitive    4 lines
+    :341 searchBrandNameInObject HIGH
+           7 cyclomatic    3 cognitive    4 lines  
           56.0 CRAP
   main.ts
     :38 setupDomRegistration HIGH
-           7 cyclomatic    6 cognitive   40 lines
+           7 cyclomatic    6 cognitive   40 lines  
+          56.0 CRAP
+  modules/event_banners.ts
+    :162 init HIGH
+           7 cyclomatic    7 cognitive    7 lines  
           56.0 CRAP
   tests/ts_loader.js
     :4 resolve HIGH
-           7 cyclomatic   12 cognitive   18 lines
+           7 cyclomatic   12 cognitive   18 lines  
           56.0 CRAP
   modules/stats_exporter.ts
     :107 loadChartData HIGH
-           7 cyclomatic    5 cognitive   37 lines
-          56.0 CRAP
-  modules/info_modal.ts
-    :96 loadTabContent HIGH
-           7 cyclomatic    5 cognitive   41 lines
+           7 cyclomatic    5 cognitive   37 lines  
           56.0 CRAP
   youtube/studio/studio_content.ts
     :210 <arrow> HIGH
-           7 cyclomatic    6 cognitive   22 lines
+           7 cyclomatic    6 cognitive   22 lines  
           56.0 CRAP
     :236 stopModule HIGH
-           7 cyclomatic    6 cognitive   34 lines
-          56.0 CRAP
-  modules/event_comments.ts
-    :87 bindEvents HIGH
-           7 cyclomatic    4 cognitive  278 lines
+           7 cyclomatic    6 cognitive   34 lines  
           56.0 CRAP
   modules/right_tabs_compact.ts
     :30 loadState
-           6 cyclomatic    6 cognitive   22 lines
+           6 cyclomatic    6 cognitive   22 lines  
           42.0 CRAP
     :58 processTabButton
-           6 cyclomatic    6 cognitive   38 lines
+           6 cyclomatic    6 cognitive   38 lines  
           42.0 CRAP
   background/service-worker.ts
     :11 <arrow>
-           6 cyclomatic    6 cognitive   18 lines
+           6 cyclomatic    6 cognitive   18 lines  
           42.0 CRAP
   popup/popup_prayers.ts
-    :298 <anonymous>
-           6 cyclomatic    4 cognitive   25 lines
+    :318 <anonymous>
+           6 cyclomatic    4 cognitive   25 lines  
           42.0 CRAP
-    :419 <anonymous>
-           6 cyclomatic    5 cognitive   12 lines
+    :442 <anonymous>
+           6 cyclomatic    5 cognitive   12 lines  
           42.0 CRAP
   popup/popup_init.ts
-    :587 <anonymous>
-           6 cyclomatic    6 cognitive   16 lines
+    :139 restoreDbState
+           6 cyclomatic    7 cognitive    9 lines  
           42.0 CRAP
-    :648 <anonymous>
-           6 cyclomatic    5 cognitive   17 lines
+    :283 restoreActiveSubtabUI
+           6 cyclomatic    7 cognitive   19 lines  
           42.0 CRAP
-    :96 initPopup
-           6 cyclomatic    5 cognitive  612 lines
+    :623 <anonymous>
+           6 cyclomatic    6 cognitive   16 lines  
+          42.0 CRAP
+    :687 <anonymous>
+           6 cyclomatic    5 cognitive   17 lines  
+          42.0 CRAP
+  modules/event_banners.ts
+    :98 <arrow>
+           6 cyclomatic    3 cognitive    5 lines  
           42.0 CRAP
   test_parsers.js
     :9 jQueryMock
-           6 cyclomatic    3 cognitive   24 lines
+           6 cyclomatic    3 cognitive   24 lines  
           42.0 CRAP
-  youtube/yt_ui.ts
-    :57 extractCommentData
-           6 cyclomatic    5 cognitive   13 lines
+  modules/event_comments.ts
+    :123 bindAutoHealScanner
+           6 cyclomatic    3 cognitive   83 lines  
           42.0 CRAP
   youtube/youtube_content.ts
     :33 processYTComment
-           6 cyclomatic    5 cognitive   28 lines
+           6 cyclomatic    5 cognitive   28 lines  
           42.0 CRAP
   popup/popup_telegram.ts
     :135 <anonymous>
-           6 cyclomatic    5 cognitive   23 lines
+           6 cyclomatic    5 cognitive   23 lines  
           42.0 CRAP
-    :518 <anonymous>
-           6 cyclomatic    5 cognitive   15 lines
+    :311 ensureNewYTRow
+           6 cyclomatic    7 cognitive   23 lines  
+          42.0 CRAP
+    :556 <anonymous>
+           6 cyclomatic    5 cognitive   15 lines  
           42.0 CRAP
   modules/right_tabs_compact.ts
     :97 shouldTabBeCollapsed
-           5 cyclomatic    4 cognitive   14 lines
+           5 cyclomatic    4 cognitive   14 lines  
           30.0 CRAP
     :142 <arrow>
-           5 cyclomatic    5 cognitive    9 lines
+           5 cyclomatic    5 cognitive    9 lines  
           30.0 CRAP
   modules/messaging.ts
     :32 <arrow>
-           5 cyclomatic    3 cognitive   19 lines
+           5 cyclomatic    3 cognitive   19 lines  
           30.0 CRAP
     :54 <arrow>
-           5 cyclomatic    3 cognitive   25 lines
+           5 cyclomatic    3 cognitive   25 lines  
           30.0 CRAP
     :104 <arrow>
-           5 cyclomatic    4 cognitive    9 lines
+           5 cyclomatic    4 cognitive    9 lines  
           30.0 CRAP
     :81 onMessage
-           5 cyclomatic    3 cognitive   33 lines
+           5 cyclomatic    3 cognitive   33 lines  
           30.0 CRAP
   popup/popup_prayers.ts
-    :450 <anonymous>
-           5 cyclomatic    5 cognitive   37 lines
+    :31 checkRoomWarning
+           5 cyclomatic    2 cognitive   34 lines  
           30.0 CRAP
-  youtube/yt_adapter.ts
-    :121 applyButtonState
-           5 cyclomatic    5 cognitive   21 lines
+    :86 buildAuthorHeader
+           5 cyclomatic    4 cognitive   77 lines  
           30.0 CRAP
-    :143 applyCheckboxState
-           5 cyclomatic    6 cognitive   13 lines
+    :473 <anonymous>
+           5 cyclomatic    5 cognitive   37 lines  
           30.0 CRAP
   youtube/studio/studio_events.ts
-    :37 setupVideoMetadataObserver
-           5 cyclomatic    4 cognitive   45 lines
+    :42 setupVideoMetadataObserver
+           5 cyclomatic    4 cognitive   46 lines  
           30.0 CRAP
   popup/popup_init.ts
-    :686 <arrow>
-           5 cyclomatic    2 cognitive   20 lines
+    :263 restoreActiveTabUI
+           5 cyclomatic    6 cognitive   19 lines  
+          30.0 CRAP
+    :726 <arrow>
+           5 cyclomatic    2 cognitive   20 lines  
           30.0 CRAP
   modules/stats_tracker.ts
     :49 setupObservers
-           5 cyclomatic    2 cognitive  141 lines
+           5 cyclomatic    2 cognitive  142 lines  
           30.0 CRAP
   main.ts
     :20 <arrow>
-           5 cyclomatic    3 cognitive  157 lines
-          30.0 CRAP
-  youtube/yt_ui.ts
-    :74 addButtonsToYTComment
-           5 cyclomatic    4 cognitive   57 lines
-          30.0 CRAP
-    :135 restoreButtonState
-           5 cyclomatic    5 cognitive   29 lines
+           5 cyclomatic    3 cognitive  157 lines  
           30.0 CRAP
   youtube/studio/studio_content.ts
     :127 <arrow>
-           5 cyclomatic    4 cognitive   28 lines
+           5 cyclomatic    4 cognitive   28 lines  
           30.0 CRAP
     :171 startModule
-           5 cyclomatic    4 cognitive   64 lines
+           5 cyclomatic    4 cognitive   64 lines  
           30.0 CRAP
   modules/event_comments.ts
-    :67 destroy
-           5 cyclomatic    4 cognitive   19 lines
-          30.0 CRAP
-    :95 runAutoHeal
-           5 cyclomatic    4 cognitive   50 lines
+    :125 runAutoHeal
+           5 cyclomatic    4 cognitive   50 lines  
           30.0 CRAP
   popup/popup_telegram.ts
     :40 updateOldInputStats
-           5 cyclomatic    5 cognitive   22 lines
+           5 cyclomatic    5 cognitive   22 lines  
+          30.0 CRAP
+    :335 updateTelegramStatsUI
+           5 cyclomatic    4 cognitive   24 lines  
           30.0 CRAP
   modules/video_copier.ts
     :93 injectModalButton
-           5 cyclomatic    5 cognitive   52 lines
+           5 cyclomatic    5 cognitive   52 lines  
           30.0 CRAP
     :191 appendButtonsToCard
-           5 cyclomatic    4 cognitive   43 lines
+           5 cyclomatic    4 cognitive   43 lines  
           30.0 CRAP
   Functions exceeding cyclomatic, cognitive, or CRAP thresholds (https://docs.fallow.tools/explanations/health#complexity-metrics)
   To suppress: // fallow-ignore-next-line complexity
 
 ● File health scores (76 files) · sorted by triage concern
 
-   82.3    popup\popup_init.ts                             risk
-            714 LOC    1 fan-in    5 fan-out    0% dead  0.35 density  >999 risk  
+   80.0    modules\event_comments.ts               
+        risk
+            435 LOC    1 fan-in    9 fan-out    0% dead  0.36 density  >999 risk
 
-   83.5    popup\popup_telegram.ts                         risk
-            536 LOC    3 fan-in    6 fan-out    0% dead  0.29 density  >999 risk  
+   81.7    options\options.ts                      
+        risk
+            342 LOC    1 fan-in    5 fan-out    0% dead  0.37 density  702.0 risk
 
-   79.4    modules\event_comments.ts                       risk
-            389 LOC    1 fan-in    9 fan-out    0% dead  0.38 density  >999 risk  
+   82.6    modules\stats_tracker.ts                
+        risk
+            348 LOC    1 fan-in    6 fan-out    0% dead  0.32 density  650.0 risk
 
-   81.7    options\options.ts                              risk
-            342 LOC    1 fan-in    5 fan-out    0% dead  0.37 density  702.0 risk 
+   84.1    popup\popup_telegram.ts                 
+        risk
+            574 LOC    3 fan-in    6 fan-out    0% dead  0.27 density  552.0 risk
 
-   82.6    modules\stats_tracker.ts                        risk
-            347 LOC    1 fan-in    6 fan-out    0% dead  0.32 density  650.0 risk 
+   83.4    modules\banner_creator.ts               
+        risk
+            247 LOC    3 fan-in    4 fan-out    0% dead  0.34 density  420.0 risk
 
-   94.3    modules\info_modal.ts                           risk
-            254 LOC    0 fan-in    0 fan-out    0% dead  0.19 density  506.0 risk 
+   87.9    youtube\yt_channel_gate.ts              
+        risk
+             58 LOC    1 fan-in    1 fan-out    0% dead  0.31 density  342.0 risk
 
-   80.2    modules\event_banners.ts                        risk
-            317 LOC    2 fan-in    6 fan-out    0% dead  0.40 density  423.0 risk 
+   82.3    popup\popup_init.ts                     
+        risk
+            784 LOC    1 fan-in    5 fan-out    0% dead  0.35 density  306.0 risk
 
-   84.4    popup\popup_prayers.ts                          risk
-            489 LOC    2 fan-in    5 fan-out    0% dead  0.28 density  380.0 risk 
+   85.1    youtube\studio\studio_events.ts         
+        risk
+            154 LOC    1 fan-in    7 fan-out    0% dead  0.22 density  306.0 risk
 
-   87.9    youtube\yt_channel_gate.ts                      risk
-             58 LOC    1 fan-in    1 fan-out    0% dead  0.31 density  342.0 risk 
+   89.0    modules\stats_exporter.ts               
+        risk
+            377 LOC    1 fan-in    2 fan-out    0% dead  0.22 density  306.0 risk
 
-   84.8    youtube\studio\studio_events.ts                 risk
-            148 LOC    1 fan-in    7 fan-out    0% dead  0.23 density  306.0 risk 
+   79.5    modules\event_banners.ts                
+        risk
+            274 LOC    1 fan-in    8 fan-out    0% dead  0.39 density  272.0 risk
 
   ... and 66 more files (--format json for full list)
 
-  Sorted by triage concern: the larger of low-MI concern and CRAP risk. The risk / structure tag marks which one placed each file. MI reflects complexity, coupling, and dead code; risk reflects untested complexity (CRAP) and can diverge from MI. Risk: low <15, moderate 15-30, high >=30. CRAP estimated from export references (85% direct, 40% indirect, 0% untested). Run `fallow health --coverage <coverage-final.json>` for exact scores. https://docs.fallow.tools/explanations/health#file-health-scores
+  Sorted by triage concern: the larger of low-MI concern and CRAP risk. The risk / structure tag marks which one placed each file. MI reflects complexity, coupling, and dead code; risk reflects untested complexity (CRAP) and can diverge from MI. Risk: low <15, moderate 15-30, high >=30. CRAP estimated from export references (85% direct, 40% indirect, 0% untested). Run `fallow health --coverage <coverage-final.json>` for exact scores. https://docs.fallow.tools/explanations/health#file-health-scores        
 
-● Hotspots (59 files, since 6 months)
+● Hotspots (58 files, since 6 months)
 
-   72.5 ▼  popup\popup_telegram.ts
-          26 commits   2509 churn  0.29 density   3 fan-in  ▼ cooling
-
-   70.8 ▼  popup\popup_init.ts
+   72.7 ▼  popup\popup_init.ts
           21 commits   1719 churn  0.35 density   1 fan-in  ▼ cooling
 
-   65.0 ▲  modules\storage.ts
-          22 commits    983 churn  0.31 density  26 fan-in  ▲ accelerating
+   69.2 ▼  popup\popup_telegram.ts
+          26 commits   2509 churn  0.27 density   3 fan-in  ▼ cooling
 
-   54.4 ▲  modules\event_comments.ts
-          15 commits    808 churn  0.38 density   1 fan-in  ▲ accelerating        
+   66.7 ▲  modules\storage.ts
+          22 commits    983 churn  0.31 density  27 fan-in  ▲ accelerating
 
-   47.4 ▼  youtube\studio\studio_content.ts
+   56.5 ▲  modules\event_comments.ts
+          16 commits    820 churn  0.36 density   1 fan-in  ▲ accelerating
+
+   48.6 ▼  youtube\studio\studio_content.ts        
           19 commits    526 churn  0.26 density   0 fan-in  ▼ cooling
 
-   46.1 ▼  youtube\studio\studio_events.ts
-          21 commits   1399 churn  0.23 density   1 fan-in  ▼ cooling
+   47.5 ▼  youtube\studio\studio_events.ts
+          22 commits   1415 churn  0.22 density   1 fan-in  ▼ cooling
 
-   40.4 ▼  popup\popup_prayers.ts
+   41.4 ▼  popup\popup_prayers.ts
           15 commits   1388 churn  0.28 density   2 fan-in  ▼ cooling
 
-   40.1 ▲  main.ts
-          14 commits    604 churn  0.30 density   0 fan-in  ▲ accelerating        
+   41.2 ▲  main.ts
+          14 commits    604 churn  0.30 density   0 fan-in  ▲ accelerating
 
-   39.7 ▲  modules\stats_tracker.ts
-          13 commits    674 churn  0.32 density   1 fan-in  ▲ accelerating        
+   40.7 ▲  modules\stats_tracker.ts
+          13 commits    674 churn  0.32 density   1 fan-in  ▲ accelerating
 
-   38.5 ▲  options\options.ts
-          11 commits    467 churn  0.37 density   1 fan-in  ▲ accelerating        
+   39.5 ▲  options\options.ts
+          11 commits    467 churn  0.37 density   1 fan-in  ▲ accelerating
 
-   35.9 ▲  modules\anti_afk.ts
-          14 commits    633 churn  0.27 density   2 fan-in  ▲ accelerating        
+   36.8 ▲  modules\anti_afk.ts
+          14 commits    633 churn  0.27 density   2 fan-in  ▲ accelerating
 
-   33.6 ▲  modules\ui_core.ts
-          11 commits    486 churn  0.32 density   4 fan-in  ▲ accelerating        
+   34.5 ▲  modules\ui_core.ts
+          11 commits    486 churn  0.32 density   4 fan-in  ▲ accelerating
 
-   32.3 ▲  modules\banner_creator.ts
-          10 commits    334 churn  0.34 density   3 fan-in  ▲ accelerating        
+   33.2 ▲  modules\banner_creator.ts
+          10 commits    334 churn  0.34 density   3 fan-in  ▲ accelerating
 
-   30.2 ─  youtube\studio\studio_adapter.ts
+   30.9 ─  youtube\studio\studio_adapter.ts        
           10 commits    613 churn  0.31 density   2 fan-in  ─ stable
 
-   30.0 ▲  modules\comment_assistant.ts
-           9 commits    382 churn  0.35 density   6 fan-in  ▲ accelerating        
+   30.8 ▲  modules\comment_assistant.ts
+           9 commits    382 churn  0.35 density   6 fan-in  ▲ accelerating
 
-   29.3 ▲  modules\utils.ts
-          11 commits    447 churn  0.28 density  13 fan-in  ▲ accelerating        
+   30.1 ▲  modules\utils.ts
+          11 commits    447 churn  0.28 density  13 fan-in  ▲ accelerating
 
-   26.7 ▼  youtube\studio\studio_selectors.ts
+   27.4 ▼  youtube\studio\studio_selectors.ts
            8 commits    229 churn  0.35 density   5 fan-in  ▼ cooling
 
-   25.4 ▲  modules\ui_comments.ts
-           7 commits    781 churn  0.38 density   2 fan-in  ▲ accelerating        
+   26.7 ▲  modules\event_banners.ts
+           7 commits    699 churn  0.39 density   1 fan-in  ▲ accelerating
 
-   22.8 ▲  modules\event_banners.ts
-           6 commits    694 churn  0.40 density   2 fan-in  ▲ accelerating        
+   26.5 ▼  modules\channel_config.ts
+           9 commits    306 churn  0.30 density  12 fan-in  ▼ cooling
 
-   22.2 ▲  modules\ui_banners.ts
-           6 commits    519 churn  0.39 density   2 fan-in  ▲ accelerating        
+   23.6 ▲  modules\ui_comments.ts
+           8 commits    785 churn  0.30 density   2 fan-in  ▲ accelerating
 
-   21.4 ▼  modules\channel_config.ts
-           8 commits    289 churn  0.28 density  12 fan-in  ▼ cooling
+   22.4 ▼  youtube\studio\studio_ui.ts
+          12 commits    423 churn  0.19 density   1 fan-in  ▼ cooling
 
-   21.2 ▲  background\service-worker.ts
-           7 commits    180 churn  0.32 density   0 fan-in  ▲ accelerating        
+   21.7 ─  youtube\yt_adapter.ts
+           7 commits    311 churn  0.31 density   2 fan-in  ─ stable
 
-   20.1 ▲  modules\parsers.ts
-          10 commits    333 churn  0.21 density   7 fan-in  ▲ accelerating        
+   21.7 ▲  background\service-worker.ts
+           7 commits    180 churn  0.32 density   0 fan-in  ▲ accelerating
 
-   18.9 ▼  youtube\studio\studio_ui.ts
-          11 commits    408 churn  0.18 density   1 fan-in  ▼ cooling
+   21.3 ▲  modules\ui_banners.ts
+           7 commits    524 churn  0.31 density   3 fan-in  ▲ accelerating
 
-   17.5 ▲  youtube\youtube_content.ts
-           8 commits    293 churn  0.23 density   0 fan-in  ▲ accelerating        
+   20.6 ▲  modules\parsers.ts
+          10 commits    333 churn  0.21 density   7 fan-in  ▲ accelerating
 
-   16.6 ▲  modules\stats_exporter.ts
-           8 commits    558 churn  0.22 density   1 fan-in  ▲ accelerating        
+   18.0 ▲  youtube\youtube_content.ts
+           8 commits    293 churn  0.23 density   0 fan-in  ▲ accelerating
 
-   16.0 ▲  modules\config.ts
-          13 commits    224 churn  0.13 density  15 fan-in  ▲ accelerating        
+   17.1 ▲  modules\stats_exporter.ts
+           8 commits    558 churn  0.22 density   1 fan-in  ▲ accelerating
 
-   14.6 ─  youtube\yt_adapter.ts
-           6 commits    285 churn  0.25 density   1 fan-in  ─ stable
+   16.4 ▲  modules\config.ts
+          13 commits    224 churn  0.13 density  15 fan-in  ▲ accelerating
 
-   14.5 ▲  modules\state.ts
-           7 commits    224 churn  0.22 density   8 fan-in  ▲ accelerating        
+   15.3 ─  tests\studio_integration.test.js [test] 
+           4 commits    524 churn  0.38 density   0 fan-in  ─ stable
 
-   14.0 ▲  modules\video_copier.ts
-           7 commits    476 churn  0.21 density   1 fan-in  ▲ accelerating        
+   15.1 ▼  modules\event_bus.ts
+           9 commits     95 churn  0.17 density   6 fan-in  ▼ cooling
 
-   13.9 ▲  modules\telegram_parser.ts
-           5 commits   1074 churn  0.29 density   4 fan-in  ▲ accelerating        
+   14.9 ▲  modules\state.ts
+           7 commits    224 churn  0.22 density   7 fan-in  ▲ accelerating
 
-   13.7 ▲  youtube\studio\studio_video_map.ts
-           9 commits    251 churn  0.16 density   2 fan-in  ▲ accelerating        
+   14.7 ▲  modules\comment_service.ts
+           7 commits    435 churn  0.21 density  17 fan-in  ▲ accelerating
 
-   13.2 ▲  modules\sheets.ts
-           6 commits    162 churn  0.23 density  12 fan-in  ▲ accelerating        
+   14.3 ▲  modules\telegram_parser.ts
+           5 commits   1074 churn  0.29 density   4 fan-in  ▲ accelerating
 
-   13.0 ▼  modules\event_bus.ts
-           8 commits     91 churn  0.17 density   6 fan-in  ▼ cooling
+   14.3 ▲  modules\video_copier.ts
+           7 commits    476 churn  0.21 density   1 fan-in  ▲ accelerating
 
-   12.0 ▲  youtube\yt_events.ts
-           9 commits    533 churn  0.14 density   1 fan-in  ▲ accelerating        
+   14.1 ▲  youtube\studio\studio_video_map.ts      
+           9 commits    251 churn  0.16 density   2 fan-in  ▲ accelerating
 
-   11.8 ▲  youtube\yt_channel_gate.ts
-           4 commits     67 churn  0.31 density   1 fan-in  ▲ accelerating        
+   13.5 ▼  modules\sheet_state_service.ts
+           8 commits    711 churn  0.17 density   3 fan-in  ▼ cooling
 
-   11.2 ▼  tests\studio_integration.test.js [test]
-           3 commits    455 churn  0.38 density   0 fan-in  ▼ cooling
+   13.5 ▲  modules\sheets.ts
+           6 commits    162 churn  0.23 density  12 fan-in  ▲ accelerating
 
-   10.8 ▼  modules\sheet_state_service.ts
-           7 commits    437 churn  0.16 density   2 fan-in  ▼ cooling
+   12.3 ▲  youtube\yt_events.ts
+           9 commits    533 churn  0.14 density   1 fan-in  ▲ accelerating
 
-   10.2 ─  modules\comment_service.ts
-           5 commits    406 churn  0.21 density  14 fan-in  ─ stable
+   12.1 ▲  youtube\yt_channel_gate.ts
+           4 commits     67 churn  0.31 density   1 fan-in  ▲ accelerating
 
-   10.0 ─  tests\state.test.js [test]
+   10.3 ─  tests\state.test.js [test]
            6 commits    281 churn  0.18 density   0 fan-in  ─ stable
 
-    9.3 ▲  modules\comment_injector.ts
-           5 commits    260 churn  0.19 density   3 fan-in  ▲ accelerating        
+    9.5 ▲  modules\comment_injector.ts
+           5 commits    260 churn  0.19 density   3 fan-in  ▲ accelerating
 
-    9.0 ▲  modules\info_modal.ts
-           5 commits    337 churn  0.19 density   0 fan-in  ▲ accelerating        
-
-    8.6 ▲  modules\i18n.ts
+    8.8 ▲  modules\i18n.ts
            4 commits     33 churn  0.23 density   3 fan-in  ▲ accelerating
 
-    8.3 ▲  modules\retention_service.ts
-           3 commits    217 churn  0.29 density   5 fan-in  ▲ accelerating        
+    8.6 ▲  modules\retention_service.ts
+           3 commits    217 churn  0.29 density   5 fan-in  ▲ accelerating
 
-    8.3 ▼  tests\utils.test.js [test]
+    8.5 ▼  tests\utils.test.js [test]
            5 commits    142 churn  0.18 density   0 fan-in  ▼ cooling
 
-    7.7 ▼  youtube\studio\studio_header_counters.ts
+    7.9 ▼  youtube\studio\studio_header_counters.ts
            3 commits    181 churn  0.26 density   2 fan-in  ▼ cooling
 
-    7.7 ▼  tests\storage.test.js [test]
+    7.9 ▼  tests\storage.test.js [test]
            4 commits    203 churn  0.20 density   0 fan-in  ▼ cooling
 
-    6.7 ▲  test_parsers.js
-          11 commits    639 churn  0.07 density   0 fan-in  ▲ accelerating        
+    6.9 ▲  test_parsers.js
+          11 commits    639 churn  0.07 density   0 fan-in  ▲ accelerating
 
-    6.7 ▼  youtube\studio\studio_channel.ts
+    6.9 ▼  youtube\studio\studio_channel.ts        
            5 commits     67 churn  0.14 density   2 fan-in  ▼ cooling
 
-    6.7 ▲  youtube\studio\studio_comment_key.ts
+    6.8 ▲  youtube\studio\studio_comment_key.ts    
            5 commits    144 churn  0.14 density   2 fan-in  ▲ accelerating
 
-    6.7 ▲  modules\comment_platform_adapter.ts
-           4 commits    104 churn  0.17 density   3 fan-in  ▲ accelerating        
+    6.8 ▲  modules\comment_platform_adapter.ts     
+           4 commits    104 churn  0.17 density   3 fan-in  ▲ accelerating
 
-    6.1 ▼  tests\popup_dom.test.js [test]
+    6.3 ▼  tests\popup_dom.test.js [test]
            5 commits    140 churn  0.13 density   0 fan-in  ▼ cooling
 
-    5.1 ▲  youtube\yt_ui.ts
-           3 commits    229 churn  0.18 density   2 fan-in  ▲ accelerating        
+    5.3 ▲  youtube\yt_ui.ts
+           3 commits    229 churn  0.18 density   2 fan-in  ▲ accelerating
 
-    5.0 ▲  youtube\studio\studio_category_matcher.ts
-           4 commits     68 churn  0.13 density   3 fan-in  ▲ accelerating        
+    5.1 ▲  youtube\studio\studio_category_matcher.ts
+           4 commits     68 churn  0.13 density   3 fan-in  ▲ accelerating
 
-    4.3 ▼  popup\popup_translit.ts
+    4.4 ▼  popup\popup_translit.ts
            3 commits     77 churn  0.15 density   1 fan-in  ▼ cooling
 
-    4.1 ▼  tests\comment_service.test.js [test]
+    4.2 ▼  tests\comment_service.test.js [test]    
            3 commits    138 churn  0.14 density   0 fan-in  ▼ cooling
 
-    3.1 ▼  tests\comment_assistant.test.js [test]
+    3.2 ▼  tests\comment_assistant.test.js [test]  
            3 commits     71 churn  0.11 density   0 fan-in  ▼ cooling
 
-    2.9 ▲  tests\sheet_state_service.test.js [test]
-           5 commits    104 churn  0.06 density   0 fan-in  ▲ accelerating        
+    3.0 ▲  tests\sheet_state_service.test.js [test]
+           5 commits    104 churn  0.06 density   0 fan-in  ▲ accelerating
 
-    1.4 ▼  tests\telegram_parser.test.js [test]
+    1.5 ▼  tests\telegram_parser.test.js [test]    
            3 commits    170 churn  0.05 density   0 fan-in  ▼ cooling
 
   17 files excluded (< 3 commits)
@@ -890,62 +810,58 @@ note: module wiring excluded from clone detection (--no-ignore-imports to includ
   Files with high churn and high complexity: https://docs.fallow.tools/explanations/health#hotspot-metrics
 
 ● Refactoring targets (20)
-  17 medium · 3 high
+  16 medium · 4 high
     score = quick-win ROI (higher = better) · pri = absolute priority
 
-   18.1  pri:36.2    modules\event_comments.ts
-         complexity · effort:medium · confidence:high  Extract <anonymous> (cognitive: 36) in 389-LOC file into smaller functions
+   18.1  pri:36.1    modules\event_comments.ts     
+         complexity · effort:medium · confidence:high  Extract <anonymous> (cognitive: 35) in 435-LOC file into smaller functions
          importers: main.ts (SYH_EVENT_COMMENTS_PLUGIN)
-         clones: modules\event_banners.ts:75-82 dup:5b35a9da
 
-   15.8  pri:31.5    modules\ui_core.ts
+   15.9  pri:31.7    modules\ui_core.ts
          high impact · effort:medium · confidence:medium  Split high-impact file (201 LOC), 4 dependents amplify every change
          importers: main.ts (SYH_UI); modules\event_banners.ts (SYH_UI, SyhUi); modules\event_comments.ts (SYH_UI, SyhUi); tests\ui_state.test.js (SYH_UI)
 
-   14.6  pri:29.2    youtube\studio\studio_adapter.ts
+   14.7  pri:29.3    youtube\studio\studio_adapter.ts
          untested risk · effort:medium · confidence:high  4 complex functions lack test coverage path, add tests before modifying
          importers: tests\studio_integration.test.js (StudioCommentAdapter); youtube\studio\studio_events.ts (StudioCommentAdapter, StudioEventCaches, retroactiveUpdateVideoComments, side effect, side effect)
 
-   13.9  pri:41.7    modules\storage.ts
-         high impact · effort:high · confidence:medium  Split high-impact file (426 LOC), 26 dependents amplify every change
-         importers: background\service-worker.ts (STORAGE_KEYS, migrateStorageIfNeeded); modules\anti_afk.ts (STORAGE_KEYS, SYH_STORAGE); modules\comment_service.ts (STORAGE_KEYS, SYH_STORAGE, getSheetCollectedStorageKey); modules\retention_service.ts (STORAGE_KEYS, SYH_STORAGE); modules\right_tabs_compact.ts (STORAGE_KEYS, SYH_STORAGE, StoredOptions)
-         clones: modules\storage.ts:231-238 dup:268f5ad3; modules\storage.ts:251-262 dup:84e7ee46; modules\storage.ts:291-298 dup:268f5ad3; modules\storage.ts:315-326 dup:84e7ee46
+   14.2  pri:28.4    modules\event_banners.ts      
+         untested risk · effort:medium · confidence:high  9 complex functions lack test coverage path, add tests before modifying
+         importers: main.ts (SYH_EVENT_BANNERS_PLUGIN)
 
-   13.9  pri:27.8    modules\ui_comments.ts
-         complexity · effort:medium · confidence:high  Extract filterStarredComments (cognitive: 66) and <arrow> (cognitive: 34) in 458-LOC file into smaller functions
-         importers: main.ts (side effect); modules\ui_core.ts (addButtonsToComment, addStarredTabControls, addStarredTabCopyButton, applySavedLabels, bindStarredControls, filterStarredComments, scrollToActiveComment, updateCommentVisuals)        
-         clones: modules\event_banners.ts:285-299 dup:7bd1ae38; modules\ui_banners.ts:241-248 dup:ee263b69; modules\ui_banners.ts:248-262 dup:fee7cf67; modules\ui_banners.ts:261-297 dup:f3a28a4c; modules\ui_banners.ts:282-296 dup:8f34750e        
+   14.0  pri:42.1    modules\storage.ts
+         high impact · effort:high · confidence:medium  Split high-impact file (429 LOC), 27 dependents amplify every change
+         importers: background\service-worker.ts (STORAGE_KEYS, migrateStorageIfNeeded); modules\anti_afk.ts (STORAGE_KEYS, SYH_STORAGE); modules\channel_config.ts (STORAGE_KEYS, SYH_STORAGE); modules\comment_service.ts (STORAGE_KEYS, SYH_STORAGE, getSheetCollectedStorageKey); modules\retention_service.ts (STORAGE_KEYS, SYH_STORAGE)
 
-   13.7  pri:27.4    options\options.ts
+   13.9  pri:27.7    options\options.ts
          complexity · effort:medium · confidence:high  Extract <arrow> (cognitive: 33) in 342-LOC file into smaller functions
          importers: options\options.html (side effect)
 
-   13.7  pri:27.3    modules\stats_tracker.ts
-         complexity · effort:medium · confidence:high  Extract injectHeaderButtons (cognitive: 47) in 347-LOC file into smaller functions
-         importers: main.ts (SYH_STATS_TRACKER)
-         clones: modules\stats_tracker.ts:192-206 dup:65f941fa; modules\stats_tracker.ts:218-223 dup:65f941fa; modules\stats_tracker.ts:219-224 dup:0864b2b7; modules\stats_tracker.ts:266-272 dup:0864b2b7
+   13.8  pri:27.6    modules\stats_tracker.ts      
+         complexity · effort:medium · confidence:high  Extract injectHeaderButtons (cognitive: 47) in 348-LOC file into smaller functions
+         importers: main.ts (SYH_STATS_TRACKER)    
+         clones: modules\stats_tracker.ts:193-207 dup:65f941fa; modules\stats_tracker.ts:219-224 dup:65f941fa; modules\stats_tracker.ts:220-225 dup:0864b2b7; modules\stats_tracker.ts:267-273 dup:0864b2b7 
 
-   13.4  pri:26.7    modules\event_banners.ts
-         complexity · effort:medium · confidence:high  Extract <anonymous> (cognitive: 39) in 317-LOC file into smaller functions
-         importers: main.ts (SYH_EVENT_BANNERS_PLUGIN); modules\ui_banners.ts (SYH_EVENT_BANNERS)
-         clones: modules\event_comments.ts:265-272 dup:5b35a9da; modules\ui_comments.ts:246-260 dup:7bd1ae38
-
-   13.1  pri:26.2    modules\banner_creator.ts
+   13.2  pri:26.4    modules\banner_creator.ts     
          high impact · effort:medium · confidence:medium  Split high-impact file (247 LOC), 3 dependents amplify every change
-         importers: main.ts (SYH_BANNER_CREATOR); modules\event_banners.ts (SYH_BANNER_CREATOR, SyhBannerCreator); test_parsers.js (SYH_BANNER_CREATOR)
-         clones: modules\telegram_parser.ts:268-274 dup:102cd7a5
+         importers: main.ts (SYH_BANNER_CREATOR); modules\event_banners.ts (SYH_BANNER_CREATOR, SyhBannerCreator); test_parsers.js (SYH_BANNER_CREATOR)  
+         clones: modules\telegram_parser.ts:276-282 dup:102cd7a5
 
-   13.1  pri:26.2    modules\ui_banners.ts
-         complexity · effort:medium · confidence:high  Extract filterBanners (cognitive: 58) in 298-LOC file into smaller functions
-         importers: main.ts (side effect); modules\ui_core.ts (addBannerHeaderControls, addButtonsToBanner, applySavedBannerLabels, filterBanners, scrollToActiveBanner, updateBannerVisuals, updateMasterCheckboxState)
-         clones: modules\ui_comments.ts:401-408 dup:ee263b69; modules\ui_comments.ts:408-422 dup:fee7cf67; modules\ui_comments.ts:421-457 dup:f3a28a4c; modules\ui_comments.ts:442-456 dup:8f34750e
+   13.1  pri:26.2    modules\comment_assistant.ts  
+         high impact · effort:medium · confidence:medium  Split high-impact file (195 LOC), 6 dependents amplify every change
+         importers: main.ts (SYH_COMMENT_ASSISTANT); modules\event_comments.ts (SYH_COMMENT_ASSISTANT); tests\comment_assistant.test.js (SYH_COMMENT_ASSISTANT); youtube\studio\studio_content.ts (SYH_COMMENT_ASSISTANT); youtube\studio\studio_events.ts (SYH_COMMENT_ASSISTANT)
+
+   12.5  pri:25.0    modules\ui_comments.ts        
+         complexity · effort:medium · confidence:high  Extract <arrow> (cognitive: 34) in 451-LOC file into smaller functions
+         importers: main.ts (side effect); modules\ui_core.ts (addButtonsToComment, addStarredTabControls, addStarredTabCopyButton, applySavedLabels, bindStarredControls, filterStarredComments, scrollToActiveComment, updateCommentVisuals)
+         clones: modules\ui_banners.ts:259-275 dup:e79eba61
 
   ... and 10 more targets (--format json for full list)
 
-  Prioritized refactoring recommendations based on complexity, churn, and coupling signals: https://docs.fallow.tools/explanations/health#refactoring-targets       
+  Prioritized refactoring recommendations based on complexity, churn, and coupling signals: https://docs.fallow.tools/explanations/health#refactoring-targets
 
-✗ 142 above threshold · 1322 analyzed · maintainability 88.6 (good) (0.79s)       
+✗ 149 above threshold · 1389 analyzed · maintainability 88.5 (good) (0.15s)
 
-Failed: dead-code (3 issues), dupes (22 clone groups), health (142 above threshold): start with modules/event_comments.ts
-Setup: `fallow init --agents` writes an agent guide; `fallow hooks install --target agent` adds a commit gate (hide this hint: `fallow init --decline`).
+Failed: dead-code (1 issues), dupes (13 clone groups), health (149 above threshold): start with modules/event_comments.ts
+Setup: `fallow init --agents` writes an agent guide; `fallow hooks install --target agent` adds a commit gate (hide this hint: `fallow init --decline`). 
 PS D:\Chrome Extension\Время перемен. Chrome Extension\streamyars-copy-buttons (added checkbox) 0.6-2026.01.11>

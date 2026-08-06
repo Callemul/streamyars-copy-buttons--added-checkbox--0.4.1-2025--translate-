@@ -31,6 +31,12 @@ export interface SyhEventComments {
 
     init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi): void;
     bindEvents(): void;
+    bindAutoHealScanner(): void;
+    bindStarButtonClickHandler(): void;
+    bindMiddleClickHandler(): void;
+    bindContextMenuHandlers(): void;
+    bindSyhButtonMouseHandlers(): void;
+    bindCheckboxChangeHandler(): void;
     destroy(): void;
     saveToDatabase(author: string, text: string, type: string, icon: string): void;
     removeFromDatabase(text: string): void;
@@ -73,9 +79,25 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             document.removeEventListener('click', this._clickHandler, true);
             this._clickHandler = undefined;
         }
+        if (this._middleClickHandler) {
+            document.removeEventListener('mousedown', this._middleClickHandler, true);
+            this._middleClickHandler = undefined;
+        }
         if (this._contextHandler) {
             document.removeEventListener('contextmenu', this._contextHandler, true);
             this._contextHandler = undefined;
+        }
+        if (this._copyPrayerContextHandler) {
+            document.removeEventListener('contextmenu', this._copyPrayerContextHandler);
+            this._copyPrayerContextHandler = undefined;
+        }
+        if (this._syhButtonMouseDownHandler) {
+            document.removeEventListener('mousedown', this._syhButtonMouseDownHandler);
+            this._syhButtonMouseDownHandler = undefined;
+        }
+        if (this._mouseupHandler) {
+            document.removeEventListener('mouseup', this._mouseupHandler);
+            this._mouseupHandler = undefined;
         }
         if (this._changeHandler) {
             document.removeEventListener('change', this._changeHandler);
@@ -89,9 +111,17 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             return;
         }
         this.isBound = true;
-        const self = this;
 
-        // --- БРОНЕБІЙНИЙ СКАНЕР ЛКМ ТА САМОВІДНОВЛЕННЯ БАЗИ (Event-Driven MutationObserver) ---
+        this.bindAutoHealScanner();
+        this.bindStarButtonClickHandler();
+        this.bindMiddleClickHandler();
+        this.bindContextMenuHandlers();
+        this.bindSyhButtonMouseHandlers();
+        this.bindCheckboxChangeHandler();
+    },
+
+    bindAutoHealScanner: function(): void {
+        const self = this;
         const runAutoHeal = (): void => {
             if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
                 if (self.autoHealObserver) {
@@ -172,8 +202,10 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
 
         // Первинна перевірка при ініціалізації
         runAutoHeal();
+    },
 
-        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ КЛІКІВ (ОБХІД REACT ТА ФІКС ЛІЧИЛЬНИКІВ) ---
+    bindStarButtonClickHandler: function(): void {
+        const self = this;
         self._clickHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (!target || !self.SELECTORS?.starButton) return;
@@ -203,9 +235,11 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             }
         };
         document.addEventListener('click', self._clickHandler, true);
+    },
 
-        // --- ПЕРЕХОПЛЮВАЧ СЕРЕДНЬОГО КЛІКУ (КОЛІЩАТКА) ДЛЯ ЗНЯТТЯ ЗІРКИ ---
-        document.addEventListener('mousedown', function(e: MouseEvent) {
+    bindMiddleClickHandler: function(): void {
+        const self = this;
+        self._middleClickHandler = function(e: MouseEvent) {
             if (e.button === 1) { 
                 const target = e.target as Element | null;
                 if (!target || !self.SELECTORS?.commentBlock) return;
@@ -222,10 +256,13 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     }
                 }
             }
-        }, true);
+        };
+        document.addEventListener('mousedown', self._middleClickHandler, true);
+    },
 
-        // --- НАТИВНИЙ ПЕРЕХОПЛЮВАЧ ПКМ ДЛЯ КОМЕНТАРІВ (У ТОМУ ЧИСЛІ НА ТРИ КРАПКИ) ---
-        document.addEventListener('contextmenu', function(e: MouseEvent) {
+    bindContextMenuHandlers: function(): void {
+        const self = this;
+        self._contextHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (!target || !self.SELECTORS?.commentBlock) return;
             const targetBtn = target.closest([
@@ -244,30 +281,36 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     if (checkbox) {
                         checkbox.checked = !checkbox.checked;
                         const textKey = commentBlock.querySelector(self.SELECTORS.commentText || '')?.textContent;
-                        if (self.STATE && textKey) {
-                            self.STATE.updateState(textKey, checkbox.checked);
+                        if (textKey) {
+                            CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
                         }
                         SYH_COMMENT_ASSISTANT.processComment(commentBlock);
                     }
                 }
             }
-        }, true);
+        };
+        document.addEventListener('contextmenu', self._contextHandler, true);
 
-        document.addEventListener('contextmenu', function(e: MouseEvent) {
+        self._copyPrayerContextHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (target?.closest('.syh-button[data-action="copy-prayer"]')) {
                 e.preventDefault();
             }
-        });
+        };
+        document.addEventListener('contextmenu', self._copyPrayerContextHandler);
+    },
 
-        document.addEventListener('mousedown', function(e: MouseEvent) {
+    bindSyhButtonMouseHandlers: function(): void {
+        const self = this;
+        self._syhButtonMouseDownHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             if (target?.closest('.syh-button[data-type="comment"]') && e.button === 1) {
                 e.preventDefault();
             }
-        });
+        };
+        document.addEventListener('mousedown', self._syhButtonMouseDownHandler);
 
-        document.addEventListener('mouseup', function(e: MouseEvent) {
+        self._mouseupHandler = function(e: MouseEvent) {
             const target = e.target as Element | null;
             const button = target?.closest('.syh-button[data-type="comment"]') as HTMLElement | null;
             if (!button) return;
@@ -327,7 +370,9 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     text: commentText
                 });
 
-                self.UTILS.copyAndShowBanner(textToCopy, header);
+                if (self.UTILS) {
+                    self.UTILS.copyAndShowBanner(textToCopy, header);
+                }
 
                 const checkboxNode = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
                 if (checkboxNode) {
@@ -343,9 +388,13 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                     starBtnNode.click();
                 }
             }
-        });
+        };
+        document.addEventListener('mouseup', self._mouseupHandler);
+    },
 
-        document.addEventListener('change', function(e: Event) {
+    bindCheckboxChangeHandler: function(): void {
+        const self = this;
+        self._changeHandler = function(e: Event) {
             const target = e.target as Element | null;
             const checkbox = target?.closest('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
             if (!checkbox) return;
@@ -356,7 +405,8 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             
             CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
             SYH_COMMENT_ASSISTANT.processComment(commentBlock);
-        });
+        };
+        document.addEventListener('change', self._changeHandler);
     },
 
     saveToDatabase: async function(author: string, text: string, type: string, icon: string): Promise<void> {

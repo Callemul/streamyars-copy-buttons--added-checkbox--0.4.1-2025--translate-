@@ -210,6 +210,26 @@ export interface StorageAdapter {
     onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
 }
 
+export function migrateItemKeys(items: Record<string, any>): Record<string, any> {
+    const migratedItems: Record<string, any> = {};
+    for (const [k, v] of Object.entries(items)) {
+        migratedItems[migrateKey(k)] = v;
+    }
+    return migratedItems;
+}
+
+export function migrateKeys(keys: StorageKeyValues | StorageKeyValues[]): string | string[] {
+    return Array.isArray(keys) ? (keys as string[]).map(migrateKey) : migrateKey(keys as string);
+}
+
+function checkAndLogStorageError(actionName: string): boolean {
+    if (chrome.runtime?.lastError) {
+        console.error(`[SYH Storage] ${actionName} error:`, chrome.runtime.lastError.message);
+        return true;
+    }
+    return false;
+}
+
 export const SYH_STORAGE: StorageAdapter = {
     isChromeStorageAvailable: function(): boolean {
         try {
@@ -234,8 +254,7 @@ export const SYH_STORAGE: StorageAdapter = {
         try {
             const { origKeys, queryKeys } = prepareQueryKeys(keys);
             chrome.storage.local.get(queryKeys, (result) => {
-                if (chrome.runtime.lastError) {
-                    console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                if (checkAndLogStorageError('get')) {
                     if (cb) cb({} as T);
                     return;
                 }
@@ -252,14 +271,8 @@ export const SYH_STORAGE: StorageAdapter = {
             return;
         }
         try {
-            const migratedItems: Record<string, any> = {};
-            for (const [k, v] of Object.entries(items)) {
-                migratedItems[migrateKey(k)] = v;
-            }
-            chrome.storage.local.set(migratedItems, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
-                }
+            chrome.storage.local.set(migrateItemKeys(items), () => {
+                checkAndLogStorageError('set');
                 if (cb) cb();
             });
         } catch {
@@ -273,11 +286,8 @@ export const SYH_STORAGE: StorageAdapter = {
             return;
         }
         try {
-            const migratedKeys = Array.isArray(keys) ? (keys as string[]).map(migrateKey) : migrateKey(keys as string);
-            chrome.storage.local.remove(migratedKeys, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('[SYH Storage] remove error:', chrome.runtime.lastError.message);
-                }
+            chrome.storage.local.remove(migrateKeys(keys), () => {
+                checkAndLogStorageError('remove');
                 if (cb) cb();
             });
         } catch {
@@ -294,8 +304,7 @@ export const SYH_STORAGE: StorageAdapter = {
             try {
                 const { origKeys, queryKeys } = prepareQueryKeys(keys);
                 chrome.storage.local.get(queryKeys, (result) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[SYH Storage] get error:', chrome.runtime.lastError.message);
+                    if (checkAndLogStorageError('get')) {
                         resolve({} as T);
                         return;
                     }
@@ -316,14 +325,8 @@ export const SYH_STORAGE: StorageAdapter = {
                 return;
             }
             try {
-                const migratedItems: Record<string, any> = {};
-                for (const [k, v] of Object.entries(items)) {
-                    migratedItems[migrateKey(k)] = v;
-                }
-                chrome.storage.local.set(migratedItems, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[SYH Storage] set error:', chrome.runtime.lastError.message);
-                    }
+                chrome.storage.local.set(migrateItemKeys(items), () => {
+                    checkAndLogStorageError('set');
                     resolve();
                 });
             } catch (e: unknown) {

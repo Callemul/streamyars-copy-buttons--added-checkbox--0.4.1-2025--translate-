@@ -1,9 +1,12 @@
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_EVENT_BANNERS } from './event_banners';
 import { UiFactory } from './ui_factory';
 import { CommentService } from './comment_service';
+import {
+    updateMasterCheckboxFromElements,
+    scrollToActiveItem
+} from './ui_shared_utils';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -121,9 +124,6 @@ export function addBannerHeaderControls(headerNode: Element): void {
 
 export function updateMasterCheckboxState(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const masterCheckbox = document.querySelector<HTMLInputElement>('.syh-master-checkbox');
-    if (!masterCheckbox) return;
-
     const bannerBlocks = document.querySelectorAll(selectors.bannerBlock);
     const allBannerCheckboxes: HTMLInputElement[] = [];
     bannerBlocks.forEach(block => {
@@ -131,43 +131,16 @@ export function updateMasterCheckboxState(): void {
         if (cb) allBannerCheckboxes.push(cb);
     });
 
-    const total = allBannerCheckboxes.length;
-    if (total === 0) {
-        masterCheckbox.checked = false;
-        masterCheckbox.indeterminate = false;
-        return;
-    }
-
-    const checkedCount = allBannerCheckboxes.filter(cb => cb.checked).length;
-    if (checkedCount === 0) {
-        masterCheckbox.checked = false;
-        masterCheckbox.indeterminate = false;
-    } else if (checkedCount === total) {
-        masterCheckbox.checked = true;
-        masterCheckbox.indeterminate = false;
-    } else {
-        masterCheckbox.checked = false;
-        masterCheckbox.indeterminate = true;
-    }
+    updateMasterCheckboxFromElements('.syh-master-checkbox', allBannerCheckboxes);
 }
 
-export function filterBanners(): void {
-    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
-    const bannerList = document.querySelector<HTMLElement>(bannerListSelector);
-    if (!bannerList) return;
-
-    const activeFilter = SYH_UI_STATE.bannerActiveFilter || 'all';
-    const searchQuery = SYH_UI_STATE.bannerSearchQuery || '';
-
-    const safeTextUpdate = (selector: string, newText: string) => {
-        const el = document.querySelector(selector);
-        if (el && el.textContent !== newText) el.textContent = newText;
-    };
-    const safeHtmlUpdate = (el: Element | null, newHtml: string) => {
-        if (el && el.innerHTML !== newHtml) el.innerHTML = newHtml;
-    };
-
+export function filterBannerListItems(
+    bannerList: HTMLElement,
+    selectors: any,
+    categoriesCache: Record<string, string>,
+    activeFilter: string,
+    searchQuery: string
+): { visibleCount: number; countAbsolute: Record<string, number>; countSearch: Record<string, number> } {
     let visibleCount = 0;
     const countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
     const countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
@@ -178,7 +151,7 @@ export function filterBanners(): void {
         if (!bannerWrap) return;
 
         const originalText = bannerWrap.querySelector(selectors.bannerText)?.textContent || '';
-        const commentType = SYH_UI_STATE.bannerCategoriesCache[originalText] || 'none';
+        const commentType = categoriesCache[originalText] || 'none';
         
         updateBannerVisuals(bannerWrap, commentType);
         
@@ -213,84 +186,94 @@ export function filterBanners(): void {
         }
     });
 
-    safeTextUpdate('#syh-banner-filter-all .tab-count', ` (${countAbsolute.all})`);
-    safeTextUpdate('#syh-banner-filter-stream .tab-count', ` (${countAbsolute.stream})`);
-    safeTextUpdate('#syh-banner-filter-audience .tab-count', ` (${countAbsolute.audience})`);
-    safeTextUpdate('#syh-banner-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
+    return { visibleCount, countAbsolute, countSearch: countSearch[activeFilter === 'all' ? 'all' : activeFilter] };
+}
 
-    const emptyState = document.querySelector<HTMLElement>('#syh-banner-empty-state-msg');
-    const emptyQuery = document.querySelector('#syh-banner-empty-query');
-    
-    let emptySuggestion = document.querySelector<HTMLElement>('#syh-banner-empty-suggestion');
-    if (!emptySuggestion && emptyState) {
-        emptyState.insertAdjacentHTML('beforeend', `<div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>`);
-        emptySuggestion = document.querySelector<HTMLElement>('#syh-banner-empty-suggestion');
-    }
+export function filterBanners(): void {
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
+    const bannerList = document.querySelector<HTMLElement>(bannerListSelector);
+    if (!bannerList) return;
 
-    if (visibleCount === 0) {
-        let messageHTML: string;
-        if (searchQuery) {
-            messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
-            <a href="#" id="syh-banner-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
-            
-            const suggestions: string[] = [];
-            if (activeFilter !== 'all' && countSearch.all > 0) {
-                if (countSearch.stream > 0 && activeFilter !== 'stream') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="stream" style="color: #f39c12; text-decoration: underline;">🎙️ Ефір (${countSearch.stream})</a>`);
-                if (countSearch.audience > 0 && activeFilter !== 'audience') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="audience" style="color: #f39c12; text-decoration: underline;">❓ Глядачі (${countSearch.audience})</a>`);
-                if (countSearch.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-banner-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countSearch.prayer})</a>`);
-            }
+    const activeFilter = SYH_UI_STATE.bannerActiveFilter || 'all';
+    const searchQuery = SYH_UI_STATE.bannerSearchQuery || '';
 
-            if (suggestions.length > 0) {
-                safeHtmlUpdate(emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
-                if (emptySuggestion && emptySuggestion.style.display === 'none') emptySuggestion.style.display = 'block';
-                
-                document.querySelectorAll('.syh-switch-banner-tab').forEach(el => {
-                    (el as HTMLElement).onclick = function(e) {
-                        e.preventDefault();
-                        const filter = (this as HTMLElement).dataset.filter;
-                        const btn = document.querySelector<HTMLElement>(`.syh-banner-filter-btn[data-filter="${filter}"]`);
-                        if (btn) btn.click();
-                    };
-                });
-            } else {
-                if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-            }
-        } else {
-            if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-            const filterNames: Record<string, string> = { 
-                'all': 'списку банерів', 
-                'stream': 'категорії "🎙️ Питання ефіру"', 
-                'audience': 'категорії "❓ Питання глядачів"', 
-                'prayer': 'категорії "🙏 Молитовні"' 
-            };
-            messageHTML = `<span style="color: #777;">Тут ще немає банерів для ${filterNames[activeFilter] || 'списку'}</span>`;
-        }
+    const { visibleCount, countAbsolute, countSearch } = filterBannerListItems(
+        bannerList,
+        selectors,
+        SYH_UI_STATE.bannerCategoriesCache,
+        activeFilter,
+        searchQuery
+    );
 
-        safeHtmlUpdate(emptyQuery, messageHTML);
-        if (emptyState && emptyState.style.display === 'none') emptyState.style.display = 'block';
-    } else {
-        if (emptyState && emptyState.style.display !== 'none') emptyState.style.display = 'none';
-        if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-    }
+    updateBannerTabCounts(countAbsolute);
+    renderBannerEmptyState(visibleCount, searchQuery, activeFilter, countSearch);
 }
 
 export function scrollToActiveBanner(): void {
-    const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
-    const bannerList = document.querySelector(bannerListSelector);
-    if (bannerList) {
-        const activeLi = Array.from(bannerList.children).find(child => child.querySelector('.lucide-circle-minus')) as HTMLElement | undefined;
-        if (activeLi) {
-            const rect = activeLi.getBoundingClientRect();
-            const scrollParent = activeLi.closest('div[class*="Scroll"]');
-            if (scrollParent) {
-                const parentRect = scrollParent.getBoundingClientRect();
-                const isVisible = (rect.top >= parentRect.top && rect.bottom <= parentRect.bottom);
-                if (!isVisible) {
-                    activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            } else {
-                activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
+    scrollToActiveItem('[class*="BannerList__ListWrap"], ul[class*="Banner"]');
+}
+
+export function bindBannersFilterControls(): void {
+    const searchInput = document.querySelector<HTMLInputElement>('#syh-banner-search');
+    const clearBtn = document.querySelector<HTMLElement>('#syh-clear-banner-search-btn');
+
+    if (searchInput) {
+        searchInput.oninput = function() {
+            SYH_UI_STATE.bannerSearchQuery = searchInput.value ? searchInput.value.toLowerCase() : '';
+            if (clearBtn) clearBtn.style.display = SYH_UI_STATE.bannerSearchQuery ? 'flex' : 'none';
+            filterBanners();
+        };
     }
+
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            if (searchInput) searchInput.value = '';
+            SYH_UI_STATE.bannerSearchQuery = '';
+            clearBtn.style.display = 'none';
+            filterBanners();
+        };
+    }
+
+    const scrollBtn = document.querySelector('#syh-scroll-to-active-banner-btn');
+    if (scrollBtn) {
+        scrollBtn.onclick = function(e) {
+            e.preventDefault();
+            scrollToActiveBanner();
+        };
+    }
+
+    document.addEventListener('click', function(e: MouseEvent) {
+        const target = e.target as Element | null;
+        if (target?.closest('#syh-banner-empty-clear-link')) {
+            e.preventDefault();
+            if (searchInput) searchInput.value = '';
+            SYH_UI_STATE.bannerSearchQuery = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            filterBanners();
+            return;
+        }
+
+        const filterBtn = target?.closest('.syh-banner-filter-btn') as HTMLElement | null;
+        if (filterBtn) {
+            document.querySelectorAll<HTMLElement>('.syh-banner-filter-btn').forEach(btn => {
+                btn.style.background = 'transparent';
+                btn.style.fontWeight = 'normal';
+                btn.style.boxShadow = 'none';
+                btn.style.color = '#666';
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+
+            filterBtn.style.background = '#fff';
+            filterBtn.style.fontWeight = 'bold';
+            filterBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            filterBtn.style.color = '#000';
+            filterBtn.classList.add('active');
+            filterBtn.setAttribute('aria-selected', 'true');
+
+            SYH_UI_STATE.bannerActiveFilter = filterBtn.dataset.filter || 'all';
+            filterBanners();
+        }
+    });
 }

@@ -70,6 +70,197 @@ export function cleanTelegramHeadersLogged(text: string, cleaningLog?: CleaningL
     return SYH_UTILS.cleanTelegramHeaders(text, cleaningLog);
 }
 
+export function processOldTelegramItem(
+    itemsArray: TelegramQuestionItem[],
+    itemObj: { rawLines?: string[]; author?: string | null; type?: string; bodyLines?: string[] },
+    filterIds: number[] | null,
+    id: number,
+    deletedArr: DeletedLogEntry[],
+    src: 'old' | 'pray',
+    cleaningLog?: CleaningLogEntry[]
+): void {
+    const lines: string[] = itemObj.rawLines || [];
+    while (lines.length > 0 && lines[0].trim() === "") lines.shift();
+    if (lines.length === 0) return;
+
+    const rawAuthorLine = lines[0].trim();
+    let author = rawAuthorLine;
+    const authorBulletMatch = author.match(/\s*•.*$/);
+    author = author.replace(/\s*•.*$/, '').trim();
+    if (authorBulletMatch && cleaningLog) {
+        cleaningLog.push({
+            before: rawAuthorLine,
+            after: author,
+            removed: authorBulletMatch[0].trim()
+        });
+    }
+
+    let contentLines = lines.slice(1);
+    while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
+    if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
+        const timeLine = contentLines[0].trim();
+        contentLines = contentLines.slice(1);
+        if (cleaningLog) {
+            cleaningLog.push({
+                before: `${rawAuthorLine}\n${timeLine}`,
+                after: author,
+                removed: `${timeLine} (мітка часу)`
+            });
+        }
+    }
+
+    let rawText = contentLines.map(l => l.trimEnd()).join('\n').trim();
+    if (!author) author = "Анонім";
+
+    rawText = cleanTelegramHeadersLogged(rawText, cleaningLog);
+
+    const totalQuestionsInBlock = countQuestionsInText(rawText);
+
+    if (filterIds && filterIds.includes(id)) {
+        deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
+        return;
+    }
+
+    if (rawText.includes('🔹') && filterIds) {
+        const subIndexesToRemove = filterIds
+            .filter(fid => Math.floor(fid) === id)
+            .map(fid => {
+                const parts = fid.toString().split('.');
+                return parts[1] ? parseInt(parts[1], 10) : 0;
+            })
+            .filter(subIdx => subIdx > 0);
+
+        if (subIndexesToRemove.length > 0) {
+            const subQuestions = rawText.split('🔹').map(t => t.trim()).filter(Boolean);
+            subIndexesToRemove.forEach(idx => {
+                if (subQuestions[idx - 1]) {
+                    deletedArr.push({ originalId: `${id}.${idx}`, author: author, type: 'sub', count: 1 });
+                }
+            });
+
+            const filteredSubQuestions = subQuestions.filter((_, idx) => !subIndexesToRemove.includes(idx + 1));
+
+            if (filteredSubQuestions.length === 0) {
+                deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
+                return;
+            } else if (filteredSubQuestions.length === 1) {
+                rawText = filteredSubQuestions[0];
+            } else {
+                rawText = filteredSubQuestions.map(q => `🔹${q}`).join('\n');
+            }
+        }
+    }
+    itemsArray.push({ author, text: rawText, source: src });
+}
+
+export function parseTelegramSection(
+    sectionText: string,
+    filterIds: number[] | null,
+    sourceType: 'old' | 'pray',
+    initialCounter: number,
+    deletedItems: DeletedLogEntry[],
+    cleaningLog: CleaningLogEntry[]
+): TelegramQuestionItem[] {
+    const lines = sectionText.split('\n');
+    const items: TelegramQuestionItem[] = [];
+    let currentItem: any = null;
+    let currentCounter = initialCounter;
+
+    const emojiNumberRegex = EMOJI_NUMBER_LINE_REGEX;
+    const tgHeaderARegex = TG_HEADER_A_REGEX;
+    const tgHeaderBRegex = TG_HEADER_B_REGEX;
+
+    const hasKeycapInRemainingLines = (linesArr: string[], currentIndex: number) => {
+        for (let i = currentIndex; i < linesArr.length; i++) {
+            if (EMOJI_NUMBER_CONTAINS_REGEX.test(linesArr[i])) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    const finalizeCurrentItem = () => {
+        if (currentItem) {
+            if (currentItem.type === 'telegram') {
+                const bodyLines: string[] = currentItem.bodyLines;
+                if (currentItem.author === null) {
+                    let firstNonEmptyIdx = -1;
+                    for (let i = 0; i < bodyLines.length; i++) {
+                        if (bodyLines[i].trim() !== "") {
+                            firstNonEmptyIdx = i;
+                            break;
+                        }
+                    }
+                    if (firstNonEmptyIdx !== -1) {
+                        const firstLine = bodyLines[firstNonEmptyIdx].trim();
+                        if (firstLine.startsWith('@')) {
+                            currentItem.author = cleanAuthorName(firstLine, cleaningLog);
+                            bodyLines.splice(firstNonEmptyIdx, 1);
+                        } else {
+                            currentItem.author = "Питання з чату";
+                        }
+                    } else {
+                        currentItem.author = "Питання з чату";
+                    }
+                }
+                currentItem.rawLines = [currentItem.author, ...bodyLines];
+            }
+            processOldTelegramItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType, cleaningLog);
+        }
+    };
+
+    lines.forEach((line, idx) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
+        if (trimmedLine.includes("Віталій Кривко")) return;
+
+        if (emojiNumberRegex.test(trimmedLine)) {
+            finalizeCurrentItem();
+            currentCounter++;
+            currentItem = { type: 'keycap', rawLines: [] };
+            return;
+        }
+
+        const isHeaderA = tgHeaderARegex.test(trimmedLine);
+        const isHeaderB = tgHeaderBRegex.test(trimmedLine);
+
+        if ((isHeaderA || isHeaderB) && sourceType === 'old' && !hasKeycapInRemainingLines(lines, idx + 1)) {
+            finalizeCurrentItem();
+            currentCounter++;
+
+            let author = null;
+            const bodyLines: string[] = [];
+
+            if (isHeaderB) {
+                const match = trimmedLine.match(tgHeaderBRegex);
+                if (match) {
+                    const trailing = match[2] ? match[2].trim() : "";
+                    if (trailing) {
+                        if (trailing.startsWith('@')) {
+                            author = cleanAuthorName(trailing, cleaningLog);
+                        } else {
+                            bodyLines.push(trailing);
+                        }
+                    }
+                }
+            }
+            currentItem = { type: 'telegram', author: author, bodyLines: bodyLines };
+            return;
+        }
+
+        if (currentItem) {
+            if (currentItem.type === 'keycap') {
+                currentItem.rawLines.push(line);
+            } else if (currentItem.type === 'telegram') {
+                currentItem.bodyLines.push(line);
+            }
+        }
+    });
+
+    finalizeCurrentItem();
+    return items;
+}
+
 export function parseAndFilterOldList(
     text: string,
     answeredIds?: number[] | null,
@@ -82,200 +273,17 @@ export function parseAndFilterOldList(
     let allPrayers: TelegramQuestionItem[] = [];
     const deletedItems: DeletedLogEntry[] = [];
 
-    const processOldItem = (
-        itemsArray: TelegramQuestionItem[],
-        itemObj: { rawLines: string[]; author?: string | null; type?: string; bodyLines?: string[] },
-        filterIds: number[] | null,
-        id: number,
-        deletedArr: DeletedLogEntry[],
-        src: 'old' | 'pray'
-    ) => {
-        const lines: string[] = itemObj.rawLines || [];
-        while (lines.length > 0 && lines[0].trim() === "") lines.shift();
-        if (lines.length === 0) return;
-
-        const rawAuthorLine = lines[0].trim();
-        let author = rawAuthorLine;
-        const authorBulletMatch = author.match(/\s*•.*$/);
-        author = author.replace(/\s*•.*$/, '').trim();
-        if (authorBulletMatch && cleaningLog) {
-            cleaningLog.push({
-                before: rawAuthorLine,
-                after: author,
-                removed: authorBulletMatch[0].trim()
-            });
-        }
-
-        let contentLines = lines.slice(1);
-        while (contentLines.length > 0 && contentLines[0].trim() === "") contentLines.shift();
-        if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
-            const timeLine = contentLines[0].trim();
-            contentLines = contentLines.slice(1);
-            if (cleaningLog) {
-                cleaningLog.push({
-                    before: `${rawAuthorLine}\n${timeLine}`,
-                    after: author,
-                    removed: `${timeLine} (мітка часу)`
-                });
-            }
-        }
-
-        let rawText = contentLines.map(l => l.trimEnd()).join('\n').trim();
-        if (!author) author = "Анонім";
-
-        rawText = cleanTelegramHeadersLogged(rawText, cleaningLog);
-
-        const totalQuestionsInBlock = countQuestionsInText(rawText);
-
-        if (filterIds && filterIds.includes(id)) {
-            deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
-            return;
-        }
-
-        if (rawText.includes('🔹') && filterIds) {
-            const subIndexesToRemove = filterIds
-                .filter(fid => Math.floor(fid) === id)
-                .map(fid => {
-                    const parts = fid.toString().split('.');
-                    return parts[1] ? parseInt(parts[1], 10) : 0;
-                })
-                .filter(subIdx => subIdx > 0);
-
-            if (subIndexesToRemove.length > 0) {
-                const subQuestions = rawText.split('🔹').map(t => t.trim()).filter(Boolean);
-                subIndexesToRemove.forEach(idx => {
-                    if (subQuestions[idx - 1]) {
-                        deletedArr.push({ originalId: `${id}.${idx}`, author: author, type: 'sub', count: 1 });
-                    }
-                });
-
-                const filteredSubQuestions = subQuestions.filter((_, idx) => !subIndexesToRemove.includes(idx + 1));
-
-                if (filteredSubQuestions.length === 0) {
-                    deletedArr.push({ originalId: id, author: author, type: 'block', count: totalQuestionsInBlock });
-                    return;
-                } else if (filteredSubQuestions.length === 1) {
-                    rawText = filteredSubQuestions[0];
-                } else {
-                    rawText = filteredSubQuestions.map(q => `🔹${q}`).join('\n');
-                }
-            }
-        }
-        itemsArray.push({ author, text: rawText, source: src });
-    };
-
-    const parseSection = (sectionText: string, filterIds: number[] | null, sourceType: 'old' | 'pray') => {
-        const lines = sectionText.split('\n');
-        const items: TelegramQuestionItem[] = [];
-        let currentItem: any = null;
-        let currentCounter = (sourceType === 'old') ? allQuestions.length : allPrayers.length;
-
-        const emojiNumberRegex = EMOJI_NUMBER_LINE_REGEX;
-        const tgHeaderARegex = TG_HEADER_A_REGEX;
-        const tgHeaderBRegex = TG_HEADER_B_REGEX;
-
-        const hasKeycapInRemainingLines = (linesArr: string[], currentIndex: number) => {
-            for (let i = currentIndex; i < linesArr.length; i++) {
-                if (EMOJI_NUMBER_CONTAINS_REGEX.test(linesArr[i])) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        const finalizeCurrentItem = () => {
-            if (currentItem) {
-                if (currentItem.type === 'telegram') {
-                    const bodyLines: string[] = currentItem.bodyLines;
-                    if (currentItem.author === null) {
-                        let firstNonEmptyIdx = -1;
-                        for (let i = 0; i < bodyLines.length; i++) {
-                            if (bodyLines[i].trim() !== "") {
-                                firstNonEmptyIdx = i;
-                                break;
-                            }
-                        }
-                        if (firstNonEmptyIdx !== -1) {
-                            const firstLine = bodyLines[firstNonEmptyIdx].trim();
-                            if (firstLine.startsWith('@')) {
-                                currentItem.author = cleanAuthorName(firstLine, cleaningLog);
-                                bodyLines.splice(firstNonEmptyIdx, 1);
-                            } else {
-                                currentItem.author = "Питання з чату";
-                            }
-                        } else {
-                            currentItem.author = "Питання з чату";
-                        }
-                    }
-                    currentItem.rawLines = [currentItem.author, ...bodyLines];
-                }
-                processOldItem(items, currentItem, filterIds, currentCounter, deletedItems, sourceType);
-            }
-        };
-
-        lines.forEach((line, idx) => {
-            const trimmedLine = line.trim();
-            if (trimmedLine.includes("❓❓❓ВОПРОСЫ")) return;
-            if (trimmedLine.includes("Віталій Кривко")) return;
-
-            if (emojiNumberRegex.test(trimmedLine)) {
-                finalizeCurrentItem();
-                currentCounter++;
-                currentItem = { type: 'keycap', rawLines: [] };
-                return;
-            }
-
-            const isHeaderA = tgHeaderARegex.test(trimmedLine);
-            const isHeaderB = tgHeaderBRegex.test(trimmedLine);
-
-            if ((isHeaderA || isHeaderB) && sourceType === 'old' && !hasKeycapInRemainingLines(lines, idx + 1)) {
-                finalizeCurrentItem();
-                currentCounter++;
-
-                let author = null;
-                const bodyLines: string[] = [];
-
-                if (isHeaderB) {
-                    const match = trimmedLine.match(tgHeaderBRegex);
-                    if (match) {
-                        const trailing = match[2] ? match[2].trim() : "";
-                        if (trailing) {
-                            if (trailing.startsWith('@')) {
-                                author = cleanAuthorName(trailing, cleaningLog);
-                            } else {
-                                bodyLines.push(trailing);
-                            }
-                        }
-                    }
-                }
-                currentItem = { type: 'telegram', author: author, bodyLines: bodyLines };
-                return;
-            }
-
-            if (currentItem) {
-                if (currentItem.type === 'keycap') {
-                    currentItem.rawLines.push(line);
-                } else if (currentItem.type === 'telegram') {
-                    currentItem.bodyLines.push(line);
-                }
-            }
-        });
-
-        finalizeCurrentItem();
-        return items;
-    };
-
     for (const msg of messages) {
         const parts = msg.split(PRAYER_SECTION_SPLIT_REGEX);
         const questionsText = parts[0] || "";
         const prayersText = parts[1] || "";
 
         if (questionsText.trim()) {
-            const qs = parseSection(questionsText, answeredIds || null, 'old');
+            const qs = parseTelegramSection(questionsText, answeredIds || null, 'old', allQuestions.length, deletedItems, cleaningLog);
             allQuestions = allQuestions.concat(qs);
         }
         if (prayersText.trim()) {
-            const prs = parseSection(prayersText, null, 'pray');
+            const prs = parseTelegramSection(prayersText, null, 'pray', allPrayers.length, deletedItems, cleaningLog);
             allPrayers = allPrayers.concat(prs);
         }
     }

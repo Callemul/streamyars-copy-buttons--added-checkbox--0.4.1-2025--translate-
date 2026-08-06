@@ -5,6 +5,7 @@ import { SYH_UI, type SyhUi } from './ui_core';
 import { SYH_BANNER_CREATOR, type SyhBannerCreator } from './banner_creator';
 import { CommentService } from './comment_service';
 import type { ISyhPlugin } from './plugin_registry';
+import { bindBannersFilterControls } from './ui_banners';
 
 export interface SyhEventBanners {
     SELECTORS: Record<string, SelectorValue> | null;
@@ -16,6 +17,128 @@ export interface SyhEventBanners {
     init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void;
     bindEvents(): void;
     bindBannersFilterControls(): void;
+}
+
+export function handleCreateBannersAction(bannerCreator: SyhBannerCreator | null): void {
+    const text = prompt("Вставте список питань для створення банерів:", "");
+    if (text && bannerCreator) {
+        bannerCreator.processAndCreateBanners(text);
+    }
+}
+
+export function handleDeleteSelectedBannersAction(
+    selectors: Record<string, SelectorValue> | null,
+    ui: SyhUi | null
+): void {
+    const checkedBanners = document.querySelectorAll<HTMLInputElement>('.syh-checkbox[data-type="banner"]:checked');
+    if (checkedBanners.length === 0) return;
+
+    const activeFilter = ui ? ui.bannerActiveFilter : 'all';
+    let proceed: boolean;
+
+    if (activeFilter && activeFilter !== 'all') {
+        const filterNames: Record<string, string> = {
+            'stream': 'Ефір',
+            'audience': 'Глядачі',
+            'prayer': 'Молитви'
+        };
+        const tabName = filterNames[activeFilter] || activeFilter;
+
+        let currentTabCount = 0;
+        const counts = {
+            all: checkedBanners.length,
+            stream: 0,
+            audience: 0,
+            prayer: 0
+        };
+
+        checkedBanners.forEach((checkbox) => {
+            const bannerBlock = checkbox.closest((selectors?.bannerBlock as string) || '');
+            const textKey = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+            const commentType = (ui && ui.bannerCategoriesCache) ? (ui.bannerCategoriesCache[textKey] || 'none') : 'none';
+            
+            if (commentType === activeFilter) {
+                currentTabCount++;
+            }
+            
+            if (commentType === 'stream') {
+                counts.stream++;
+            } else if (commentType === 'audience') {
+                counts.audience++;
+            } else if (commentType === 'prayer') {
+                counts.prayer++;
+            }
+        });
+
+        let confirmMessage: string;
+        if (currentTabCount > 0) {
+            confirmMessage = `Ви впевнені, що хочете видалити ${currentTabCount} банер(ів) з вкладки "${tabName}"?\n\n` +
+                             `Зверніть увагу: ці банери будуть видалені не тільки з поточної вкладки, а й з усіх інших вкладок, і з вкладки "Всі" також.\n\n` +
+                             `Буде видалено:\n` +
+                             `- Всі: ${counts.all}\n` +
+                             `- Ефір: ${counts.stream}\n` +
+                             `- Глядачі: ${counts.audience}\n` +
+                             `- Молитви: ${counts.prayer}`;
+        } else {
+            confirmMessage = `Увага! На поточній вкладці "${tabName}" не вибрано жодного банера, але вибрано банери на інших вкладках.\n\n` +
+                             `Зверніть увагу: ці банери будуть видалені назавжди з усіх вкладок, і з вкладки "Всі" також.\n\n` +
+                             `Буде видалено:\n` +
+                             `- Всі: ${counts.all}\n` +
+                             `- Ефір: ${counts.stream}\n` +
+                             `- Глядачі: ${counts.audience}\n` +
+                             `- Молитви: ${counts.prayer}`;
+        }
+
+        proceed = confirm(confirmMessage);
+    } else {
+        proceed = confirm(`Ви впевнені, що хочете видалити ${checkedBanners.length} банер(ів)?`);
+    }
+
+    if (proceed) {
+        checkedBanners.forEach((checkbox) => {
+            const bannerBlock = checkbox.closest((selectors?.bannerBlock as string) || '');
+            const deleteButton = bannerBlock?.querySelector((selectors?.bannerDeleteButton as string) || '') as HTMLElement | null;
+            if (deleteButton) deleteButton.click();
+        });
+    }
+}
+
+export function handleCopyBannerAction(
+    button: HTMLElement,
+    selectors: Record<string, SelectorValue> | null,
+    utils: SyhUtils | null
+): void {
+    const bannerBlock = button.closest((selectors?.bannerBlock as string) || '');
+    const bannerText = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+
+    const utilObj = utils || SYH_UTILS;
+    utilObj.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
+    const checkbox = bannerBlock?.querySelector<HTMLInputElement>('.syh-checkbox');
+    if (checkbox) {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+export function handleMarkBannerCategoryAction(
+    button: HTMLElement,
+    action: string,
+    selectors: Record<string, SelectorValue> | null,
+    ui: SyhUi | null,
+    utils: SyhUtils | null
+): void {
+    const bannerBlock = button.closest((selectors?.bannerBlock as string) || '');
+    const bannerText = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+    const targetType = action.replace('mark-', '');
+
+    const currentType = (ui && ui.bannerCategoriesCache && ui.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
+    const utilObj = utils || SYH_UTILS;
+    utilObj.saveBannerCategory(bannerText, currentType).then(() => {
+        if (ui) {
+            ui.bannerCategoriesCache[bannerText] = currentType;
+            ui.filterBanners();
+        }
+    });
 }
 
 export const SYH_EVENT_BANNERS_PLUGIN: ISyhPlugin = {
@@ -95,112 +218,22 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             if (buttonNum !== 0) return;
 
             if (action === 'create-from-text') {
-                const text = prompt("Вставте список питань для створення банерів:", "");
-                if (text && self.BANNER_CREATOR) self.BANNER_CREATOR.processAndCreateBanners(text);
+                handleCreateBannersAction(self.BANNER_CREATOR);
                 return;
             }
-            
+
             if (action === 'delete-selected-banners') {
-                const checkedBanners = document.querySelectorAll<HTMLInputElement>('.syh-checkbox[data-type="banner"]:checked');
-                if (checkedBanners.length === 0) return;
-
-                const activeFilter = self.UI ? self.UI.bannerActiveFilter : 'all';
-                let proceed: boolean;
-
-                if (activeFilter && activeFilter !== 'all') {
-                    const filterNames: Record<string, string> = {
-                        'stream': 'Ефір',
-                        'audience': 'Глядачі',
-                        'prayer': 'Молитви'
-                    };
-                    const tabName = filterNames[activeFilter] || activeFilter;
-
-                    let currentTabCount = 0;
-                    const counts = {
-                        all: checkedBanners.length,
-                        stream: 0,
-                        audience: 0,
-                        prayer: 0
-                    };
-
-                    checkedBanners.forEach((checkbox) => {
-                        const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
-                        const textKey = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
-                        const commentType = (self.UI && self.UI.bannerCategoriesCache) ? (self.UI.bannerCategoriesCache[textKey] || 'none') : 'none';
-                        
-                        if (commentType === activeFilter) {
-                            currentTabCount++;
-                        }
-                        
-                        if (commentType === 'stream') {
-                            counts.stream++;
-                        } else if (commentType === 'audience') {
-                            counts.audience++;
-                        } else if (commentType === 'prayer') {
-                            counts.prayer++;
-                        }
-                    });
-
-                    let confirmMessage: string;
-                    if (currentTabCount > 0) {
-                        confirmMessage = `Ви впевнені, що хочете видалити ${currentTabCount} банер(ів) з вкладки "${tabName}"?\n\n` +
-                                         `Зверніть увагу: ці банери будуть видалені не тільки з поточної вкладки, а й з усіх інших вкладок, і з вкладки "Всі" також.\n\n` +
-                                         `Буде видалено:\n` +
-                                         `- Всі: ${counts.all}\n` +
-                                         `- Ефір: ${counts.stream}\n` +
-                                         `- Глядачі: ${counts.audience}\n` +
-                                         `- Молитви: ${counts.prayer}`;
-                    } else {
-                        confirmMessage = `Увага! На поточній вкладці "${tabName}" не вибрано жодного банера, але вибрано банери на інших вкладках.\n\n` +
-                                         `Зверніть увагу: ці банери будуть видалені назавжди з усіх вкладок, і з вкладки "Всі" також.\n\n` +
-                                         `Буде видалено:\n` +
-                                         `- Всі: ${counts.all}\n` +
-                                         `- Ефір: ${counts.stream}\n` +
-                                         `- Глядачі: ${counts.audience}\n` +
-                                         `- Молитви: ${counts.prayer}`;
-                    }
-
-                    proceed = confirm(confirmMessage);
-                } else {
-                    proceed = confirm(`Ви впевнені, що хочете видалити ${checkedBanners.length} банер(ів)?`);
-                }
-
-                if (proceed) {
-                    checkedBanners.forEach((checkbox) => {
-                        const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
-                        const deleteButton = bannerBlock?.querySelector((self.SELECTORS?.bannerDeleteButton as string) || '') as HTMLElement | null;
-                        if (deleteButton) deleteButton.click();
-                    });
-                }
+                handleDeleteSelectedBannersAction(self.SELECTORS, self.UI);
                 return;
             }
 
             if (type === 'banner' && action === 'copy-banner') {
-                const bannerBlock = button.closest((self.SELECTORS?.bannerBlock as string) || '');
-                const bannerText = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
-                const utils = self.UTILS || SYH_UTILS;
-                utils.copyAndShowBanner(bannerText, "Текст з Банера 🗞");
-                const checkbox = bannerBlock?.querySelector<HTMLInputElement>('.syh-checkbox');
-                if (checkbox) {
-                    checkbox.checked = true;
-                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                handleCopyBannerAction(button, self.SELECTORS, self.UTILS);
                 return;
             }
 
             if (action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
-                const bannerBlock = button.closest((self.SELECTORS?.bannerBlock as string) || '');
-                const bannerText = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
-                const targetType = action.replace('mark-', '');
-                
-                const currentType = (self.UI && self.UI.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
-                const utils = self.UTILS || SYH_UTILS;
-                utils.saveBannerCategory(bannerText, currentType).then(() => {
-                    if (self.UI) {
-                        self.UI.bannerCategoriesCache[bannerText] = currentType;
-                        self.UI.filterBanners();
-                    }
-                });
+                handleMarkBannerCategoryAction(button, action, self.SELECTORS, self.UI, self.UTILS);
                 return;
             }
         });
@@ -233,82 +266,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
     },
 
     bindBannersFilterControls: function(): void {
-        const self = this;
-        const searchInput = document.querySelector<HTMLInputElement>('#syh-banner-search');
-        const clearBtn = document.querySelector<HTMLElement>('#syh-clear-banner-search-btn');
-
-        if (searchInput) {
-            searchInput.oninput = function() {
-                if (self.UI) {
-                    self.UI.bannerSearchQuery = searchInput.value ? searchInput.value.toLowerCase() : '';
-                    if (clearBtn) clearBtn.style.display = self.UI.bannerSearchQuery ? 'flex' : 'none';
-                    self.UI.filterBanners();
-                }
-            };
-        }
-
-        if (clearBtn) {
-            clearBtn.onclick = function() {
-                if (searchInput) searchInput.value = '';
-                if (self.UI) {
-                    self.UI.bannerSearchQuery = '';
-                    clearBtn.style.display = 'none';
-                    self.UI.filterBanners();
-                }
-            };
-        }
-
-        const scrollBtn = document.querySelector('#syh-scroll-to-active-banner-btn');
-        if (scrollBtn) {
-            scrollBtn.onclick = function(e) {
-                e.preventDefault();
-                if (self.UI) self.UI.scrollToActiveBanner();
-            };
-        }
-
-        document.addEventListener('click', function(e: MouseEvent) {
-            const target = e.target as Element | null;
-            if (target?.closest('#syh-banner-empty-clear-link')) {
-                e.preventDefault();
-                if (searchInput) searchInput.value = '';
-                if (self.UI) {
-                    self.UI.bannerSearchQuery = '';
-                    if (clearBtn) clearBtn.style.display = 'none';
-                    self.UI.filterBanners();
-                }
-                return;
-            }
-
-            const filterBtn = target?.closest('.syh-banner-filter-btn') as HTMLElement | null;
-            if (filterBtn) {
-                document.querySelectorAll<HTMLElement>('.syh-banner-filter-btn').forEach(btn => {
-                    btn.style.background = 'transparent';
-                    btn.style.fontWeight = 'normal';
-                    btn.style.boxShadow = 'none';
-                    btn.style.color = '#666';
-                    btn.classList.remove('active');
-                    btn.setAttribute('aria-selected', 'false');
-                });
-
-                filterBtn.style.background = '#fff';
-                filterBtn.style.fontWeight = 'bold';
-                filterBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                filterBtn.style.color = '#000';
-                filterBtn.classList.add('active');
-                filterBtn.setAttribute('aria-selected', 'true');
-
-                if (self.UI) {
-                    self.UI.bannerActiveFilter = filterBtn.dataset.filter || 'all';
-                    self.UI.filterBanners();
-                }
-
-                if (self.UI && self.UI.bannerSearchQuery && searchInput) {
-                    searchInput.classList.remove('syh-banner-search-pulse');
-                    void searchInput.offsetWidth;
-                    searchInput.classList.add('syh-banner-search-pulse');
-                }
-            }
-        });
+        bindBannersFilterControls();
     }
 };
 

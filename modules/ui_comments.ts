@@ -4,6 +4,11 @@ import { SYH_UTILS } from './utils';
 import { UiFactory } from './ui_factory';
 import { CommentService } from './comment_service';
 import type { PrayerItem } from './types';
+import {
+    updateTabCounts,
+    renderSharedEmptyState,
+    scrollToActiveItem
+} from './ui_shared_utils';
 
 export function addButtonsToComment(commentNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -269,26 +274,11 @@ export function bindStarredControls(): void {
     });
 }
 
-export function filterStarredComments(): void {
-    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const commentList = document.querySelector<HTMLElement>(selectors.starredList);
-    if (!commentList) return;
-
-    const activeFilter = SYH_UI_STATE.activeFilter;
-    const searchQuery = SYH_UI_STATE.searchQuery;
-
-    const safeHtmlUpdate = (el: Element | null, newHtml: string) => {
-        if (el && el.innerHTML !== newHtml) el.innerHTML = newHtml;
-    };
-    const safeTextUpdate = (selector: string, newText: string) => {
-        const el = document.querySelector(selector);
-        if (el && el.textContent !== newText) el.textContent = newText;
-    };
-
+export function buildSortedCommentTexts(prayersCache: PrayerItem[], activeFilter: string): string[] {
     let sortedTexts: string[] = [];
     const grouped: Record<string, string[]> = {};
     
-    SYH_UI_STATE.prayersCache.forEach((p: PrayerItem) => {
+    prayersCache.forEach((p: PrayerItem) => {
         if (activeFilter === 'prayer' && p.type !== 'prayer') return;
         if (activeFilter === 'question' && p.type !== 'question') return;
         if (activeFilter === 'other') return; 
@@ -301,12 +291,17 @@ export function filterStarredComments(): void {
     for (const author in grouped) {
         sortedTexts = sortedTexts.concat(grouped[author]);
     }
+    return sortedTexts;
+}
 
-    if (commentList.style.display !== 'flex') {
-        commentList.style.display = 'flex';
-        commentList.style.flexDirection = 'column';
-    }
-
+export function filterCommentListItems(
+    commentList: HTMLElement,
+    selectors: any,
+    prayersCache: PrayerItem[],
+    activeFilter: string,
+    searchQuery: string,
+    sortedTexts: string[]
+): { visibleCount: number; countAbsolute: Record<string, number>; countSearch: Record<string, number> } {
     let visibleCount = 0;
     const countAbsolute = { all: 0, question: 0, prayer: 0, other: 0 };
     const countSearch = { all: 0, question: 0, prayer: 0, other: 0 };
@@ -321,7 +316,7 @@ export function filterStarredComments(): void {
         const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
         const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
         
-        const foundInCache = SYH_UI_STATE.prayersCache.find((item: PrayerItem) => item.text === originalText);
+        const foundInCache = prayersCache.find((item: PrayerItem) => item.text === originalText);
         const commentType = foundInCache ? foundInCache.type : 'none';
         
         updateCommentVisuals(commentWrap, commentType);
@@ -362,6 +357,75 @@ export function filterStarredComments(): void {
         }
     });
 
+    return { visibleCount, countAbsolute, countSearch };
+}
+
+export function updateCommentTabCounts(countAbsolute: Record<string, number>): void {
+    updateTabCounts({
+        '#syh-comment-filter-all .tab-count': ` (${countAbsolute.all})`,
+        '#syh-comment-filter-question .tab-count': ` (${countAbsolute.question})`,
+        '#syh-comment-filter-prayer .tab-count': ` (${countAbsolute.prayer})`,
+        '#syh-comment-filter-other .tab-count': ` (${countAbsolute.other})`,
+    });
+}
+
+export function renderCommentEmptyState(
+    visibleCount: number,
+    searchQuery: string,
+    activeFilter: string,
+    countSearch: Record<string, number>
+): void {
+    renderSharedEmptyState({
+        emptyStateId: 'syh-empty-state-msg',
+        emptyQueryId: 'syh-empty-query',
+        emptySuggestionId: 'syh-empty-suggestion',
+        clearLinkId: 'syh-empty-clear-link',
+        switchTabClass: 'syh-switch-tab',
+        filterBtnSelector: '.syh-filter-btn',
+        visibleCount,
+        searchQuery,
+        activeFilter,
+        countSearch,
+        suggestions: [
+            { key: 'question', label: 'Питання', icon: '❓' },
+            { key: 'prayer', label: 'Молитви', icon: '🙏' },
+            { key: 'other', label: 'Інші', icon: '📝' },
+        ],
+        filterNames: {
+            'all': 'списку коментарів',
+            'question': 'категорії "❓ Питання"',
+            'prayer': 'категорії "🙏 Молитви"',
+            'other': 'категорії "📝 Інші"'
+        },
+        entityNamePlural: 'коментарів',
+        defaultFilterTargetName: 'списку коментарів'
+    });
+}
+
+export function filterStarredComments(): void {
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    const commentList = document.querySelector<HTMLElement>(selectors.starredList);
+    if (!commentList) return;
+
+    const activeFilter = SYH_UI_STATE.activeFilter;
+    const searchQuery = SYH_UI_STATE.searchQuery;
+
+    const sortedTexts = buildSortedCommentTexts(SYH_UI_STATE.prayersCache, activeFilter);
+
+    if (commentList.style.display !== 'flex') {
+        commentList.style.display = 'flex';
+        commentList.style.flexDirection = 'column';
+    }
+
+    const { visibleCount, countAbsolute, countSearch } = filterCommentListItems(
+        commentList,
+        selectors,
+        SYH_UI_STATE.prayersCache,
+        activeFilter,
+        searchQuery,
+        sortedTexts
+    );
+
     const otherTabBtn = document.querySelector<HTMLElement>('#syh-comment-filter-other');
     if (countAbsolute.other === 0) {
         if (otherTabBtn && otherTabBtn.style.display !== 'none') otherTabBtn.style.display = 'none';
@@ -376,80 +440,11 @@ export function filterStarredComments(): void {
         if (otherTabBtn && otherTabBtn.style.display === 'none') otherTabBtn.style.display = 'inline-flex';
     }
 
-    safeTextUpdate('#syh-comment-filter-all .tab-count', ` (${countAbsolute.all})`);
-    safeTextUpdate('#syh-comment-filter-question .tab-count', ` (${countAbsolute.question})`);
-    safeTextUpdate('#syh-comment-filter-prayer .tab-count', ` (${countAbsolute.prayer})`);
-    safeTextUpdate('#syh-comment-filter-other .tab-count', ` (${countAbsolute.other})`);
-
-    const emptyState = document.querySelector<HTMLElement>('#syh-empty-state-msg');
-    const emptyQuery = document.querySelector('#syh-empty-query');
-    const emptySuggestion = document.querySelector<HTMLElement>('#syh-empty-suggestion');
-
-    if (visibleCount === 0) {
-        let messageHTML: string;
-        
-        if (searchQuery) {
-            messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${searchQuery}"</b><br><br>
-            <a href="#" id="syh-empty-clear-link" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
-            
-            const suggestions: string[] = [];
-            if (activeFilter !== 'all' && countSearch.all > 0) {
-                if (countSearch.question > 0 && activeFilter !== 'question') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="question" style="color: #f39c12; text-decoration: underline;">❓ Питання (${countSearch.question})</a>`);
-                if (countSearch.prayer > 0 && activeFilter !== 'prayer') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="prayer" style="color: #f39c12; text-decoration: underline;">🙏 Молитви (${countSearch.prayer})</a>`);
-                if (countSearch.other > 0 && activeFilter !== 'other') suggestions.push(`<a href="#" class="syh-switch-tab" data-filter="other" style="color: #f39c12; text-decoration: underline;">📝 Інші (${countSearch.other})</a>`);
-            }
-            
-            if (suggestions.length > 0) {
-                safeHtmlUpdate(emptySuggestion, `Знайдено в інших категоріях: ` + suggestions.join(', '));
-                if (emptySuggestion && emptySuggestion.style.display === 'none') emptySuggestion.style.display = 'block';
-                
-                document.querySelectorAll('.syh-switch-tab').forEach(el => {
-                    (el as HTMLElement).onclick = function(e) {
-                        e.preventDefault();
-                        const filter = (this as HTMLElement).dataset.filter;
-                        const btn = document.querySelector<HTMLElement>(`.syh-filter-btn[data-filter="${filter}"]`);
-                        if (btn) btn.click();
-                    };
-                });
-            } else {
-                if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-            }
-        } else {
-            if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-            const filterNames: Record<string, string> = { 
-                'all': 'списку коментарів', 
-                'question': 'категорії "❓ Питання"', 
-                'prayer': 'категорії "🙏 Молитви"', 
-                'other': 'категорії "📝 Інші"' 
-            };
-            messageHTML = `<span style="color: #777;">Тут ще немає коментарів для ${filterNames[activeFilter] || 'списку'}</span>`;
-        }
-
-        safeHtmlUpdate(emptyQuery, messageHTML);
-        if (emptyState && emptyState.style.display === 'none') emptyState.style.display = 'block';
-    } else {
-        if (emptyState && emptyState.style.display !== 'none') emptyState.style.display = 'none';
-        if (emptySuggestion && emptySuggestion.style.display !== 'none') emptySuggestion.style.display = 'none';
-    }
+    updateCommentTabCounts(countAbsolute);
+    renderCommentEmptyState(visibleCount, searchQuery, activeFilter, countSearch);
 }
 
 export function scrollToActiveComment(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const commentList = document.querySelector(selectors.starredList);
-    if (commentList) {
-        const activeLi = Array.from(commentList.children).find(child => child.querySelector('.lucide-circle-minus')) as HTMLElement | undefined;
-        if (activeLi) {
-            const rect = activeLi.getBoundingClientRect();
-            const scrollParent = activeLi.closest('div[class*="Scroll"]');
-            if (scrollParent) {
-                const parentRect = scrollParent.getBoundingClientRect();
-                const isVisible = (rect.top >= parentRect.top && rect.bottom <= parentRect.bottom);
-                if (!isVisible) {
-                    activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            } else {
-                activeLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }
+    scrollToActiveItem(selectors.starredList);
 }

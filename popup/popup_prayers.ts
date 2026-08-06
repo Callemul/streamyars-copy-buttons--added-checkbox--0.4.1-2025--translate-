@@ -28,41 +28,7 @@ export function sendUnstarMessagesForList(prayersList: PrayerItem[]): void {
     });
 }
 
-export function renderPrayers(prayersList: PrayerItem[]): void {
-    const outputDiv = $('prayersResultDiv');
-    if (!outputDiv) return;
-    outputDiv.innerHTML = '';
-
-    const roomWarning = $('syh-room-warning');
-    if (roomWarning) roomWarning.remove();
-    outputDiv.removeAttribute('contenteditable');
-
-    if (!prayersList || prayersList.length === 0) {
-        const totalCount = $('prayersTotalCount');
-        if (totalCount) totalCount.textContent = '0 люд. - 0 прохань';
-        outputDiv.innerHTML = '<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
-        outputDiv.setAttribute('data-raw-text', '');
-        return;
-    }
-
-    let needsSaveId = false;
-    prayersList.forEach((p, idx) => {
-        if (!p.id) {
-            p.id = 'p_' + (p.timestamp || Date.now()) + '_' + idx + '_' + Math.random().toString(36).substring(2, 7);
-            needsSaveId = true;
-        }
-    });
-    if (needsSaveId) {
-        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: prayersList });
-    }
-
-    const cleanedList = RetentionService.filterFreshPrayers(prayersList);
-
-    if (cleanedList.length !== prayersList.length) {
-        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: cleanedList });
-        prayersList = cleanedList;
-    }
-
+function checkRoomWarning(prayersList: PrayerItem[], outputDiv: HTMLElement): void {
     if (SYH_MESSAGING.isExtensionValid() && typeof chrome !== 'undefined' && chrome.tabs?.query) {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (!tabs || !tabs[0] || !tabs[0].url) return;
@@ -95,16 +61,18 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
             } catch(e) { console.error("[SYH] Room check error", e); }
         });
     }
+}
 
+function groupPrayersByAuthor(prayersList: PrayerItem[]): {
+    grouped: Record<string, { text: string; icon: string; id: string }[]>;
+    totalRequests: number;
+} {
     const grouped: Record<string, { text: string; icon: string; id: string }[]> = {};
     let totalRequests = 0;
-
     const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
-
     onlyPrayers.forEach((p) => {
         const cleanAuthor = p.author.replace(/^@+/, '');
         if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
-
         grouped[cleanAuthor].push({
             text: p.text,
             icon: p.icon || '🙏🙏🙏',
@@ -112,7 +80,172 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         });
         totalRequests++;
     });
+    return { grouped, totalRequests };
+}
 
+function buildAuthorHeader(author: string, items: { text: string; icon: string; id: string }[]): { header: HTMLElement; authorIcon: string } {
+    let hasPrayer = false;
+    let hasThanks = false;
+
+    items.forEach(item => {
+        if (item.icon === '🙏🙏🙏') hasPrayer = true;
+        if (item.icon === '❤️❤️❤️') hasThanks = true;
+        if (item.icon === '🙏❤️🙏') { hasPrayer = true; hasThanks = true; }
+    });
+
+    let authorIcon = '🙏🙏🙏';
+    if (hasPrayer && hasThanks) authorIcon = '🙏❤️🙏';
+    else if (!hasPrayer && hasThanks) authorIcon = '❤️❤️❤️';
+
+    const header = document.createElement('div');
+    setStyle(header, {
+        marginBottom: '5px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'nowrap',
+        width: '100%'
+    });
+
+    const leftWrap = document.createElement('div');
+    setStyle(leftWrap, {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        display: 'flex',
+        alignItems: 'center',
+        flex: '1',
+        minWidth: '0'
+    });
+
+    const iconSpan = document.createElement('span');
+    setStyle(iconSpan, { color: '#0b5394', fontWeight: 'bold', marginRight: '2px', whiteSpace: 'nowrap', flexShrink: '0' });
+    iconSpan.textContent = `${authorIcon} @`;
+
+    const authorSpan = document.createElement('span');
+    authorSpan.className = 'editable-author';
+    authorSpan.setAttribute('contenteditable', 'true');
+    setStyle(authorSpan, {
+        color: '#0b5394',
+        fontWeight: 'bold',
+        outline: 'none',
+        borderBottom: '1px dashed transparent',
+        whiteSpace: 'nowrap',
+        display: 'inline-block',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+    });
+    authorSpan.textContent = author;
+
+    leftWrap.append(iconSpan, authorSpan);
+
+    const rightWrap = document.createElement('div');
+    setStyle(rightWrap, { display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0' });
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-prayer-btn';
+    editBtn.setAttribute('title', 'Редагувати автора');
+    setStyle(editBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
+    editBtn.textContent = '✏️';
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-author-btn';
+    delBtn.setAttribute('data-author', author);
+    delBtn.setAttribute('title', 'Видалити автора з усіма проханнями');
+    setStyle(delBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
+    delBtn.textContent = '🗑️';
+
+    rightWrap.append(editBtn, delBtn);
+    header.append(leftWrap, rightWrap);
+
+    return { header, authorIcon };
+}
+
+function buildSinglePrayerRow(item: { text: string; id: string }): HTMLElement {
+    const textContainer = document.createElement('div');
+    setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px' });
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'editable-prayer';
+    textSpan.setAttribute('contenteditable', 'true');
+    textSpan.setAttribute('data-id', item.id);
+    setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
+    textSpan.textContent = item.text;
+
+    const delBtnSingle = document.createElement('button');
+    delBtnSingle.textContent = '❌';
+    delBtnSingle.setAttribute('title', 'Видалити прохання');
+    delBtnSingle.setAttribute('data-id', item.id);
+    delBtnSingle.className = 'del-prayer-btn';
+    setStyle(delBtnSingle, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
+
+    textContainer.append(textSpan, delBtnSingle);
+    return textContainer;
+}
+
+function buildIndexedPrayerRow(item: { text: string; id: string }, idx: number): HTMLElement {
+    const textContainer = document.createElement('div');
+    setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px' });
+
+    const indexSpan = document.createElement('span');
+    setStyle(indexSpan, { color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap' });
+    indexSpan.textContent = `${idx + 1}) `;
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'editable-prayer';
+    textSpan.setAttribute('contenteditable', 'true');
+    textSpan.setAttribute('data-id', item.id);
+    setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
+    textSpan.textContent = item.text;
+
+    const delBtnItem = document.createElement('button');
+    delBtnItem.textContent = '❌';
+    delBtnItem.setAttribute('title', 'Видалити прохання');
+    delBtnItem.setAttribute('data-id', item.id);
+    delBtnItem.className = 'del-prayer-btn';
+    setStyle(delBtnItem, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
+
+    textContainer.append(indexSpan, textSpan, delBtnItem);
+    return textContainer;
+}
+
+export function renderPrayers(prayersList: PrayerItem[]): void {
+    const outputDiv = $('prayersResultDiv');
+    if (!outputDiv) return;
+    outputDiv.innerHTML = '';
+
+    const roomWarning = $('syh-room-warning');
+    if (roomWarning) roomWarning.remove();
+    outputDiv.removeAttribute('contenteditable');
+
+    if (!prayersList || prayersList.length === 0) {
+        const totalCount = $('prayersTotalCount');
+        if (totalCount) totalCount.textContent = '0 люд. - 0 прохань';
+        outputDiv.innerHTML = '<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
+        outputDiv.setAttribute('data-raw-text', '');
+        return;
+    }
+
+    let needsSaveId = false;
+    prayersList.forEach((p, idx) => {
+        if (!p.id) {
+            p.id = 'p_' + (p.timestamp || Date.now()) + '_' + idx + '_' + Math.random().toString(36).substring(2, 7);
+            needsSaveId = true;
+        }
+    });
+    if (needsSaveId) {
+        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: prayersList });
+    }
+
+    const cleanedList = RetentionService.filterFreshPrayers(prayersList);
+    if (cleanedList.length !== prayersList.length) {
+        SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: cleanedList });
+        prayersList = cleanedList;
+    }
+
+    checkRoomWarning(prayersList, outputDiv);
+
+    const { grouped, totalRequests } = groupPrayersByAuthor(prayersList);
     const authorsCount = Object.keys(grouped).length;
     const totalCount = $('prayersTotalCount');
     if (totalCount) totalCount.textContent = `${authorsCount} люд. - ${totalRequests} прохань`;
@@ -120,137 +253,24 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     let fullTextForCopy = "🙏🙏🙏 МОЛИТВЕННЫЕ ПРОСЬБЫ\n\n";
 
     for (const author in grouped) {
-        let hasPrayer = false;
-        let hasThanks = false;
-
-        grouped[author].forEach(item => {
-            if (item.icon === '🙏🙏🙏') hasPrayer = true;
-            if (item.icon === '❤️❤️❤️') hasThanks = true;
-            if (item.icon === '🙏❤️🙏') { hasPrayer = true; hasThanks = true; }
-        });
-
-        let authorIcon = '🙏🙏🙏';
-        if (hasPrayer && hasThanks) authorIcon = '🙏❤️🙏';
-        else if (!hasPrayer && hasThanks) authorIcon = '❤️❤️❤️';
+        const items = grouped[author];
+        const { header, authorIcon } = buildAuthorHeader(author, items);
 
         fullTextForCopy += `${authorIcon} @${author}\n`;
 
         const block = document.createElement('div');
         block.className = 'q-block q-pray';
         block.style.position = 'relative';
-
-        const header = document.createElement('div');
-        setStyle(header, {
-            marginBottom: '5px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'nowrap',
-            width: '100%'
-        });
-
-        const leftWrap = document.createElement('div');
-        setStyle(leftWrap, {
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'flex',
-            alignItems: 'center',
-            flex: '1',
-            minWidth: '0'
-        });
-
-        const iconSpan = document.createElement('span');
-        setStyle(iconSpan, { color: '#0b5394', fontWeight: 'bold', marginRight: '2px', whiteSpace: 'nowrap', flexShrink: '0' });
-        iconSpan.textContent = `${authorIcon} @`;
-
-        const authorSpan = document.createElement('span');
-        authorSpan.className = 'editable-author';
-        authorSpan.setAttribute('contenteditable', 'true');
-        setStyle(authorSpan, {
-            color: '#0b5394',
-            fontWeight: 'bold',
-            outline: 'none',
-            borderBottom: '1px dashed transparent',
-            whiteSpace: 'nowrap',
-            display: 'inline-block',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-        });
-        authorSpan.textContent = author;
-
-        leftWrap.append(iconSpan, authorSpan);
-
-        const rightWrap = document.createElement('div');
-        setStyle(rightWrap, { display: 'flex', alignItems: 'center', gap: '8px', flexShrink: '0' });
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'edit-prayer-btn';
-        editBtn.setAttribute('title', 'Редагувати автора');
-        setStyle(editBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
-        editBtn.textContent = '✏️';
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'del-author-btn';
-        delBtn.setAttribute('data-author', author);
-        delBtn.setAttribute('title', 'Видалити автора з усіма проханнями');
-        setStyle(delBtn, { background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', padding: '0 4px' });
-        delBtn.textContent = '🗑️';
-
-        rightWrap.append(editBtn, delBtn);
-        header.append(leftWrap, rightWrap);
         block.appendChild(header);
 
-        if (grouped[author].length === 1) {
-            const item = grouped[author][0];
+        if (items.length === 1) {
+            const item = items[0];
             fullTextForCopy += `${item.text}\n\n`;
-
-            const textContainer = document.createElement('div');
-            setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px' });
-
-            const textSpan = document.createElement('span');
-            textSpan.className = 'editable-prayer';
-            textSpan.setAttribute('contenteditable', 'true');
-            textSpan.setAttribute('data-id', item.id);
-            setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
-            textSpan.textContent = item.text;
-
-            const delBtnSingle = document.createElement('button');
-            delBtnSingle.textContent = '❌';
-            delBtnSingle.setAttribute('title', 'Видалити прохання');
-            delBtnSingle.setAttribute('data-id', item.id);
-            delBtnSingle.className = 'del-prayer-btn';
-            setStyle(delBtnSingle, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
-
-            textContainer.append(textSpan, delBtnSingle);
-            block.appendChild(textContainer);
+            block.appendChild(buildSinglePrayerRow(item));
         } else {
-            grouped[author].forEach((item, idx) => {
+            items.forEach((item, idx) => {
                 fullTextForCopy += `${idx + 1}) ${item.text}\n`;
-
-                const textContainer = document.createElement('div');
-                setStyle(textContainer, { display: 'flex', alignItems: 'flex-start', gap: '5px', marginBottom: '4px' });
-
-                const indexSpan = document.createElement('span');
-                setStyle(indexSpan, { color: '#666', fontWeight: 'bold', whiteSpace: 'nowrap' });
-                indexSpan.textContent = `${idx + 1}) `;
-
-                const textSpan = document.createElement('span');
-                textSpan.className = 'editable-prayer';
-                textSpan.setAttribute('contenteditable', 'true');
-                textSpan.setAttribute('data-id', item.id);
-                setStyle(textSpan, { flex: '1', outline: 'none', borderBottom: '1px dashed transparent', padding: '2px' });
-                textSpan.textContent = item.text;
-
-                const delBtnItem = document.createElement('button');
-                delBtnItem.textContent = '❌';
-                delBtnItem.setAttribute('title', 'Видалити прохання');
-                delBtnItem.setAttribute('data-id', item.id);
-                delBtnItem.className = 'del-prayer-btn';
-                setStyle(delBtnItem, { background: 'none', border: 'none', cursor: 'pointer', padding: '0 5px', fontSize: '12px' });
-
-                textContainer.append(indexSpan, textSpan, delBtnItem);
-                block.appendChild(textContainer);
+                block.appendChild(buildIndexedPrayerRow(item, idx));
             });
             fullTextForCopy += `\n`;
         }
@@ -260,7 +280,7 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
     outputDiv.setAttribute('data-raw-text', fullTextForCopy.trim());
 }
 
-export function initPopupPrayersListeners() {
+function bindPrayerFocusListeners(): void {
     document.addEventListener('focusin', function(e) {
         const target = e.target as Element | null;
         const el = target?.closest('.editable-prayer') as HTMLElement | null;
@@ -320,7 +340,9 @@ export function initPopupPrayersListeners() {
             });
         }
     });
+}
 
+function bindPrayerClickListeners(): void {
     document.addEventListener('click', function(e) {
         const target = e.target as Element | null;
 
@@ -330,7 +352,6 @@ export function initPopupPrayersListeners() {
             const authorSpan = block?.querySelector('.editable-author') as HTMLElement | null;
             if (authorSpan) {
                 authorSpan.focus();
-
                 const range = document.createRange();
                 const sel = window.getSelection();
                 if (sel) {
@@ -413,7 +434,9 @@ export function initPopupPrayersListeners() {
             });
         }
     });
+}
 
+function bindPrayerToolbarListeners(): void {
     const copyBtn = $('copyPrayersBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', async function() {
@@ -485,4 +508,10 @@ export function initPopupPrayersListeners() {
             }
         });
     }
+}
+
+export function initPopupPrayersListeners() {
+    bindPrayerFocusListeners();
+    bindPrayerClickListeners();
+    bindPrayerToolbarListeners();
 }

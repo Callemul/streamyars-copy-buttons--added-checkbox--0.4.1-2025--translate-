@@ -120,10 +120,11 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
                     btnInfo.onmouseover = () => btnInfo.style.background = '#636979';
                     btnInfo.onmouseout = () => btnInfo.style.background = '#4F5461';
                     btnInfo.onclick = () => {
-                        if (SYH_INFO_MODAL && typeof SYH_INFO_MODAL.showModal === 'function') {
-                            SYH_INFO_MODAL.showModal();
+                        const globalModal = (window as any).SYH_INFO_MODAL;
+                        if (globalModal && typeof globalModal.showModal === 'function') {
+                            globalModal.showModal();
                         } else {
-                            console.warn("[SYH] Модуль info_modal ще не завантажено.");
+                            console.warn("[SYH] Модуль info_modal недоступний.");
                         }
                     };
 
