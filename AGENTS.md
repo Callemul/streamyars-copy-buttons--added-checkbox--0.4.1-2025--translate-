@@ -40,3 +40,22 @@
   - Зчитай `.agents/skills/streamyard.md` при розробці/дебагу UI чи ін'єкцій StreamYard.
 - 🔴 **Модуль YouTube Studio (`modules/youtube/` | `studio.youtube.com`):**
   - Зчитай `.agents/skills/youtube-studio.md` при розробці/дебагу YouTube Studio (Polymer, `<iron-list>`, рециклінг).
+
+---
+
+## 🚨 ТОЧНА СХЕМА ПАРАМЕТРІВ MCP-ІНСТРУМЕНТІВ
+
+1. ДЛЯ `codebase-memory`:
+   - `search_code`: ОБОВ'ЯЗКОВИЙ параметр назвати `pattern` (НЕ `query`).
+     Приклад: `call_mcp_tool("codebase-memory", "search_code", {"pattern": "cleanAuthorName"})`
+
+2. ДЛЯ `code-extractor`:
+   - `get_symbols_tool`: ОБОВ'ЯЗКОВИЙ параметр назвати `path_or_url` (НЕ `file_path`).
+     Приклад: `call_mcp_tool("code-extractor", "get_symbols_tool", {"path_or_url": "modules/comment_assistant.ts"})`
+   - `get_lines_tool`: ОБОВ'ЯЗКОВІ параметри `path_or_url`, `start_line`, `end_line`.
+     Запитуй точечно по 15–30 рядків, щоб вивід не згортався у файл output.txt!
+     Приклад: `call_mcp_tool("code-extractor", "get_lines_tool", {"path_or_url": "modules/comment_assistant.ts", "start_line": 1, "end_line": 30})`
+
+3. ЗАБОРОНА УСИХ `view_file` ДЛЯ ФАЙЛІВ > 50 РЯДКІВ:
+   - Використовуй тільки `get_lines_tool` з параметром `path_or_url`.
+

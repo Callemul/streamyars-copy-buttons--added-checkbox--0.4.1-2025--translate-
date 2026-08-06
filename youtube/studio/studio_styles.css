@@ -226,7 +226,35 @@ ytcp-comment-video-thumbnail {
     border-color: rgba(231, 76, 60, 0.4);
 }
 
-/* Sermon badges (Preach) use standard blue background, no green background */
+/* Sermon / Preach category badge in comment list (Unified Green Design) */
+.syh-badge-preach.syh-badge-auto,
+.syh-studio-badge.syh-badge-preach {
+    background-color: rgba(39, 174, 96, 0.15);
+    color: #1e8449;
+    border-color: rgba(39, 174, 96, 0.4);
+}
+
+html[dark] .syh-badge-preach.syh-badge-auto,
+html[dark="true"] .syh-badge-preach.syh-badge-auto,
+html[dark] .syh-studio-badge.syh-badge-preach,
+html[dark="true"] .syh-studio-badge.syh-badge-preach {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.5);
+}
+
+.syh-badge-preach.syh-badge-manual {
+    background-color: rgba(39, 174, 96, 0.25);
+    color: #196f3d;
+    border-color: rgba(39, 174, 96, 0.6);
+}
+
+html[dark] .syh-badge-preach.syh-badge-manual,
+html[dark="true"] .syh-badge-preach.syh-badge-manual {
+    background-color: rgba(46, 204, 113, 0.3);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.7);
+}
 
 
 .syh-badge-highlight {
@@ -425,6 +453,27 @@ html[dark="true"] .syh-header-badge-preach {
     font-size: 12px;
 }
 
+.syh-stat-total {
+    color: #2980b9;
+    font-weight: 600;
+}
+
+.syh-stat-total .syh-counter-num-total {
+    color: #2980b9;
+    font-weight: 800;
+}
+
+.syh-header-stat-divider {
+    color: rgba(0, 0, 0, 0.25);
+    font-weight: 300;
+    margin: 0 1px;
+}
+
+html[dark] .syh-header-stat-divider,
+html[dark="true"] .syh-header-stat-divider {
+    color: rgba(255, 255, 255, 0.35);
+}
+
 .syh-stat-questions {
     color: #27ae60;
     font-weight: 600;
@@ -491,5 +540,74 @@ html[dark] .syh-stat-del:hover,
 html[dark="true"] .syh-stat-del:hover {
     background-color: rgba(255, 107, 107, 0.25);
 }
+
+/* --- СТИЛІ ПІДСВІЧУВАННЯ ТРИГЕРНИХ СЛІВ ТА БЛОКІВ У YOUTUBE STUDIO --- */
+mark.syh-trigger-highlight {
+    background-color: #ffe066 !important;
+    color: #111111 !important;
+    padding: 0 3px !important;
+    border-radius: 3px !important;
+    font-weight: 700 !important;
+    display: inline !important;
+    line-height: inherit !important;
+    vertical-align: baseline !important;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+mark.syh-trigger-highlight.syh-trigger-question {
+    background-color: #27ae60 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(39, 174, 96, 0.4) !important;
+}
+
+mark.syh-trigger-highlight.syh-trigger-prayer {
+    background-color: #9b59b6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(155, 89, 182, 0.4) !important;
+}
+
+/* Підсвічування контейнера коментаря у Studio при спрацюванні тригера */
+ytcp-comment[data-syh-triggered="question"] {
+    border-left: 4px solid #27ae60 !important;
+    background-color: rgba(39, 174, 96, 0.08) !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+ytcp-comment[data-syh-triggered="prayer"] {
+    border-left: 4px solid #9b59b6 !important;
+    background-color: rgba(155, 89, 182, 0.08) !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Захист від помилкового згортання Polymer is-empty при скролі (без порушення нативного max-height truncation) */
+#content-text[is-empty]:not(:empty),
+yt-formatted-string#content-text[is-empty]:not(:empty) {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Гарантоване розміщення кнопки "...Докладніше" у нижньому правому кутку обрізаного коментаря */
+#expander-container {
+    position: relative !important;
+}
+
+#more.show {
+    position: absolute !important;
+    top: auto !important;
+    bottom: 0px !important;
+    right: 0px !important;
+    left: auto !important;
+    background: var(--ytcp-general-background-a, #ffffff) !important;
+    padding-left: 8px !important;
+    box-shadow: -8px 0 8px var(--ytcp-general-background-a, #ffffff) !important;
+    z-index: 2 !important;
+}
+
+html[dark] #more.show,
+html[dark="true"] #more.show {
+    background: var(--ytcp-general-background-a, #282828) !important;
+    box-shadow: -8px 0 8px var(--ytcp-general-background-a, #282828) !important;
+}
+
 
 

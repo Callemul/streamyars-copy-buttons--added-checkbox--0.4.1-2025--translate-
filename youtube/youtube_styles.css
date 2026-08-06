@@ -120,11 +120,32 @@
 mark.syh-trigger-highlight {
     background-color: #ffe066 !important;
     color: #111111 !important;
-    padding: 1px 4px !important;
+    padding: 0 3px !important;
     border-radius: 3px !important;
     font-weight: bold !important;
-    display: inline-block !important;
+    display: inline !important;
+    line-height: inherit !important;
+    vertical-align: baseline !important;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+mark.syh-trigger-highlight.syh-trigger-question {
+    background-color: #27ae60 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(39, 174, 96, 0.4) !important;
+}
+
+mark.syh-trigger-highlight.syh-trigger-prayer {
+    background-color: #9b59b6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(155, 89, 182, 0.4) !important;
+}
+
+/* Захист від згортання Polymer is-empty */
+#content-text[is-empty]:not(:empty),
+yt-formatted-string#content-text[is-empty]:not(:empty) {
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* Блокування виділення тексту для ПКМ-тогла */

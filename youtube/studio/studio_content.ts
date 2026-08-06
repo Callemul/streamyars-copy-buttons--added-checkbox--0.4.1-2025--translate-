@@ -26,7 +26,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
-import { getCommentThreads, getCommentHeaderLabelElement, getCommentHeaderElement } from './studio_selectors';
+import { getCommentThreads, getCommentHeaderLabelElement, getCommentHeaderElement, STUDIO_SELECTORS } from './studio_selectors';
 import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
@@ -34,6 +34,8 @@ import { getAllSheetIds } from '../../modules/sheets';
 import { renderStudioHeaderCounters, type SheetHeaderStats } from './studio_header_counters';
 import { countQuestionsInText } from '../../modules/telegram_parser';
 import type { CommentPayload } from '../../modules/comment_service';
+import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
+import { SYH_CONFIG } from '../../modules/config';
 
 const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
 
@@ -57,6 +59,17 @@ class StudioModuleController {
 
     public async init(): Promise<void> {
         console.log('[SYH Studio] Initializing Studio Module...');
+
+        // 0. Initialize Comment Assistant with Studio selectors
+        SYH_COMMENT_ASSISTANT.init({
+            SELECTORS: {
+                commentBlock: STUDIO_SELECTORS.COMMENT,
+                commentText: STUDIO_SELECTORS.CONTENT_TEXT
+            },
+            TRIGGER_WORDS_QUESTION: SYH_CONFIG.TRIGGER_WORDS_QUESTION,
+            TRIGGER_WORDS_PRAYER: SYH_CONFIG.TRIGGER_WORDS_PRAYER,
+            TRIGGER_WORDS: SYH_CONFIG.TRIGGER_WORDS
+        });
 
         // 1. Run 30-day state cleanup
         cleanupStudioState().catch((err) => console.warn('[SYH Studio] Cleanup error:', err));

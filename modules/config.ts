@@ -15,6 +15,8 @@ export interface SyhConfig {
         TEXT_TRUNCATION_LENGTH: number;
     };
     TRIGGER_WORDS: string[];
+    TRIGGER_WORDS_QUESTION?: string[];
+    TRIGGER_WORDS_PRAYER?: string[];
 }
 
 /**
@@ -104,5 +106,7 @@ export const SYH_CONFIG: SyhConfig = {
         TEXT_TRUNCATION_LENGTH: 195,     // Максимальна довжина тексту перед обрізанням
     },
 
-    TRIGGER_WORDS: ['вопрос']            // Список тригерних слів для Помічника коментарів
+    TRIGGER_WORDS_QUESTION: ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'],
+    TRIGGER_WORDS_PRAYER: ['молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба'],
+    TRIGGER_WORDS: ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом', 'молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба']
 };

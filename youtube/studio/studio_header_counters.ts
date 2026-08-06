@@ -38,8 +38,20 @@ export function formatCategoryLabel(label: string): string {
 }
 
 /**
- * Renders or updates the sticky duplicate counter badges (questions & prayers) directly next to "Коментар" span inside #comment-header.
- * Clicking anywhere on a badge activates the corresponding sheet tab in popup.
+ * Renders or updates the sticky counter badges directly next to "Коментар" span inside #comment-header in YouTube Studio.
+ * 
+ * AI SEARCH KEYWORDS / КЛЮЧОВІ СЛОВА ДЛЯ ШІ:
+ * - "бадж", "баджі", "бадже", "лічильник", "коментар", "Молчанов СШ", "Молчанов проповеди", "Время перемен СШ", "Опарин"
+ * - "syh-header-counter-badge", "syh-stat-total", "syh-counter-num-total", "syh-header-stat-divider", "renderStudioHeaderCounters"
+ * 
+ * HTML BADGE STRUCTURE / СТРУКТУРА БАДЖА:
+ * [Категорія] | 👥 [Всього люд.] │ ❓ [Питань] 🙏 [Молитов] 🗑️
+ * - .syh-header-sheet-label (Назва: Молчанов СШ / проповеди / Время перемен СШ)
+ * - .syh-stat-total (👥 total = questions + prayers) -> відповідає кількості людей у Попапі
+ * - .syh-header-stat-divider (│ роздільник)
+ * - .syh-stat-questions (❓ questions) -> сума питань з типом question
+ * - .syh-stat-prayers (🙏 prayers) -> сума молитов з типом prayer
+ * - .syh-stat-del (🗑️ кнопка очищення коментарів цієї категорії)
  */
 export function renderStudioHeaderCounters(
     parentContainer: HTMLElement,
@@ -101,12 +113,15 @@ export function renderStudioHeaderCounters(
             questions = rawStat;
         }
 
+        const total = questions + prayers;
         const isPreach = sheetId.includes('preach') || sheetId.includes('oparin');
         const preachClass = isPreach ? ' syh-header-badge-preach' : '';
 
         html += `
             <span class="syh-header-counter-badge${preachClass}" data-sheet-id="${sheetId}">
                 <span class="syh-header-sheet-label">${formattedLabel}</span>
+                <span class="syh-header-stat-item syh-stat-total" title="Всього коментарів з YouTube (Людей)">👥 <b class="syh-counter-num-total">${total}</b></span>
+                <span class="syh-header-stat-divider">│</span>
                 <span class="syh-header-stat-item syh-stat-questions" title="Питання з YouTube">❓ <b class="syh-counter-num-q">${questions}</b></span>
                 <span class="syh-header-stat-item syh-stat-prayers" title="Молитви з YouTube">🙏 <b class="syh-counter-num-p">${prayers}</b></span>
                 <span class="syh-header-stat-item syh-stat-del" title="Видалити зібрані коментарі з YouTube для цієї категорії">🗑️</span>

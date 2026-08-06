@@ -21,6 +21,7 @@ import { StudioCommentAdapter, type StudioEventCaches, retroactiveUpdateVideoCom
 import type { SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
 import { STUDIO_SELECTORS } from './studio_selectors';
+import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
 
 export type { StudioEventCaches };
 
@@ -103,6 +104,10 @@ export function bindStudioCommentEvents(
         threadEl.removeAttribute('data-syh-studio-events-bound');
         threadEl.removeAttribute('data-syh-bound');
         delete (threadEl as any)._syhBound;
+        const textNode = threadEl.querySelector('#content-text');
+        if (textNode) {
+            textNode.removeAttribute('data-syh-original-text');
+        }
     }
 
     threadEl.dataset.syhVideoKey = videoKey;
@@ -131,6 +136,12 @@ export function bindStudioCommentEvents(
 
     injector.bindCommentEvents(threadEl, commentKey);
     adapter.bindStudioSpecificEvents(threadEl, commentKey, caches);
+
+    try {
+        SYH_COMMENT_ASSISTANT.processComment(threadEl);
+    } catch (err) {
+        console.warn('[SYH Studio] Error highlighting comment triggers:', err);
+    }
 
     threadEl.dataset.syhStudioEventsBound = 'true';
 }

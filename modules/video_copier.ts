@@ -14,6 +14,7 @@ export interface SyhVideoCopier {
 import type { ISyhPlugin } from './plugin_registry';
 import { UiFactory } from './ui_factory';
 import { SYH_I18N } from './i18n';
+import { SYH_DOM_OBSERVER } from './dom_observer';
 
 export const SYH_VIDEO_COPIER_PLUGIN: ISyhPlugin = {
     id: 'syh_video_copier',

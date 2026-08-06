@@ -82,3 +82,38 @@
 Відкрий DevTools → Console на вкладці streamyard.com.
 Якщо видно: [SYH Storage] chrome.storage not available — це zombie context.
 Натисни Reload в chrome://extensions або перезавантаж сторінку.
+
+---
+
+## 🏷️ Лічильники та баджі у шапці YouTube Studio (Header Counter Badges)
+
+### Ключові слова для швидкого пошуку ШІ (AI Search Index):
+`бадж`, `баджі`, `бадже`, `коментар`, `лічильник`, `Молчанов СШ`, `Молчанов проповеди`, `Время перемен СШ`, `Опарин проповеди`, `syh-header-counter-badge`, `syh-stat-total`, `syh-counter-num-total`, `renderStudioHeaderCounters`, `studio_header_counters`
+
+### Розташування коду та стилів:
+- 📄 Логіка та генерація DOM: [`youtube/studio/studio_header_counters.ts`](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20(added%20checkbox)%200.6-2026.01.11/youtube/studio/studio_header_counters.ts)
+- 🎨 CSS Стилі: [`youtube/studio/studio_styles.css`](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20(added%20checkbox)%200.6-2026.01.11/youtube/studio/studio_styles.css)
+- 🔄 Виклики рендеру: [`youtube/studio/studio_content.ts`](file:///d:/Chrome%20Extension/%D0%92%D1%80%D0%B5%D0%BC%D1%8F%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD.%20Chrome%20Extension/streamyars-copy-buttons%20(added%20checkbox)%200.6-2026.01.11/youtube/studio/studio_content.ts)
+
+### Анатомія баджа у DOM (`.syh-header-counter-badge`):
+```html
+<span class="syh-header-counter-badge" data-sheet-id="molchanov_ss">
+    <span class="syh-header-sheet-label">Молчанов <b>СШ</b></span>
+    <!-- Загальний лічильник коментарів/людей для цієї категорії (відповідник Попапу) -->
+    <span class="syh-header-stat-item syh-stat-total" title="Всього коментарів з YouTube (Людей)">👥 <b class="syh-counter-num-total">11</b></span>
+    <!-- Вертикальний роздільник -->
+    <span class="syh-header-stat-divider">│</span>
+    <!-- Кількість питань -->
+    <span class="syh-header-stat-item syh-stat-questions" title="Питання з YouTube">❓ <b class="syh-counter-num-q">4</b></span>
+    <!-- Кількість молитов -->
+    <span class="syh-header-stat-item syh-stat-prayers" title="Молитви з YouTube">🙏 <b class="syh-counter-num-p">7</b></span>
+    <!-- Очищення зібраного з YouTube для цієї категорії -->
+    <span class="syh-header-stat-item syh-stat-del" title="Видалити зібрані коментарі з YouTube для цієї категорії">🗑️</span>
+</span>
+```
+
+### Співвідношення даних з Попапом:
+- `👥 Total` ($questions + prayers$) = Кількість людей у Попапі для YouTube колонки (`11 люд.`).
+- `❓ Questions` = Сума питань з типом `question` (за маркерами `🔹` або 1 на коментар).
+- `🙏 Prayers` = Сума молитов з типом `prayer`.
+

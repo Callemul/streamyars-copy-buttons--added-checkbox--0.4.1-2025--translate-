@@ -292,3 +292,15 @@ mark.syh-trigger-highlight {
     box-shadow: 0 0 4px rgba(255, 224, 102, 0.6) !important;
     display: inline !important;
 }
+
+mark.syh-trigger-highlight.syh-trigger-question {
+    background-color: #f39c12 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 4px rgba(243, 156, 18, 0.6) !important;
+}
+
+mark.syh-trigger-highlight.syh-trigger-prayer {
+    background-color: #005df7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 4px rgba(0, 93, 247, 0.6) !important;
+}
