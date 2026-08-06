@@ -93,4 +93,12 @@ describe('SheetStateService Tests', () => {
         assert.equal(processResult.stats.newLeftQuestionsTotal, 1);
         assert.equal(processResult.stats.newLeftPrayersTotal, 1);
     });
+
+    test('5. leftPeople deduplicates identical author names (e.g. @Alex and Alex)', () => {
+        const telegramText = `❓❓❓ВОПРОСЫ\n1️⃣\n@Alex\nFirst question?\n\n2️⃣\nAlex\nSecond question?`;
+        const computeResult = SheetStateService.computeSheetCounters(telegramText, []);
+
+        assert.equal(computeResult.leftPeople, 1); // 1 unique author (@Alex and Alex)
+        assert.equal(computeResult.leftQuestions, 2); // 2 questions total
+    });
 });

@@ -58,6 +58,25 @@ export interface ProcessedSheetResult {
 
 import type { TelegramQuestionItem, GroupedNewItem } from './telegram_parser';
 
+export function countUniquePeople(items: { author: string }[]): number {
+    const namedAuthors = new Set<string>();
+    let anonymousCount = 0;
+
+    for (const item of items) {
+        const raw = (item.author || '').trim();
+        const norm = raw.replace(/^@+/, '').toLowerCase();
+        const isGenericAnon = !norm || norm === 'анонім' || norm === 'питання з чату' || norm === 'невідомий';
+
+        if (isGenericAnon) {
+            anonymousCount++;
+        } else {
+            namedAuthors.add(norm);
+        }
+    }
+
+    return namedAuthors.size + anonymousCount;
+}
+
 export class SheetStateService {
     public static processSheetData(inputs: {
         oldListText: string;
@@ -100,16 +119,16 @@ export class SheetStateService {
         const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
         const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
 
-        const oldPeople = preservedData.questions.length;
+        const oldPeople = countUniquePeople(preservedData.questions);
         let oldQuestionsTotal = 0;
         preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
 
-        const newLeftPeople = newQuestions.length + newPrayers.length;
+        const newLeftPeople = countUniquePeople([...newQuestions, ...newPrayers]);
         let newLeftQuestionsTotal = 0;
         newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
         const newLeftPrayersTotal = newPrayers.length;
 
-        const newYTPeople = ytItems.length;
+        const newYTPeople = countUniquePeople(ytItems);
         let newYTQuestionsTotal = 0;
         newYTQuestions.forEach((q) => newYTQuestionsTotal += countQuestionsInText(q.text));
         const newYTPrayersTotal = newYTPrayers.length;
@@ -239,17 +258,17 @@ export class SheetStateService {
         if (telegramText && telegramText.trim()) {
             if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
                 const parsed = parseAndFilterOldList(telegramText, []);
-                leftPeople = parsed.questions.length + parsed.prayers.length;
+                leftPeople = countUniquePeople([...parsed.questions, ...parsed.prayers]);
                 parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
                 leftPrayers = parsed.prayers.length;
             } else {
                 const items = parseTelegramExportLineByLine(telegramText);
-                leftPeople = items.length;
+                leftPeople = countUniquePeople(items);
                 items.forEach((q) => leftQuestions += countQuestionsInText(q.text));
             }
         }
 
-        const rightPeople = ytItems.length;
+        const rightPeople = countUniquePeople(ytItems);
         let rightQuestions = 0;
         let rightPrayers = 0;
 

@@ -284,6 +284,7 @@ textarea {
     font-size: 13.5px;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior-y: auto;
     background-color: var(--card-bg);
     white-space: pre-wrap;
     word-wrap: break-word;
