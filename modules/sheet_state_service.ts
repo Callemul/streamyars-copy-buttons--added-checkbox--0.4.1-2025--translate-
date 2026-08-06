@@ -58,119 +58,75 @@ export interface ProcessedSheetResult {
 
 import type { TelegramQuestionItem, GroupedNewItem } from './telegram_parser';
 
-export function countUniquePeople(items: { author: string }[]): number {
-    const namedAuthors = new Set<string>();
-    let anonymousCount = 0;
+export class SheetStatsCalculator {
+    public static countUniquePeople(items: { author: string }[]): number {
+        const namedAuthors = new Set<string>();
+        let anonymousCount = 0;
 
-    for (const item of items) {
-        const raw = (item.author || '').trim();
-        const norm = raw.replace(/^@+/, '').toLowerCase();
-        const isGenericAnon = !norm || norm === 'анонім' || norm === 'питання з чату' || norm === 'невідомий';
+        for (const item of items) {
+            const raw = (item.author || '').trim();
+            const norm = raw.replace(/^@+/, '').toLowerCase();
+            const isGenericAnon = !norm || norm === 'анонім' || norm === 'питання з чату' || norm === 'невідомий';
 
-        if (isGenericAnon) {
-            anonymousCount++;
-        } else {
-            namedAuthors.add(norm);
+            if (isGenericAnon) {
+                anonymousCount++;
+            } else {
+                namedAuthors.add(norm);
+            }
         }
+
+        return namedAuthors.size + anonymousCount;
     }
 
-    return namedAuthors.size + anonymousCount;
-}
+    public static computeSheetCounters(telegramText: string, ytItems: YTCollectedItem[]): SheetCounterStats {
+        let leftPeople = 0;
+        let leftQuestions = 0;
+        let leftPrayers = 0;
 
-export class SheetStateService {
-    public static processSheetData(inputs: {
-        oldListText: string;
-        answeredInput: string;
-        telegramText: string;
-        ytItems: YTCollectedItem[];
-    }): ProcessedSheetResult {
-        const { oldListText, answeredInput, telegramText, ytItems } = inputs;
-        const answeredIds = answeredInput
-            .split(/[\s,]+/)
-            .map(s => parseFloat(s.trim()))
-            .filter(n => !isNaN(n));
-
-        const cleaningLog: CleaningLogEntry[] = [];
-        const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
-
-        let newQuestions: TelegramQuestionItem[];
-        let newPrayers: TelegramQuestionItem[] = [];
-
-        if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
-            const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
-            newQuestions = parsedNew.questions.map((q) => ({ ...q, source: 'new' as const }));
-            newPrayers = parsedNew.prayers.map((p) => ({ ...p, source: 'pray' as const }));
-        } else {
-            const parsedLineItems: GroupedNewItem[] = parseTelegramExportLineByLine(telegramText, cleaningLog);
-            newQuestions = parsedLineItems.map(item => ({ ...item, source: 'new' as const }));
+        if (telegramText && telegramText.trim()) {
+            if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
+                const parsed = parseAndFilterOldList(telegramText, []);
+                leftPeople = SheetStatsCalculator.countUniquePeople([...parsed.questions, ...parsed.prayers]);
+                parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
+                leftPrayers = parsed.prayers.length;
+            } else {
+                const items = parseTelegramExportLineByLine(telegramText);
+                leftPeople = SheetStatsCalculator.countUniquePeople(items);
+                items.forEach((q) => leftQuestions += countQuestionsInText(q.text));
+            }
         }
 
-        const newYTQuestions: TelegramQuestionItem[] = [];
-        const newYTPrayers: TelegramQuestionItem[] = [];
+        const rightPeople = SheetStatsCalculator.countUniquePeople(ytItems);
+        let rightQuestions = 0;
+        let rightPrayers = 0;
 
-        ytItems.forEach((item: YTCollectedItem) => {
+        ytItems.forEach(item => {
             if (item.type === 'question') {
-                newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
+                rightQuestions += countQuestionsInText(item.text);
             } else if (item.type === 'prayer') {
-                newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
+                rightPrayers += 1;
             }
         });
-
-        const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
-        const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
-
-        const oldPeople = countUniquePeople(preservedData.questions);
-        let oldQuestionsTotal = 0;
-        preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
-
-        const newLeftPeople = countUniquePeople([...newQuestions, ...newPrayers]);
-        let newLeftQuestionsTotal = 0;
-        newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
-        const newLeftPrayersTotal = newPrayers.length;
-
-        const newYTPeople = countUniquePeople(ytItems);
-        let newYTQuestionsTotal = 0;
-        newYTQuestions.forEach((q) => newYTQuestionsTotal += countQuestionsInText(q.text));
-        const newYTPrayersTotal = newYTPrayers.length;
-
-        let delPeople = 0;
-        let delQuestionsTotal = 0;
-        preservedData.deleted.forEach((d: DeletedLogEntry) => {
-            if (d.type === 'block') {
-                delPeople++;
-                delQuestionsTotal += d.count;
-            } else if (d.type === 'sub') {
-                delQuestionsTotal += d.count;
-            }
-        });
-
-        const totalPeople = oldPeople + newLeftPeople + newYTPeople;
-        const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
-        const totalPrayers = combinedPrayers.length;
 
         return {
-            questions: combinedQuestions,
-            prayers: combinedPrayers,
-            stats: {
-                oldPeople,
-                oldQuestionsTotal,
-                newLeftPeople,
-                newLeftQuestionsTotal,
-                newLeftPrayersTotal,
-                newYTPeople,
-                newYTQuestionsTotal,
-                newYTPrayersTotal,
-                delPeople,
-                delQuestionsTotal,
-                totalPeople,
-                totalQuestions,
-                totalPrayers
-            },
-            deletedLog: preservedData.deleted,
-            cleaningLog
+            leftPeople,
+            leftQuestions,
+            leftPrayers,
+            rightPeople,
+            rightQuestions,
+            rightPrayers,
+            totalPeople: leftPeople + rightPeople,
+            totalQuestions: leftQuestions + rightQuestions,
+            totalPrayers: leftPrayers + rightPrayers
         };
     }
+}
 
+export function countUniquePeople(items: { author: string }[]): number {
+    return SheetStatsCalculator.countUniquePeople(items);
+}
+
+export class SheetRepository {
     public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
         const sheetKey = getSheetCollectedStorageKey(sheetId);
         const k = POPUP_SHEET_KEYS;
@@ -249,47 +205,115 @@ export class SheetStateService {
         ];
         await SYH_STORAGE.removeAsync(keysToRemove);
     }
+}
 
-    public static computeSheetCounters(telegramText: string, ytItems: YTCollectedItem[]): SheetCounterStats {
-        let leftPeople = 0;
-        let leftQuestions = 0;
-        let leftPrayers = 0;
+export class SheetStateService {
+    public static processSheetData(inputs: {
+        oldListText: string;
+        answeredInput: string;
+        telegramText: string;
+        ytItems: YTCollectedItem[];
+    }): ProcessedSheetResult {
+        const { oldListText, answeredInput, telegramText, ytItems } = inputs;
+        const answeredIds = answeredInput
+            .split(/[\s,]+/)
+            .map(s => parseFloat(s.trim()))
+            .filter(n => !isNaN(n));
 
-        if (telegramText && telegramText.trim()) {
-            if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
-                const parsed = parseAndFilterOldList(telegramText, []);
-                leftPeople = countUniquePeople([...parsed.questions, ...parsed.prayers]);
-                parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
-                leftPrayers = parsed.prayers.length;
-            } else {
-                const items = parseTelegramExportLineByLine(telegramText);
-                leftPeople = countUniquePeople(items);
-                items.forEach((q) => leftQuestions += countQuestionsInText(q.text));
-            }
+        const cleaningLog: CleaningLogEntry[] = [];
+        const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
+
+        let newQuestions: TelegramQuestionItem[];
+        let newPrayers: TelegramQuestionItem[] = [];
+
+        if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
+            const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
+            newQuestions = parsedNew.questions.map((q) => ({ ...q, source: 'new' as const }));
+            newPrayers = parsedNew.prayers.map((p) => ({ ...p, source: 'pray' as const }));
+        } else {
+            const parsedLineItems: GroupedNewItem[] = parseTelegramExportLineByLine(telegramText, cleaningLog);
+            newQuestions = parsedLineItems.map(item => ({ ...item, source: 'new' as const }));
         }
 
-        const rightPeople = countUniquePeople(ytItems);
-        let rightQuestions = 0;
-        let rightPrayers = 0;
+        const newYTQuestions: TelegramQuestionItem[] = [];
+        const newYTPrayers: TelegramQuestionItem[] = [];
 
-        ytItems.forEach(item => {
+        ytItems.forEach((item: YTCollectedItem) => {
             if (item.type === 'question') {
-                rightQuestions += countQuestionsInText(item.text);
+                newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
             } else if (item.type === 'prayer') {
-                rightPrayers += 1;
+                newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
             }
         });
 
+        const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
+        const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
+
+        const oldPeople = SheetStatsCalculator.countUniquePeople(preservedData.questions);
+        let oldQuestionsTotal = 0;
+        preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
+
+        const newLeftPeople = SheetStatsCalculator.countUniquePeople([...newQuestions, ...newPrayers]);
+        let newLeftQuestionsTotal = 0;
+        newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
+        const newLeftPrayersTotal = newPrayers.length;
+
+        const newYTPeople = SheetStatsCalculator.countUniquePeople(ytItems);
+        let newYTQuestionsTotal = 0;
+        newYTQuestions.forEach((q) => newYTQuestionsTotal += countQuestionsInText(q.text));
+        const newYTPrayersTotal = newYTPrayers.length;
+
+        let delPeople = 0;
+        let delQuestionsTotal = 0;
+        preservedData.deleted.forEach((d: DeletedLogEntry) => {
+            if (d.type === 'block') {
+                delPeople++;
+                delQuestionsTotal += d.count;
+            } else if (d.type === 'sub') {
+                delQuestionsTotal += d.count;
+            }
+        });
+
+        const totalPeople = oldPeople + newLeftPeople + newYTPeople;
+        const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
+        const totalPrayers = combinedPrayers.length;
+
         return {
-            leftPeople,
-            leftQuestions,
-            leftPrayers,
-            rightPeople,
-            rightQuestions,
-            rightPrayers,
-            totalPeople: leftPeople + rightPeople,
-            totalQuestions: leftQuestions + rightQuestions,
-            totalPrayers: leftPrayers + rightPrayers
+            questions: combinedQuestions,
+            prayers: combinedPrayers,
+            stats: {
+                oldPeople,
+                oldQuestionsTotal,
+                newLeftPeople,
+                newLeftQuestionsTotal,
+                newLeftPrayersTotal,
+                newYTPeople,
+                newYTQuestionsTotal,
+                newYTPrayersTotal,
+                delPeople,
+                delQuestionsTotal,
+                totalPeople,
+                totalQuestions,
+                totalPrayers
+            },
+            deletedLog: preservedData.deleted,
+            cleaningLog
         };
+    }
+
+    public static loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
+        return SheetRepository.loadSheetState(sheetId);
+    }
+
+    public static saveSheetState(sheetId: string, updates: Record<string, any>): Promise<void> {
+        return SheetRepository.saveSheetState(sheetId, updates);
+    }
+
+    public static clearSheetState(sheetId: string): Promise<void> {
+        return SheetRepository.clearSheetState(sheetId);
+    }
+
+    public static computeSheetCounters(telegramText: string, ytItems: YTCollectedItem[]): SheetCounterStats {
+        return SheetStatsCalculator.computeSheetCounters(telegramText, ytItems);
     }
 }

@@ -3,6 +3,7 @@ import { SYH_STATE, type SyhState } from './state';
 import { SYH_UTILS, type SyhUtils } from './utils';
 import { SYH_UI, type SyhUi } from './ui_core';
 import { SYH_BANNER_CREATOR, type SyhBannerCreator } from './banner_creator';
+import { CommentService } from './comment_service';
 import type { ISyhPlugin } from './plugin_registry';
 
 export interface SyhEventBanners {
@@ -210,9 +211,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
             if (checkbox) {
                 const bannerBlock = checkbox.closest((self.SELECTORS?.bannerBlock as string) || '');
                 const textKey = bannerBlock?.querySelector((self.SELECTORS?.bannerText as string) || '')?.textContent || '';
-                if (self.STATE) {
-                    self.STATE.updateState(textKey, checkbox.checked);
-                }
+                CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
                 if (self.UI) self.UI.updateMasterCheckboxState();
                 return;
             }

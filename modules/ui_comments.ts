@@ -1,7 +1,6 @@
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_STATE } from './state';
 import { UiFactory } from './ui_factory';
 import { CommentService } from './comment_service';
 import type { PrayerItem } from './types';
@@ -41,9 +40,8 @@ export function addButtonsToComment(commentNode: Element): void {
         targetContainer.appendChild(container);
         
         const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
-        const state = SYH_UI_STATE.STATE || SYH_STATE;
         
-        if (state && typeof state.getState === 'function' && state.getState(commentText)) {
+        if (CommentService.getStreamYardCheckboxState(commentText)) {
             const checkbox = targetContainer.querySelector<HTMLInputElement>('.syh-checkbox');
             if (checkbox) checkbox.checked = true;
         }

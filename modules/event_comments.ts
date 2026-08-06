@@ -110,8 +110,8 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                         if (checkbox && !checkbox.checked) {
                             checkbox.checked = true;
                             const textKey = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent;
-                            if (self.STATE && textKey) {
-                                self.STATE.updateState(textKey, true);
+                            if (textKey) {
+                                CommentService.setStreamYardCheckboxState(textKey, true);
                             }
                             SYH_COMMENT_ASSISTANT.processComment(commentBlock);
                         }
@@ -333,9 +333,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
                 if (checkboxNode) {
                     checkboxNode.checked = true;
                     checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
-                    if (self.STATE) {
-                        self.STATE.updateState(commentText, true);
-                    }
+                    CommentService.setStreamYardCheckboxState(commentText, true);
                 }
 
                 commentBlock.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach(cb => cb.checked = true);
@@ -356,9 +354,7 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             if (!commentBlock) return;
             const textKey = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
             
-            if (self.STATE) {
-                self.STATE.updateState(textKey, checkbox.checked);
-            }
+            CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
             SYH_COMMENT_ASSISTANT.processComment(commentBlock);
         });
     },

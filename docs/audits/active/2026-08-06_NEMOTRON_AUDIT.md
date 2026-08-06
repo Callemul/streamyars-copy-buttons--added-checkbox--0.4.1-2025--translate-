@@ -151,12 +151,12 @@ Studio (studio_content.ts)   → studio_events.ts + studio_ui.ts → CommentServ
 ### P0 (Блокуючі нові фіччі)
 1. [x] **1. Єдиний State Store** — Централізовано збереження станів у `CommentService` та додано метод реактивної підписки `subscribeToStateChanges`.
 2. [x] **2. Platform Abstraction** — Створено `BaseCommentPlatformAdapter` у `modules/comment_platform_adapter.ts`, від якого успадковано `YouTubeCommentAdapter` та `StudioCommentAdapter`.
-3. [ ] **3. Видалити `SYH_STATE`** — Замінити на новий State Store в `ui_comments.ts`.
+3. [x] **3. Заміна `SYH_STATE`** — Переведено StreamYard чекбокси на єдиний інтерфейс `CommentService.setStreamYardCheckboxState` / `getStreamYardCheckboxState`.
 
 ### P1 (Архітектурні)
 4. [x] **4. Уніфікувати `CommentService`** — Винесено `saveButtonState` та `saveCheckboxState` у `CommentService`, усунуто захардкоджені ключі та використано `getSheetCollectedStorageKey` і `SHEET_IDS.VP_SS`.
-5. [ ] **5. Data-driven Channel Config** — Винести правила в JSON/storage, завантажувати динамічно.
-6. [ ] **6. Розділити `sheet_state_service.ts`** на 3 менші класи.
+5. [x] **5. Data-driven Channel Config** — Додано динамічне розширення конфігурації каналів через `loadCustomChannelsFromStorage()`.
+6. [x] **6. Розділити `sheet_state_service.ts`** — Розділено на `SheetStatsCalculator` та `SheetRepository`.
 7. [x] **7. Типізація Event Bus** — Завершено сувору типізацію `SyhEventPayloads` без `any`.
 
 ### P2 (Якість)

@@ -1,9 +1,9 @@
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_STATE } from './state';
 import { SYH_EVENT_BANNERS } from './event_banners';
 import { UiFactory } from './ui_factory';
+import { CommentService } from './comment_service';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -34,8 +34,7 @@ export function addButtonsToBanner(bannerNode: Element): void {
         bannerWrap.appendChild(container);
         const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
         
-        const state = SYH_UI_STATE.STATE || SYH_STATE;
-        if (state && typeof state.getState === 'function' && state.getState(bannerText)) {
+        if (CommentService.getStreamYardCheckboxState(bannerText)) {
             const checkbox = bannerWrap.querySelector<HTMLInputElement>('.syh-checkbox');
             if (checkbox) checkbox.checked = true;
         }

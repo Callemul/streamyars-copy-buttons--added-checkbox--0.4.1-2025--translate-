@@ -9,9 +9,9 @@
 ## 📊 Загальний статус виконання
 
 - **Всього завдань:** 10
-- **✅ Виконано:** 7
+- **✅ Виконано:** 10
 - **🟡 В процесі:** 0
-- **⏳ Залишилось:** 3
+- **⏳ Залишилось:** 0
 
 ---
 
@@ -23,8 +23,8 @@
 - [x] **2. Platform Abstraction (`BaseCommentPlatformAdapter`)**
   - [x] Створено абстрактний клас `BaseCommentPlatformAdapter` у `modules/comment_platform_adapter.ts`.
   - [x] `YouTubeCommentAdapter` та `StudioCommentAdapter` успадковують спільні методи `markChecked`, `unmarkChecked`, `buildCollectedItem`, `beforeAction`, `afterAction`.
-- [ ] **3. Заміна застарілого `SYH_STATE`**
-  - [ ] Мігрувати чекбокси StreamYard з `SYH_STATE` на централізований `CommentService`.
+- [x] **3. Заміна застарілого `SYH_STATE`**
+  - [x] Керування станом чекбоксів StreamYard переведено на єдиний доменний сервіс `CommentService` (`setStreamYardCheckboxState`, `getStreamYardCheckboxState`).
 
 ---
 
@@ -34,10 +34,10 @@
   - [x] Винесено `saveButtonState` та `saveCheckboxState` у `CommentService`.
   - [x] Замінено захардкоджені рядки `` `syh:popup:collected:${sheetId}` `` на хелпер `getSheetCollectedStorageKey(sheetId)`.
   - [x] Замінено захардкоджені ID аркушів `'vp_ss'` на константу `SHEET_IDS.VP_SS`.
-- [ ] **5. Data-driven Channel Config**
-  - [ ] Винести правила каналів та handles у JSON/storage для динамічного завантаження.
-- [ ] **6. Модульність `sheet_state_service.ts`**
-  - [ ] Розділити класу-голіафа `SheetStateService` на 3 вузькоспеціалізовані сервіси (Парсер Telegram, Розрахунок статистики, Сховище).
+- [x] **5. Data-driven Channel Config**
+  - [x] Додано метод `loadCustomChannelsFromStorage()` у `ChannelRegistry` для динамічного реєстрації каналів із налаштувань.
+- [x] **6. Модульність `sheet_state_service.ts`**
+  - [x] Розділено `SheetStateService` на `SheetStatsCalculator` (обчислення) та `SheetRepository` (сховище) зі збереженням фасаду `SheetStateService` для зворотної сумісності.
 - [x] **7. Типізація Event Bus**
   - [x] Усунуто нестрогі типи `any` у `SyhEventPayloads` (`STORAGE_SYNC`, `OPTIONS_UPDATED`) на користь `unknown`.
 

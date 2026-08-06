@@ -1,5 +1,6 @@
 // modules/channel_config.ts
 import { SHEET_IDS, type SheetId } from './sheets';
+import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 
 export type ChannelKey = 'vp' | 'slovo' | 'unknown';
 
@@ -74,6 +75,22 @@ export class ChannelRegistry {
 
     public registerChannel(config: ChannelConfigItem): void {
         this.channels.set(config.key, config);
+    }
+
+    public async loadCustomChannelsFromStorage(): Promise<void> {
+        try {
+            const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.OPTIONS]);
+            const opts = result[STORAGE_KEYS.OPTIONS];
+            if (opts && Array.isArray(opts.customChannels)) {
+                opts.customChannels.forEach((config: ChannelConfigItem) => {
+                    if (config && config.key && config.label) {
+                        this.registerChannel(config);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('[ChannelRegistry] Failed to load custom channels:', e);
+        }
     }
 
     public getChannel(key: string): ChannelConfigItem | undefined {

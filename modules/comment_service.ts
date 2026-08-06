@@ -1,6 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
 import { SYH_BUS } from './event_bus';
-
+import { SYH_STATE } from './state';
 import { RetentionService } from './retention_service';
 
 export interface CommentPayload {
@@ -160,6 +160,22 @@ export class CommentService {
             totalQuestions: 0,
             totalPrayers: 0
         });
+    }
+
+    /**
+     * Встановлення стану чекбокса StreamYard
+     */
+    public static setStreamYardCheckboxState(textKey: string, isChecked: boolean, delayMs = 150): void {
+        if (!textKey) return;
+        SYH_STATE.updateState(textKey, isChecked, delayMs);
+    }
+
+    /**
+     * Отримання стану чекбокса StreamYard
+     */
+    public static getStreamYardCheckboxState(textKey: string): boolean {
+        if (!textKey) return false;
+        return SYH_STATE.getState(textKey);
     }
 
     /**
