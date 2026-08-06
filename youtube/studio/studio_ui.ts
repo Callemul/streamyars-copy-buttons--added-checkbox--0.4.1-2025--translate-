@@ -16,16 +16,11 @@ export interface StudioCommentUIElements {
 /**
  * Ensures Studio action buttons, Badge dropdown, and Checkbox are injected into comment thread element
  */
-export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIElements | null {
-    const toolbar = getToolbarElement(threadEl);
-
-    // Return null only if there is no toolbar — buttons are the minimum requirement.
-    // Missing #metadata (common for replies rendered with delay) must NOT block button injection.
-    if (!toolbar) {
-        return null;
-    }
-
-    // 1. Inject / retrieve Action Buttons in #toolbar
+function ensureToolbarActionButtons(toolbar: HTMLElement): {
+    copyBtn: HTMLButtonElement;
+    questionBtn: HTMLButtonElement;
+    prayerBtn: HTMLButtonElement;
+} {
     let copyBtn = toolbar.querySelector<HTMLButtonElement>('.syh-studio-btn-copy');
     let questionBtn = toolbar.querySelector<HTMLButtonElement>('.syh-studio-btn-question');
     let prayerBtn = toolbar.querySelector<HTMLButtonElement>('.syh-studio-btn-prayer');
@@ -59,17 +54,21 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         toolbar.appendChild(prayerBtn);
     }
 
-    // 2. Right-aligned Meta Container (Badge + Checkbox) — injected into #metadata if present.
-    // For replies that render #metadata with a delay, we skip badge injection gracefully
-    // and return a partial UI (buttons only). The caller can handle missing badge/checkbox.
-    const metadata = getMetadataElement(threadEl);
+    return { copyBtn, questionBtn, prayerBtn };
+}
 
-    let checkboxEl = metadata?.querySelector<HTMLInputElement>('.syh-studio-checkbox') ?? null;
-    let badgeEl = metadata?.querySelector<HTMLElement>('.syh-studio-badge') ?? null;
-    let dropdownEl = metadata?.querySelector<HTMLElement>('.syh-studio-dropdown') ?? null;
-    let badgeWrapper = metadata?.querySelector<HTMLElement>('.syh-studio-badge-wrapper') ?? null;
+function ensureMetadataBadgeAndCheckbox(metadata: HTMLElement): {
+    badgeEl: HTMLElement;
+    dropdownEl: HTMLElement;
+    checkboxEl: HTMLInputElement;
+    badgeWrapper: HTMLElement;
+} {
+    let checkboxEl = metadata.querySelector<HTMLInputElement>('.syh-studio-checkbox');
+    let badgeEl = metadata.querySelector<HTMLElement>('.syh-studio-badge');
+    let dropdownEl = metadata.querySelector<HTMLElement>('.syh-studio-dropdown');
+    let badgeWrapper = metadata.querySelector<HTMLElement>('.syh-studio-badge-wrapper');
 
-    if (metadata && (!badgeEl || !dropdownEl || !checkboxEl || !badgeWrapper)) {
+    if (!badgeEl || !dropdownEl || !checkboxEl || !badgeWrapper) {
         metadata.querySelectorAll('.syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper').forEach(el => el.remove());
 
         badgeWrapper = document.createElement('div');
@@ -83,10 +82,7 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         dropdownEl.className = 'syh-studio-dropdown';
         dropdownEl.style.display = 'none';
 
-        const optionKeys: (SheetId | 'auto_reset')[] = [
-            ...getAllSheetIds(),
-            'auto_reset'
-        ];
+        const optionKeys: (SheetId | 'auto_reset')[] = [...getAllSheetIds(), 'auto_reset'];
 
         optionKeys.forEach((key) => {
             const item = document.createElement('div');
@@ -117,8 +113,29 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
         metadata.appendChild(checkboxWrapper);
     }
 
-    // Always return a valid UI object as long as toolbar exists.
-    // badgeEl / dropdownEl / checkboxEl / metaContainer may be null if metadata not yet in DOM.
+    return { badgeEl, dropdownEl, checkboxEl, badgeWrapper };
+}
+
+export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIElements | null {
+    const toolbar = getToolbarElement(threadEl);
+    if (!toolbar) return null;
+
+    const { copyBtn, questionBtn, prayerBtn } = ensureToolbarActionButtons(toolbar);
+
+    const metadata = getMetadataElement(threadEl);
+    let badgeEl: HTMLElement | null = null;
+    let dropdownEl: HTMLElement | null = null;
+    let checkboxEl: HTMLInputElement | null = null;
+    let badgeWrapper: HTMLElement | null = null;
+
+    if (metadata) {
+        const metaRes = ensureMetadataBadgeAndCheckbox(metadata);
+        badgeEl = metaRes.badgeEl;
+        dropdownEl = metaRes.dropdownEl;
+        checkboxEl = metaRes.checkboxEl;
+        badgeWrapper = metaRes.badgeWrapper;
+    }
+
     return {
         copyBtn,
         questionBtn,

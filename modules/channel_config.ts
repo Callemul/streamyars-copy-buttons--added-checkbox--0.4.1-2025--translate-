@@ -36,11 +36,7 @@ export class ChannelRegistry {
             rules: [
                 {
                     sheetId: SHEET_IDS.VP_SS,
-                    matchers: [
-                        (t) => (t.includes('субботн') && t.includes('школ')) ||
-                               (t.includes('суботн') && t.includes('школ')) ||
-                               /(?:^|[^\p{L}\p{N}])сш(?:[^\p{L}\p{N}]|$)/ui.test(t)
-                    ]
+                    matchers: [isSabbathSchoolTitle]
                 },
                 {
                     sheetId: SHEET_IDS.OPARIN,
@@ -59,11 +55,7 @@ export class ChannelRegistry {
             rules: [
                 {
                     sheetId: SHEET_IDS.MOLCHANOV_SS,
-                    matchers: [
-                        (t) => (t.includes('субботн') && t.includes('школ')) ||
-                               (t.includes('суботн') && t.includes('школ')) ||
-                               /(?:^|[^\p{L}\p{N}])сш(?:[^\p{L}\p{N}]|$)/ui.test(t)
-                    ]
+                    matchers: [isSabbathSchoolTitle]
                 },
                 {
                     sheetId: SHEET_IDS.MOLCHANOV_PREACH,
@@ -133,6 +125,13 @@ export const ALLOWED_CHANNELS: Record<string, ChannelInfo> = new Proxy({}, {
     get: (_, prop: string) => CHANNEL_REGISTRY.getChannel(prop),
     ownKeys: () => Array.from(CHANNEL_REGISTRY['channels'].keys())
 });
+
+export function isSabbathSchoolTitle(t: string): boolean {
+    const lower = t.toLowerCase();
+    return (lower.includes('субботн') && lower.includes('школ')) ||
+           (lower.includes('суботн') && lower.includes('школ')) ||
+           /(?:^|[^\p{L}\p{N}])сш(?:[^\p{L}\p{N}]|$)/ui.test(t);
+}
 
 export function isAllowedChannelKey(key: string): key is 'vp' | 'slovo' {
     return CHANNEL_REGISTRY.getChannel(key) !== undefined;

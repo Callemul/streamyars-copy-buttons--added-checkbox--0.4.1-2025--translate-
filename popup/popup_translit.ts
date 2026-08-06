@@ -30,16 +30,9 @@ export function translitToRussian(translitText: string): string {
     const words = translitText.split(' ');
     const russianWords = words.map(word => {
         let russianWord = "";
-        let curLetter = "";
         for (let i = 0; i < word.length; i++) {
-            curLetter += word[i];
-            if (translitMap[curLetter]) { 
-                russianWord += translitMap[curLetter]; 
-                curLetter = ""; 
-            } else { 
-                russianWord += word[i]; 
-                curLetter = ""; 
-            }
+            const char = word[i];
+            russianWord += translitMap[char] || char;
         }
         return russianWord;
     });

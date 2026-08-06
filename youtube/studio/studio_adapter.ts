@@ -82,6 +82,22 @@ export function retroactiveUpdateVideoComments(
     });
 }
 
+function resolveReplyVideoMetadata(threadEl: HTMLElement): { videoTitle: string; videoHref: string | null } {
+    let videoTitle = getVideoTitleText(threadEl);
+    let videoHref = getVideoLinkHref(threadEl);
+
+    if (threadEl.hasAttribute('is-reply') && !videoTitle) {
+        const parentThread = threadEl.closest('ytcp-comment-thread');
+        const parentComment = parentThread?.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
+        if (parentComment) {
+            if (!videoTitle) videoTitle = getVideoTitleText(parentComment);
+            if (!videoHref) videoHref = getVideoLinkHref(parentComment);
+        }
+    }
+
+    return { videoTitle, videoHref };
+}
+
 export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-studio-events-bound';
     private static readonly BUTTON_BOUND_ATTR = 'data-syh-bound';
@@ -112,21 +128,7 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
         if (!author) return null;
         if (!text) text = '[comment]';
 
-        let videoTitle = getVideoTitleText(threadEl);
-        let videoHref = getVideoLinkHref(threadEl);
-
-        const isReply = threadEl.hasAttribute('is-reply');
-        if (isReply && !videoTitle) {
-            const parentThread = threadEl.closest('ytcp-comment-thread');
-            if (parentThread) {
-                const parentComment = parentThread.querySelector<HTMLElement>('ytcp-comment:not([is-reply])');
-                if (parentComment) {
-                    if (!videoTitle) videoTitle = getVideoTitleText(parentComment);
-                    if (!videoHref) videoHref = getVideoLinkHref(parentComment);
-                }
-            }
-        }
-
+        const { videoTitle, videoHref } = resolveReplyVideoMetadata(threadEl);
         const videoKey = generateVideoKey(videoHref, videoTitle);
         const commentKey = generateCommentKey(videoTitle, author, text);
 
@@ -265,14 +267,7 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
         sheetId: string;
         commentKey: string;
     }): Promise<void> {
-        const threads = document.querySelectorAll('ytcp-comment, ytcp-comment-thread');
-        let targetEl: HTMLElement | null = null;
-        for (const t of Array.from(threads)) {
-            if ((t as HTMLElement).dataset.syhCommentKey === action.commentKey) {
-                targetEl = t as HTMLElement;
-                break;
-            }
-        }
+        const targetEl = document.querySelector<HTMLElement>(`[data-syh-comment-key="${action.commentKey}"]`);
         if (!targetEl) return;
 
         const ctx = this.getCommentContext(targetEl);

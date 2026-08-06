@@ -1,5 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { TG_HEADER_CLEANUP_REGEX } from './parsers';
+import { resolveSelector } from './config';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string | string[]> | null;
@@ -66,15 +67,7 @@ export const SYH_UTILS: SyhUtils = {
             const interval = 100;
             let elapsedTime = 0;
             const timer = setInterval(() => {
-                let element: Element | null = null;
-                if (typeof selector === 'string') {
-                    element = document.querySelector(selector);
-                } else {
-                    for (const sel of selector) {
-                        element = document.querySelector(sel);
-                        if (element) break;
-                    }
-                }
+                const element = resolveSelector(selector);
                 if (element && (element as HTMLElement).offsetWidth > 0 && (element as HTMLElement).offsetHeight > 0) {
                     clearInterval(timer);
                     resolve(element);

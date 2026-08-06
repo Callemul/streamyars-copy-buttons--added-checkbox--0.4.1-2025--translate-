@@ -53,11 +53,7 @@ export function formatCategoryLabel(label: string): string {
  * - .syh-stat-prayers (🙏 prayers) -> сума молитов з типом prayer
  * - .syh-stat-del (🗑️ кнопка очищення коментарів цієї категорії)
  */
-export function renderStudioHeaderCounters(
-    parentContainer: HTMLElement,
-    channelKey: ChannelKey,
-    sheetStatsMap: Record<string, SheetHeaderStats | number>
-): HTMLElement {
+function resolveHeaderTargets(parentContainer: HTMLElement): { targetParent: HTMLElement; commentSpan: HTMLElement | null } {
     let targetParent = parentContainer;
     let commentSpan: HTMLElement | null = null;
 
@@ -74,6 +70,16 @@ export function renderStudioHeaderCounters(
             targetParent = commentSpan.parentElement;
         }
     }
+
+    return { targetParent, commentSpan };
+}
+
+export function renderStudioHeaderCounters(
+    parentContainer: HTMLElement,
+    channelKey: ChannelKey,
+    sheetStatsMap: Record<string, SheetHeaderStats | number>
+): HTMLElement {
+    const { targetParent, commentSpan } = resolveHeaderTargets(parentContainer);
 
     let wrapper = targetParent.querySelector<HTMLElement>('.syh-header-counters-wrapper');
 

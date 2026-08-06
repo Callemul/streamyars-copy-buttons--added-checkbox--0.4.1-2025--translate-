@@ -89,7 +89,7 @@ function startObserver() {
 /**
  * Ініціалізація модуля
  */
-function initYouTubeModule() {
+async function initYouTubeModule() {
     if (!isAllowedChannel()) {
         console.log('[SYH YT] YouTube module skipped: Channel is not in allowed list');
         if (unregisterObserver) {
@@ -102,36 +102,34 @@ function initYouTubeModule() {
 
     const vpSsCollectedKey = getSheetCollectedStorageKey('vp_ss');
 
-    SYH_STORAGE.get(
-        [STORAGE_KEYS.OPTIONS, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.YT_CHECKBOX_STATE, vpSsCollectedKey],
-        (res) => {
-            const options = res[STORAGE_KEYS.OPTIONS] || {};
-            stateCache.youtubeEnabled = options.youtube_enabled !== false;
+    const res = await SYH_STORAGE.getAsync<Record<string, any>>([
+        STORAGE_KEYS.OPTIONS,
+        STORAGE_KEYS.YT_BUTTON_STATES,
+        STORAGE_KEYS.YT_CHECKBOX_STATE,
+        vpSsCollectedKey
+    ]);
 
-            if (!stateCache.youtubeEnabled) {
-                console.log('[SYH YT] YouTube module is disabled in options');
-                return;
-            }
+    const options = res[STORAGE_KEYS.OPTIONS] || {};
+    stateCache.youtubeEnabled = options.youtube_enabled !== false;
 
-            stateCache.buttonStates = res[STORAGE_KEYS.YT_BUTTON_STATES] || {};
-            stateCache.checkboxStates = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || {};
-            stateCache.collectedList = res[vpSsCollectedKey] || [];
+    if (!stateCache.youtubeEnabled) {
+        console.log('[SYH YT] YouTube module is disabled in options');
+        return;
+    }
 
-            // 1. Ініціалізація помічника коментарів з селекторами YouTube
-            SYH_COMMENT_ASSISTANT.init({
-                SELECTORS: YT_SELECTORS,
-                TRIGGER_WORDS: SYH_CONFIG?.TRIGGER_WORDS || ['вопрос']
-            });
+    stateCache.buttonStates = res[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+    stateCache.checkboxStates = res[STORAGE_KEYS.YT_CHECKBOX_STATE] || {};
+    stateCache.collectedList = res[vpSsCollectedKey] || [];
 
-            // 2. Первинна обробка коментарів
-            processAllYTComments();
+    SYH_COMMENT_ASSISTANT.init({
+        SELECTORS: YT_SELECTORS,
+        TRIGGER_WORDS: SYH_CONFIG?.TRIGGER_WORDS || ['вопрос']
+    });
 
-            // 3. Запуск MutationObserver
-            startObserver();
+    processAllYTComments();
+    startObserver();
 
-            console.log('[SYH YT] YouTube module loaded successfully');
-        }
-    );
+    console.log('[SYH YT] YouTube module loaded successfully');
 }
 
 function handleOptionsChange(newOptions: Record<string, any>): void {
