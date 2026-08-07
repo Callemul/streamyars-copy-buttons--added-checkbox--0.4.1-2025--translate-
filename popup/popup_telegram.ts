@@ -7,28 +7,16 @@ import {
     parseAndFilterOldList,
     collectTelegramSheetStateFromDOM,
     TelegramQuestionItem,
-    TelegramSheetDOMState
+    TelegramSheetDOMState,
+    parseAnsweredIds
 } from '../modules/telegram_parser';
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
 import type { YTCollectedItem } from '../modules/types';
+import { $, setTextContent, showElement } from './popup_dom_utils';
 
 const SHEET_IDS = getAllSheetIds();
 const activeBatchCancel: Record<string, () => void> = {};
-
-function $(id: string): HTMLElement | null {
-    return document.getElementById(id);
-}
-
-function setTextContent(id: string, text: string): void {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-}
-
-function showElement(id: string): void {
-    const el = document.getElementById(id);
-    if (el && el instanceof HTMLElement) el.style.display = '';
-}
 
 export function clearFinalResult(sheetId: string): void {
     const frEl = $(`finalResultDiv__${sheetId}`);
@@ -241,10 +229,7 @@ function updateStatsBarSection(sheetId: string, stats: any): void {
     const oldListText = oldListEl?.value || '';
     const answeredEl = $(`answeredIds__${sheetId}`) as HTMLInputElement | null;
     const answeredInput = answeredEl?.value || '';
-    const answeredIds = answeredInput
-        .split(/[\s,]+/)
-        .map(s => parseFloat(s.trim()))
-        .filter(n => !isNaN(n));
+    const answeredIds = parseAnsweredIds(answeredInput);
     
     const preservedData = parseAndFilterOldList(oldListText, answeredIds);
     const oldPeople = preservedData.questions.length;

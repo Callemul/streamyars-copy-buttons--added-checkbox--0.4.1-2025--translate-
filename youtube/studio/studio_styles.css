@@ -541,31 +541,6 @@ html[dark="true"] .syh-stat-del:hover {
     background-color: rgba(255, 107, 107, 0.25);
 }
 
-/* --- СТИЛІ ПІДСВІЧУВАННЯ ТРИГЕРНИХ СЛІВ ТА БЛОКІВ У YOUTUBE STUDIO --- */
-mark.syh-trigger-highlight {
-    background-color: #ffe066 !important;
-    color: #111111 !important;
-    padding: 0 3px !important;
-    border-radius: 3px !important;
-    font-weight: 700 !important;
-    display: inline !important;
-    line-height: inherit !important;
-    vertical-align: baseline !important;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2) !important;
-}
-
-mark.syh-trigger-highlight.syh-trigger-question {
-    background-color: #27ae60 !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(39, 174, 96, 0.4) !important;
-}
-
-mark.syh-trigger-highlight.syh-trigger-prayer {
-    background-color: #9b59b6 !important;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(155, 89, 182, 0.4) !important;
-}
-
 /* Підсвічування контейнера коментаря у Studio при спрацюванні тригера */
 ytcp-comment[data-syh-triggered="question"] {
     border-left: 4px solid #27ae60 !important;
@@ -577,13 +552,6 @@ ytcp-comment[data-syh-triggered="prayer"] {
     border-left: 4px solid #9b59b6 !important;
     background-color: rgba(155, 89, 182, 0.08) !important;
     transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-/* Захист від помилкового згортання Polymer is-empty при скролі (без порушення нативного max-height truncation) */
-#content-text[is-empty]:not(:empty),
-yt-formatted-string#content-text[is-empty]:not(:empty) {
-    display: block !important;
-    visibility: visible !important;
 }
 
 /* Гарантоване розміщення кнопки "...Докладніше" у нижньому правому кутку обрізаного коментаря */

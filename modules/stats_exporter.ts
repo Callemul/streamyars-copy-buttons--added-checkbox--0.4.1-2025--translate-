@@ -365,11 +365,22 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         return { overall, initialViewers, st1, st2, st3 };
     },
 
-    formatSummaryMarkdown: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
+    getSummaryData(dataObj: StreamChartSession | null): { overall: any; initialViewers: number; st1: any; st2: any; st3: any } | null {
         const stats = this.getReportStats(dataObj);
-        if (!stats) return "";
+        return stats ? {
+            overall: stats.overall,
+            initialViewers: stats.initialViewers,
+            st1: stats.st1,
+            st2: stats.st2,
+            st3: stats.st3
+        } : null;
+    },
 
-        const { overall, initialViewers, st1, st2, st3 } = stats;
+    formatSummaryMarkdown: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
+        const data = this.getSummaryData(dataObj);
+        if (!data) return "";
+
+        const { overall, initialViewers, st1, st2, st3 } = data;
 
         return `# 📊 Підсумкова аналітика ефіру: ${currentBrand}
 **Дата:** ${dateStr}
@@ -390,10 +401,10 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     },
 
     formatSummaryHTML: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
-        const stats = this.getReportStats(dataObj);
-        if (!stats) return "";
+        const data = this.getSummaryData(dataObj);
+        if (!data) return "";
 
-        const { overall, initialViewers, st1, st2, st3 } = stats;
+        const { overall, initialViewers, st1, st2, st3 } = data;
 
         return `<div class="syh-summary-report">
   <h2>📊 Підсумкова аналітика ефіру: ${currentBrand}</h2>

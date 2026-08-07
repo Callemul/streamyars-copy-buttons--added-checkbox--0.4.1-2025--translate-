@@ -68,6 +68,17 @@ export function numberToEmoji(num: number): string {
     return num.toString().split('').map(d => emojis[parseInt(d, 10)]).join('');
 }
 
+/**
+ * Parses answered IDs from a string (space or comma separated)
+ * Returns an array of valid numbers
+ */
+export function parseAnsweredIds(input: string): number[] {
+    return input
+        .split(/[\s,]+/)
+        .map(s => parseFloat(s.trim()))
+        .filter(n => !isNaN(n));
+}
+
 export function cleanAuthorName(rawName: string, cleaningLog?: CleaningLogEntry[]): string {
     return SYH_PARSERS.cleanAuthorName(rawName, cleaningLog);
 }

@@ -1,5 +1,5 @@
 import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
-import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine } from './telegram_parser';
+import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine, parseAnsweredIds } from './telegram_parser';
 import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers';
 import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
 
@@ -127,10 +127,9 @@ export function countUniquePeople(items: { author: string }[]): number {
 }
 
 export class SheetRepository {
-    public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
-        const sheetKey = getSheetCollectedStorageKey(sheetId);
+    private static getSheetStateKeys(sheetId: string): string[] {
         const k = POPUP_SHEET_KEYS;
-        const keysToLoad = [
+        return [
             k.oldList(sheetId),
             k.answered(sheetId),
             k.newTelegram(sheetId),
@@ -144,12 +143,20 @@ export class SheetRepository {
             k.cleanedLogHtml(sheetId),
             k.cleanedLogCount(sheetId),
             k.cleanedLogDetailsVisible(sheetId),
-            k.cleanedLogDetailsOpen(sheetId),
-            k.dividerPos(sheetId),
+            k.cleanedLogDetailsOpen(sheetId)
+        ];
+    }
+
+    public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
+        const sheetKey = getSheetCollectedStorageKey(sheetId);
+        const keysToLoad = [
+            ...SheetRepository.getSheetStateKeys(sheetId),
+            POPUP_SHEET_KEYS.dividerPos(sheetId),
             sheetKey
         ];
 
         const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToLoad);
+        const k = POPUP_SHEET_KEYS;
         const ytCollected: YTCollectedItem[] = res[sheetKey] || [];
 
         return {
@@ -186,23 +193,7 @@ export class SheetRepository {
     }
 
     public static async clearSheetState(sheetId: string): Promise<void> {
-        const k = POPUP_SHEET_KEYS;
-        const keysToRemove = [
-            k.oldList(sheetId),
-            k.answered(sheetId),
-            k.newTelegram(sheetId),
-            k.finalResultHtml(sheetId),
-            k.statsHtml(sheetId),
-            k.statsVisible(sheetId),
-            k.deletedLogHtml(sheetId),
-            k.deletedLogCount(sheetId),
-            k.deletedLogDetailsVisible(sheetId),
-            k.deletedLogDetailsOpen(sheetId),
-            k.cleanedLogHtml(sheetId),
-            k.cleanedLogCount(sheetId),
-            k.cleanedLogDetailsVisible(sheetId),
-            k.cleanedLogDetailsOpen(sheetId)
-        ];
+        const keysToRemove = SheetRepository.getSheetStateKeys(sheetId);
         await SYH_STORAGE.removeAsync(keysToRemove);
     }
 }
@@ -215,10 +206,7 @@ export class SheetStateService {
         ytItems: YTCollectedItem[];
     }): ProcessedSheetResult {
         const { oldListText, answeredInput, telegramText, ytItems } = inputs;
-        const answeredIds = answeredInput
-            .split(/[\s,]+/)
-            .map(s => parseFloat(s.trim()))
-            .filter(n => !isNaN(n));
+        const answeredIds = parseAnsweredIds(answeredInput);
 
         const cleaningLog: CleaningLogEntry[] = [];
         const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);

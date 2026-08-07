@@ -73,23 +73,16 @@ export class CommentService {
     }
 
     /**
-     * Уніфіковане збереження зібраного коментаря у відповідний аркуш сховища
+     * Уніфіковане оновлення списку зібраних коментарів та еміт події
      */
-    public static async saveCollectedComment(
+    private static async updateCollectedListAndEmit(
         sheetId: string,
-        comment: CommentPayload
+        updater: (list: CommentPayload[]) => CommentPayload[]
     ): Promise<CommentPayload[]> {
         const storageKey = getSheetCollectedStorageKey(sheetId);
         const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
         const list = result[storageKey] || [];
-        const index = list.findIndex(item => 
-            item.id === comment.id || 
-            (item.author === comment.author && item.text === comment.text && item.type === comment.type)
-        );
-
-        const updated = index >= 0
-            ? list.map((item, idx) => idx === index ? comment : item)
-            : [comment, ...list];
+        const updated = updater(list);
 
         await SYH_STORAGE.setAsync({ [storageKey]: updated });
         SYH_BUS.emit('SHEET_DATA_PROCESSED', {
@@ -101,6 +94,25 @@ export class CommentService {
     }
 
     /**
+     * Уніфіковане збереження зібраного коментаря у відповідний аркуш сховища
+     */
+    public static async saveCollectedComment(
+        sheetId: string,
+        comment: CommentPayload
+    ): Promise<CommentPayload[]> {
+        return CommentService.updateCollectedListAndEmit(sheetId, (list) => {
+            const index = list.findIndex(item => 
+                item.id === comment.id || 
+                (item.author === comment.author && item.text === comment.text && item.type === comment.type)
+            );
+
+            return index >= 0
+                ? list.map((item, idx) => idx === index ? comment : item)
+                : [comment, ...list];
+        });
+    }
+
+    /**
      * Уніфіковане видалення зібраного коментаря з відповідного аркуша сховища
      */
     public static async removeCollectedComment(
@@ -109,21 +121,12 @@ export class CommentService {
         author?: string,
         text?: string
     ): Promise<CommentPayload[]> {
-        const storageKey = getSheetCollectedStorageKey(sheetId);
-        const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
-        const list = result[storageKey] || [];
-        const updated = list.filter(item => !(
-            item.id === commentId ||
-            (author && text && item.author === author && item.text === text)
-        ));
-
-        await SYH_STORAGE.setAsync({ [storageKey]: updated });
-        SYH_BUS.emit('SHEET_DATA_PROCESSED', {
-            sheetId,
-            totalQuestions: updated.filter(i => i.type === 'question').length,
-            totalPrayers: updated.filter(i => i.type === 'prayer').length
-        });
-        return updated;
+        return CommentService.updateCollectedListAndEmit(sheetId, (list) => 
+            list.filter(item => !(
+                item.id === commentId ||
+                (author && text && item.author === author && item.text === text)
+            ))
+        );
     }
 
     /**

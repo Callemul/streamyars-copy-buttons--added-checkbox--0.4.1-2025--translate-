@@ -29,12 +29,12 @@
     {
       "matches": ["*://*.youtube.com/*"],
       "exclude_matches": ["https://studio.youtube.com/*"],
-      "css": ["youtube/youtube_styles.css"],
+      "css": ["youtube/shared_styles.css", "youtube/youtube_styles.css"],
       "js": ["youtube/youtube_content.ts"]
     },
     {
       "matches": ["https://studio.youtube.com/*"],
-      "css": ["youtube/studio/studio_styles.css"],
+      "css": ["youtube/shared_styles.css", "youtube/studio/studio_styles.css"],
       "js": ["youtube/studio/studio_content.ts"],
       "run_at": "document_idle"
     }

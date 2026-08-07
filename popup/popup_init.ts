@@ -72,26 +72,9 @@ export async function saveData(key: string, value: unknown): Promise<void> {
     await SYH_STORAGE.setAsync({ [key]: value });
 }
 
+import { $, setTextContent, setElementText, hideElement } from './popup_dom_utils';
+
 const SHEET_IDS = getAllSheetIds();
-
-function $(id: string): HTMLElement | null {
-    return document.getElementById(id);
-}
-
-function setTextContent(id: string, text: string): void {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-}
-
-function setElementText(id: string, html: string): void {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-}
-
-function hideElement(id: string): void {
-    const el = document.getElementById(id);
-    if (el && el instanceof HTMLElement) el.style.display = 'none';
-}
 
 function buildPopupKeysToLoad(sheetIds: string[]): string[] {
     const keysToLoad = [
