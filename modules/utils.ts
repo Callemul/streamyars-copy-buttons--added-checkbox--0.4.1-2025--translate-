@@ -1,5 +1,5 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { TG_HEADER_CLEANUP_REGEX } from './parsers';
+import { TG_HEADER_CLEANUP_REGEX } from './parsers/index.ts';
 import { resolveSelector } from './config';
 
 export interface SyhUtils {

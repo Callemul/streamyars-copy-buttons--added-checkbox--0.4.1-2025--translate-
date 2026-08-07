@@ -10,7 +10,7 @@ import {
     EMOJI_NUMBER_CONTAINS_REGEX,
     TELEGRAM_HEADER_MARKER_REGEX
 } from '../modules/telegram_parser.ts';
-import { SYH_PARSERS } from '../modules/parsers.ts';
+import { SYH_PARSERS } from '../modules/parsers/index.ts';
 
 test('countQuestionsInText counts bullet points correctly', () => {
     assert.equal(countQuestionsInText('Simple question'), 1);

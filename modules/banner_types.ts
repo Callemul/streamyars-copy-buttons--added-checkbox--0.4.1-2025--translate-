@@ -1,6 +1,6 @@
 import type { SyhConfig } from './config';
 import type { SyhUtils } from './utils';
-import type { SyhParsers } from './parsers';
+import type { SyhParsers } from './parsers/index.ts';
 
 export interface BannerItem {
     text: string;
