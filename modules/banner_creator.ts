@@ -1,141 +1,14 @@
 import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX, splitPrayerSection, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers';
-import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
-
-export interface BannerItem {
-    text: string;
-    category: string;
-    isStandard: boolean;
-}
+import { SYH_PARSERS } from './parsers';
 
 import type { SyhConfig } from './config';
 import type { SyhUtils } from './utils';
 import type { SyhParsers } from './parsers';
 
-export interface SyhBannerCreator {
-    SELECTORS: Record<string, any> | null;
-    UTILS: SyhUtils;
-    PARSERS: SyhParsers;
-    UI?: any;
-
-    init(config?: SyhConfig, utils?: SyhUtils, parsers?: SyhParsers): void;
-    log(msg: string): void;
-    processAndCreateBanners(rawText: string): Promise<void>;
-    clickCancelButton(form: Element): void;
-    ensureCleanStart(): Promise<void>;
-    finalCleanup(): Promise<void>;
-    createSingleBanner(text: string): Promise<void>;
-}
-
-export function detectBlockCategory(firstLine: string, defaultCat: string): string {
-    const isQuestionStart = QUESTION_START_REGEX.test(firstLine);
-    if (!isQuestionStart && firstLine) {
-        const headerMatch = firstLine.split(QUESTION_SPLIT_REGEX);
-        const headerText = (headerMatch[0] || "").trim().toUpperCase();
-        if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
-            return "prayer";
-        }
-        if (headerText.includes("СУББОТ") || headerText.includes("СУБОТ") || headerText.includes("УРОК")) {
-            return "stream";
-        }
-        if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
-            return "audience";
-        }
-    }
-    return defaultCat;
-}
-
-export function parseBlock(
-    text: string,
-    defaultCat: string,
-    parsers: SyhParsers,
-    logger?: (msg: string) => void
-): BannerItem[] {
-    if (!text.trim()) return [];
-    let blockQuestions: string[];
-    let isStd = false;
-
-    const firstLine = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0] || "";
-    let blockCategory = detectBlockCategory(firstLine, defaultCat);
-
-    if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !STANDARD_NUMBER_START_REGEX.test(text) && !EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
-        if (logger) logger("Формат: Суботня Школа (без нумерації)");
-        blockQuestions = parsers.parseSabbathSchoolUnnumberedQuestions(text);
-        blockCategory = "stream"; 
-    } else if (EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
-        if (logger) logger("Формат: Емодзі 1️⃣");
-        blockQuestions = parsers.parseEmojiNumberedQuestions(text);
-    } else {
-        if (logger) logger("Формат: Стандартний 1.");
-        blockQuestions = parsers.parseStandardNumberedQuestions(text);
-        isStd = true;
-    }
-
-    return blockQuestions.map((q: string) => ({ text: q, category: blockCategory, isStandard: isStd }));
-}
-
-export function parseRawTextToBanners(
-    rawText: string,
-    parsers: SyhParsers,
-    utils: SyhUtils,
-    logger?: (msg: string) => void
-): { bannersToCreate: BannerItem[]; hasStandardFormat: boolean } {
-    let bannersToCreate: BannerItem[] = [];
-    let hasStandardFormat = false;
-
-    const cleaner = utils.cleanTelegramHeaders ? utils.cleanTelegramHeaders.bind(utils) : ((t: string) => t);
-    const cleanedText = cleaner(rawText);
-
-    let messages = cleanedText.split(SECTION_HEADER_SPLIT_REGEX).map((m: string) => m.trim()).filter(Boolean);
-    if (messages.length === 0) messages = [cleanedText];
-
-    for (const msg of messages) {
-        const { questionsText, prayersText } = splitPrayerSection(msg);
-
-        if (questionsText.trim()) {
-            const qItems = parseBlock(questionsText, "stream", parsers, logger);
-            bannersToCreate = bannersToCreate.concat(qItems);
-            if (qItems.some(item => item.isStandard)) {
-                hasStandardFormat = true;
-            }
-        }
-        if (prayersText.trim()) {
-            const pItems = parseBlock(prayersText, "prayer", parsers, logger);
-            bannersToCreate = bannersToCreate.concat(pItems);
-        }
-    }
-
-    return { bannersToCreate, hasStandardFormat };
-}
-
-export async function executeBannerCreationLoop(
-    creator: SyhBannerCreator,
-    bannersToCreate: BannerItem[]
-): Promise<number> {
-    let createdCount = 0;
-    for (const [index, item] of bannersToCreate.entries()) {
-        creator.log(`>>> Обробка банера ${index + 1} з ${bannersToCreate.length}`);
-        try {
-            const pauseTime = index === 0 ? 600 : 250;
-            await new Promise(r => setTimeout(r, pauseTime));
-            
-            const cleanQuestion = item.text.replace(SPEAKER_SUFFIX_CLEANUP_REGEX, "").trim();
-            await creator.createSingleBanner(cleanQuestion);
-            
-            if (creator.UTILS && typeof creator.UTILS.saveBannerCategory === 'function') {
-                await creator.UTILS.saveBannerCategory(cleanQuestion, item.category);
-            }
-
-            createdCount++;
-        } catch (error: any) {
-            console.error(error);
-            creator.log(`Помилка: ${error.message}`);
-            await creator.finalCleanup();
-        }
-    }
-    return createdCount;
-}
+import type { SyhBannerCreator } from './banner_types';
+import { parseRawTextToBanners } from './banner_parser';
+import { executeBannerCreationLoop } from './banner_executor';
 
 export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     SELECTORS: null,
@@ -153,7 +26,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     },
 
     processAndCreateBanners: async function(rawText: string): Promise<void> {
-        let parsedResult: { bannersToCreate: BannerItem[]; hasStandardFormat: boolean };
+        let parsedResult: { bannersToCreate: import('./banner_types').BannerItem[]; hasStandardFormat: boolean };
         try {
             parsedResult = parseRawTextToBanners(rawText, this.PARSERS, this.UTILS, this.log.bind(this));
         } catch (error: any) {
@@ -168,10 +41,10 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
             return;
         }
 
-        await this.ensureCleanStart(); 
+        await this.ensureCleanStart();
 
         const createdCount = await executeBannerCreationLoop(this, bannersToCreate);
-        
+
         if (hasStandardFormat) {
             this.log("Додаю розділювач...");
             await new Promise(r => setTimeout(r, 300));
@@ -189,9 +62,9 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
     clickCancelButton: function(form: Element): void {
         const buttons = Array.from(form.querySelectorAll('button'));
-        const cancelButton = buttons.find(b => 
-            b.type !== 'submit' && 
-            b.id !== 'banner-timer-dropdown-button' && 
+        const cancelButton = buttons.find(b =>
+            b.type !== 'submit' &&
+            b.id !== 'banner-timer-dropdown-button' &&
             !b.closest('#banner-timer-dropdown-button')
         );
         if (cancelButton) {
@@ -202,7 +75,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     ensureCleanStart: async function(): Promise<void> {
         this.log("Перевірка на чистоту старту...");
         const form = resolveSelector(this.SELECTORS?.createBannerForm as any);
-        
+
         if (form) {
             this.log("Форма була відкрита. Закриваю...");
             this.clickCancelButton(form);
@@ -258,4 +131,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     }
 };
 
-// Pure ESM Module Export
+// Re-export types and functions for backward compatibility
+export type { BannerItem, SyhBannerCreator } from './banner_types';
+export { detectBlockCategory, parseBlock, parseRawTextToBanners } from './banner_parser';
+export { executeBannerCreationLoop } from './banner_executor';
