@@ -6,9 +6,11 @@ import {
     numberToEmoji,
     parseAndFilterOldList,
     collectTelegramSheetStateFromDOM,
-    TelegramQuestionItem,
-    TelegramSheetDOMState,
     parseAnsweredIds
+} from '../modules/telegram_parser';
+import type {
+    TelegramQuestionItem,
+    TelegramSheetDOMState
 } from '../modules/telegram_parser';
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
