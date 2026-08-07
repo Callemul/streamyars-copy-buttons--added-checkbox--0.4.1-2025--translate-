@@ -1,6 +1,6 @@
 import { renderSheetTemplates } from './popup_state_restorer';
 import { initPopupTelegramListeners } from './popup_telegram';
-import { initPopupPrayersListeners, renderPrayers } from './popup_prayers';
+import { initPopupPrayersListeners, renderPrayers } from './prayer_api';
 import { buildPopupKeysToLoad, restoreDbState, restoreSingleSheetState, restoreActiveTabUI, restoreActiveSubtabUI, restoreTextareaSizesUI, restoreTranslitStateUI, restoreScrollPositionsUI } from './popup_state_restorer';
 import { setupPopupTabListeners, setupSheetInputListeners, setupTranslitListeners, setupTitleAndOptionsListeners } from './popup_listeners';
 import { setupResizeObserver, initStep3Resizers, setupStep3ResizerEvents } from './popup_resizers';
