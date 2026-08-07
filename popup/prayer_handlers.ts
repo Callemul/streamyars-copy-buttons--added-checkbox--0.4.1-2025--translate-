@@ -2,8 +2,9 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
 import { CommentService } from '../modules/comment_service';
 import { renderPrayers } from './prayer_render';
-import { sendUnstarMessage, sendUnstarMessagesForList } from './prayer_api';
+import { sendUnstarMessage, sendUnstarMessagesForList } from './prayer_messaging';
 import { $ } from './prayer_utils';
+import type { PrayerItem } from '../modules/types';
 
 function handleEditPrayerAuthor(editBtn: Element): void {
     const block = editBtn.closest('.q-block');
@@ -260,5 +261,3 @@ export function initPopupPrayersListeners(): void {
     bindPrayerClickListeners();
     bindPrayerToolbarListeners();
 }
-
-import type { PrayerItem } from '../modules/types';

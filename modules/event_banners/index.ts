@@ -10,6 +10,7 @@ import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
 import { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction } from './mouse_handlers';
 import { handleBannerChange } from './checkbox';
+import { handleBannerMouseUp } from './mouseup_handler';
 
 export { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction };
 export { handleDeleteSelectedBannersAction, calculateBannerDeletionCounts, buildBannerDeleteConfirmMessage, executeBannerDeletion } from './deletion';
@@ -52,39 +53,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
         document.addEventListener('contextmenu', (e: MouseEvent) => handleBannerContextMenu(e, self.SELECTORS), true);
         document.addEventListener('mousedown', handleBannerMouseDown);
-        document.addEventListener('mouseup', (e: MouseEvent) => {
-            const target = e.target as Element | null;
-            const button = target?.closest('.syh-button') as HTMLElement | null;
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const type = button.dataset.type;
-            const buttonNum = e.button;
-
-            if (!isAllowedBannerAction(action, type) || buttonNum !== 0) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (action === 'create-from-text') {
-                handleCreateBannersAction(self.BANNER_CREATOR);
-                return;
-            }
-
-            if (action === 'delete-selected-banners') {
-                handleDeleteSelectedBannersAction(self.SELECTORS, self.UI);
-                return;
-            }
-
-            if (type === 'banner' && action === 'copy-banner') {
-                handleCopyBannerAction(button, self.SELECTORS, self.UTILS);
-                return;
-            }
-
-            if (action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer') {
-                handleMarkBannerCategoryAction(button, action, self.SELECTORS, self.UI, self.UTILS);
-            }
-        });
+        document.addEventListener('mouseup', (e: MouseEvent) => handleBannerMouseUp(e, self));
         document.addEventListener('change', (e: Event) => handleBannerChange(e, self.SELECTORS, self.UI));
     },
 

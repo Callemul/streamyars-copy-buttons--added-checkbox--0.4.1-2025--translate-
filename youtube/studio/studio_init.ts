@@ -1,0 +1,78 @@
+// youtube/studio/studio_init.ts
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../../modules/storage';
+import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
+import { SYH_CONFIG } from '../../modules/config';
+import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
+import { getAllSheetIds } from '../../modules/sheets';
+import { countQuestionsInText } from '../../modules/telegram_parser';
+import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
+import type { CommentPayload } from '../../modules/comment_service';
+import type { SheetHeaderStats } from './studio_header_counters';
+
+export async function initializeStudioModule(
+    caches: StudioModuleCaches,
+    sheetStatsMap: Record<string, SheetHeaderStats>
+): Promise<StudioChannelInfo | null> {
+    SYH_COMMENT_ASSISTANT.init({
+        SELECTORS: {
+            commentBlock: 'ytcp-comment',
+            commentText: '#content-text'
+        },
+        TRIGGER_WORDS_QUESTION: SYH_CONFIG.TRIGGER_WORDS_QUESTION,
+        TRIGGER_WORDS_PRAYER: SYH_CONFIG.TRIGGER_WORDS_PRAYER,
+        TRIGGER_WORDS: SYH_CONFIG.TRIGGER_WORDS
+    });
+
+    await cleanupStudioState().catch((err) => console.warn('[SYH Studio] Cleanup error:', err));
+
+    await loadStorageData(caches, sheetStatsMap);
+
+    const channelInfo = getStudioChannelInfo();
+    return channelInfo;
+}
+
+export interface StudioModuleCaches {
+    videoSheetMap: Record<string, string>;
+    buttonStates: Record<string, 'question' | 'prayer'>;
+    checkboxStates: Record<string, { checked: boolean; timestamp: number }>;
+    collectedItems: CommentPayload[];
+}
+
+async function loadStorageData(
+    caches: StudioModuleCaches,
+    sheetStatsMap: Record<string, SheetHeaderStats>
+): Promise<void> {
+    const sheetIds = getAllSheetIds();
+    const collectedKeys = sheetIds.map((sId) => getSheetCollectedStorageKey(sId));
+    const keysToFetch = [
+        'syh:studio:enabled',
+        'syh:studio:videoMap',
+        STUDIO_BUTTON_STATE_KEY,
+        STUDIO_CHECKBOX_STATE_KEY,
+        ...collectedKeys
+    ];
+
+    const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToFetch);
+    caches.videoSheetMap = res['syh:studio:videoMap'] || {};
+    caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
+    caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
+
+    const collected: CommentPayload[] = [];
+    sheetIds.forEach((sId) => {
+        const list = res[`syh:popup:collected:${sId}`];
+        let questions = 0;
+        let prayers = 0;
+        if (Array.isArray(list)) {
+            collected.push(...list);
+            list.forEach((item: any) => {
+                if (item.type === 'question') {
+                    questions += countQuestionsInText(item.text || '');
+                } else if (item.type === 'prayer') {
+                    prayers += 1;
+                }
+            });
+        }
+        sheetStatsMap[sId] = { questions, prayers };
+    });
+    caches.collectedItems = collected;
+}
