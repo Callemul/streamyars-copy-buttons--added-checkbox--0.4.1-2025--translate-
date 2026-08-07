@@ -1,3 +1,4 @@
+import type { CopyPayload } from './types';
 import { getPrayerIcon, stripLeadingAt } from './utils';
 
 export function formatCopyPayload(

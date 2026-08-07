@@ -1,5 +1,4 @@
-import type { SyhEventComments } from './types';
-import type { CopyPayload } from './formatters';
+import type { SyhEventComments, CopyPayload } from './types';
 import { SYH_BUS } from '../event_bus';
 import { CommentService } from '../comment_service';
 

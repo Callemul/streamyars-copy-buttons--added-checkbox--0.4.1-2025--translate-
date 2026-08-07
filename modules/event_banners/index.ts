@@ -5,30 +5,11 @@ import { SYH_UI, type SyhUi } from '../ui';
 import { SYH_BANNER_CREATOR, type SyhBannerCreator } from '../banner_creator';
 import type { ISyhPlugin } from '../plugin_registry';
 
-import type { SyhEventBanners, BannerDeleteCounts } from './types';
+import type { SyhEventBanners } from './types';
 import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
 import { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction } from './mouse_handlers';
 import { handleBannerChange } from './checkbox';
-
-export interface SyhEventBanners {
-    SELECTORS: Record<string, SelectorValue> | null;
-    STATE: SyhState | null;
-    UTILS: SyhUtils | null;
-    UI: SyhUi | null;
-    BANNER_CREATOR: SyhBannerCreator | null;
-
-    init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void;
-    bindEvents(): void;
-    bindBannersFilterControls(): void;
-}
-
-export interface BannerDeleteCounts {
-    all: number;
-    stream: number;
-    audience: number;
-    prayer: number;
-}
 
 export { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction };
 export { handleDeleteSelectedBannersAction, calculateBannerDeletionCounts, buildBannerDeleteConfirmMessage, executeBannerDeletion } from './deletion';

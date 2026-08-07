@@ -379,44 +379,42 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     formatSummaryMarkdown: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
         const data = this.getSummaryData(dataObj);
         if (!data) return "";
-
-        const { overall, initialViewers, st1, st2, st3 } = data;
-
+        const o = data.overall, iv = data.initialViewers, s1 = data.st1, s2 = data.st2, s3 = data.st3;
         return `# 📊 Підсумкова аналітика ефіру: ${currentBrand}
 **Дата:** ${dateStr}
-**Глядачів на старті:** ${initialViewers}
+**Глядачів на старті:** ${iv}
 
 ## 📈 Загальні показники
-- **Пік онлайн:** ${overall.max}
-- **Середній онлайн:** ${overall.avg}
-- **Медіана:** ${overall.median}
-- **Мінімум:** ${overall.min}
+- **Пік онлайн:** ${o.max}
+- **Середній онлайн:** ${o.avg}
+- **Медіана:** ${o.median}
+- **Мінімум:** ${o.min}
 
 ## 📑 Розподіл по блоках (Фази)
 | Фаза | Середній онлайн | Пік у фазі | Медіана |
 | --- | --- | --- | --- |
-| 📖 Суботня школа | ${st1.avg} | ${st1.max} | ${st1.median} |
-| ❓ Питання | ${st2.avg} | ${st2.max} | ${st2.median} |
-| 🙏 Молитви | ${st3.avg} | ${st3.max} | ${st3.median} |`;
+| 📖 Суботня школа | ${s1.avg} | ${s1.max} | ${s1.median} |
+| ❓ Питання | ${s2.avg} | ${s2.max} | ${s2.median} |
+| 🙏 Молитви | ${s3.avg} | ${s3.max} | ${s3.median} |`;
     },
 
     formatSummaryHTML: function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string {
-        const data = this.getSummaryData(dataObj);
-        if (!data) return "";
-
-        const { overall, initialViewers, st1, st2, st3 } = data;
-
+        const result = this.getSummaryData(dataObj);
+        if (!result) return "";
+        const ov = result.overall;
+        const viewers = result.initialViewers;
+        const phases = [result.st1, result.st2, result.st3];
         return `<div class="syh-summary-report">
   <h2>📊 Підсумкова аналітика ефіру: ${currentBrand}</h2>
   <p><strong>Дата:</strong> ${dateStr}</p>
-  <p><strong>Глядачів на старті:</strong> ${initialViewers}</p>
+  <p><strong>Глядачів на старті:</strong> ${viewers}</p>
 
   <h3>📈 Загальні показники</h3>
   <ul>
-    <li><strong>Пік онлайн:</strong> ${overall.max}</li>
-    <li><strong>Середній онлайн:</strong> ${overall.avg}</li>
-    <li><strong>Медіана:</strong> ${overall.median}</li>
-    <li><strong>Мінімум:</strong> ${overall.min}</li>
+    <li><strong>Пік онлайн:</strong> ${ov.max}</li>
+    <li><strong>Середній онлайн:</strong> ${ov.avg}</li>
+    <li><strong>Медіана:</strong> ${ov.median}</li>
+    <li><strong>Мінімум:</strong> ${ov.min}</li>
   </ul>
 
   <h3>📑 Розподіл по блоках (Фази)</h3>
@@ -432,21 +430,21 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
     <tbody>
       <tr>
         <td>📖 Суботня школа</td>
-        <td>${st1.avg}</td>
-        <td>${st1.max}</td>
-        <td>${st1.median}</td>
+        <td>${phases[0].avg}</td>
+        <td>${phases[0].max}</td>
+        <td>${phases[0].median}</td>
       </tr>
       <tr>
         <td>❓ Питання</td>
-        <td>${st2.avg}</td>
-        <td>${st2.max}</td>
-        <td>${st2.median}</td>
+        <td>${phases[1].avg}</td>
+        <td>${phases[1].max}</td>
+        <td>${phases[1].median}</td>
       </tr>
       <tr>
         <td>🙏 Молитви</td>
-        <td>${st3.avg}</td>
-        <td>${st3.max}</td>
-        <td>${st3.median}</td>
+        <td>${phases[2].avg}</td>
+        <td>${phases[2].max}</td>
+        <td>${phases[2].median}</td>
       </tr>
     </tbody>
   </table>

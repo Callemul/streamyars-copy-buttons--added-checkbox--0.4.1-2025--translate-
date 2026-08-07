@@ -1,12 +1,3 @@
-export interface PrayerRecord {
-    author: string;
-    text: string;
-    type: string;
-    icon: string;
-    roomId: string;
-    timestamp: number;
-}
-
 export interface CopyPayload {
     header: string;
     textToCopy: string;

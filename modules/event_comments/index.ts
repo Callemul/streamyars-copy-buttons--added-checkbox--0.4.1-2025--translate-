@@ -12,22 +12,6 @@ import { formatCopyPayload, getPrayerIcon, stripLeadingAt } from './formatters';
 import { handleSyhButtonMouseUp } from './button_handlers';
 import { applyCommentActionState } from './actions';
 
-export interface PrayerRecord {
-    author: string;
-    text: string;
-    type: string;
-    icon: string;
-    roomId: string;
-    timestamp: number;
-}
-
-export interface CopyPayload {
-    header: string;
-    textToCopy: string;
-    actionType: 'question' | 'prayer' | 'copy' | null;
-    prayerIcon?: string;
-}
-
 export { getPrayerIcon, stripLeadingAt, formatCopyPayload };
 export { applyCommentActionState };
 export { handleSyhButtonMouseUp };
