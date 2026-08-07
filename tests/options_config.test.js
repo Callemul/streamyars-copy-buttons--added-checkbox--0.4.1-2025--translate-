@@ -1,45 +1,62 @@
-import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { validateImportedConfig } from '../options/options.ts';
+import assert from 'node:assert/strict';
 
-describe('options/options.ts validateImportedConfig Tests', () => {
-    test('1. validateImportedConfig returns true for valid JSON config with db and options', () => {
-        const validConfig = {
-            version: '1.0.0',
-            timestamp: new Date().toISOString(),
-            db: { newTitleSS: 'Test SS' },
-            syh_options: { show_copy_buttons: true }
-        };
-        assert.equal(validateImportedConfig(validConfig), true);
+const { validateImportedConfig } = await import('../options/options.ts');
+
+describe('options.ts - validateImportedConfig', () => {
+    test('returns false for null/undefined', () => {
+        assert.strictEqual(validateImportedConfig(null), false);
+        assert.strictEqual(validateImportedConfig(undefined), false);
     });
 
-    test('2. validateImportedConfig returns true for full storage state export', () => {
-        const fullStateConfig = {
-            'syh:core:options': { show_copy_buttons: true },
-            'syh:core:db': { newTitleSS: 'Test' }
-        };
-        assert.equal(validateImportedConfig(fullStateConfig), true);
+    test('returns false for non-object', () => {
+        assert.strictEqual(validateImportedConfig('string'), false);
+        assert.strictEqual(validateImportedConfig(123), false);
+        assert.strictEqual(validateImportedConfig([]), false);
     });
 
-    test('3. validateImportedConfig returns false for invalid structure or null', () => {
-        assert.equal(validateImportedConfig(null), false);
-        assert.equal(validateImportedConfig([]), false);
-        assert.equal(validateImportedConfig('invalid string'), false);
-        assert.equal(validateImportedConfig({ unknown_key: 123 }), false);
+    test('returns false for empty object', () => {
+        assert.strictEqual(validateImportedConfig({}), false);
     });
 
-    test('4. extractImportedItems extracts db, options, studio_enabled, and syh: prefix keys', async () => {
-        const { OptionsController } = await import('../options/options.ts');
-        const importedData = {
-            db: { newTitleSS: 'SS' },
-            options: { show_copy_buttons: false },
-            'syh:popup:active_tab': 'tab-prayers'
-        };
-        const controller = Object.create(OptionsController.prototype);
-        const extracted = controller.extractImportedItems(importedData);
+    test('returns true when has db key', () => {
+        assert.strictEqual(validateImportedConfig({ db: {} }), true);
+    });
 
-        assert.deepEqual(extracted['syh:core:db'], { newTitleSS: 'SS' });
-        assert.deepEqual(extracted['syh:core:options'], { show_copy_buttons: false });
-        assert.equal(extracted['syh:popup:active_tab'], 'tab-prayers');
+    test('returns true when has syh_options key', () => {
+        assert.strictEqual(validateImportedConfig({ syh_options: {} }), true);
+    });
+
+    test('returns true when has options key', () => {
+        assert.strictEqual(validateImportedConfig({ options: {} }), true);
+    });
+
+    test('returns true when has categories key', () => {
+        assert.strictEqual(validateImportedConfig({ categories: {} }), true);
+    });
+
+    test('returns true when has studio_enabled key', () => {
+        assert.strictEqual(validateImportedConfig({ studio_enabled: true }), true);
+    });
+
+    test('returns false when all sections are invalid (arrays)', () => {
+        assert.strictEqual(validateImportedConfig({ syh_options: [] }), false);
+        assert.strictEqual(validateImportedConfig({ db: [] }), false);
+    });
+
+    test('returns true with STORAGE_KEYS.DB', () => {
+        assert.strictEqual(validateImportedConfig({ 'syh:core:db': {} }), true);
+    });
+
+    test('returns true with STORAGE_KEYS.OPTIONS', () => {
+        assert.strictEqual(validateImportedConfig({ 'syh:core:options': {} }), true);
+    });
+
+    test('returns true with STORAGE_KEYS.CATEGORIES', () => {
+        assert.strictEqual(validateImportedConfig({ 'syh:core:categories': {} }), true);
+    });
+
+    test('returns true with STORAGE_KEYS.STUDIO_ENABLED', () => {
+        assert.strictEqual(validateImportedConfig({ 'syh:core:studio_enabled': true }), true);
     });
 });

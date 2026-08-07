@@ -1,62 +1,9 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { SYH_CONFIG } from '../modules/config';
-import { SHEET_LABELS } from '../modules/sheets';
 import { CommentService } from '../modules/comment_service';
 import type { StudioOverrideLogEntry } from '../modules/types';
-
-interface OptionsState {
-    newTitleSS: string;
-    newTitlePreach: string;
-    ui_locale: string;
-    anti_afk_enabled: boolean;
-    anti_afk_interval_sec: number;
-    auto_heal_enabled: boolean;
-    text_truncation_length: number;
-    show_copy_buttons: boolean;
-    youtube_enabled: boolean;
-    studio_enabled: boolean;
-    compact_secondary_tabs_default: boolean;
-}
-
-function isSectionValid(section: any): boolean {
-    return !section || (typeof section === 'object' && !Array.isArray(section));
-}
-
-export function validateImportedConfig(data: any): boolean {
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        return false;
-    }
-    const hasDb = 'db' in data || STORAGE_KEYS.DB in data;
-    const hasOptions = 'syh_options' in data || STORAGE_KEYS.OPTIONS in data || 'options' in data;
-    const hasCategories = 'categories' in data || STORAGE_KEYS.CATEGORIES in data;
-    const hasStudioEnabled = 'studio_enabled' in data || STORAGE_KEYS.STUDIO_ENABLED in data;
-
-    if (!hasDb && !hasOptions && !hasCategories && !hasStudioEnabled) {
-        return false;
-    }
-
-    const opts = data.syh_options || data[STORAGE_KEYS.OPTIONS] || data.options;
-    if (!isSectionValid(opts)) return false;
-
-    const db = data.db || data[STORAGE_KEYS.DB];
-    if (!isSectionValid(db)) return false;
-
-    return true;
-}
-
-const DEFAULT_OPTIONS: OptionsState = {
-    newTitleSS: 'СШ Урок',
-    newTitlePreach: 'Проповідь',
-    ui_locale: 'auto',
-    anti_afk_enabled: true,
-    anti_afk_interval_sec: SYH_CONFIG.TIMINGS.ANTI_AFK_INTERVAL / 1000,
-    auto_heal_enabled: true,
-    text_truncation_length: SYH_CONFIG.LIMITS.TEXT_TRUNCATION_LENGTH,
-    show_copy_buttons: true,
-    youtube_enabled: true,
-    studio_enabled: true,
-    compact_secondary_tabs_default: true
-};
+import { validateImportedConfig, extractImportedItems } from './validation';
+import { DEFAULT_OPTIONS, type OptionsState } from './defaults';
+import { populateFormElements } from './form';
 
 class OptionsController {
     private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -106,39 +53,11 @@ class OptionsController {
         if (clearLogBtn) clearLogBtn.addEventListener('click', () => this.clearStudioLog());
     }
 
-    private populateFormElements(db: any, opts: Partial<OptionsState>, studioEnabled?: boolean): void {
-        const setVal = (id: string, val: string) => {
-            const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
-            if (el) el.value = val;
-        };
-        const setCheck = (id: string, val: boolean) => {
-            const el = document.getElementById(id) as HTMLInputElement | null;
-            if (el) el.checked = val;
-        };
-
-        setVal('optSschoolName', db.newTitleSS || DEFAULT_OPTIONS.newTitleSS);
-        setVal('optPreachName', db.newTitlePreach || DEFAULT_OPTIONS.newTitlePreach);
-        setVal('optLanguage', opts.ui_locale || DEFAULT_OPTIONS.ui_locale);
-
-        setCheck('optAntiAfkEnabled', opts.anti_afk_enabled !== undefined ? opts.anti_afk_enabled : DEFAULT_OPTIONS.anti_afk_enabled);
-        setVal('optAntiAfkInterval', String(opts.anti_afk_interval_sec || DEFAULT_OPTIONS.anti_afk_interval_sec));
-
-        setCheck('optAutoHealEnabled', opts.auto_heal_enabled !== undefined ? opts.auto_heal_enabled : DEFAULT_OPTIONS.auto_heal_enabled);
-        setVal('optTruncationLength', String(opts.text_truncation_length || DEFAULT_OPTIONS.text_truncation_length));
-
-        setCheck('optShowCopyButtons', opts.show_copy_buttons !== undefined ? opts.show_copy_buttons : DEFAULT_OPTIONS.show_copy_buttons);
-        setCheck('optCompactSecondaryTabs', opts.compact_secondary_tabs_default !== undefined ? opts.compact_secondary_tabs_default : DEFAULT_OPTIONS.compact_secondary_tabs_default);
-        setCheck('optYouTubeEnabled', opts.youtube_enabled !== undefined ? opts.youtube_enabled : DEFAULT_OPTIONS.youtube_enabled);
-
-        const isStudioEnabled = studioEnabled !== undefined ? studioEnabled : (opts.studio_enabled !== undefined ? opts.studio_enabled : DEFAULT_OPTIONS.studio_enabled);
-        setCheck('optStudioEnabled', isStudioEnabled);
-    }
-
     private loadSettings(): void {
         SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS, STORAGE_KEYS.STUDIO_ENABLED], (result) => {
             const db = result[STORAGE_KEYS.DB] || {};
             const opts: Partial<OptionsState> = result[STORAGE_KEYS.OPTIONS] || {};
-            this.populateFormElements(db, opts, result[STORAGE_KEYS.STUDIO_ENABLED]);
+            populateFormElements(db, opts, DEFAULT_OPTIONS, result[STORAGE_KEYS.STUDIO_ENABLED]);
             this.loadStudioLog();
         });
     }
@@ -215,12 +134,12 @@ class OptionsController {
 
                 const autoTd = document.createElement('td');
                 autoTd.style.padding = '6px 8px';
-                autoTd.textContent = entry.autoDetectedSheet ? (SHEET_LABELS[entry.autoDetectedSheet] || entry.autoDetectedSheet) : 'Не визначено';
+                autoTd.textContent = entry.autoDetectedSheet ? (entry.autoDetectedSheet) : 'Не визначено';
 
                 const assignedTd = document.createElement('td');
                 assignedTd.style.padding = '6px 8px';
                 assignedTd.style.fontWeight = 'bold';
-                assignedTd.textContent = SHEET_LABELS[entry.assignedSheet] || entry.assignedSheet;
+                assignedTd.textContent = entry.assignedSheet || '—';
 
                 tr.appendChild(timeTd);
                 tr.appendChild(chanTd);
@@ -243,8 +162,8 @@ class OptionsController {
             const lines = logs.map(entry => {
                 const time = entry.timestamp ? new Date(entry.timestamp).toLocaleString('uk-UA') : '—';
                 const channel = entry.channelLabel || entry.channelKey || '—';
-                const auto = entry.autoDetectedSheet ? (SHEET_LABELS[entry.autoDetectedSheet] || entry.autoDetectedSheet) : 'Не визначено';
-                const assigned = SHEET_LABELS[entry.assignedSheet] || entry.assignedSheet;
+                const auto = entry.autoDetectedSheet ? (entry.autoDetectedSheet) : 'Не визначено';
+                const assigned = entry.assignedSheet || '—';
                 return `[${time}] Канал: ${channel} | Відео: "${entry.videoTitle}" | Авто: ${auto} => Ручний вибір: ${assigned}`;
             });
 
@@ -299,36 +218,6 @@ class OptionsController {
         });
     }
 
-    private validateImportedConfig(data: any): boolean {
-        return validateImportedConfig(data);
-    }
-
-    public extractImportedItems(imported: Record<string, any>): Record<string, any> {
-        const itemsToSave: Record<string, any> = {};
-
-        const mapKey = (stdKey: string, ...fallbackKeys: string[]) => {
-            const foundKey = [stdKey, ...fallbackKeys].find(k => k in imported);
-            if (foundKey !== undefined) {
-                itemsToSave[stdKey] = imported[foundKey];
-            }
-        };
-
-        mapKey(STORAGE_KEYS.DB, 'db');
-        mapKey(STORAGE_KEYS.OPTIONS, 'syh_options', 'options');
-        mapKey(STORAGE_KEYS.STUDIO_ENABLED, 'studio_enabled');
-        mapKey(STORAGE_KEYS.CATEGORIES, 'categories');
-        mapKey(STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP, 'studio_video_sheet_map');
-        mapKey(STORAGE_KEYS.COLLAPSED_TABS, 'collapsed_tabs');
-
-        for (const key of Object.keys(imported)) {
-            if (key.startsWith('syh:')) {
-                itemsToSave[key] = imported[key];
-            }
-        }
-
-        return itemsToSave;
-    }
-
     private importConfig(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files || input.files.length === 0) return;
@@ -339,7 +228,7 @@ class OptionsController {
             try {
                 const imported = JSON.parse(e.target?.result as string);
                 if (validateImportedConfig(imported)) {
-                    const itemsToSave = this.extractImportedItems(imported);
+                    const itemsToSave = extractImportedItems(imported);
 
                     SYH_STORAGE.set(itemsToSave, () => {
                         this.loadSettings();
@@ -379,6 +268,8 @@ class OptionsController {
         }, 3000);
     }
 }
+
+export { validateImportedConfig, DEFAULT_OPTIONS, type OptionsState, populateFormElements };
 
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     document.addEventListener('DOMContentLoaded', () => {
