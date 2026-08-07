@@ -1,51 +1,29 @@
 import { SYH_STORAGE, STORAGE_KEYS, POPUP_SHEET_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { updateOldInputStats, updateNewInputStats, updateCombinedCounters, clearFinalResult, clearAllYTCollected, loadYTCollected } from './popup_telegram';
-import { $, setTextContent, hideElement } from './popup_dom_utils';
+import { $, setTextContent, hideElement, bindTabSwitcher, bindDebouncedInput } from './popup_dom_utils';
 import { CommentService } from '../modules/comment_service';
 import { db, saveDataToStorage } from './popup_state_restorer';
 
 const SHEET_IDS = getAllSheetIds();
 
 export function setupPopupTabListeners(): void {
-    document.querySelectorAll('.tab-link').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const tabId = this.getAttribute('data-tab');
-            if (!tabId) return;
-            document.querySelectorAll('.tab-link').forEach(b => {
-                b.classList.remove('active');
-                b.setAttribute('aria-selected', 'false');
-            });
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            const tabContent = document.getElementById(tabId);
-            if (tabContent) tabContent.classList.add('active');
-            SYH_STORAGE.set({
-                [STORAGE_KEYS.POPUP_ACTIVE_TAB]: tabId,
-                'tg_active_tab': tabId
-            });
-        });
+    bindTabSwitcher({
+        tabSelector: '.tab-link',
+        contentSelector: '.tab-content',
+        dataAttr: 'data-tab',
+        storageKey: STORAGE_KEYS.POPUP_ACTIVE_TAB,
+        tgStorageKey: 'tg_active_tab',
+        buildContentId: (id) => id
     });
 
-    document.querySelectorAll('.subtab-button').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const sheetId = this.getAttribute('data-sheet');
-            if (!sheetId) return;
-            document.querySelectorAll('.subtab-button').forEach(b => {
-                b.classList.remove('active');
-                b.setAttribute('aria-selected', 'false');
-            });
-            document.querySelectorAll('.sheet-content').forEach(content => content.classList.remove('active'));
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            const sheetContent = document.getElementById(`sheet-content-${sheetId}`);
-            if (sheetContent) sheetContent.classList.add('active');
-            SYH_STORAGE.set({
-                [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]: sheetId,
-                'tg_active_subtab': sheetId
-            });
-        });
+    bindTabSwitcher({
+        tabSelector: '.subtab-button',
+        contentSelector: '.sheet-content',
+        dataAttr: 'data-sheet',
+        storageKey: STORAGE_KEYS.POPUP_ACTIVE_SUBTAB,
+        tgStorageKey: 'tg_active_subtab',
+        buildContentId: (id) => `sheet-content-${id}`
     });
 }
 
@@ -56,55 +34,49 @@ export function setupSheetInputListeners(): void {
     const finalResultTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
     SHEET_IDS.forEach(sId => {
-        const oldListEl = $(`oldList__${sId}`) as HTMLTextAreaElement | null;
-        if (oldListEl) {
-            oldListEl.addEventListener('input', function () {
-                const val = this.value;
-                const existing = oldListTimers.get(sId);
-                if (existing) clearTimeout(existing);
-                oldListTimers.set(sId, setTimeout(() => {
-                    SYH_STORAGE.set({
-                        [POPUP_SHEET_KEYS.oldList(sId)]: val,
-                        [`tg_oldList__${sId}`]: val
-                    });
-                    updateOldInputStats(sId);
-                }, 300));
-            });
-        }
+        bindDebouncedInput(
+            $(`oldList__${sId}`),
+            sId,
+            oldListTimers,
+            300,
+            (val) => {
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.oldList(sId)]: val,
+                    [`tg_oldList__${sId}`]: val
+                });
+                updateOldInputStats(sId);
+            }
+        );
 
-        const newTgEl = $(`newTelegram__${sId}`) as HTMLTextAreaElement | null;
-        if (newTgEl) {
-            newTgEl.addEventListener('input', function () {
-                const val = this.value;
-                const existing = newTelegramTimers.get(sId);
-                if (existing) clearTimeout(existing);
-                newTelegramTimers.set(sId, setTimeout(() => {
-                    SYH_STORAGE.set({
-                        [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
-                        [`tg_newTelegram__${sId}`]: val
-                    });
-                    updateNewInputStats(sId);
-                    clearFinalResult(sId);
-                }, 300));
-            });
-        }
+        bindDebouncedInput(
+            $(`newTelegram__${sId}`),
+            sId,
+            newTelegramTimers,
+            300,
+            (val) => {
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.newTelegram(sId)]: val,
+                    [`tg_newTelegram__${sId}`]: val
+                });
+                updateNewInputStats(sId);
+                clearFinalResult(sId);
+            }
+        );
 
-        const answeredEl = $(`answeredIds__${sId}`) as HTMLInputElement | null;
-        if (answeredEl) {
-            answeredEl.addEventListener('input', function () {
-                const val = this.value;
-                const existing = answeredIdsTimers.get(sId);
-                if (existing) clearTimeout(existing);
-                answeredIdsTimers.set(sId, setTimeout(() => {
-                    SYH_STORAGE.set({
-                        [POPUP_SHEET_KEYS.answered(sId)]: val,
-                        [`tg_answered__${sId}`]: val
-                    });
-                    updateCombinedCounters(sId);
-                    clearFinalResult(sId);
-                }, 300));
-            });
-        }
+        bindDebouncedInput(
+            $(`answeredIds__${sId}`),
+            sId,
+            answeredIdsTimers,
+            300,
+            (val) => {
+                SYH_STORAGE.set({
+                    [POPUP_SHEET_KEYS.answered(sId)]: val,
+                    [`tg_answered__${sId}`]: val
+                });
+                updateCombinedCounters(sId);
+                clearFinalResult(sId);
+            }
+        );
 
         const finalResultEl = $(`finalResultDiv__${sId}`);
         if (finalResultEl && finalResultEl instanceof HTMLElement) {
@@ -162,30 +134,23 @@ export function setupSheetInputListeners(): void {
 }
 
 export function setupTranslitListeners(): void {
-    let translitOldTimer: ReturnType<typeof setTimeout> | null = null;
-    let translitNewTimer: ReturnType<typeof setTimeout> | null = null;
+    const translitTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-    const ta1 = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
-    if (ta1) {
-        ta1.addEventListener('input', function () {
-            const val = this.value;
-            if (translitOldTimer) clearTimeout(translitOldTimer);
-            translitOldTimer = setTimeout(() => {
-                SYH_STORAGE.set({ 'tg_translit_old': val });
-            }, 300);
-        });
-    }
+    bindDebouncedInput(
+        $(`textArea1_oldText`),
+        'translitOld',
+        translitTimers,
+        300,
+        (val) => { SYH_STORAGE.set({ 'tg_translit_old': val }); }
+    );
 
-    const ta2 = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
-    if (ta2) {
-        ta2.addEventListener('input', function () {
-            const val = this.value;
-            if (translitNewTimer) clearTimeout(translitNewTimer);
-            translitNewTimer = setTimeout(() => {
-                SYH_STORAGE.set({ 'tg_translit_new': val });
-            }, 300);
-        });
-    }
+    bindDebouncedInput(
+        $(`textArea2_generatedRuText`),
+        'translitNew',
+        translitTimers,
+        300,
+        (val) => { SYH_STORAGE.set({ 'tg_translit_new': val }); }
+    );
 }
 
 export function setupTitleAndOptionsListeners(): void {

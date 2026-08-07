@@ -20,6 +20,28 @@ export interface SyhConfig {
 }
 
 /**
+ * Повертає перший CSS-селектор із можливого масиву-фолбеку.
+ * Корисно, коли потрібен лише рядок-селектор (наприклад, для реєстрації DOM-спостерігача).
+ */
+export function resolveFirstSelector(
+    selectorValue: SelectorValue | null | undefined
+): string | undefined {
+    if (!selectorValue) return undefined;
+    return Array.isArray(selectorValue) ? selectorValue[0] : selectorValue;
+}
+
+/**
+ * Об'єднує можливий масив селекторів у один рядок через кому.
+ * Повертає порожній рядок, якщо значення невизначене.
+ */
+export function resolveSelectorString(
+    selectorValue: SelectorValue | null | undefined
+): string {
+    if (!selectorValue) return '';
+    return Array.isArray(selectorValue) ? selectorValue.join(',') : selectorValue;
+}
+
+/**
  * Допоміжний резолвер селекторів з підтримкою масивів-фолбеків
  */
 export function resolveSelector<T extends Element = Element>(

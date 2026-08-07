@@ -2,6 +2,7 @@
  * StreamYard Helper - Shared UI Utilities
  * Спільні допоміжні функції для UI модулів (ui_banners, ui_comments)
  */
+import { CommentService } from './comment_service';
 
 export function safeTextUpdate(selector: string, newText: string): void {
     const el = document.querySelector(selector);
@@ -63,4 +64,97 @@ export function updateMasterCheckboxFromElements(
         masterCheckbox.checked = false;
         masterCheckbox.indeterminate = true;
     }
+}
+
+export function restoreCheckboxFromCache(
+    container: Element,
+    textKey: string
+): void {
+    if (CommentService.getStreamYardCheckboxState(textKey)) {
+        const checkbox = container.querySelector<HTMLInputElement>('.syh-checkbox');
+        if (checkbox) checkbox.checked = true;
+    }
+}
+
+export function updateFilterTabSelection(
+    selectedBtn: HTMLElement,
+    filterBtnClass: string
+): void {
+    const allTabs = document.querySelectorAll<HTMLElement>(filterBtnClass);
+    allTabs.forEach(btn => {
+        const isSelected = btn === selectedBtn;
+        btn.classList.toggle('active', isSelected);
+        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        btn.style.background = isSelected ? '#fff' : 'transparent';
+        btn.style.fontWeight = isSelected ? 'bold' : 'normal';
+        btn.style.boxShadow = isSelected ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
+        btn.style.color = isSelected ? '#000' : '#666';
+    });
+}
+
+export interface FilterSearchControlsConfig {
+    searchInputSelector: string;
+    clearBtnSelector: string;
+    scrollBtnSelector: string;
+    onSearch: (query: string) => void;
+    onClear: () => void;
+    onScroll: () => void;
+}
+
+export function bindFilterSearchControls(config: FilterSearchControlsConfig): void {
+    const searchInput = document.querySelector<HTMLInputElement>(config.searchInputSelector);
+    const clearBtn = document.querySelector<HTMLElement>(config.clearBtnSelector);
+
+    if (searchInput) {
+        searchInput.oninput = function() {
+            const query = searchInput.value ? searchInput.value.toLowerCase() : '';
+            config.onSearch(query);
+            if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
+        };
+    }
+
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            if (searchInput) searchInput.value = '';
+            config.onClear();
+            clearBtn.style.display = 'none';
+        };
+    }
+
+    const scrollBtn = document.querySelector<HTMLElement>(config.scrollBtnSelector);
+    if (scrollBtn) {
+        scrollBtn.onclick = function(e: MouseEvent) {
+            e.preventDefault();
+            config.onScroll();
+        };
+    }
+}
+
+export interface FilterDocClickConfig {
+    searchInputSelector: string;
+    clearBtnSelector: string;
+    clearLinkSelector: string;
+    filterBtnClass: string;
+    onClearAll: () => void;
+    onFilterSelect: (filterBtn: HTMLElement) => void;
+}
+
+export function bindFilterDocClickHandler(config: FilterDocClickConfig): void {
+    document.addEventListener('click', function(e: MouseEvent) {
+        const target = e.target as Element | null;
+        if (target?.closest(config.clearLinkSelector)) {
+            e.preventDefault();
+            const searchInput = document.querySelector<HTMLInputElement>(config.searchInputSelector);
+            const clearBtn = document.querySelector<HTMLElement>(config.clearBtnSelector);
+            if (searchInput) searchInput.value = '';
+            if (clearBtn) clearBtn.style.display = 'none';
+            config.onClearAll();
+            return;
+        }
+
+        const filterBtn = target?.closest(config.filterBtnClass) as HTMLElement | null;
+        if (filterBtn) {
+            config.onFilterSelect(filterBtn);
+        }
+    });
 }

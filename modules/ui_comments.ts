@@ -6,7 +6,11 @@ import { CommentService } from './comment_service';
 import type { PrayerItem } from './types';
 import {
     updateTabCounts,
-    scrollToActiveItem
+    scrollToActiveItem,
+    restoreCheckboxFromCache,
+    updateFilterTabSelection,
+    bindFilterSearchControls,
+    bindFilterDocClickHandler
 } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';
 
@@ -46,10 +50,7 @@ export function addButtonsToComment(commentNode: Element): void {
         
         const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
         
-        if (CommentService.getStreamYardCheckboxState(commentText)) {
-            const checkbox = targetContainer.querySelector<HTMLInputElement>('.syh-checkbox');
-            if (checkbox) checkbox.checked = true;
-        }
+        restoreCheckboxFromCache(targetContainer, commentText);
         applySavedLabels(commentNode, commentText);
     }
 }
@@ -206,62 +207,33 @@ export function addStarredTabCopyButton(starredTabNode: Element): void {
 
 export function bindStarredControls(): void {
     const searchInput = document.querySelector<HTMLInputElement>('#syh-starred-search');
-    const clearBtn = document.querySelector<HTMLElement>('#syh-clear-search-btn');
 
-    if (searchInput) {
-        searchInput.oninput = function() {
-            SYH_UI_STATE.searchQuery = searchInput.value.toLowerCase();
-            if (clearBtn) clearBtn.style.display = SYH_UI_STATE.searchQuery ? 'flex' : 'none';
+    bindFilterSearchControls({
+        searchInputSelector: '#syh-starred-search',
+        clearBtnSelector: '#syh-clear-search-btn',
+        scrollBtnSelector: '#syh-scroll-to-active-btn',
+        onSearch: (query) => {
+            SYH_UI_STATE.searchQuery = query;
             filterStarredComments();
-        };
-    }
-
-    if (clearBtn) {
-        clearBtn.onclick = function() {
-            if (searchInput) searchInput.value = '';
+        },
+        onClear: () => {
             SYH_UI_STATE.searchQuery = '';
-            clearBtn.style.display = 'none';
             filterStarredComments();
-        };
-    }
+        },
+        onScroll: scrollToActiveComment
+    });
 
-    const scrollBtn = document.querySelector('#syh-scroll-to-active-btn');
-    if (scrollBtn) {
-        scrollBtn.onclick = function(e) {
-            e.preventDefault();
-            scrollToActiveComment();
-        };
-    }
-
-    document.addEventListener('click', function(e: MouseEvent) {
-        const target = e.target as Element | null;
-        if (target?.closest('#syh-empty-clear-link')) {
-            e.preventDefault();
-            if (searchInput) searchInput.value = '';
+    bindFilterDocClickHandler({
+        searchInputSelector: '#syh-starred-search',
+        clearBtnSelector: '#syh-clear-search-btn',
+        clearLinkSelector: '#syh-empty-clear-link',
+        filterBtnClass: '.syh-filter-btn',
+        onClearAll: () => {
             SYH_UI_STATE.searchQuery = '';
-            if (clearBtn) clearBtn.style.display = 'none';
             filterStarredComments();
-            return;
-        }
-
-        const filterBtn = target?.closest('.syh-filter-btn') as HTMLElement | null;
-        if (filterBtn) {
-            document.querySelectorAll<HTMLElement>('.syh-filter-btn').forEach(btn => {
-                btn.style.background = 'transparent';
-                btn.style.fontWeight = 'normal';
-                btn.style.boxShadow = 'none';
-                btn.style.color = '#666';
-                btn.classList.remove('active');
-                btn.setAttribute('aria-selected', 'false');
-            });
-
-            filterBtn.style.background = '#fff';
-            filterBtn.style.fontWeight = 'bold';
-            filterBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-            filterBtn.style.color = '#000';
-            filterBtn.classList.add('active');
-            filterBtn.setAttribute('aria-selected', 'true');
-            
+        },
+        onFilterSelect: (filterBtn) => {
+            updateFilterTabSelection(filterBtn, '.syh-filter-btn');
             SYH_UI_STATE.activeFilter = filterBtn.dataset.filter || 'all';
             filterStarredComments();
 

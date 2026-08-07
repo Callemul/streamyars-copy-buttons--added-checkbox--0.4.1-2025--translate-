@@ -1,6 +1,7 @@
 // youtube/yt_ui.ts
 import { YT_SELECTORS } from './yt_selectors';
 import { UiFactory } from '../modules/ui_factory';
+import { type ButtonStateType } from '../modules/comment_platform_adapter';
 
 export interface CommentData {
     id: string;
@@ -130,6 +131,56 @@ export function addButtonsToYTComment(commentNode: Element): HTMLElement | null 
 }
 
 /**
+ * Встановлює візуальний стан кнопок питання/молитви на панелі коментаря.
+ */
+export function applyButtonVisualState(
+    questionBtn: HTMLElement | null,
+    prayerBtn: HTMLElement | null,
+    state: ButtonStateType | null
+): void {
+    if (!questionBtn || !prayerBtn) return;
+
+    if (state === 'question') {
+        questionBtn.dataset.state = 'added';
+        questionBtn.innerText = 'Додано до питань';
+        prayerBtn.dataset.state = '';
+        prayerBtn.innerText = 'Додати до молитов';
+    } else if (state === 'prayer') {
+        prayerBtn.dataset.state = 'added';
+        prayerBtn.innerText = 'Додано до молитов';
+        questionBtn.dataset.state = '';
+        questionBtn.innerText = 'Додати до питань';
+    } else {
+        questionBtn.dataset.state = '';
+        questionBtn.innerText = 'Додати до питань';
+        prayerBtn.dataset.state = '';
+        prayerBtn.innerText = 'Додати до молитов';
+    }
+}
+
+/**
+ * Встановлює візуальний стан чекбокса коментаря на панелі: галочка + CSS-клас.
+ */
+export function applyCheckboxStateFromCache(
+    container: Element,
+    commentId: string,
+    checkboxStates: Record<string, { checked: boolean; timestamp: number }>
+): void {
+    const checkbox = container.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
+    if (!checkbox) return;
+
+    const entry = checkboxStates[commentId];
+    const isChecked = !!(entry && entry.checked);
+
+    checkbox.checked = isChecked;
+    if (isChecked) {
+        container.classList.add('syh-yt-comment-checked');
+    } else {
+        container.classList.remove('syh-yt-comment-checked');
+    }
+}
+
+/**
  * Відновлює стан кнопок коментаря
  */
 export function restoreButtonState(
@@ -139,27 +190,8 @@ export function restoreButtonState(
 ): void {
     const btnQuestion = commentNode.querySelector('.syh-yt-btn-question') as HTMLButtonElement | null;
     const btnPrayer = commentNode.querySelector('.syh-yt-btn-prayer') as HTMLButtonElement | null;
-
-    if (!btnQuestion || !btnPrayer) return;
-
-    const state = buttonStates[commentId];
-
-    if (state === 'question') {
-        btnQuestion.dataset.state = 'added';
-        btnQuestion.innerText = 'Додано до питань';
-        btnPrayer.dataset.state = '';
-        btnPrayer.innerText = 'Додати до молитов';
-    } else if (state === 'prayer') {
-        btnPrayer.dataset.state = 'added';
-        btnPrayer.innerText = 'Додано до молитов';
-        btnQuestion.dataset.state = '';
-        btnQuestion.innerText = 'Додати до питань';
-    } else {
-        btnQuestion.dataset.state = '';
-        btnQuestion.innerText = 'Додати до питань';
-        btnPrayer.dataset.state = '';
-        btnPrayer.innerText = 'Додати до молитов';
-    }
+    const state = buttonStates[commentId] ?? null;
+    applyButtonVisualState(btnQuestion, btnPrayer, state);
 }
 
 /**
@@ -170,16 +202,5 @@ export function restoreCheckboxState(
     commentId: string,
     checkboxStates: Record<string, { checked: boolean; timestamp: number }>
 ): void {
-    const checkbox = commentNode.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
-    if (!checkbox) return;
-
-    const entry = checkboxStates[commentId];
-    const isChecked = !!(entry && entry.checked);
-
-    checkbox.checked = isChecked;
-    if (isChecked) {
-        commentNode.classList.add('syh-yt-comment-checked');
-    } else {
-        commentNode.classList.remove('syh-yt-comment-checked');
-    }
+    applyCheckboxStateFromCache(commentNode, commentId, checkboxStates);
 }

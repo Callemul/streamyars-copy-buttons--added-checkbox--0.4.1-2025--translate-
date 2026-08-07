@@ -148,6 +148,31 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
 }
 
 /**
+ * Applies icon, active state, and tooltip to a single Studio button.
+ */
+function applyStudioButtonUI(
+    btn: HTMLButtonElement,
+    iconHtml: string,
+    type: 'question' | 'prayer',
+    buttonState: 'question' | 'prayer' | null,
+    sheetLabel: string | null
+): void {
+    const suffix = type === 'question' ? 'питань' : 'молитов';
+    btn.innerHTML = iconHtml;
+    if (buttonState === type) {
+        btn.classList.add('syh-btn-active');
+        btn.title = sheetLabel
+            ? `Відправлено до ${sheetLabel} - ${suffix}`
+            : `Відправлено до ${suffix}`;
+    } else {
+        btn.classList.remove('syh-btn-active');
+        btn.title = sheetLabel
+            ? `Додати до ${sheetLabel} - ${suffix}`
+            : 'Категорію не визначено (натисніть на Badge)';
+    }
+}
+
+/**
  * Updates button labels, tooltips and icons based on sheet category and button active state
  */
 export function updateStudioButtonsUI(
@@ -158,33 +183,8 @@ export function updateStudioButtonsUI(
     const { questionBtn, prayerBtn } = elements;
     const sheetLabel = resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null;
 
-    // Question button
-    questionBtn.innerHTML = '<span class="syh-icon">\u2753</span>';
-    if (buttonState === 'question') {
-        questionBtn.classList.add('syh-btn-active');
-        questionBtn.title = sheetLabel
-            ? `Відправлено до ${sheetLabel} - питань`
-            : 'Відправлено до питань';
-    } else {
-        questionBtn.classList.remove('syh-btn-active');
-        questionBtn.title = sheetLabel
-            ? `Додати до ${sheetLabel} - питань`
-            : 'Категорію не визначено (натисніть на Badge)';
-    }
-
-    // Prayer button
-    prayerBtn.innerHTML = '<span class="syh-icon">\uD83D\uDE4F</span>';
-    if (buttonState === 'prayer') {
-        prayerBtn.classList.add('syh-btn-active');
-        prayerBtn.title = sheetLabel
-            ? `Відправлено до ${sheetLabel} - молитов`
-            : 'Відправлено до молитов';
-    } else {
-        prayerBtn.classList.remove('syh-btn-active');
-        prayerBtn.title = sheetLabel
-            ? `Додати до ${sheetLabel} - молитов`
-            : 'Категорію не визначено (натисніть на Badge)';
-    }
+    applyStudioButtonUI(questionBtn, '<span class="syh-icon">\u2753</span>', 'question', buttonState, sheetLabel);
+    applyStudioButtonUI(prayerBtn, '<span class="syh-icon">\uD83D\uDE4F</span>', 'prayer', buttonState, sheetLabel);
 }
 
 /**

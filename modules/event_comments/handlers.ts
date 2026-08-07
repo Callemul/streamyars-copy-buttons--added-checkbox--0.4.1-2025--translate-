@@ -2,11 +2,21 @@ import type { SyhEventComments } from './types';
 import { CommentService } from '../comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../comment_assistant/index';
 
+function getValidatedTarget(
+    e: Event,
+    self: SyhEventComments,
+    selectorKey: string
+): Element | null {
+    const target = e.target as Element | null;
+    if (!target || !self.SELECTORS?.[selectorKey]) return null;
+    return target;
+}
+
 export function bindStarButtonClickHandler(self: SyhEventComments): void {
     self._clickHandler = function(e: MouseEvent) {
-        const target = e.target as Element | null;
-        if (!target || !self.SELECTORS?.starButton) return;
-        const starBtn = target.closest(self.SELECTORS.starButton);
+        const target = getValidatedTarget(e, self, 'starButton');
+        if (!target) return;
+        const starBtn = target.closest(self.SELECTORS!.starButton);
         if (starBtn) {
             if (starBtn.getAttribute('aria-selected') === 'true') {
                 const commentBlock = starBtn.closest(self.SELECTORS.commentBlock);
@@ -37,8 +47,8 @@ export function bindStarButtonClickHandler(self: SyhEventComments): void {
 export function bindMiddleClickHandler(self: SyhEventComments): void {
     self._middleClickHandler = function(e: MouseEvent) {
         if (e.button === 1) { 
-            const target = e.target as Element | null;
-            if (!target || !self.SELECTORS?.commentBlock) return;
+            const target = getValidatedTarget(e, self, 'commentBlock');
+            if (!target) return;
             if (target.closest('.syh-button')) return;
 
             const commentBlock = target.closest(self.SELECTORS.commentBlock);
@@ -58,8 +68,8 @@ export function bindMiddleClickHandler(self: SyhEventComments): void {
 
 export function bindContextMenuHandlers(self: SyhEventComments): void {
     self._contextHandler = function(e: MouseEvent) {
-        const target = e.target as Element | null;
-        if (!target || !self.SELECTORS?.commentBlock) return;
+        const target = getValidatedTarget(e, self, 'commentBlock');
+        if (!target) return;
         const targetBtn = target.closest([
             '[data-testid="show-comment-button"]',
             '[class*="PlatformComment__CoverButton"]',

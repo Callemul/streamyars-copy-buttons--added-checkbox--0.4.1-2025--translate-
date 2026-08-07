@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from '../modules/storage';
 import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
-import { extractCommentId, extractCommentData } from './yt_ui';
+import { extractCommentId, extractCommentData, applyButtonVisualState, applyCheckboxStateFromCache } from './yt_ui';
 import { extractDomChannelInfo } from './yt_channel_gate';
 import {
     BaseCommentPlatformAdapter,
@@ -95,25 +95,7 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     }
 
     public applyButtonState(buttons: PlatformButtons, state: ButtonStateType, _sheetId: string | null): void {
-        const { questionBtn, prayerBtn } = buttons;
-        if (!questionBtn || !prayerBtn) return;
-
-        if (state === 'question') {
-            questionBtn.dataset.state = 'added';
-            questionBtn.innerText = 'Додано до питань';
-            prayerBtn.dataset.state = '';
-            prayerBtn.innerText = 'Додати до молитов';
-        } else if (state === 'prayer') {
-            prayerBtn.dataset.state = 'added';
-            prayerBtn.innerText = 'Додано до молитов';
-            questionBtn.dataset.state = '';
-            questionBtn.innerText = 'Додати до питань';
-        } else {
-            questionBtn.dataset.state = '';
-            questionBtn.innerText = 'Додати до питань';
-            prayerBtn.dataset.state = '';
-            prayerBtn.innerText = 'Додати до молитов';
-        }
+        applyButtonVisualState(buttons.questionBtn, buttons.prayerBtn, state);
     }
 
     public applyCheckboxState(buttons: PlatformButtons, isChecked: boolean): void {
@@ -153,17 +135,6 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
         commentId: string,
         checkboxStates: Record<string, { checked: boolean; timestamp: number }>
     ): void {
-        const checkbox = element.querySelector('.syh-yt-checkbox') as HTMLInputElement | null;
-        if (!checkbox) return;
-
-        const entry = checkboxStates[commentId];
-        const isChecked = !!(entry && entry.checked);
-
-        checkbox.checked = isChecked;
-        if (isChecked) {
-            element.classList.add('syh-yt-comment-checked');
-        } else {
-            element.classList.remove('syh-yt-comment-checked');
-        }
+        applyCheckboxStateFromCache(element, commentId, checkboxStates);
     }
 }

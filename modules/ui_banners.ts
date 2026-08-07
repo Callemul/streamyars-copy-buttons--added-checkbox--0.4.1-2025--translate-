@@ -2,11 +2,14 @@ import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG } from './config';
 import { SYH_UTILS } from './utils';
 import { UiFactory } from './ui_factory';
-import { CommentService } from './comment_service';
 import {
     updateMasterCheckboxFromElements,
     scrollToActiveItem,
-    updateTabCounts
+    updateTabCounts,
+    restoreCheckboxFromCache,
+    updateFilterTabSelection,
+    bindFilterSearchControls,
+    bindFilterDocClickHandler
 } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';
 
@@ -39,10 +42,7 @@ export function addButtonsToBanner(bannerNode: Element): void {
         bannerWrap.appendChild(container);
         const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
 
-        if (CommentService.getStreamYardCheckboxState(bannerText)) {
-            const checkbox = bannerWrap.querySelector<HTMLInputElement>('.syh-checkbox');
-            if (checkbox) checkbox.checked = true;
-        }
+        restoreCheckboxFromCache(bannerWrap, bannerText);
 
         applySavedBannerLabels(bannerWrap, bannerText);
     }
@@ -269,67 +269,38 @@ export function scrollToActiveBanner(): void {
     scrollToActiveItem('[class*="BannerList__ListWrap"], ul[class*="Banner"]');
 }
 
-export function updateFilterTabSelection(selectedBtn: HTMLElement): void {
-    const allTabs = document.querySelectorAll<HTMLElement>('.syh-banner-filter-btn');
-    allTabs.forEach(btn => {
-        const isSelected = btn === selectedBtn;
-        btn.classList.toggle('active', isSelected);
-        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-        btn.style.background = isSelected ? '#fff' : 'transparent';
-        btn.style.fontWeight = isSelected ? 'bold' : 'normal';
-        btn.style.boxShadow = isSelected ? '0 1px 3px rgba(0,0,0,0.1)' : 'none';
-        btn.style.color = isSelected ? '#000' : '#666';
-    });
-}
-
 let filterControlsBound = false;
 
 export function bindBannersFilterControls(): void {
-    const searchInput = document.querySelector<HTMLInputElement>('#syh-banner-search');
-    const clearBtn = document.querySelector<HTMLElement>('#syh-clear-banner-search-btn');
-
-    if (searchInput) {
-        searchInput.oninput = function() {
-            SYH_UI_STATE.bannerSearchQuery = searchInput.value ? searchInput.value.toLowerCase() : '';
-            if (clearBtn) clearBtn.style.display = SYH_UI_STATE.bannerSearchQuery ? 'flex' : 'none';
+    bindFilterSearchControls({
+        searchInputSelector: '#syh-banner-search',
+        clearBtnSelector: '#syh-clear-banner-search-btn',
+        scrollBtnSelector: '#syh-scroll-to-active-banner-btn',
+        onSearch: (query) => {
+            SYH_UI_STATE.bannerSearchQuery = query;
             filterBanners();
-        };
-    }
-
-    if (clearBtn) {
-        clearBtn.onclick = function() {
-            if (searchInput) searchInput.value = '';
+        },
+        onClear: () => {
             SYH_UI_STATE.bannerSearchQuery = '';
-            clearBtn.style.display = 'none';
             filterBanners();
-        };
-    }
-
-    const scrollBtn = document.querySelector('#syh-scroll-to-active-banner-btn');
-    if (scrollBtn) {
-        scrollBtn.onclick = function(e) {
-            e.preventDefault();
-            scrollToActiveBanner();
-        };
-    }
+        },
+        onScroll: scrollToActiveBanner
+    });
 
     if (filterControlsBound) return;
     filterControlsBound = true;
 
-    document.addEventListener('click', function(e: MouseEvent) {
-        const target = e.target as Element | null;
-        if (target?.closest('#syh-banner-empty-clear-link')) {
-            e.preventDefault();
-            if (searchInput) searchInput.value = '';
+    bindFilterDocClickHandler({
+        searchInputSelector: '#syh-banner-search',
+        clearBtnSelector: '#syh-clear-banner-search-btn',
+        clearLinkSelector: '#syh-banner-empty-clear-link',
+        filterBtnClass: '.syh-banner-filter-btn',
+        onClearAll: () => {
             SYH_UI_STATE.bannerSearchQuery = '';
-            if (clearBtn) clearBtn.style.display = 'none';
             filterBanners();
-            return;
-        }
-
-        const filterBtn = target?.closest('.syh-banner-filter-btn') as HTMLElement | null;
-        if (filterBtn) {
-            updateFilterTabSelection(filterBtn);
+        },
+        onFilterSelect: (filterBtn) => {
+            updateFilterTabSelection(filterBtn, '.syh-banner-filter-btn');
             SYH_UI_STATE.bannerActiveFilter = filterBtn.dataset.filter || 'all';
             filterBanners();
         }

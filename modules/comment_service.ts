@@ -231,29 +231,29 @@ export class CommentService {
      * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL
      */
     public static async savePrayerRecord(record: PrayerRecord): Promise<PrayerRecord[]> {
-        const now = Date.now();
-        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-
-        list = RetentionService.filterFreshPrayers(list, now);
-        list = list.filter(item => item.text !== record.text);
-        list.push(record);
-
-        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
-        return list;
+        const list = await CommentService.loadPrayerList();
+        const deduped = list.filter(item => item.text !== record.text);
+        deduped.push(record);
+        return CommentService.savePrayerList(deduped);
     }
 
     /**
      * Уніфіковане видалення молитви/питання з бази STREAMYARD з урахуванням TTL
      */
     public static async removePrayerRecord(text: string): Promise<PrayerRecord[]> {
+        const list = await CommentService.loadPrayerList();
+        const filtered = list.filter(item => item.text !== text);
+        return CommentService.savePrayerList(filtered);
+    }
+
+    private static async loadPrayerList(): Promise<PrayerRecord[]> {
         const now = Date.now();
         const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-        let list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+        const list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+        return RetentionService.filterFreshPrayers(list, now);
+    }
 
-        list = list.filter(item => item.text !== text);
-        list = RetentionService.filterFreshPrayers(list, now);
-
+    private static async savePrayerList(list: PrayerRecord[]): Promise<PrayerRecord[]> {
         await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
         return list;
     }

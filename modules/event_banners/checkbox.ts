@@ -1,14 +1,14 @@
 import type { SyhUi } from './types';
 import type { SelectorValue } from '../config';
 import { CommentService } from '../comment_service';
+import { resolveBannerContext } from './helpers';
 
 export function handleSingleBannerCheckboxChange(
     checkbox: HTMLInputElement,
     selectors: Record<string, SelectorValue> | null,
     ui: SyhUi | null
 ): void {
-    const bannerBlock = checkbox.closest((selectors?.bannerBlock as string) || '');
-    const textKey = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+    const { bannerText: textKey } = resolveBannerContext(checkbox, selectors);
     CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
     if (ui) ui.updateMasterCheckboxState();
 }

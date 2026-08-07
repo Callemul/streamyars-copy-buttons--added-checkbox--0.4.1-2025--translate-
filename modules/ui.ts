@@ -1,6 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_STATE, type SyhState } from './state';
-import { SYH_CONFIG, type SyhConfig } from './config';
+import { SYH_CONFIG, resolveFirstSelector, type SyhConfig } from './config';
 import { SYH_UI_STATE, type SyhUi } from './ui_state';
 import { 
     addButtonsToComment, 
@@ -83,10 +83,10 @@ function validateSelectorsSyntax(): void {
 
 function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record<string, any>): string {
     const type = checkbox.dataset.type;
-    const selCommentBlock = Array.isArray(selectors.commentBlock) ? selectors.commentBlock[0] : selectors.commentBlock;
-    const selCommentText = Array.isArray(selectors.commentText) ? selectors.commentText[0] : selectors.commentText;
-    const selBannerBlock = Array.isArray(selectors.bannerBlock) ? selectors.bannerBlock[0] : selectors.bannerBlock;
-    const selBannerText = Array.isArray(selectors.bannerText) ? selectors.bannerText[0] : selectors.bannerText;
+    const selCommentBlock = resolveFirstSelector(selectors.commentBlock) || '';
+    const selCommentText = resolveFirstSelector(selectors.commentText) || '';
+    const selBannerBlock = resolveFirstSelector(selectors.bannerBlock) || '';
+    const selBannerText = resolveFirstSelector(selectors.bannerText) || '';
 
     if (type === 'comment') {
         const commentBlock = checkbox.closest(selCommentBlock || '[class*="PlatformComment__Wrap"]');

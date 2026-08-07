@@ -422,10 +422,10 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
 
     public isCheckboxOutOfSync(element: HTMLElement, commentKey: string): boolean {
         const ctx = this.getCommentContext(element);
-        const expectedChecked = this.getEffectiveCheckboxState(commentKey, ctx);
         const ui = this.getStudioUI(element);
         if (!ui || !ui.checkboxEl) return false;
 
+        const expectedChecked = this.getEffectiveCheckboxState(commentKey, ctx);
         const threadEl = element.closest('ytcp-comment, ytcp-comment-thread') as HTMLElement | null;
         const currentClassChecked = threadEl ? threadEl.classList.contains('syh-studio-comment-checked') : false;
 
@@ -434,10 +434,10 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
 
     public isButtonOutOfSync(element: HTMLElement, commentKey: string): boolean {
         const ctx = this.getCommentContext(element);
-        const expectedState = this.getEffectiveButtonState(commentKey, ctx);
         const ui = this.getStudioUI(element);
         if (!ui || !ui.questionBtn || !ui.prayerBtn) return false;
 
+        const expectedState = this.getEffectiveButtonState(commentKey, ctx);
         const hasQuestionActive = ui.questionBtn.classList.contains('syh-btn-active');
         const hasPrayerActive = ui.prayerBtn.classList.contains('syh-btn-active');
 

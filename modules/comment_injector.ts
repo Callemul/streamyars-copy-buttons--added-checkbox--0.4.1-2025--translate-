@@ -27,21 +27,21 @@ export class CommentInjector {
 
         const buttons = this.adapter.getButtons(element);
 
-        if (buttons.questionBtn) {
-            buttons.questionBtn.addEventListener('click', (e) => this.handleQuestionClick(e, buttons, element));
-        }
-        if (buttons.prayerBtn) {
-            buttons.prayerBtn.addEventListener('click', (e) => this.handlePrayerClick(e, buttons, element));
-        }
-        if (buttons.copyBtn) {
-            buttons.copyBtn.addEventListener('click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element));
-        }
-        if (buttons.checkboxEl) {
-            buttons.checkboxEl.addEventListener('change', (e) => this.handleCheckboxChange(e, buttons, element));
-        }
+        this.bindEventListener(buttons.questionBtn, 'click', (e) => this.handleQuestionClick(e, buttons, element));
+        this.bindEventListener(buttons.prayerBtn, 'click', (e) => this.handlePrayerClick(e, buttons, element));
+        this.bindEventListener(buttons.copyBtn, 'click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element));
+        this.bindEventListener(buttons.checkboxEl, 'change', (e) => this.handleCheckboxChange(e, buttons, element));
         if (buttons.bodyEl && buttons.checkboxEl) {
             buttons.bodyEl.addEventListener('contextmenu', (e) => this.handleContextMenu(e, buttons.bodyEl!, buttons.checkboxEl!));
         }
+    }
+
+    private bindEventListener(
+        target: Element | null,
+        event: string,
+        handler: (e: Event) => void
+    ): void {
+        if (target) target.addEventListener(event, handler);
     }
 
     private async handleQuestionClick(

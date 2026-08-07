@@ -25,6 +25,8 @@
 //   getToolbarElement()    — повертає #toolbar для ін'єкції кнопок (studio_ui.ts)
 //   getVideoThumbnailElement() — ytcp-comment-video-thumbnail для badge+checkbox
 
+import { resolveSelectorString } from '../../modules/config';
+
 export const STUDIO_SELECTORS = {
     CHANNEL_NAME: ['#entity-label-container #entity-name', 'ytcp-navigation-drawer #entity-name', '#entity-name'],
     COMMENT_THREAD: ['.ytcp-comment-thread', 'ytcp-comment-thread'],
@@ -43,44 +45,42 @@ export const STUDIO_SELECTORS = {
 };
 
 export function getCommentHeaderLabelElement(doc: Document | HTMLElement = document): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT_HEADER_SPAN) ? STUDIO_SELECTORS.COMMENT_HEADER_SPAN.join(',') : STUDIO_SELECTORS.COMMENT_HEADER_SPAN;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.COMMENT_HEADER_SPAN);
     return doc.querySelector<HTMLElement>(selector);
 }
 
 export function getCommentHeaderElement(doc: Document | HTMLElement = document): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT_HEADER) ? STUDIO_SELECTORS.COMMENT_HEADER.join(',') : STUDIO_SELECTORS.COMMENT_HEADER;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.COMMENT_HEADER);
     return doc.querySelector<HTMLElement>(selector);
 }
 
 export function getChannelNameElement(doc: Document | HTMLElement = document): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.CHANNEL_NAME) ? STUDIO_SELECTORS.CHANNEL_NAME.join(',') : STUDIO_SELECTORS.CHANNEL_NAME;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.CHANNEL_NAME);
     return doc.querySelector<HTMLElement>(selector);
 }
 
 export function getCommentThreads(doc: Document | HTMLElement = document): HTMLElement[] {
-    const selector = Array.isArray(STUDIO_SELECTORS.COMMENT) ? STUDIO_SELECTORS.COMMENT.join(',') : STUDIO_SELECTORS.COMMENT;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.COMMENT);
     return Array.from(doc.querySelectorAll<HTMLElement>(selector));
 }
 
 export function getToolbarElement(thread: HTMLElement): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.ACTION_TOOLBAR) ? STUDIO_SELECTORS.ACTION_TOOLBAR.join(',') : STUDIO_SELECTORS.ACTION_TOOLBAR;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.ACTION_TOOLBAR);
     return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getMetadataElement(thread: HTMLElement): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.METADATA) ? STUDIO_SELECTORS.METADATA.join(',') : STUDIO_SELECTORS.METADATA;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.METADATA);
     return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getVideoThumbnailElement(thread: HTMLElement): HTMLElement | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_THUMBNAIL) ? STUDIO_SELECTORS.VIDEO_THUMBNAIL.join(',') : STUDIO_SELECTORS.VIDEO_THUMBNAIL;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.VIDEO_THUMBNAIL);
     return thread.querySelector<HTMLElement>(selector);
 }
 
 export function getVideoTitleText(thread: HTMLElement): string {
-    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_TITLE)
-        ? STUDIO_SELECTORS.VIDEO_TITLE.join(',')
-        : STUDIO_SELECTORS.VIDEO_TITLE;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.VIDEO_TITLE);
     let el = thread.querySelector<HTMLElement>(selector);
     let text = el ? (el.textContent || '').trim() : '';
     if (!text && thread.closest) {
@@ -94,9 +94,7 @@ export function getVideoTitleText(thread: HTMLElement): string {
 }
 
 export function getVideoLinkHref(thread: HTMLElement): string | null {
-    const selector = Array.isArray(STUDIO_SELECTORS.VIDEO_LINK)
-        ? STUDIO_SELECTORS.VIDEO_LINK.join(',')
-        : STUDIO_SELECTORS.VIDEO_LINK;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.VIDEO_LINK);
     let a = thread.querySelector<HTMLAnchorElement>(selector);
     let href = a ? (typeof a.getAttribute === 'function' ? a.getAttribute('href') : a.href) || a.href : null;
     if (!href && thread.closest) {
@@ -110,17 +108,13 @@ export function getVideoLinkHref(thread: HTMLElement): string | null {
 }
 
 export function getAuthorNameText(thread: HTMLElement): string {
-    const selector = Array.isArray(STUDIO_SELECTORS.AUTHOR_NAME)
-        ? STUDIO_SELECTORS.AUTHOR_NAME.join(',')
-        : STUDIO_SELECTORS.AUTHOR_NAME;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.AUTHOR_NAME);
     const el = thread.querySelector<HTMLElement>(selector);
     return el ? (el.textContent || '').trim() : '';
 }
 
 export function getCommentText(thread: HTMLElement): string {
-    const selector = Array.isArray(STUDIO_SELECTORS.CONTENT_TEXT)
-        ? STUDIO_SELECTORS.CONTENT_TEXT.join(',')
-        : STUDIO_SELECTORS.CONTENT_TEXT;
+    const selector = resolveSelectorString(STUDIO_SELECTORS.CONTENT_TEXT);
     const el = thread.querySelector<HTMLElement>(selector);
     if (!el) return '';
 
@@ -151,7 +145,8 @@ export function getCommentText(thread: HTMLElement): string {
 }
 
 export function getCommentTextAreaElement(thread: HTMLElement): HTMLElement | null {
-    return thread.querySelector<HTMLElement>(STUDIO_SELECTORS.COMMENT_TEXT_AREA);
+    const selector = resolveSelectorString(STUDIO_SELECTORS.COMMENT_TEXT_AREA);
+    return thread.querySelector<HTMLElement>(selector);
 }
 
 // Exported as standard ESM module. Global window assignment removed.

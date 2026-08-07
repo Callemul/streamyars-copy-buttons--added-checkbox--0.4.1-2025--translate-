@@ -1,4 +1,4 @@
-import { SYH_CONFIG } from './modules/config';
+import { SYH_CONFIG, resolveFirstSelector } from './modules/config';
 import { SYH_STATE } from './modules/state';
 import { SYH_UTILS } from './modules/utils';
 import { SYH_UI } from './modules/ui';
@@ -34,12 +34,12 @@ import { SYH_DOM_OBSERVER } from './modules/dom_observer';
     const { SELECTORS } = SYH_CONFIG;
 
     function setupDomRegistration(): void {
-        const commentSelector = Array.isArray(SELECTORS.commentBlock) ? SELECTORS.commentBlock[0] : SELECTORS.commentBlock;
-        const bannerSelector = Array.isArray(SELECTORS.bannerBlock) ? SELECTORS.bannerBlock[0] : SELECTORS.bannerBlock;
-        const bannerHeaderSelector = Array.isArray(SELECTORS.bannerHeader) ? SELECTORS.bannerHeader[0] : SELECTORS.bannerHeader;
-        const starredHeaderSelector = Array.isArray(SELECTORS.starredHeaderWrap) ? SELECTORS.starredHeaderWrap[0] : SELECTORS.starredHeaderWrap;
-        const starredTabSelector = Array.isArray(SELECTORS.starredTabButton) ? SELECTORS.starredTabButton[0] : SELECTORS.starredTabButton;
-        const rightTabSelector = Array.isArray(SELECTORS.rightTabButtons) ? SELECTORS.rightTabButtons[0] : SELECTORS.rightTabButtons;
+        const commentSelector = resolveFirstSelector(SELECTORS.commentBlock)!;
+        const bannerSelector = resolveFirstSelector(SELECTORS.bannerBlock)!;
+        const bannerHeaderSelector = resolveFirstSelector(SELECTORS.bannerHeader)!;
+        const starredHeaderSelector = resolveFirstSelector(SELECTORS.starredHeaderWrap)!;
+        const starredTabSelector = resolveFirstSelector(SELECTORS.starredTabButton)!;
+        const rightTabSelector = resolveFirstSelector(SELECTORS.rightTabButtons)!;
 
         SYH_DOM_OBSERVER.register(commentSelector, (el) => {
             SYH_UI.addButtonsToComment(el);

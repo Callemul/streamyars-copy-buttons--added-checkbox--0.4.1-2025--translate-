@@ -44,7 +44,3 @@ export interface SyhEventComments {
     removeFromDatabase(text: string): Promise<void>;
 }
 
-import type { SyhConfig, SelectorValue } from './config';
-import type { SyhState } from './state';
-import type { SyhUtils } from './utils';
-import type { SyhUi } from '../ui';

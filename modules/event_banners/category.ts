@@ -1,5 +1,6 @@
 import type { SyhUi, SyhUtils } from './types';
 import type { SelectorValue } from '../config';
+import { resolveBannerContext } from './helpers';
 
 export function handleCreateBannersAction(bannerCreator: any): void {
     const text = prompt("Вставте список питань для створення банерів:", "");
@@ -13,8 +14,7 @@ export function handleCopyBannerAction(
     selectors: Record<string, SelectorValue> | null,
     utils: SyhUtils | null
 ): void {
-    const bannerBlock = button.closest((selectors?.bannerBlock as string) || '');
-    const bannerText = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+    const { bannerBlock, bannerText } = resolveBannerContext(button, selectors);
 
     const utilObj = utils;
     if (utilObj) {
@@ -34,8 +34,7 @@ export function handleMarkBannerCategoryAction(
     ui: SyhUi | null,
     utils: SyhUtils | null
 ): void {
-    const bannerBlock = button.closest((selectors?.bannerBlock as string) || '');
-    const bannerText = bannerBlock?.querySelector((selectors?.bannerText as string) || '')?.textContent || '';
+    const { bannerText } = resolveBannerContext(button, selectors);
     const targetType = action.replace('mark-', '');
 
     const currentType = (ui && ui.bannerCategoriesCache && ui.bannerCategoriesCache[bannerText] === targetType) ? 'none' : targetType;
