@@ -1,9 +1,7 @@
 import { SYH_CONFIG } from './modules/config';
 import { SYH_STATE } from './modules/state';
 import { SYH_UTILS } from './modules/utils';
-import { SYH_UI } from './modules/ui_core';
-import './modules/ui_comments';
-import './modules/ui_banners';
+import { SYH_UI } from './modules/ui';
 import { SYH_PARSERS } from './modules/parsers';
 import { SYH_BANNER_CREATOR } from './modules/banner_creator';
 import { SYH_EVENT_COMMENTS_PLUGIN } from './modules/event_comments';

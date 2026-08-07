@@ -6,9 +6,9 @@ import { CommentService } from './comment_service';
 import {
     updateMasterCheckboxFromElements,
     scrollToActiveItem,
-    updateTabCounts,
-    renderSharedEmptyState
+    updateTabCounts
 } from './ui_shared_utils';
+import { renderSharedEmptyState } from './ui_empty_state';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;

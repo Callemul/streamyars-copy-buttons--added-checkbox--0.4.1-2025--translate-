@@ -1,7 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_STATE, type SyhState } from './state';
 import { SYH_CONFIG, type SyhConfig } from './config';
-import { SYH_UI_STATE, type SyhUiState } from './ui_state';
+import { SYH_UI_STATE, type SyhUi } from './ui_state';
 import { 
     addButtonsToComment, 
     updateCommentVisuals, 
@@ -21,37 +21,10 @@ import {
     filterBanners, 
     scrollToActiveBanner 
 } from './ui_banners';
-
+import { SYH_BUS } from './event_bus';
 import type { PrayerItem } from './types';
 
-export interface SyhUi extends SyhUiState {
-    init(config?: SyhConfig, state?: SyhState): void;
-    validateSelectorsSyntax(): void;
-    restoreDomCheckboxes(): void;
-
-    // Comments UI methods
-    addButtonsToComment(commentNode: Element): void;
-    updateCommentVisuals(commentWrap: Element, type: string): void;
-    applySavedLabels(commentNode: Element, text: string): void;
-    addStarredTabControls(starredHeaderNode: Element): void;
-    addStarredTabCopyButton(starredTabNode: Element): void;
-    bindStarredControls(): void;
-    filterStarredComments(): void;
-    scrollToActiveComment(): void;
-
-    // Banner UI methods
-    addButtonsToBanner(bannerNode: Element): void;
-    updateBannerVisuals(bannerBlock: Element, type: string): void;
-    applySavedBannerLabels(bannerNode: Element, text: string): void;
-    addBannerHeaderControls(headerNode: Element): void;
-    updateMasterCheckboxState(): void;
-    filterBanners(): void;
-    scrollToActiveBanner(): void;
-}
-
-import { SYH_BUS } from './event_bus';
-
-export function init(config?: SyhConfig, state?: SyhState): void {
+function init(config?: SyhConfig, state?: SyhState): void {
     try {
         SYH_UI_STATE.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
         SYH_UI_STATE.STATE = state || SYH_STATE;
@@ -90,11 +63,11 @@ export function init(config?: SyhConfig, state?: SyhState): void {
         });
 
     } catch (error) {
-        console.error("[SYH] Критичний збій ініціалізації модуля UI Core:", error);
+        console.error("[SYH] Критичний збій ініціалізації модуля UI:", error);
     }
 }
 
-export function validateSelectorsSyntax(): void {
+function validateSelectorsSyntax(): void {
     if (!SYH_UI_STATE.SELECTORS) return;
     console.log("[SYH] Запуск синтаксичного сканування CSS-селекторів...");
     for (const key in SYH_UI_STATE.SELECTORS) {
@@ -108,7 +81,7 @@ export function validateSelectorsSyntax(): void {
     }
 }
 
-export function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record<string, any>): string {
+function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record<string, any>): string {
     const type = checkbox.dataset.type;
     const selCommentBlock = Array.isArray(selectors.commentBlock) ? selectors.commentBlock[0] : selectors.commentBlock;
     const selCommentText = Array.isArray(selectors.commentText) ? selectors.commentText[0] : selectors.commentText;
@@ -126,7 +99,7 @@ export function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record
     return "";
 }
 
-export function restoreDomCheckboxes(): void {
+function restoreDomCheckboxes(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
     const itemStates = SYH_UI_STATE.STATE?.itemStates || {};
 
@@ -145,6 +118,7 @@ export function restoreDomCheckboxes(): void {
     });
 }
 
+// Create the combined SYH_UI object
 export const SYH_UI: SyhUi = {
     get SELECTORS() { return SYH_UI_STATE.SELECTORS; },
     set SELECTORS(val) { SYH_UI_STATE.SELECTORS = val; },
@@ -199,5 +173,3 @@ export const SYH_UI: SyhUi = {
     filterBanners,
     scrollToActiveBanner
 };
-
-

@@ -9,7 +9,7 @@ global.document = {
 };
 
 const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
-const { SYH_UI } = await import('../modules/ui_core.ts');
+const { SYH_UI } = await import('../modules/ui.ts');
 
 describe('UI State & Decoupling Tests', () => {
     test('1. SYH_UI proxies properties to SYH_UI_STATE correctly', () => {

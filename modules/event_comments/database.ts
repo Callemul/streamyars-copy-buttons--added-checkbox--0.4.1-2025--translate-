@@ -1,0 +1,34 @@
+import type { SyhEventComments } from './types';
+import { CommentService } from '../comment_service';
+
+export async function saveToDatabase(
+    self: SyhEventComments,
+    author: string,
+    text: string,
+    type: string,
+    icon: string
+): Promise<void> {
+    const currentRoomId = (typeof window !== 'undefined' && window.location?.pathname)
+        ? window.location.pathname.replace(/\//g, '')
+        : '';
+    const now = Date.now();
+
+    await CommentService.savePrayerRecord({
+        author,
+        text,
+        type,
+        icon,
+        roomId: currentRoomId,
+        timestamp: now
+    });
+}
+
+export async function removeFromDatabase(
+    self: SyhEventComments,
+    text: string
+): Promise<void> {
+    if (self.UI && self.UI.prayersCache) {
+        self.UI.prayersCache = self.UI.prayersCache.filter((item: any) => item.text !== text);
+    }
+    await CommentService.removePrayerRecord(text);
+}

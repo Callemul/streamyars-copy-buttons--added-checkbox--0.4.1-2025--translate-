@@ -1,8 +1,9 @@
 import type { SyhState } from './state';
 import type { PrayerItem } from './types';
+import type { SelectorValue } from './config';
 
 export interface SyhUiState {
-    SELECTORS: Record<string, string | string[]> | null;
+    SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;
     activeFilter: string;
     searchQuery: string;
@@ -12,6 +13,33 @@ export interface SyhUiState {
     bannerCategoriesCache: Record<string, string>;
     _filterBannersTimeout?: ReturnType<typeof setTimeout> | number;
     _filterCommentsTimeout?: ReturnType<typeof setTimeout> | number;
+}
+
+// SyhUi interface combines state and UI methods
+export interface SyhUi extends SyhUiState {
+    // Comments UI methods
+    addButtonsToComment(commentNode: Element): void;
+    updateCommentVisuals(commentWrap: Element, type: string): void;
+    applySavedLabels(commentNode: Element, text: string): void;
+    addStarredTabControls(starredHeaderNode: Element): void;
+    addStarredTabCopyButton(starredTabNode: Element): void;
+    bindStarredControls(): void;
+    filterStarredComments(): void;
+    scrollToActiveComment(): void;
+
+    // Banner UI methods
+    addButtonsToBanner(bannerNode: Element): void;
+    updateBannerVisuals(bannerBlock: Element, type: string): void;
+    applySavedBannerLabels(bannerNode: Element, text: string): void;
+    addBannerHeaderControls(headerNode: Element): void;
+    updateMasterCheckboxState(): void;
+    filterBanners(): void;
+    scrollToActiveBanner(): void;
+    
+    // Init and validation
+    init(config?: import('./config').SyhConfig, state?: SyhState): void;
+    validateSelectorsSyntax(): void;
+    restoreDomCheckboxes(): void;
 }
 
 import { SYH_BUS } from './event_bus';
