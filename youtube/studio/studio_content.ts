@@ -1,19 +1,10 @@
-// youtube/studio/studio_content.ts
 import { SYH_STORAGE } from '../../modules/storage';
-import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
-import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
-import type { SheetHeaderStats } from './studio_header_counters';
-import type { CommentPayload } from '../../modules/comment_service';
-import type { StudioEventCaches } from './studio_events';
-
 import { initializeStudioModule } from './studio_init';
 import { StudioStorageController, createStorageChangeHandler } from './studio_storage_handler';
 import { StudioSPAHandler } from './studio_spa_handler';
 import { StudioCommentProcessor } from './studio_comment_processor';
 
 import type { ISyhPlugin } from '../../modules/plugin_registry';
-
-const STUDIO_ENABLED_KEY = 'syh:studio:enabled';
 
 class StudioModuleController {
     private storageController: StudioStorageController;

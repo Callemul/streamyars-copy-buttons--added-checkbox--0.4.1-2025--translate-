@@ -4,8 +4,7 @@ import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../modul
 import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant';
 import { SYH_CONFIG } from '../modules/config';
 import { isAllowedChannel } from './yt_channel_gate';
-import { SYH_DOM_OBSERVER } from '../modules/dom_observer';
-import { processYTComment, processAllYTComments, startObserver, stateCache, unregisterObserver } from './yt_comment_processor';
+import { processAllYTComments, startObserver, stateCache, unregisterObserver } from './yt_comment_processor';
 
 export async function initializeYouTubeModule(): Promise<void> {
     if (!isAllowedChannel()) {

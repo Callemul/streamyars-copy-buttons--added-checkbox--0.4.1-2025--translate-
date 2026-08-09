@@ -4,8 +4,6 @@
 import { STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
 
-const SHEET_IDS = getAllSheetIds();
-
 export function renderSheetTemplates(): void {
     const template = document.getElementById('sheet-content-template') as HTMLTemplateElement | null;
     const container = document.getElementById('sheet-contents-container');

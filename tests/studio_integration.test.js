@@ -155,21 +155,24 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
                     className: '',
                     style: {},
                     dataset: {},
-                    classList: { add: () => {}, remove: () => {}, contains: () => false },
+                    classList: { add: () => {}, remove: () => {}, contains: () => false, toggle: () => false },
                     setAttribute: () => {},
                     getAttribute: () => null,
                     addEventListener: () => {},
                     querySelectorAll: () => [],
                     querySelector: () => null,
-                    appendChild: () => {}
+                    appendChild: () => {},
+                    closest: () => null
                 }),
                 querySelectorAll: () => [],
                 addEventListener: () => {}
             };
         }
 
-        const fakeQuestionBtn = { classList: { contains: () => false }, innerHTML: '', title: '' };
-        const fakePrayerBtn = { classList: { contains: () => false }, innerHTML: '', title: '' };
+        let thread;
+        const fakeCopyBtn = { classList: { contains: () => false }, innerHTML: '', title: '', closest: (sel) => sel && (sel.includes('ytcp-comment') || sel.includes('ytcp-comment-thread')) ? thread : null };
+        const fakeQuestionBtn = { classList: { contains: () => false }, innerHTML: '', title: '', closest: (sel) => sel && (sel.includes('ytcp-comment') || sel.includes('ytcp-comment-thread')) ? thread : null };
+        const fakePrayerBtn = { classList: { contains: () => false }, innerHTML: '', title: '', closest: (sel) => sel && (sel.includes('ytcp-comment') || sel.includes('ytcp-comment-thread')) ? thread : null };
 
         const caches = {
             videoSheetMap: {},
@@ -181,29 +184,32 @@ describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
         };
         const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
 
-        const thread = {
+        thread = {
             tagName: 'YTCP-COMMENT',
             hasAttribute: () => false,
             querySelector: (sel) => {
                 if (typeof sel === 'string' && (sel.includes('author-text') || sel.includes('name'))) return { textContent: 'Алексей' };
-                if (typeof sel === 'string' && sel.includes('content-text')) return { textContent: 'Вопрос по Библии?' };
+                if (typeof sel === 'string' && sel.includes('content-text')) return {
+                    textContent: 'Вопрос по Библии?',
+                    childNodes: [{ nodeType: 3, textContent: 'Вопрос по Библии?' }]
+                };
                 if (typeof sel === 'string' && (sel.includes('video-title') || sel.includes('#video-title'))) return { textContent: 'Что значит служить Богу...' };
-                if (typeof sel === 'string' && sel.includes('btn-copy')) return { classList: { contains: () => false } };
+                if (typeof sel === 'string' && sel.includes('btn-copy')) return fakeCopyBtn;
                 if (typeof sel === 'string' && sel.includes('btn-question')) return fakeQuestionBtn;
                 if (typeof sel === 'string' && sel.includes('btn-prayer')) return fakePrayerBtn;
                 if (typeof sel === 'string' && sel.includes('toolbar')) return {
-                    querySelectorAll: () => [],
+                    querySelectorAll: () => [fakeCopyBtn, fakeQuestionBtn, fakePrayerBtn],
                     querySelector: (sub) => {
                         if (sub.includes('btn-question')) return fakeQuestionBtn;
                         if (sub.includes('btn-prayer')) return fakePrayerBtn;
-                        if (sub.includes('btn-copy')) return { classList: { contains: () => false } };
+                        if (sub.includes('btn-copy')) return fakeCopyBtn;
                         return null;
                     },
                     appendChild: () => {}
                 };
                 return null;
             },
-            closest: () => null
+            closest: (sel) => sel && (sel.includes('ytcp-comment') || sel.includes('ytcp-comment-thread')) ? thread : null
         };
 
         const ctx = adapter.getCommentContext(thread);

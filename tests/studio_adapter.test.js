@@ -2,24 +2,8 @@ import test, { describe } from 'node:test';
 import assert from 'node:assert/strict';
 
 global.window = global;
-global.document = global.document || {};
-global.document.addEventListener = () => {};
-global.document.querySelectorAll = () => [];
-global.document.createElement = (tag) => ({
-    tagName: tag.toUpperCase(),
-    className: '',
-    innerHTML: '',
-    style: {},
-    dataset: {},
-    classList: { add: () => {}, remove: () => {}, contains: () => false },
-    setAttribute: () => {},
-    getAttribute: () => null,
-    addEventListener: () => {},
-    querySelectorAll: () => [],
-    querySelector: () => null,
-    appendChild: () => {}
-});
 let mockStorageStore = {};
+global.__mockThreads = [];
 
 global.chrome = {
     runtime: { id: 'test-id' },
@@ -47,12 +31,154 @@ global.chrome = {
 const { StudioCommentAdapter, retroactiveUpdateVideoComments } = await import('../youtube/studio/studio_adapter.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
 
+function createMockElement(tagName = 'DIV', options = {}) {
+    const attributes = { ...options.attributes };
+    const classes = new Set(options.className ? options.className.split(' ').filter(Boolean) : []);
+    const children = [];
+
+    const el = {
+        tagName: tagName.toUpperCase(),
+        type: tagName.toLowerCase() === 'button' ? 'button' : (tagName.toLowerCase() === 'input' ? 'checkbox' : ''),
+        className: options.className || '',
+        innerHTML: options.innerHTML || '',
+        textContent: options.textContent || '',
+        style: options.style || {},
+        dataset: options.dataset || {},
+        checked: options.checked || false,
+        parentElement: options.parentElement || null,
+        children,
+        childNodes: options.childNodes || [],
+        classList: {
+            add: (...cls) => { cls.forEach(c => classes.add(c)); el.className = Array.from(classes).join(' '); },
+            remove: (...cls) => { cls.forEach(c => classes.delete(c)); el.className = Array.from(classes).join(' '); },
+            contains: (c) => classes.has(c),
+            toggle: (c, val) => {
+                if (val === undefined) val = !classes.has(c);
+                if (val) classes.add(c); else classes.delete(c);
+                el.className = Array.from(classes).join(' ');
+                return val;
+            }
+        },
+        setAttribute: (name, val) => {
+            attributes[name] = String(val);
+        },
+        getAttribute: (name) => {
+            return attributes[name] !== undefined ? attributes[name] : null;
+        },
+        hasAttribute: (name) => {
+            return name in attributes;
+        },
+        removeAttribute: (name) => {
+            delete attributes[name];
+        },
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        appendChild: (child) => {
+            if (child) {
+                child.parentElement = el;
+                children.push(child);
+            }
+            return child;
+        },
+        querySelector: options.querySelector || ((sel) => {
+            for (const child of children) {
+                if (child.matches && child.matches(sel)) return child;
+                if (child.querySelector) {
+                    const found = child.querySelector(sel);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }),
+        querySelectorAll: options.querySelectorAll || ((sel) => {
+            const results = [];
+            for (const child of children) {
+                if (child.matches && child.matches(sel)) results.push(child);
+                if (child.querySelectorAll) {
+                    results.push(...child.querySelectorAll(sel));
+                }
+            }
+            return results;
+        }),
+        closest: options.closest || function(sel) {
+            let curr = el;
+            while (curr) {
+                if (typeof sel === 'string') {
+                    const tag = curr.tagName ? curr.tagName.toLowerCase() : '';
+                    if ((sel.includes('ytcp-comment') || sel.includes('ytcp-comment-thread')) && 
+                        (tag === 'ytcp-comment' || tag === 'ytcp-comment-thread' || curr.classList?.contains('ytcp-comment-thread') || curr.isMockThread)) {
+                        return curr;
+                    }
+                    if (sel === '.ytcp-comment-thread' && (tag === 'ytcp-comment-thread' || curr.classList?.contains('ytcp-comment-thread') || curr.isMockThread)) {
+                        return curr;
+                    }
+                }
+                curr = curr.parentElement;
+            }
+            return null;
+        }
+    };
+
+    return el;
+}
+
+global.document = global.document || {};
+global.document.addEventListener = () => {};
+global.document.querySelectorAll = (sel) => {
+    if (!sel || sel === '*') return global.__mockThreads || [];
+    if (typeof sel === 'string' && sel.includes('ytcp-comment')) return global.__mockThreads || [];
+    return [];
+};
+global.document.querySelector = (sel) => {
+    if (typeof sel === 'string' && sel.includes('data-syh-comment-key')) {
+        const match = sel.match(/\[data-syh-comment-key="([^"]+)"\]/);
+        if (match) {
+            const key = match[1];
+            return (global.__mockThreads || []).find(
+                t => t.dataset?.syhCommentKey === key || t.getAttribute?.('data-syh-comment-key') === key
+            ) || null;
+        }
+    }
+    const all = global.document.querySelectorAll(sel);
+    return all && all.length > 0 ? all[0] : null;
+};
+global.document.createElement = (tag) => createMockElement(tag);
+
 const createMockThread = (overrides = {}) => {
+    const attributes = { 'data-syh-studio-events-bound': 'false', ...overrides.attributes };
+    const classes = new Set(['ytcp-comment-thread']);
+    if (overrides.checkedClass) classes.add('syh-studio-comment-checked');
+
+    const fakeQuestionBtn = createMockElement('BUTTON', { className: 'syh-studio-btn syh-studio-btn-question' });
+    const fakePrayerBtn = createMockElement('BUTTON', { className: 'syh-studio-btn syh-studio-btn-prayer' });
+    const fakeCopyBtn = createMockElement('BUTTON', { className: 'syh-studio-btn syh-studio-btn-copy' });
+    const fakeCheckbox = createMockElement('INPUT', { className: 'syh-studio-checkbox', checked: overrides.checkboxChecked || false });
+
     const base = {
+        isMockThread: true,
         tagName: 'YTCP-COMMENT',
-        hasAttribute: (attr) => attr === 'is-reply' ? false : (base.hasAttribute ? base.hasAttribute(attr) : false),
+        className: Array.from(classes).join(' '),
+        parentElement: null,
+        dataset: { syhCommentKey: overrides.commentKey },
+        classList: {
+            add: (...cls) => { cls.forEach(c => classes.add(c)); base.className = Array.from(classes).join(' '); },
+            remove: (...cls) => { cls.forEach(c => classes.delete(c)); base.className = Array.from(classes).join(' '); },
+            contains: (c) => classes.has(c),
+            toggle: (c, val) => {
+                if (val === undefined) val = !classes.has(c);
+                if (val) classes.add(c); else classes.delete(c);
+                base.className = Array.from(classes).join(' ');
+                return val;
+            }
+        },
+        hasAttribute: (attr) => attr === 'is-reply' ? (overrides.isReply || false) : (attr in attributes),
+        getAttribute: (attr) => attributes[attr] !== undefined ? attributes[attr] : null,
+        setAttribute: (attr, val) => { attributes[attr] = String(val); },
+        removeAttribute: (attr) => { delete attributes[attr]; },
+        addEventListener: () => {},
         querySelector: (sel) => {
             const s = typeof sel === 'string' ? sel : '';
+            if (s.includes('.syh-studio-checkbox')) return fakeCheckbox;
             if (s.includes('author-text') || s.includes('author') || s.includes('name')) {
                 return { textContent: overrides.author || 'TestAuthor' };
             }
@@ -62,68 +188,51 @@ const createMockThread = (overrides = {}) => {
                     childNodes: [{ nodeType: 3, textContent: overrides.text || 'Test comment' }]
                 };
             }
-            if (s.includes('video-title')) {
+            if (s.includes('video-title') || s.includes('#video-title')) {
                 return { textContent: overrides.videoTitle || 'Test Video Title' };
             }
             if (s.includes('video-thumbnail a') || s.includes('a#body') || s.includes('a.ytcp-comment-video-thumbnail')) {
                 return { href: overrides.videoHref || '/watch?v=test123', getAttribute: (a) => a === 'href' ? overrides.videoHref || '/watch?v=test123' : null };
             }
-            if (s.includes('btn-question')) return { classList: { contains: () => false, add: () => {}, remove: () => {} }, innerHTML: '', title: '' };
-            if (s.includes('btn-prayer')) return { classList: { contains: () => false, add: () => {}, remove: () => {} }, innerHTML: '', title: '' };
-            if (s.includes('btn-copy')) return { classList: { contains: () => false } };
+            if (s.includes('btn-question')) return fakeQuestionBtn;
+            if (s.includes('btn-prayer')) return fakePrayerBtn;
+            if (s.includes('btn-copy')) return fakeCopyBtn;
             if (s.includes('toolbar')) return {
-                querySelectorAll: () => [],
+                querySelectorAll: () => [fakeCopyBtn, fakeQuestionBtn, fakePrayerBtn],
                 querySelector: (sub) => {
-                    if (sub.includes('btn-question')) return { classList: { contains: () => false, add: () => {}, remove: () => {} }, innerHTML: '', title: '' };
-                    if (sub.includes('btn-prayer')) return { classList: { contains: () => false, add: () => {}, remove: () => {} }, innerHTML: '', title: '' };
-                    if (sub.includes('btn-copy')) return { classList: { contains: () => false } };
+                    if (sub.includes('btn-question')) return fakeQuestionBtn;
+                    if (sub.includes('btn-prayer')) return fakePrayerBtn;
+                    if (sub.includes('btn-copy')) return fakeCopyBtn;
                     return null;
                 },
                 appendChild: () => {}
             };
             if (s.includes('metadata')) return {
-                querySelector: () => null,
+                querySelector: (sub) => sub.includes('checkbox') ? fakeCheckbox : null,
                 querySelectorAll: () => [],
                 appendChild: () => {}
             };
-            if (s.includes('checkbox')) return { checked: false };
+            if (s.includes('checkbox')) return fakeCheckbox;
             return null;
         },
+        querySelectorAll: () => [],
         closest: (sel) => {
-            if (sel === '.ytcp-comment-thread') {
-                return {
-                    querySelector: (subSel) => {
-                        if (typeof subSel === 'string' && subSel.includes('video-title')) {
-                            return { textContent: overrides.videoTitle || 'Test Video Title' };
-                        }
-                        if (typeof subSel === 'string' && subSel.includes('a#body')) {
-                            return { href: overrides.videoHref || '/watch?v=test123' };
-                        }
-                        return null;
-                    }
-                };
-            }
-            if (sel === 'ytcp-comment, ytcp-comment-thread') {
-                return {
-                    classList: {
-                        contains: (cls) => cls === 'syh-studio-comment-checked' ? !!base.checkedClass : false,
-                        add: (cls) => { if (cls === 'syh-studio-comment-checked') base.checkedClass = true; },
-                        remove: (cls) => { if (cls === 'syh-studio-comment-checked') base.checkedClass = false; }
-                    },
-                    querySelector: (sub) => sub.includes('checkbox') ? { checked: !!base.checkboxChecked } : null
-                };
+            if (typeof sel === 'string') {
+                if (sel.includes('ytcp-comment') || sel === '.ytcp-comment-thread') {
+                    return base;
+                }
             }
             return null;
-        },
-        classList: {
-            contains: (cls) => cls === 'syh-studio-comment-checked' ? !!base.checkedClass : false,
-            add: (cls) => { if (cls === 'syh-studio-comment-checked') base.checkedClass = true; },
-            remove: (cls) => { if (cls === 'syh-studio-comment-checked') base.checkedClass = false; }
-        },
-        dataset: { syhCommentKey: overrides.commentKey },
-        getAttribute: (attr) => attr === 'data-syh-studio-events-bound' ? 'false' : null,
-        setAttribute: () => {}
+        }
     };
+
+    fakeQuestionBtn.parentElement = base;
+    fakePrayerBtn.parentElement = base;
+    fakeCopyBtn.parentElement = base;
+    fakeCheckbox.parentElement = base;
+
+    global.__mockThreads.push(base);
+
     return base;
 };
 
@@ -268,13 +377,13 @@ describe('StudioCommentAdapter - Public API Tests', () => {
     test('getButtonStatesKey returns correct storage key', () => {
         const caches = createMockCaches();
         const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
-        assert.equal(adapter.getButtonStatesKey(), 'syh_studio_button_state');
+        assert.equal(adapter.getButtonStatesKey(), 'syh:studio:button_state');
     });
 
     test('getCheckboxStatesKey returns correct storage key', () => {
         const caches = createMockCaches();
         const adapter = new StudioCommentAdapter('vp', 'Время перемен', caches);
-        assert.equal(adapter.getCheckboxStatesKey(), 'syh_studio_checkbox_state');
+        assert.equal(adapter.getCheckboxStatesKey(), 'syh:studio:checkbox_state');
     });
 
     test('applyButtonState updates button UI based on state', () => {
@@ -533,6 +642,7 @@ describe('retroactiveUpdateVideoComments', () => {
 
         const fakeQuestionBtn = createFakeBtn();
         const fakePrayerBtn = createFakeBtn();
+        const fakeCopyBtn = createFakeBtn();
 
         const fakeThread = {
             tagName: 'YTCP-COMMENT',
@@ -545,25 +655,21 @@ describe('retroactiveUpdateVideoComments', () => {
                 if (s.includes('video-title')) return { textContent: 'Retro Video Title' };
                 if (s.includes('btn-question')) return fakeQuestionBtn;
                 if (s.includes('btn-prayer')) return fakePrayerBtn;
+                if (s.includes('btn-copy')) return fakeCopyBtn;
                 if (s.includes('toolbar')) return {
                     querySelector: (sub) => {
                         if (sub.includes('btn-question')) return fakeQuestionBtn;
                         if (sub.includes('btn-prayer')) return fakePrayerBtn;
+                        if (sub.includes('btn-copy')) return fakeCopyBtn;
                         return null;
                     },
-                    querySelectorAll: () => [],
+                    querySelectorAll: () => [fakeCopyBtn, fakeQuestionBtn, fakePrayerBtn],
                     appendChild: () => {}
                 };
                 if (s.includes('metadata')) return { querySelector: () => null, querySelectorAll: () => [], appendChild: () => {} };
                 return null;
             },
-            closest: () => ({
-                classList: {
-                    contains: () => false,
-                    add: () => {},
-                    remove: () => {}
-                }
-            })
+            closest: () => fakeThread
         };
 
         global.document.querySelectorAll = (sel) => {

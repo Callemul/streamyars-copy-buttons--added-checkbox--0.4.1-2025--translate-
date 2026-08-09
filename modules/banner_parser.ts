@@ -1,5 +1,5 @@
-import { SYH_PARSERS, EMOJI_NUMBER_CONTAINS_REGEX, splitPrayerSection, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers/index.ts';
-import { SABBATH_SCHOOL_KEYWORDS_REGEX, SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
+import { EMOJI_NUMBER_CONTAINS_REGEX, splitPrayerSection, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers/index.ts';
+import { SABBATH_SCHOOL_KEYWORDS_REGEX } from './channel_config';
 import type { SyhParsers } from './parsers/index.ts';
 import type { SyhUtils } from './utils';
 import type { BannerItem } from './banner_types';

@@ -1,13 +1,13 @@
 // youtube/studio/studio_storage_handler.ts
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { SYH_STORAGE } from '../../modules/storage';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
-import { getSheetCollectedStorageKey, getAllSheetIds } from '../../modules/storage';
+import { getSheetCollectedStorageKey } from '../../modules/storage';
 import { getAllSheetIds as getSheetIds } from '../../modules/sheets';
 import { countQuestionsInText } from '../../modules/telegram_parser';
 import type { CommentPayload } from '../../modules/comment_service';
 import type { SheetHeaderStats } from './studio_header_counters';
-import { initializeStudioModule, StudioModuleCaches } from './studio_init';
+import { type StudioModuleCaches } from './studio_init';
 
 const STUDIO_ENABLED_KEY = 'syh:studio:enabled';
 
@@ -54,7 +54,7 @@ export class StudioStorageController {
         const sheetIds = getSheetIds();
         sheetIds.forEach((sId) => {
             const key = getSheetCollectedStorageKey(sId);
-            this.changeHandlers[key] = (ctrl, newValue) => {
+            this.changeHandlers[key] = (ctrl, _newValue) => {
                 ctrl.loadStorageData().then(() => ctrl.scheduleProcessComments(true));
             };
         });

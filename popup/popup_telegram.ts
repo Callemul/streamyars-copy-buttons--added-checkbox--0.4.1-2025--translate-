@@ -15,7 +15,7 @@ import type {
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
 import type { YTCollectedItem } from '../modules/types';
-import { $, setTextContent, showElement, renderLogEmptyState, cancelBatchRender } from './popup_dom_utils';
+import { $, setTextContent, showElement } from './popup_dom_utils';
 
 const SHEET_IDS = getAllSheetIds();
 const activeBatchCancel: Record<string, () => void> = {};

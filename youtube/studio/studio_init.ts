@@ -1,5 +1,4 @@
-// youtube/studio/studio_init.ts
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../../modules/storage';
+import { SYH_STORAGE, getSheetCollectedStorageKey } from '../../modules/storage';
 import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
 import { SYH_CONFIG } from '../../modules/config';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';

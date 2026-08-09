@@ -6,11 +6,11 @@ import { SYH_BANNER_CREATOR, type SyhBannerCreator } from '../banner_creator';
 import type { ISyhPlugin } from '../plugin_registry';
 
 import type { SyhEventBanners } from './types';
-import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
 import { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction } from './mouse_handlers';
 import { handleBannerChange } from './checkbox';
 import { handleBannerMouseUp } from './mouseup_handler';
+import { bindBannersFilterControls } from '../ui_banners';
 
 export { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction };
 export { handleDeleteSelectedBannersAction, calculateBannerDeletionCounts, buildBannerDeleteConfirmMessage, executeBannerDeletion } from './deletion';
@@ -57,8 +57,7 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
         document.addEventListener('change', (e: Event) => handleBannerChange(e, self.SELECTORS, self.UI));
     },
 
-    bindBannersFilterControls: async function(): Promise<void> {
-        const { bindBannersFilterControls } = await import('../ui_banners');
+    bindBannersFilterControls: function(): void {
         bindBannersFilterControls();
     }
 };

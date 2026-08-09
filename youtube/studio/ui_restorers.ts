@@ -1,6 +1,5 @@
-// youtube/studio/ui_restorers.ts
 import { resolveCategoryForVideo } from './studio_category_matcher';
-import type { CommentContext, SheetId, VideoSheetMapEntry } from '../../modules/comment_platform_adapter';
+import type { SheetId } from '../../modules/comment_platform_adapter';
 import { 
     updateStudioButtonsUI, 
     updateStudioBadgeUI, 

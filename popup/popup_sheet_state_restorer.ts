@@ -1,7 +1,7 @@
 // popup/popup_sheet_state_restorer.ts
 // Sheet-specific state restoration functions
 
-import { STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
+import { POPUP_SHEET_KEYS } from '../modules/storage';
 import { $, setTextContent, setElementText } from './popup_dom_utils';
 import { updateOldInputStats, updateNewInputStats, loadYTCollected, ensureStatsBarRows } from './popup_telegram';
 

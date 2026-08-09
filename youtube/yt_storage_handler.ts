@@ -1,6 +1,5 @@
-// youtube/yt_storage_handler.ts
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
-import { initializeCommentAssistant, processAllYTComments, stateCache } from './yt_comment_processor';
+import { STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
+import { processAllYTComments, stateCache } from './yt_comment_processor';
 import { cleanupYouTubeUI, initializeYouTubeModule } from './yt_init';
 
 export function handleOptionsChange(newOptions: Record<string, any>): void {

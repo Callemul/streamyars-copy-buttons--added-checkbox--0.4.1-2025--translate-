@@ -1,5 +1,4 @@
-// youtube/studio/comment_context.ts
-import type { CommentContext, CommentStateCaches } from '../../modules/comment_platform_adapter';
+import type { CommentContext } from '../../modules/comment_platform_adapter';
 import type { StudioCommentUIElements } from './studio_ui';
 import type { StudioEventCaches } from './state_resolvers';
 
