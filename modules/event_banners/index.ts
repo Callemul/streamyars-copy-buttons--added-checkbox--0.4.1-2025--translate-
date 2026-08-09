@@ -11,11 +11,20 @@ import { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction }
 import { handleBannerChange } from './checkbox';
 import { handleBannerMouseUp } from './mouseup_handler';
 import { bindBannersFilterControls } from '../ui_banners';
+import { currentBrowserUrl, isStreamYardUrl, resolveEventBannerDeps } from './deps';
 
 export { handleCreateBannersAction, handleCopyBannerAction, handleMarkBannerCategoryAction };
 export { handleDeleteSelectedBannersAction, calculateBannerDeletionCounts, buildBannerDeleteConfirmMessage, executeBannerDeletion } from './deletion';
 export { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction };
 export { handleSingleBannerCheckboxChange, handleMasterCheckboxChange, handleBannerChange } from './checkbox';
+export {
+    resolveBannerSelectors,
+    resolveEventBannerDeps,
+    preferOverride,
+    currentBrowserUrl,
+    isStreamYardUrl,
+    STREAMYARD_URL_MARKER
+} from './deps';
 
 let eventsBound = false;
 
@@ -23,7 +32,7 @@ export const SYH_EVENT_BANNERS_PLUGIN: ISyhPlugin = {
     id: 'syh_event_banners',
     name: 'StreamYard Banners Handler',
     enabled: true,
-    isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
+    isSupported: (url = currentBrowserUrl()) => isStreamYardUrl(url),
     init: () => {
         SYH_EVENT_BANNERS.init();
         SYH_EVENT_BANNERS.bindEvents();
@@ -38,11 +47,22 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
     BANNER_CREATOR: null,
 
     init: function(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void {
-        this.SELECTORS = config ? config.SELECTORS : (SYH_CONFIG ? SYH_CONFIG.SELECTORS : null);
-        this.STATE = state || SYH_STATE;
-        this.UTILS = utils || SYH_UTILS;
-        this.UI = ui || SYH_UI;
-        this.BANNER_CREATOR = bannerCreator || SYH_BANNER_CREATOR;
+        const deps = resolveEventBannerDeps(
+            { config, state, utils, ui, bannerCreator },
+            {
+                config: SYH_CONFIG,
+                state: SYH_STATE,
+                utils: SYH_UTILS,
+                ui: SYH_UI,
+                bannerCreator: SYH_BANNER_CREATOR
+            }
+        );
+
+        this.SELECTORS = deps.SELECTORS;
+        this.STATE = deps.STATE;
+        this.UTILS = deps.UTILS;
+        this.UI = deps.UI;
+        this.BANNER_CREATOR = deps.BANNER_CREATOR;
     },
 
     bindEvents: function(): void {
