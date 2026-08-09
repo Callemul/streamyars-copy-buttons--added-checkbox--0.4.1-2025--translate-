@@ -4,6 +4,11 @@ import type { SyhUtils } from '../utils';
 import type { SyhUi } from '../ui';
 import type { SyhBannerCreator } from '../banner_creator';
 
+// `./category` та `./checkbox` імпортують ці типи саме звідси, тому барель
+// зобов'язаний їх реекспортувати, а не лише споживати локально.
+export type { SyhUtils } from '../utils';
+export type { SyhUi } from '../ui';
+
 export interface SyhEventBanners {
     SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;

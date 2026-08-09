@@ -2,113 +2,43 @@
  * StreamYard Helper - Centralized Messaging Service
  * Безпечний адаптер зв'язку між Content Scripts, Popup та Background Worker.
  * Запобігає помилкам "Extension context invalidated" та незакритим обробникам Promise.
+ *
+ * Файл свідомо тонкий: це лише фасад. Реалізація живе в `messaging_context`
+ * (живучість контексту), `messaging_senders` (вихідні канали) та
+ * `messaging_listener` (вхідний канал).
+ *
+ * Гард передається в помічники як колбек `() => this.isExtensionValid()`, щоб
+ * зберегти пізнє зв'язування: підміна `SYH_MESSAGING.isExtensionValid` у тестах
+ * чи в рантаймі має впливати на всі три канали, як і в оригіналі.
  */
 
 import type { SyhRuntimeMessage } from './types';
+import { isExtensionContextValid } from './messaging_context';
+import { sendRuntimeMessage, sendActiveTabMessage } from './messaging_senders';
+import { registerMessageListener, type SyhMessageHandler } from './messaging_listener';
 
 export interface SyhMessagingService {
     isExtensionValid(): boolean;
     sendToBackground<T = unknown>(message: SyhRuntimeMessage): Promise<T | null>;
     sendToActiveTab<T = unknown>(message: SyhRuntimeMessage): Promise<T | null>;
-    onMessage(
-        callback: (
-            message: SyhRuntimeMessage,
-            sender: chrome.runtime.MessageSender,
-            sendResponse: (response?: unknown) => void
-        ) => boolean | void
-    ): () => void;
+    onMessage(callback: SyhMessageHandler): () => void;
 }
 
 export const SYH_MESSAGING: SyhMessagingService = {
-    isExtensionValid: function(): boolean {
-        try {
-            return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
-        } catch {
-            return false;
-        }
-    },
+    isExtensionValid: isExtensionContextValid,
 
     sendToBackground: function<T = unknown>(message: SyhRuntimeMessage): Promise<T | null> {
-        return new Promise((resolve) => {
-            if (!this.isExtensionValid() || !chrome.runtime?.sendMessage) {
-                resolve(null);
-                return;
-            }
-            try {
-                chrome.runtime.sendMessage(message, (response: T) => {
-                    const err = chrome.runtime.lastError;
-                    if (err) {
-                        resolve(null);
-                    } else {
-                        resolve(response ?? null);
-                    }
-                });
-            } catch (e) {
-                console.warn('[SYH Messaging] sendToBackground error:', e);
-                resolve(null);
-            }
-        });
+        const self = this;
+        return sendRuntimeMessage<T>(() => self.isExtensionValid(), message);
     },
 
     sendToActiveTab: function<T = unknown>(message: SyhRuntimeMessage): Promise<T | null> {
-        return new Promise((resolve) => {
-            if (!this.isExtensionValid() || !chrome.tabs?.query) {
-                resolve(null);
-                return;
-            }
-            try {
-                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    const activeTab = tabs && tabs[0];
-                    if (!activeTab || activeTab.id === undefined) {
-                        resolve(null);
-                        return;
-                    }
-                    chrome.tabs.sendMessage(activeTab.id, message, (response: T) => {
-                        const err = chrome.runtime.lastError;
-                        if (err) {
-                            resolve(null);
-                        } else {
-                            resolve(response ?? null);
-                        }
-                    });
-                });
-            } catch {
-                resolve(null);
-            }
-        });
+        const self = this;
+        return sendActiveTabMessage<T>(() => self.isExtensionValid(), message);
     },
 
-    onMessage: function(callback) {
-        if (!this.isExtensionValid() || !chrome.runtime?.onMessage) {
-            return () => {};
-        }
-        const listener = (
-            msg: unknown,
-            sender: chrome.runtime.MessageSender,
-            sendResponse: (response?: unknown) => void
-        ) => {
-            try {
-                return callback(msg as SyhRuntimeMessage, sender, sendResponse);
-            } catch (e) {
-                console.warn('[SYH Messaging] Error in message listener:', e);
-                return false;
-            }
-        };
-
-        try {
-            chrome.runtime.onMessage.addListener(listener);
-        } catch (e) {
-            console.warn('[SYH Messaging] Failed to add listener:', e);
-        }
-
-        return () => {
-            if (this.isExtensionValid() && chrome.runtime?.onMessage) {
-                try {
-                    chrome.runtime.onMessage.removeListener(listener);
-                } catch {
-                    // Ignore disconnect errors
-                }
-            }
-        };
+    onMessage: function(callback: SyhMessageHandler): () => void {
+        const self = this;
+        return registerMessageListener(() => self.isExtensionValid(), callback);
     }
 };

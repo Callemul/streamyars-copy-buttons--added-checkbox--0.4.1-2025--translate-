@@ -1,122 +1,39 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { SYH_STATE, type SyhState } from './state';
-import { SYH_CONFIG, resolveFirstSelector, type SyhConfig } from './config';
+/**
+ * StreamYard Helper — фасад UI.
+ *
+ * Файл свідомо тонкий: він лише збирає `SYH_UI` з профільних модулів і проксіює
+ * стан у єдине джерело правди `SYH_UI_STATE`. Логіка ініціалізації, валідації
+ * селекторів і відновлення чекбоксів живе в `ui_init` / `ui_selector_validator`
+ * / `ui_checkbox_restorer` відповідно.
+ */
+
 import { SYH_UI_STATE, type SyhUi } from './ui_state';
-import { 
-    addButtonsToComment, 
-    updateCommentVisuals, 
-    applySavedLabels, 
-    addStarredTabControls, 
+import { initUiModule } from './ui_init';
+import { validateSelectorsSyntax } from './ui_selector_validator';
+import { restoreDomCheckboxes } from './ui_checkbox_restorer';
+import {
+    addButtonsToComment,
+    updateCommentVisuals,
+    applySavedLabels,
+    addStarredTabControls,
     addStarredTabCopyButton,
-    bindStarredControls, 
-    filterStarredComments, 
-    scrollToActiveComment 
+    bindStarredControls,
+    filterStarredComments,
+    scrollToActiveComment
 } from './ui_comments';
-import { 
-    addButtonsToBanner, 
-    updateBannerVisuals, 
-    applySavedBannerLabels, 
-    addBannerHeaderControls, 
-    updateMasterCheckboxState, 
-    filterBanners, 
-    scrollToActiveBanner 
+import {
+    addButtonsToBanner,
+    updateBannerVisuals,
+    applySavedBannerLabels,
+    addBannerHeaderControls,
+    updateMasterCheckboxState,
+    filterBanners,
+    scrollToActiveBanner
 } from './ui_banners';
-import { SYH_BUS } from './event_bus';
-import type { PrayerItem } from './types';
 
-function init(config?: SyhConfig, state?: SyhState): void {
-    try {
-        SYH_UI_STATE.SELECTORS = config ? config.SELECTORS : SYH_CONFIG.SELECTORS;
-        SYH_UI_STATE.STATE = state || SYH_STATE;
-        
-        if (SYH_UI_STATE.STATE) {
-            SYH_UI_STATE.STATE.onStateLoaded = () => restoreDomCheckboxes();
-        }
-
-        validateSelectorsSyntax();
-        
-        SYH_STORAGE.getAsync<{ [STORAGE_KEYS.PRAYERS]?: PrayerItem[]; [STORAGE_KEYS.CATEGORIES]?: Record<string, string> }>([STORAGE_KEYS.PRAYERS, STORAGE_KEYS.CATEGORIES])
-            .then((result) => {
-                SYH_UI_STATE.prayersCache = result[STORAGE_KEYS.PRAYERS] || [];
-                SYH_UI_STATE.bannerCategoriesCache = result[STORAGE_KEYS.CATEGORIES] || {};
-            })
-            .catch(e => console.error("[SYH UI] Error loading initial storage cache:", e));
-
-        SYH_STORAGE.onChanged((changes: Record<string, { oldValue?: unknown; newValue?: unknown }>) => {
-            try {
-                if (changes[STORAGE_KEYS.PRAYERS] && changes[STORAGE_KEYS.PRAYERS].newValue !== undefined) {
-                    SYH_UI_STATE.prayersCache = (changes[STORAGE_KEYS.PRAYERS].newValue as PrayerItem[]) || [];
-                    filterStarredComments();
-                }
-                if (changes[STORAGE_KEYS.CATEGORIES] && changes[STORAGE_KEYS.CATEGORIES].newValue !== undefined) {
-                    SYH_UI_STATE.bannerCategoriesCache = (changes[STORAGE_KEYS.CATEGORIES].newValue as Record<string, string>) || {};
-                    filterBanners();
-                }
-            } catch (e) {
-                console.error("[SYH] Помилка синхронізації сховища в UI:", e);
-            }
-        });
-
-        // Підписка на події від інших модулів через шину подій
-        SYH_BUS.on('COMMENT_MARKED', (event) => {
-            updateCommentVisuals(event.element, event.type);
-        });
-
-    } catch (error) {
-        console.error("[SYH] Критичний збій ініціалізації модуля UI:", error);
-    }
-}
-
-function validateSelectorsSyntax(): void {
-    if (!SYH_UI_STATE.SELECTORS) return;
-    console.log("[SYH] Запуск синтаксичного сканування CSS-селекторів...");
-    for (const key in SYH_UI_STATE.SELECTORS) {
-        const selector = SYH_UI_STATE.SELECTORS[key];
-        if (!selector) continue;
-        try {
-            document.querySelector(selector);
-        } catch (e) {
-            console.error(`[SYH] Виявлено критично невалідний CSS селектор у конфігу для ключа [${key}]:`, selector, e);
-        }
-    }
-}
-
-function getCheckboxTextKey(checkbox: HTMLInputElement, selectors: Record<string, any>): string {
-    const type = checkbox.dataset.type;
-    const selCommentBlock = resolveFirstSelector(selectors.commentBlock) || '';
-    const selCommentText = resolveFirstSelector(selectors.commentText) || '';
-    const selBannerBlock = resolveFirstSelector(selectors.bannerBlock) || '';
-    const selBannerText = resolveFirstSelector(selectors.bannerText) || '';
-
-    if (type === 'comment') {
-        const commentBlock = checkbox.closest(selCommentBlock || '[class*="PlatformComment__Wrap"]');
-        return commentBlock?.querySelector(selCommentText || '[class*="PlatformCommentShell__ContentSpan"]')?.textContent || "";
-    }
-    if (type === 'banner') {
-        const bannerBlock = checkbox.closest(selBannerBlock || '[class*="Banner__LiWrap"]');
-        return bannerBlock?.querySelector(selBannerText || '[class*="Banner__BannerText"]')?.textContent || "";
-    }
-    return "";
-}
-
-function restoreDomCheckboxes(): void {
-    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const itemStates = SYH_UI_STATE.STATE?.itemStates || {};
-
-    if (!selectors) {
-        console.warn("[SYH_UI] Конфігурація SELECTORS ще не завантажена.");
-        return;
-    }
-
-    console.log("[SYH_UI] Відновлення стану чекбоксів у DOM...");
-
-    document.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach((checkbox) => {
-        const textKey = getCheckboxTextKey(checkbox, selectors);
-        if (textKey) {
-            checkbox.checked = !!itemStates[textKey];
-        }
-    });
-}
+// `SyhUi` живе в `./ui_state`, але історично споживачі імпортують його з фасаду
+// `../ui` разом із самим `SYH_UI`. Реекспорт відновлює цей контракт.
+export type { SyhUi } from './ui_state';
 
 // Create the combined SYH_UI object
 export const SYH_UI: SyhUi = {
@@ -150,7 +67,7 @@ export const SYH_UI: SyhUi = {
     get _filterCommentsTimeout() { return SYH_UI_STATE._filterCommentsTimeout; },
     set _filterCommentsTimeout(val) { SYH_UI_STATE._filterCommentsTimeout = val; },
 
-    init,
+    init: initUiModule,
     validateSelectorsSyntax,
     restoreDomCheckboxes,
 
