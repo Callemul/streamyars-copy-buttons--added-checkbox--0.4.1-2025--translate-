@@ -7,6 +7,21 @@
 
 import type { PrayerItem, YTCollectedItem } from './types';
 
+export interface StorageAdapter {
+    isChromeStorageAvailable(): boolean;
+    get<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
+    set(items: Record<string, any>, cb?: () => void): void;
+    remove(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void;
+    getAsync<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
+    setAsync(items: Record<string, any>): Promise<void>;
+    removeAsync(keys: StorageKeyValues | StorageKeyValues[]): Promise<void>;
+    updateAsync<T = Record<string, any>>(
+        keys: StorageKeyValues | StorageKeyValues[],
+        updateFn: (current: T) => T | Promise<T>
+    ): Promise<T>;
+    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
+}
+
 export const STORAGE_SCHEMA_VERSION = 2;
 
 export interface StoredOptions {

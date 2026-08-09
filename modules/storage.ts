@@ -1,28 +1,15 @@
 /**
- * StreamYard Helper - Centralized Storage Adapter
- * Модуль керування сховищем із захистом від розриву контексту розширення (zombie context).
- * ВАЖЛИВО: localStorage fallback видалено навмисно — він ламає синхронізацію між контент-скриптом і попапом.
+ * StreamYard Helper - Centralized Storage Adapter (фасад)
  *
- * Чиста логіка ключів та міграцій винесена у `storage_keys.ts`, щоб зменшити
- * розмір цього файлу та уникнути зациклень завантаження. Публічний API
- * (ключі, міграції, типи) реекспортується звідти 1-в-1 для зворотної сумісності.
+ * Публічний API залишено 1-в-1 для зворотної сумісності (60 залежних файлів).
+ * «Важка» логіка міграції винесена у `storage_migration.ts`, а чисті ключі/типи —
+ * у `storage_keys.ts` (зокрема канонічний тип `StorageAdapter`). Цей файл
+ * тримає лише екземпляр `SYH_STORAGE` та реекспортує символи з тих модулів,
+ * не створюючи зайвих ланцюгів імпортів, що ламають розв'язання типів.
+ *
+ * ВАЖЛИВО: localStorage fallback видалено навмисно — він ламає синхронізацію між
+ * контент-скриптом і попапом.
  */
-
-import {
-    STORAGE_SCHEMA_VERSION,
-    type StoredOptions,
-    type StorageSchema,
-    STORAGE_KEYS,
-    getSheetStorageKey,
-    getSheetCollectedStorageKey,
-    POPUP_SHEET_KEYS,
-    migrateKey,
-    type StorageKeyValues,
-    migrateItemKeys,
-    migrateKeys,
-    prepareQueryKeys,
-    processGetResult
-} from './storage_keys';
 
 export {
     STORAGE_SCHEMA_VERSION,
@@ -37,39 +24,33 @@ export {
     migrateItemKeys,
     migrateKeys,
     prepareQueryKeys,
-    processGetResult
-};
+    processGetResult,
+    type StorageAdapter
+} from './storage_keys';
 
-export interface StorageAdapter {
-    isChromeStorageAvailable(): boolean;
-    get<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
-    set(items: Record<string, any>, cb?: () => void): void;
-    remove(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void;
-    getAsync<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
-    setAsync(items: Record<string, any>): Promise<void>;
-    removeAsync(keys: StorageKeyValues | StorageKeyValues[]): Promise<void>;
-    updateAsync<T = Record<string, any>>(
-        keys: StorageKeyValues | StorageKeyValues[],
-        updateFn: (current: T) => T | Promise<T>
-    ): Promise<T>;
-    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
-}
+export {
+    checkAndLogStorageError,
+    migrateLegacyYtCollected,
+    migrateStorageIfNeeded
+} from './storage_migration';
 
-function checkAndLogStorageError(actionName: string): boolean {
-    if (chrome.runtime?.lastError) {
-        console.error(`[SYH Storage] ${actionName} error:`, chrome.runtime.lastError.message);
-        return true;
-    }
-    return false;
-}
+import { checkAndLogStorageError } from './storage_migration';
+import {
+    prepareQueryKeys,
+    processGetResult,
+    migrateItemKeys,
+    migrateKeys,
+    type StorageKeyValues,
+    type StorageAdapter
+} from './storage_keys';
 
 export const SYH_STORAGE: StorageAdapter = {
     isChromeStorageAvailable: function(): boolean {
         try {
-            return typeof chrome !== 'undefined' && 
-                   !!chrome.runtime && 
+            return typeof chrome !== 'undefined' &&
+                   !!chrome.runtime &&
                    !!chrome.runtime.id &&
-                   !!chrome.storage && 
+                   !!chrome.storage &&
                    !!chrome.storage.local;
         } catch {
             return false;
@@ -196,73 +177,3 @@ export const SYH_STORAGE: StorageAdapter = {
         }
     }
 };
-
-function migrateLegacyYtCollected(
-    allData: Record<string, any>,
-    migrated: Record<string, unknown>,
-    keysToRemove: string[]
-): void {
-    const legacyYtItems = (allData[STORAGE_KEYS.YT_COLLECTED] || allData['syh_yt_collected']) as any[] | undefined;
-    if (Array.isArray(legacyYtItems) && legacyYtItems.length > 0) {
-        const vpSsKey = getSheetCollectedStorageKey('vp_ss');
-        const existingVpSs = (migrated[vpSsKey] || allData[vpSsKey]) as any[] | undefined;
-        const itemMap = new Map<string | any, any>();
-
-        if (Array.isArray(existingVpSs)) {
-            existingVpSs.forEach(item => { itemMap.set(item?.id ?? item, item); });
-        }
-        legacyYtItems.forEach(item => { itemMap.set(item?.id ?? item, item); });
-
-        migrated[vpSsKey] = Array.from(itemMap.values());
-        if (allData[STORAGE_KEYS.YT_COLLECTED]) keysToRemove.push(STORAGE_KEYS.YT_COLLECTED);
-    }
-}
-
-export async function migrateStorageIfNeeded(): Promise<void> {
-    if (!SYH_STORAGE.isChromeStorageAvailable()) return;
-
-    return new Promise((resolve) => {
-        chrome.storage.local.get(null, (allData) => {
-            if (chrome.runtime.lastError || !allData) {
-                resolve();
-                return;
-            }
-            const schemaVersion = allData._schema_version;
-            if (typeof schemaVersion === 'number' && schemaVersion >= STORAGE_SCHEMA_VERSION) {
-                resolve();
-                return;
-            }
-
-            const migrated: Record<string, unknown> = {};
-            const keysToRemove: string[] = [];
-
-            for (const [oldKey, value] of Object.entries(allData)) {
-                if (oldKey === '_schema_version') continue;
-                const newKey = migrateKey(oldKey);
-                if (newKey !== oldKey) {
-                    migrated[newKey] = value;
-                    keysToRemove.push(oldKey);
-                }
-            }
-
-            migrateLegacyYtCollected(allData, migrated, keysToRemove);
-
-            if (keysToRemove.length > 0) {
-                chrome.storage.local.set(migrated, () => {
-                    chrome.storage.local.remove(keysToRemove, () => {
-                        chrome.storage.local.set({ _schema_version: STORAGE_SCHEMA_VERSION }, () => {
-                            console.log(`[SYH Storage] Storage migrated: ${keysToRemove.length} keys renamed`);
-                            resolve();
-                        });
-                    });
-                });
-            } else {
-                chrome.storage.local.set({ _schema_version: STORAGE_SCHEMA_VERSION }, () => {
-                    resolve();
-                });
-            }
-        });
-    });
-}
-
-

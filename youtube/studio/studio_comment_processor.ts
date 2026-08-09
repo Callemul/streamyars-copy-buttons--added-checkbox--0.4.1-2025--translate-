@@ -94,27 +94,39 @@ export class StudioCommentProcessor {
     }
 
     public stopModule(): void {
+        this.cancelScheduledFrame();
+        this.detachObserver();
+        this.detachScrollHandler();
+        this.detachContextMenuHandler();
+        this.cleanupInjectedUI();
+    }
+
+    private cancelScheduledFrame(): void {
         if (this.frameId !== null) {
             cancelAnimationFrame(this.frameId);
             this.frameId = null;
         }
+    }
 
+    private detachObserver(): void {
         if (this.unregisterObserver) {
             this.unregisterObserver();
             this.unregisterObserver = null;
         }
+    }
 
+    private detachScrollHandler(): void {
         if (this.scrollHandler) {
             window.removeEventListener('scroll', this.scrollHandler, { capture: true });
             this.scrollHandler = null;
         }
+    }
 
+    private detachContextMenuHandler(): void {
         if (this.contextMenuHandler) {
             window.removeEventListener('contextmenu', this.contextMenuHandler, { capture: true });
             this.contextMenuHandler = null;
         }
-
-        this.cleanupInjectedUI();
     }
 
     private cleanupInjectedUI(): void {

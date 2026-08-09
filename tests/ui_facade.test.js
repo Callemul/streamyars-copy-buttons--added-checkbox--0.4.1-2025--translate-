@@ -82,12 +82,13 @@ describe('ui — контракт фасаду SYH_UI', () => {
     test('2. методи коментарів/банерів делегуються у профільні модулі без обгорток', async () => {
         const comments = await import('../modules/ui_comments.ts');
         const banners = await import('../modules/ui_banners.ts');
+        const starred = await import('../modules/ui_starred_controls.ts');
 
         assert.equal(SYH_UI.addButtonsToComment, comments.addButtonsToComment);
         assert.equal(SYH_UI.updateCommentVisuals, comments.updateCommentVisuals);
         assert.equal(SYH_UI.applySavedLabels, comments.applySavedLabels);
-        assert.equal(SYH_UI.addStarredTabControls, comments.addStarredTabControls);
-        assert.equal(SYH_UI.filterStarredComments, comments.filterStarredComments);
+        assert.equal(SYH_UI.addStarredTabControls, starred.addStarredTabControls);
+        assert.equal(SYH_UI.filterStarredComments, starred.filterStarredComments);
 
         assert.equal(SYH_UI.addButtonsToBanner, banners.addButtonsToBanner);
         assert.equal(SYH_UI.updateBannerVisuals, banners.updateBannerVisuals);

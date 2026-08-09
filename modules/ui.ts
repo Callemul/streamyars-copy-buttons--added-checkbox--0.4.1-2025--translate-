@@ -15,12 +15,14 @@ import {
     addButtonsToComment,
     updateCommentVisuals,
     applySavedLabels,
-    addStarredTabControls,
-    addStarredTabCopyButton,
-    bindStarredControls,
-    filterStarredComments,
-    scrollToActiveComment
+    addStarredTabCopyButton
 } from './ui_comments';
+import {
+    addStarredTabControls,
+    bindStarredControls,
+    filterStarredComments
+} from './ui_starred_controls';
+import { scrollToActiveComment } from './ui_shared_utils';
 import {
     addButtonsToBanner,
     updateBannerVisuals,

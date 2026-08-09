@@ -3,8 +3,8 @@ import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
 import { SYH_CONFIG } from '../../modules/config';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 import { getAllSheetIds } from '../../modules/sheets';
-import { countQuestionsInText } from '../../modules/telegram_parser';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
+import { buildCollectedAggregation } from './studio_aggregator';
 import type { CommentPayload } from '../../modules/comment_service';
 import type { SheetHeaderStats } from './studio_header_counters';
 
@@ -56,22 +56,7 @@ async function loadStorageData(
     caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
     caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
 
-    const collected: CommentPayload[] = [];
-    sheetIds.forEach((sId) => {
-        const list = res[`syh:popup:collected:${sId}`];
-        let questions = 0;
-        let prayers = 0;
-        if (Array.isArray(list)) {
-            collected.push(...list);
-            list.forEach((item: any) => {
-                if (item.type === 'question') {
-                    questions += countQuestionsInText(item.text || '');
-                } else if (item.type === 'prayer') {
-                    prayers += 1;
-                }
-            });
-        }
-        sheetStatsMap[sId] = { questions, prayers };
-    });
-    caches.collectedItems = collected;
+    const { collectedItems, sheetStatsMap: stats } = buildCollectedAggregation(res, sheetIds);
+    caches.collectedItems = collectedItems;
+    Object.assign(sheetStatsMap, stats);
 }

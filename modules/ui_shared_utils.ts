@@ -3,6 +3,8 @@
  * Спільні допоміжні функції для UI модулів (ui_banners, ui_comments)
  */
 import { CommentService } from './comment_service';
+import { SYH_UI_STATE } from './ui_state';
+import { SYH_CONFIG, queryBySelectorValue, resolveSelectorString } from './config';
 
 export function safeTextUpdate(selector: string, newText: string): void {
     const el = document.querySelector(selector);
@@ -37,6 +39,15 @@ export function scrollToActiveItem(listSelector: string): void {
             }
         }
     }
+}
+
+export function scrollToActiveComment(): void {
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    // Порожній селектор -> скролити нікуди (раніше сюди летіло `undefined`,
+    // і `querySelector` усередині так само не знаходив нічого).
+    const listSelector = resolveSelectorString(selectors.starredList);
+    if (!listSelector) return;
+    scrollToActiveItem(listSelector);
 }
 
 export function updateMasterCheckboxFromElements(
