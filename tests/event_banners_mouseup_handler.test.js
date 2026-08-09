@@ -153,4 +153,114 @@ describe('Event Banners MouseUp Handler tests', () => {
         assert.strictEqual(mockEvent.preventDefault.mock.callCount(), 0);
         assert.strictEqual(mockEvent.stopPropagation.mock.callCount(), 0);
     });
+
+    test('handleBannerMouseUp executes handleCopyBannerAction on copy-banner', () => {
+        const mockCheckbox = {
+            checked: false,
+            dispatchEvent: mock.fn()
+        };
+        const mockBannerBlock = {
+            querySelector: mock.fn((selector) => {
+                if (selector === '.syh-checkbox') return mockCheckbox;
+                if (selector === '.banner-text-selector') return { textContent: 'Banner Copied Text' };
+                return null;
+            })
+        };
+        const mockButton = {
+            dataset: { action: 'copy-banner', type: 'banner' },
+            closest: mock.fn((selector) => {
+                if (selector === '.syh-button') return mockButton;
+                if (selector === '.banner-block-selector') return mockBannerBlock;
+                return null;
+            })
+        };
+
+        const mockEvent = {
+            target: mockButton,
+            button: 0,
+            preventDefault: mock.fn(),
+            stopPropagation: mock.fn()
+        };
+
+        const copyAndShowBannerMock = mock.fn();
+        const mockSelf = {
+            BANNER_CREATOR: {},
+            SELECTORS: {
+                bannerBlock: '.banner-block-selector',
+                bannerText: '.banner-text-selector'
+            },
+            UI: {},
+            UTILS: {
+                copyAndShowBanner: copyAndShowBannerMock
+            }
+        };
+
+        handleBannerMouseUp(mockEvent, mockSelf);
+
+        assert.strictEqual(mockEvent.preventDefault.mock.callCount(), 1);
+        assert.strictEqual(mockEvent.stopPropagation.mock.callCount(), 1);
+        assert.strictEqual(copyAndShowBannerMock.mock.callCount(), 1);
+        const args = copyAndShowBannerMock.mock.calls[0].arguments;
+        assert.strictEqual(args[0], 'Banner Copied Text');
+        assert.strictEqual(args[1], 'Текст з Банера 🗞');
+        assert.strictEqual(mockCheckbox.checked, true);
+        assert.strictEqual(mockCheckbox.dispatchEvent.mock.callCount(), 1);
+    });
+
+    test('handleBannerMouseUp executes handleMarkBannerCategoryAction on mark-stream', async () => {
+        const mockBannerBlock = {
+            querySelector: mock.fn((selector) => {
+                if (selector === '.banner-text-selector') return { textContent: 'Banner Stream Text' };
+                return null;
+            })
+        };
+        const mockButton = {
+            dataset: { action: 'mark-stream' },
+            closest: mock.fn((selector) => {
+                if (selector === '.syh-button') return mockButton;
+                if (selector === '.banner-block-selector') return mockBannerBlock;
+                return null;
+            })
+        };
+
+        const mockEvent = {
+            target: mockButton,
+            button: 0,
+            preventDefault: mock.fn(),
+            stopPropagation: mock.fn()
+        };
+
+        const saveBannerCategoryMock = mock.fn(() => Promise.resolve());
+        const filterBannersMock = mock.fn();
+        const mockSelf = {
+            BANNER_CREATOR: {},
+            SELECTORS: {
+                bannerBlock: '.banner-block-selector',
+                bannerText: '.banner-text-selector'
+            },
+            UI: {
+                bannerCategoriesCache: {},
+                filterBanners: filterBannersMock
+            },
+            UTILS: {
+                saveBannerCategory: saveBannerCategoryMock
+            }
+        };
+
+        handleBannerMouseUp(mockEvent, mockSelf);
+
+        assert.strictEqual(mockEvent.preventDefault.mock.callCount(), 1);
+        assert.strictEqual(mockEvent.stopPropagation.mock.callCount(), 1);
+        assert.strictEqual(saveBannerCategoryMock.mock.callCount(), 1);
+        
+        const args = saveBannerCategoryMock.mock.calls[0].arguments;
+        assert.strictEqual(args[0], 'Banner Stream Text');
+        assert.strictEqual(args[1], 'stream');
+
+        // Wait for the asynchronous saveBannerCategory promise to resolve
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        assert.strictEqual(mockSelf.UI.bannerCategoriesCache['Banner Stream Text'], 'stream');
+        assert.strictEqual(filterBannersMock.mock.callCount(), 1);
+    });
 });

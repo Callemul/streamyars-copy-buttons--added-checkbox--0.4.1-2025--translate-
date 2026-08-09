@@ -4,12 +4,10 @@ import { SYH_BUS } from './event_bus';
 import { SYH_UTILS } from './utils';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
 import { UiFactory } from './ui_factory';
+import { getOrCreateTodaySession, searchBrandNameInObject } from './stats_session';
 
-function getOrCreateTodaySession(db: Record<string, any>, brand: string, today: string): any {
-    if (!db[brand]) db[brand] = {};
-    if (!db[brand][today]) db[brand][today] = { data: [] };
-    return db[brand][today];
-}
+// Реекспорт чистих хелперів для зворотної сумісності публічного API.
+export { getOrCreateTodaySession, searchBrandNameInObject };
 
 export interface SyhStatsTracker {
     intervalId: number | null;
@@ -19,6 +17,8 @@ export interface SyhStatsTracker {
     lastKnownBrand: string;
 
     init(): void;
+    bindEvents(): void;
+    registerPrayerMarker(): void;
     loadStatsDb(callback: (db: Record<string, any>) => void): void;
     setupObservers(): void;
     restoreButtonStates(btnQ: HTMLElement, btnP: HTMLElement): void;
@@ -357,8 +357,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     },
 
     searchBrandNameInObject: function(obj: any): string | null {
-        if (!obj || typeof obj !== 'object') return null;
-        return obj?.activeBrand?.name || obj?.brand?.name || null;
+        return searchBrandNameInObject(obj);
     }
 };
 

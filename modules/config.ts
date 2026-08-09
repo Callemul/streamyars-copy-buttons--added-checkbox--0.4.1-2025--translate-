@@ -42,17 +42,59 @@ export function resolveSelectorString(
 }
 
 /**
+ * Нормалізує `SelectorValue` у список непорожніх селекторів-кандидатів
+ * у порядку спадання пріоритету.
+ *
+ * Єдине джерело правди для правила «як читати `SelectorValue`»: використовується
+ * в `resolveSelector`, `resolveSelectorAll` та у валідаторі синтаксису
+ * (`modules/ui_selector_validator.ts`).
+ */
+export function toSelectorList(
+    selectorValue: SelectorValue | null | undefined
+): string[] {
+    if (!selectorValue) return [];
+    const list = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
+    return list.filter((sel): sel is string => Boolean(sel));
+}
+
+/**
+ * `querySelector` для `SelectorValue` зі збереженням історичної семантики
+ * «масив === CSS-група» (`['.a','.b']` -> `'.a,.b'`), яку рушій і так застосовував
+ * через неявний `ToString`.
+ *
+ * Відмінність від `resolveSelector`: тут НЕ змінюється те, який саме вузол буде
+ * обрано (група віддає перший у DOM, а `resolveSelector` — перший за пріоритетом
+ * конфігу). Тому цей хелпер безпечний для «1-в-1» міграції типів, тоді як перехід
+ * на `resolveSelector` — це вже зміна поведінки й потребує окремого рішення.
+ *
+ * Порожнє/відсутнє значення трактується як «нічого не знайдено» замість
+ * `querySelector('')`, який кидає `SyntaxError`.
+ */
+export function queryBySelectorValue<T extends Element = Element>(
+    selectorValue: SelectorValue | null | undefined,
+    root: ParentNode = document
+): T | null {
+    const selector = resolveSelectorString(selectorValue);
+    return selector ? root.querySelector<T>(selector) : null;
+}
+
+/** Парний до `queryBySelectorValue` хелпер для `Element.closest()`. */
+export function closestBySelectorValue<T extends Element = Element>(
+    start: Element | null | undefined,
+    selectorValue: SelectorValue | null | undefined
+): T | null {
+    const selector = resolveSelectorString(selectorValue);
+    return start && selector ? start.closest<T>(selector) : null;
+}
+
+/**
  * Допоміжний резолвер селекторів з підтримкою масивів-фолбеків
  */
 export function resolveSelector<T extends Element = Element>(
     selectorValue: SelectorValue | null | undefined, 
     root: ParentNode = document
 ): T | null {
-    if (!selectorValue) return null;
-    const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
-
-    for (const sel of selectors) {
-        if (!sel) continue;
+    for (const sel of toSelectorList(selectorValue)) {
         try {
             const el = root.querySelector<T>(sel);
             if (el) return el;
@@ -67,11 +109,7 @@ export function resolveSelectorAll<T extends Element = Element>(
     selectorValue: SelectorValue | null | undefined, 
     root: ParentNode = document
 ): T[] {
-    if (!selectorValue) return [];
-    const selectors = typeof selectorValue === 'string' ? [selectorValue] : selectorValue;
-
-    for (const sel of selectors) {
-        if (!sel) continue;
+    for (const sel of toSelectorList(selectorValue)) {
         try {
             const els = Array.from(root.querySelectorAll<T>(sel));
             if (els.length > 0) return els;

@@ -1,6 +1,8 @@
 import type { SyhEventComments } from './types';
+import { closestBySelectorValue, queryBySelectorValue } from '../config';
 import { CommentService } from '../comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../comment_assistant/index';
+import { handleSyhButtonMouseUp } from './button_handlers';
 
 function getValidatedTarget(
     e: Event,
@@ -16,25 +18,26 @@ export function bindStarButtonClickHandler(self: SyhEventComments): void {
     self._clickHandler = function(e: MouseEvent) {
         const target = getValidatedTarget(e, self, 'starButton');
         if (!target) return;
-        const starBtn = target.closest(self.SELECTORS!.starButton);
+        const starBtn = closestBySelectorValue(target, self.SELECTORS?.starButton);
         if (starBtn) {
             if (starBtn.getAttribute('aria-selected') === 'true') {
-                const commentBlock = starBtn.closest(self.SELECTORS.commentBlock);
+                const commentBlock = closestBySelectorValue(starBtn, self.SELECTORS?.commentBlock);
                 if (commentBlock) {
-                    const text = commentBlock.querySelector(self.SELECTORS.commentText)?.textContent;
+                    const text = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent;
                     if (text) {
                         self.removeFromDatabase(text);
                     }
-                    if (self.UI) {
-                        self.UI.updateCommentVisuals(commentBlock, 'none');
+                    const ui = self.UI;
+                    if (ui) {
+                        ui.updateCommentVisuals(commentBlock, 'none');
                         const li = commentBlock.closest('li');
                         if (li) {
                             li.setAttribute('data-syh-deleted', 'true');
                             li.style.display = 'none';
                         }
                         
-                        if (typeof self.UI.filterStarredComments === 'function') {
-                            setTimeout(() => self.UI.filterStarredComments(), 50);
+                        if (typeof ui.filterStarredComments === 'function') {
+                            setTimeout(() => ui.filterStarredComments(), 50);
                         }
                     }
                 }
@@ -51,12 +54,12 @@ export function bindMiddleClickHandler(self: SyhEventComments): void {
             if (!target) return;
             if (target.closest('.syh-button')) return;
 
-            const commentBlock = target.closest(self.SELECTORS.commentBlock);
+            const commentBlock = closestBySelectorValue(target, self.SELECTORS?.commentBlock);
             if (commentBlock) {
                 e.preventDefault(); 
                 e.stopPropagation();
                 
-                const starBtnNode = commentBlock.querySelector(self.SELECTORS.starButton || '') as HTMLElement | null;
+                const starBtnNode = queryBySelectorValue<HTMLElement>(self.SELECTORS?.starButton, commentBlock);
                 if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'true') {
                     starBtnNode.click(); 
                 }
@@ -80,12 +83,12 @@ export function bindContextMenuHandlers(self: SyhEventComments): void {
         if (targetBtn) {
             e.preventDefault();
             e.stopPropagation();
-            const commentBlock = targetBtn.closest(self.SELECTORS.commentBlock);
+            const commentBlock = closestBySelectorValue(targetBtn, self.SELECTORS?.commentBlock);
             if (commentBlock) {
-                const checkbox = commentBlock.querySelector('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
+                const checkbox = commentBlock.querySelector<HTMLInputElement>('.syh-checkbox[data-type="comment"]');
                 if (checkbox) {
                     checkbox.checked = !checkbox.checked;
-                    const textKey = commentBlock.querySelector(self.SELECTORS.commentText || '')?.textContent;
+                    const textKey = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent;
                     if (textKey) {
                         CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
                     }
@@ -97,7 +100,8 @@ export function bindContextMenuHandlers(self: SyhEventComments): void {
     document.addEventListener('contextmenu', self._contextHandler, true);
 
     self._copyPrayerContextHandler = function(e: MouseEvent) {
-        if (e.target?.closest('.syh-button[data-action="copy-prayer"]')) {
+        const target = e.target as Element | null;
+        if (target?.closest('.syh-button[data-action="copy-prayer"]')) {
             e.preventDefault();
         }
     };
@@ -122,12 +126,12 @@ export function bindSyhButtonMouseHandlers(self: SyhEventComments): void {
 export function bindCheckboxChangeHandler(self: SyhEventComments): void {
     self._changeHandler = function(e: Event) {
         const target = e.target as Element | null;
-        const checkbox = target?.closest('.syh-checkbox[data-type="comment"]') as HTMLInputElement | null;
+        const checkbox = target?.closest<HTMLInputElement>('.syh-checkbox[data-type="comment"]');
         if (!checkbox) return;
 
-        const commentBlock = checkbox.closest(self.SELECTORS?.commentBlock || '');
+        const commentBlock = closestBySelectorValue(checkbox, self.SELECTORS?.commentBlock);
         if (!commentBlock) return;
-        const textKey = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
+        const textKey = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent || '';
         
         CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
         SYH_COMMENT_ASSISTANT.processComment(commentBlock);

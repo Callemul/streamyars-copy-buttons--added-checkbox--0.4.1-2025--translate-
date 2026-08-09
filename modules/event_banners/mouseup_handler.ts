@@ -19,12 +19,12 @@ const actionHandlers: ButtonActionHandler[] = [
         handle: (_button, self) => handleDeleteSelectedBannersAction(self.SELECTORS, self.UI)
     },
     {
-        canHandle: (_action, type, action) => type === 'banner' && action === 'copy-banner',
+        canHandle: (action, type) => type === 'banner' && action === 'copy-banner',
         handle: (button, self) => handleCopyBannerAction(button, self.SELECTORS, self.UTILS)
     },
     {
         canHandle: (action) => action === 'mark-stream' || action === 'mark-audience' || action === 'mark-prayer',
-        handle: (button, self) => handleMarkBannerCategoryAction(button, action!, self.SELECTORS, self.UI, self.UTILS)
+        handle: (button, self) => handleMarkBannerCategoryAction(button, button.dataset.action!, self.SELECTORS, self.UI, self.UTILS)
     }
 ];
 

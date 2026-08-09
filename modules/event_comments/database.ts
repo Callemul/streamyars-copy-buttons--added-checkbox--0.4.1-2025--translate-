@@ -1,4 +1,5 @@
 import type { SyhEventComments } from './types';
+import type { PrayerItem } from '../types';
 import { CommentService } from '../comment_service';
 
 export async function saveToDatabase(
@@ -28,7 +29,7 @@ export async function removeFromDatabase(
     text: string
 ): Promise<void> {
     if (self.UI && self.UI.prayersCache) {
-        self.UI.prayersCache = self.UI.prayersCache.filter((item: any) => item.text !== text);
+        self.UI.prayersCache = self.UI.prayersCache.filter((item: PrayerItem) => item.text !== text);
     }
     await CommentService.removePrayerRecord(text);
 }

@@ -1,5 +1,5 @@
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG } from './config';
+import { SYH_CONFIG, queryBySelectorValue, resolveSelectorString, type SelectorValue } from './config';
 import { SYH_UTILS } from './utils';
 import { UiFactory } from './ui_factory';
 import { CommentService } from './comment_service';
@@ -16,7 +16,7 @@ import { renderSharedEmptyState } from './ui_empty_state';
 
 export function addButtonsToComment(commentNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const targetContainer = commentNode.querySelector(selectors.commentButtonContainer);
+    const targetContainer = queryBySelectorValue(selectors.commentButtonContainer, commentNode);
     if (targetContainer && !targetContainer.querySelector('.syh-custom-buttons-comment')) {
         const container = document.createElement('div');
         container.className = 'syh-custom-buttons-comment';
@@ -48,7 +48,7 @@ export function addButtonsToComment(commentNode: Element): void {
 
         targetContainer.appendChild(container);
         
-        const commentText = commentNode.querySelector(selectors.commentText)?.textContent || '';
+        const commentText = queryBySelectorValue(selectors.commentText, commentNode)?.textContent || '';
         
         restoreCheckboxFromCache(targetContainer, commentText);
         applySavedLabels(commentNode, commentText);
@@ -69,7 +69,9 @@ export function applySavedLabels(commentNode: Element, text: string): void {
     if (!text || !text.trim()) return; 
     
     const found = SYH_UI_STATE.prayersCache.find((item: PrayerItem) => item.text === text);
-    const type = found ? found.type : 'none';
+    // `PrayerItem.type` — необов'язкове поле; для DOM-мітки відсутній тип
+    // еквівалентний 'none' (та сама гілка `else` в `updateCommentVisuals`).
+    const type = found?.type ?? 'none';
     updateCommentVisuals(commentNode, type);
 }
 
@@ -105,7 +107,7 @@ export function addStarredTabControls(starredHeaderNode: Element): void {
         const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
 
         if (!document.querySelector('#syh-empty-state-msg')) {
-            const starredList = document.querySelector(selectors.starredList);
+            const starredList = queryBySelectorValue(selectors.starredList, document);
             if (starredList) {
                 starredList.insertAdjacentHTML('afterend', `
                     <div id="syh-empty-state-msg" class="syh-empty-state">
@@ -147,7 +149,7 @@ export function addStarredTabCopyButton(starredTabNode: Element): void {
         e.preventDefault();
 
         const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-        const commentList = document.querySelector<HTMLElement>(selectors.starredList);
+        const commentList = queryBySelectorValue<HTMLElement>(selectors.starredList, document);
         const commentsToCopy: { author: string; text: string }[] = [];
 
         if (commentList && commentList.children.length > 0) {
@@ -156,9 +158,9 @@ export function addStarredTabCopyButton(starredTabNode: Element): void {
                 if (li.getAttribute('data-syh-deleted') === 'true') return;
                 if (li.style.display === 'none') return;
 
-                const commentWrap = li.querySelector(selectors.commentBlock) || li;
-                const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
-                const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
+                const commentWrap = queryBySelectorValue(selectors.commentBlock, li) || li;
+                const authorText = queryBySelectorValue(selectors.commentAuthor, commentWrap)?.textContent || '';
+                const originalText = queryBySelectorValue(selectors.commentText, commentWrap)?.textContent || '';
 
                 if (originalText.trim()) {
                     commentsToCopy.push({
@@ -296,7 +298,7 @@ function incrementCommentCategoryCounts(
 
 export function filterCommentListItems(
     commentList: HTMLElement,
-    selectors: any,
+    selectors: Record<string, SelectorValue>,
     prayersCache: PrayerItem[],
     activeFilter: string,
     searchQuery: string,
@@ -310,14 +312,14 @@ export function filterCommentListItems(
         const li = liChild as HTMLElement;
         if (li.getAttribute('data-syh-deleted') === 'true') return;
 
-        const commentWrap = li.querySelector(selectors.commentBlock);
+        const commentWrap = queryBySelectorValue(selectors.commentBlock, li);
         if (!commentWrap) return;
 
-        const originalText = commentWrap.querySelector(selectors.commentText)?.textContent || '';
-        const authorText = commentWrap.querySelector(selectors.commentAuthor)?.textContent || '';
+        const originalText = queryBySelectorValue(selectors.commentText, commentWrap)?.textContent || '';
+        const authorText = queryBySelectorValue(selectors.commentAuthor, commentWrap)?.textContent || '';
 
         const foundInCache = prayersCache.find((item: PrayerItem) => item.text === originalText);
-        const commentType = foundInCache ? foundInCache.type : 'none';
+        const commentType = foundInCache?.type ?? 'none';
 
         updateCommentVisuals(commentWrap, commentType);
         incrementCommentCategoryCounts(countAbsolute, commentType);
@@ -383,7 +385,7 @@ export function renderCommentEmptyState(
 
 export function filterStarredComments(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const commentList = document.querySelector<HTMLElement>(selectors.starredList);
+    const commentList = queryBySelectorValue<HTMLElement>(selectors.starredList, document);
     if (!commentList) return;
 
     const activeFilter = SYH_UI_STATE.activeFilter;
@@ -425,5 +427,9 @@ export function filterStarredComments(): void {
 
 export function scrollToActiveComment(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    scrollToActiveItem(selectors.starredList);
+    // Порожній селектор -> скролити нікуди (раніше сюди летіло `undefined`,
+    // і `querySelector` усередині так само не знаходив нічого).
+    const listSelector = resolveSelectorString(selectors.starredList);
+    if (!listSelector) return;
+    scrollToActiveItem(listSelector);
 }

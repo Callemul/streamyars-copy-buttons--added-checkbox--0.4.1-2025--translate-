@@ -1,4 +1,5 @@
 import type { SyhEventComments } from './types';
+import { closestBySelectorValue, queryBySelectorValue } from '../config';
 import { applyCommentActionState } from './actions';
 import { formatCopyPayload, stripLeadingAt } from './formatters';
 
@@ -7,7 +8,7 @@ export function handleSyhButtonMouseUp(
     self: SyhEventComments
 ): void {
     const target = e.target as Element | null;
-    const button = target?.closest('.syh-button[data-type="comment"]') as HTMLElement | null;
+    const button = target?.closest<HTMLElement>('.syh-button[data-type="comment"]');
     if (!button) return;
 
     e.preventDefault();
@@ -18,12 +19,12 @@ export function handleSyhButtonMouseUp(
 
     if (buttonNum !== 0 && action !== 'copy-prayer') return;
 
-    const commentBlock = button.closest(self.SELECTORS?.commentBlock || '');
+    const commentBlock = closestBySelectorValue(button, self.SELECTORS?.commentBlock);
     if (!commentBlock) return;
 
-    const rawAuthor = commentBlock.querySelector(self.SELECTORS?.commentAuthor || '')?.textContent;
+    const rawAuthor = queryBySelectorValue(self.SELECTORS?.commentAuthor, commentBlock)?.textContent;
     const author = stripLeadingAt(rawAuthor);
-    const commentText = commentBlock.querySelector(self.SELECTORS?.commentText || '')?.textContent || '';
+    const commentText = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent || '';
 
     if (action === 'copy-author-comment' || action === 'copy-prayer') {
         commentBlock.setAttribute('data-syh-just-added', 'true');

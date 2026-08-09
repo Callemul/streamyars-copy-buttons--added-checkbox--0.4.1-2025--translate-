@@ -1,0 +1,93 @@
+﻿modules/anti_afk.ts(93,28): error TS2304: Cannot find name 'SYH_BUS'.
+modules/anti_afk.ts(94,21): error TS2304: Cannot find name 'SYH_BUS'.
+modules/banner_creator.ts(3,29): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/banner_creator.ts(97,13): error TS2740: Type 'Element' is missing the following properties from type 'HTMLElement': accessKey, accessKeyLabel, autocapitalize, dir, and 126 more.
+modules/banner_parser.ts(1,166): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/comment_assistant/highlighter.ts(33,73): error TS2341: Property 'resolveTriggerCategory' is private and only accessible within class 'TriggerManager'.
+modules/comment_injector.ts(30,94): error TS2345: Argument of type 'Event' is not assignable to parameter of type 'MouseEvent'.
+  Type 'Event' is missing the following properties from type 'MouseEvent': altKey, button, buttons, clientX, and 23 more.
+modules/comment_injector.ts(31,90): error TS2345: Argument of type 'Event' is not assignable to parameter of type 'MouseEvent'.
+  Type 'Event' is missing the following properties from type 'MouseEvent': altKey, button, buttons, clientX, and 23 more.
+modules/comment_injector.ts(32,86): error TS2345: Argument of type 'Event' is not assignable to parameter of type 'MouseEvent'.
+  Type 'Event' is missing the following properties from type 'MouseEvent': altKey, button, buttons, clientX, and 23 more.
+modules/parsers/question_parsers.ts(5,15): error TS2303: Circular definition of import alias 'GroupedQuestion'.
+modules/sheet_state_service.ts(3,46): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/stats_exporter.ts(368,5): error TS2353: Object literal may only specify known properties, and 'getSummaryData' does not exist in type 'SyhStatsExporter'.
+modules/stats_exporter.ts(380,27): error TS2339: Property 'getSummaryData' does not exist on type 'SyhStatsExporter'.
+modules/stats_exporter.ts(402,29): error TS2339: Property 'getSummaryData' does not exist on type 'SyhStatsExporter'.
+modules/telegram_parser.ts(15,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/telegram_parser.ts(32,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/telegram_parser.ts(87,49): error TS2554: Expected 1 arguments, but got 2.
+modules/ui_banners.ts(18,49): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorValue' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+modules/ui_banners.ts(43,53): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorValue' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+modules/ui_banners.ts(138,52): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorValue' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+modules/ui_banners.ts(202,56): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ all: number; stream: number; audience: number; prayer: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ all: number; stream: number; audience: number; prayer: number; }'.
+modules/utils.ts(2,41): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+modules/utils.ts(109,59): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+popup/popup_dom_utils.ts(36,24): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+popup/popup_dom_utils.ts(43,13): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+popup/popup_dom_utils.ts(44,13): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+popup/popup_prayers.ts(4,62): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+popup/popup_prayers.ts(5,31): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+popup/popup_prayers.ts(6,43): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+popup/popup_ui_state_restorer.ts(12,23): error TS2304: Cannot find name 'db'.
+popup/popup_ui_state_restorer.ts(14,13): error TS2304: Cannot find name 'db'.
+popup/popup_ui_state_restorer.ts(14,63): error TS2304: Cannot find name 'db'.
+popup/popup_ui_state_restorer.ts(16,13): error TS2304: Cannot find name 'db'.
+popup/popup_ui_state_restorer.ts(16,65): error TS2304: Cannot find name 'db'.
+youtube/studio/studio_comment_processor.ts(97,87): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(type: "scroll", listener: (this: Window, ev: Event) => any, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'passive' does not exist in type 'EventListenerOptions'.
+  Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.
+    Object literal may only specify known properties, and 'passive' does not exist in type 'EventListenerOptions'.
+youtube/studio/studio_comment_processor.ts(134,37): error TS2345: Argument of type 'Element' is not assignable to parameter of type 'HTMLElement'.
+  Type 'Element' is missing the following properties from type 'HTMLElement': accessKey, accessKeyLabel, autocapitalize, dir, and 126 more.
+youtube/studio/studio_content.ts(19,84): error TS2339: Property 'updateHeaderCounters' does not exist on type 'StudioCommentProcessor'.
+youtube/studio/studio_events.ts(65,5): error TS2322: Type 'Promise<CommentPayload[]>' is not assignable to type 'Promise<void>'.
+  Type 'CommentPayload[]' is not assignable to type 'void'.
+youtube/studio/ui_restorers.ts(2,15): error TS2305: Module '"../../modules/comment_platform_adapter"' has no exported member 'SheetId'.
+youtube/yt_events.ts(34,35): error TS2304: Cannot find name 'CommentStateCaches'.
+youtube/yt_events.ts(48,9): error TS2353: Object literal may only specify known properties, and 'buttonStates' does not exist in type 'YTCaches'.
+youtube/yt_events.ts(53,51): error TS2345: Argument of type 'YTCaches' is not assignable to parameter of type 'CommentStateCaches'.
+  Type 'YTCaches' is missing the following properties from type 'CommentStateCaches': buttonStates, checkboxStates
+youtube/yt_ui.ts(20,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(40,48): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(41,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(59,48): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(61,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(80,52): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.
+youtube/yt_ui.ts(125,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SelectorList' is not assignable to parameter of type 'string'.
+      Type 'string[]' is not assignable to type 'string'.

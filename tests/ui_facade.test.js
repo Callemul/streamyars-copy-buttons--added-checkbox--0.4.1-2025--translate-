@@ -160,6 +160,85 @@ describe('ui — validateSelectorsSyntax', () => {
         assert.doesNotThrow(() => SYH_UI.validateSelectorsSyntax());
         assert.equal(errors, 1, 'кожен зламаний селектор дає рівно один console.error');
     });
+
+    // Регресія на латентний баг «валідатор склеює масив у CSS-групу».
+    // Див. docs/audits/active/audit_2026-08-09_KILO_selector-array-validation-false-positive.md
+    test('7a. масив валідних селекторів перевіряється почленно, без склеювання', () => {
+        SYH_UI_STATE.SELECTORS = { pair: ['.a', '.b'] };
+        const spy = mock.method(document, 'querySelector');
+        let errors = 0;
+        console.error = () => { errors += 1; };
+
+        SYH_UI.validateSelectorsSyntax();
+
+        assert.deepEqual(spy.mock.calls.map((c) => c.arguments[0]), ['.a', '.b']);
+        assert.equal(errors, 0);
+    });
+
+    test('7b. порожній член масиву пропускається, а не валить увесь ключ', () => {
+        SYH_UI_STATE.SELECTORS = { tail: ['.a', ''] };
+        const spy = mock.method(document, 'querySelector');
+        let errors = 0;
+        console.error = () => { errors += 1; };
+
+        assert.doesNotThrow(() => SYH_UI.validateSelectorsSyntax());
+
+        assert.deepEqual(spy.mock.calls.map((c) => c.arguments[0]), ['.a']);
+        assert.equal(errors, 0, 'хибної тривоги на порожньому «хвості» більше немає');
+    });
+
+    test('7c. у лог потрапляє саме зламаний член масиву, а не масив цілком', () => {
+        // Селектори навмисно унікальні для кожного тесту: happy-dom кешує
+        // результат розбору, тож повторно той самий рядок уже не кидає SyntaxError.
+        SYH_UI_STATE.SELECTORS = { mixed: [':::broken-member', '.b'] };
+        const logged = [];
+        console.error = (...args) => { logged.push(args); };
+
+        SYH_UI.validateSelectorsSyntax();
+
+        assert.equal(logged.length, 1);
+        assert.equal(logged[0][1], ':::broken-member', 'аргументом іде рядок, а не масив');
+    });
+
+    test('7d. кожен зламаний член масиву рахується окремо', () => {
+        SYH_UI_STATE.SELECTORS = { both: [':::broken-one', ':::broken-two'] };
+        let errors = 0;
+        console.error = () => { errors += 1; };
+
+        SYH_UI.validateSelectorsSyntax();
+
+        assert.equal(errors, 2);
+    });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('config — хелпери читання SelectorValue', () => {
+    test('7e. queryBySelectorValue: рядок, масив-група, порожнє значення', async () => {
+        const { queryBySelectorValue, closestBySelectorValue, toSelectorList } =
+            await import('../modules/config.ts');
+
+        document.body.innerHTML = `
+            <div class="wrap"><span class="text" data-testid="content">Привіт</span></div>
+        `;
+        const span = document.querySelector('.text');
+
+        assert.equal(queryBySelectorValue('.text'), span, 'рядок');
+        assert.equal(queryBySelectorValue(['.missing', '[data-testid="content"]']), span, 'масив як CSS-група');
+
+        // Ключова гарантія: порожнє/відсутнє значення НЕ кидає SyntaxError.
+        assert.doesNotThrow(() => queryBySelectorValue(undefined));
+        assert.equal(queryBySelectorValue(undefined), null);
+        assert.equal(queryBySelectorValue(['']), null);
+
+        assert.equal(closestBySelectorValue(span, '.wrap'), document.querySelector('.wrap'));
+        assert.equal(closestBySelectorValue(span, undefined), null);
+        assert.equal(closestBySelectorValue(null, '.wrap'), null);
+
+        assert.deepEqual(toSelectorList(['.a', '', '.b']), ['.a', '.b']);
+        assert.deepEqual(toSelectorList('.a'), ['.a']);
+        assert.deepEqual(toSelectorList(null), []);
+    });
 });
 
 // ---------------------------------------------------------------------------
