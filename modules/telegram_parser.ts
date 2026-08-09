@@ -402,25 +402,37 @@ export function parseAndFilterOldList(
 /**
  * Helper: Створення об'єкта елемента для заголовка рядкового експорту
  */
-function createLineByLineHeaderItem(trimmedLine: string, cleaningLog?: CleaningLogEntry[]): { author: string | null; textLines: string[] } {
-    let author: string | null = null;
-    const textLines: string[] = [];
-    if (TG_HEADER_B_REGEX.test(trimmedLine)) {
-        const match = trimmedLine.match(TG_HEADER_B_REGEX);
-        if (match) {
-            const headerAuthorCandidate = match[1] ? match[1].trim() : "";
-            const trailing = match[2] ? match[2].trim() : "";
-            if (headerAuthorCandidate && headerAuthorCandidate.startsWith('@')) {
-                author = cleanAuthorName(headerAuthorCandidate, cleaningLog);
-            } else if (trailing && trailing.startsWith('@')) {
-                author = cleanAuthorName(trailing, cleaningLog);
-            }
-            if (trailing && !trailing.startsWith('@')) {
-                textLines.push(trailing);
-            }
-        }
-    }
+export function createLineByLineHeaderItem(trimmedLine: string, cleaningLog?: CleaningLogEntry[]): { author: string | null; textLines: string[] } {
+    const match = trimmedLine.match(TG_HEADER_B_REGEX);
+    if (!match) return { author: null, textLines: [] };
+
+    const headerAuthorCandidate = match[1] ? match[1].trim() : "";
+    const trailing = match[2] ? match[2].trim() : "";
+    const textLines = collectTrailingText(trailing);
+    const author = resolveHeaderAuthor(headerAuthorCandidate, trailing, cleaningLog);
+
     return { author, textLines };
+}
+
+function resolveHeaderAuthor(
+    headerAuthorCandidate: string,
+    trailing: string,
+    cleaningLog?: CleaningLogEntry[]
+): string | null {
+    if (headerAuthorCandidate && headerAuthorCandidate.startsWith('@')) {
+        return cleanAuthorName(headerAuthorCandidate, cleaningLog);
+    }
+    if (trailing && trailing.startsWith('@')) {
+        return cleanAuthorName(trailing, cleaningLog);
+    }
+    return null;
+}
+
+function collectTrailingText(trailing: string): string[] {
+    if (trailing && !trailing.startsWith('@')) {
+        return [trailing];
+    }
+    return [];
 }
 
 /**

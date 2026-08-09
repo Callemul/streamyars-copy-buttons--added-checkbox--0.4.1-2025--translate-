@@ -19,6 +19,13 @@ export async function resolve(specifier, context, nextResolve) {
                         shortCircuit: true,
                     };
                 }
+                const urlWithIndex = new URL(specifier + '/index.ts', context.parentURL);
+                if (fs.existsSync(urlWithIndex)) {
+                    return {
+                        url: urlWithIndex.href,
+                        shortCircuit: true,
+                    };
+                }
             }
         }
         throw err;

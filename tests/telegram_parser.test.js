@@ -12,6 +12,9 @@ import {
 } from '../modules/telegram_parser.ts';
 import { SYH_PARSERS } from '../modules/parsers/index.ts';
 
+// Імпорт для тестування createLineByLineHeaderItem після рефакторингу
+import { createLineByLineHeaderItem } from '../modules/telegram_parser.ts';
+
 test('countQuestionsInText counts bullet points correctly', () => {
     assert.equal(countQuestionsInText('Simple question'), 1);
     assert.equal(countQuestionsInText('🔹Question 1\n🔹Question 2'), 2);
@@ -165,4 +168,84 @@ obey
     const result = parseAndFilterOldList(text, []);
     assert.equal(result.questions.length, 15);
     assert.equal(result.prayers.length, 7);
+});
+
+// ---------------------------------------------------------------------------
+// createLineByLineHeaderItem — характеристичні тести для різних сценаріїв
+
+test('createLineByLineHeaderItem: лінійка з @Author у першій групі → author видаляється з @', () => {
+    const log = [];
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] @John', log);
+    assert.equal(item.author, 'John');
+    assert.equal(item.textLines.length, 0);
+});
+
+test('createLineByLineHeaderItem: лінійка @Author: text → author + textLines', () => {
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] @John: Some text');
+    assert.equal(item.author, 'John');
+    assert.equal(item.textLines.length, 1);
+    assert.equal(item.textLines[0], 'Some text');
+});
+
+test('createLineByLineHeaderItem: Author: @Other → author з trailing', () => {
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] Name: @Other');
+    assert.equal(item.author, 'Other');
+    assert.equal(item.textLines.length, 0);
+});
+
+test('createLineByLineHeaderItem: Author: text → author null, textLines має text', () => {
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] Name: Some text');
+    assert.equal(item.author, null);
+    assert.equal(item.textLines.length, 1);
+    assert.equal(item.textLines[0], 'Some text');
+});
+
+test('createLineByLineHeaderItem: @Author: @Other → author з першої групи, textLines порожні', () => {
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] @John: @Other');
+    assert.equal(item.author, 'John');
+    assert.equal(item.textLines.length, 0);
+});
+
+test('createLineByLineHeaderItem: без заголовка → author null, textLines порожні', () => {
+    const item = createLineByLineHeaderItem('Just some content without header');
+    assert.equal(item.author, null);
+    assert.equal(item.textLines.length, 0);
+});
+
+test('createLineByLineHeaderItem: @Author без trailing → author, textLines порожні', () => {
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] @Mary');
+    assert.equal(item.author, 'Mary');
+    assert.equal(item.textLines.length, 0);
+});
+
+test('createLineByLineHeaderItem: із cleaningLog → log entries для cleanAuthorName', () => {
+    const log = [];
+    const item = createLineByLineHeaderItem('[10.07.2026 20:44] @John•Admin', log);
+    assert.equal(item.author, 'John');
+    assert.ok(log.length > 0, 'cleaningLog має містити записи');
+});
+
+test('parseTelegramExportLineByLine: різні автори окремо', () => {
+    const text = `[10.07.2026 20:44] @John\nWhat is grace?\n[10.07.2026 20:45] @Mary\nWhat is love?`;
+    const result = parseTelegramExportLineByLine(text);
+    assert.equal(result.length, 2);
+    assert.equal(result[0].author, 'John');
+    assert.equal(result[1].author, 'Mary');
+});
+
+test('parseTelegramExportLineByLine: однакові автори об\'єднуются з 🔹', () => {
+    const text = `[10.07.2026 20:44] @John\nFirst question\n[10.07.2026 20:45] @John\nSecond question`;
+    const result = parseTelegramExportLineByLine(text);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].author, 'John');
+    assert.ok(result[0].text.includes('🔹First question'));
+    assert.ok(result[0].text.includes('🔹Second question'));
+});
+
+test('parseTelegramExportLineByLine: лінійка без @ → author = "Питання з чату"', () => {
+    const text = `[10.07.2026 20:44] Name\nQuestion text`;
+    const result = parseTelegramExportLineByLine(text);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].author, 'Питання з чату');
+    assert.ok(result[0].text.includes('Question text'));
 });
