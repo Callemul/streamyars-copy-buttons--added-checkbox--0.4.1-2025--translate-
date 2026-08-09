@@ -210,30 +210,35 @@ Without keywords`;
     assert.deepEqual(result, []);
 });
 
+// NOTE: The parser starts collecting at the first line matching SABBATH_SCHOOL_KEYWORDS_REGEX
+// (/памятн|пам'ятн|молчанов|опарин|опарін|молчанів/i), so "Памятный стих" is the trigger line -
+// "Субботняя школа" alone is NOT a keyword and yields an empty result.
+
 test('parseSabbathSchoolUnnumberedQuestions - throws when too many questions', () => {
     const lines = Array(12).fill('Вопрос').join('\n');
-    const input = `Субботняя школа\n${lines}`;
-    assert.throws(() => SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input), /лимит/);
+    const input = `Памятный стих\n${lines}`;
+    assert.throws(() => SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input), /ліміт/);
 });
 
 test('parseSabbathSchoolUnnumberedQuestions - truncates long questions', () => {
     const longText = 'A'.repeat(300);
-    const input = `Субботняя школа\nВопрос 1\n${longText}`;
+    const input = `Памятный стих\nВопрос 1\n${longText}`;
     const result = SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input);
-    assert.ok(result.length >= 1);
-    if (result.length > 0) {
-        assert.ok(result[0].includes('...'));
-    }
+    assert.equal(result.length, 3);
+    assert.equal(result[0], 'Памятный стих');
+    assert.equal(result[1], 'Вопрос 1');
+    // Long line is truncated to TEXT_TRUNCATION_LENGTH (195) including the "..." suffix
+    assert.ok(result[2].endsWith('...'));
+    assert.equal(result[2].length, 195);
 });
 
 test('parseSabbathSchoolUnnumberedQuestions - cleans parentheses from end', () => {
-    const input = `Субботняя школа
+    const input = `Памятный стих
 Вопрос про веру (John)`;
     const result = SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input);
-    assert.ok(result.length >= 1);
-    if (result.length > 0) {
-        assert.ok(result[0].includes('Вопрос про веру'));
-    }
+    assert.equal(result.length, 2);
+    assert.equal(result[1], 'Вопрос про веру');
+    assert.ok(!result[1].includes('(John)'));
 });
 
 // --- Tests for cleanAuthorName ---
@@ -414,9 +419,10 @@ test('SYH_PARSERS - parseStandardNumberedQuestions works', () => {
 });
 
 test('SYH_PARSERS - parseSabbathSchoolUnnumberedQuestions works', () => {
-    const input = `Субботняя школа\nQuestion`;
+    const input = `Памятный стих\nQuestion`;
     const result = SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input);
-    assert.ok(result.length >= 1);
+    assert.equal(result.length, 2);
+    assert.equal(result[1], 'Question');
 });
 
 test('SYH_PARSERS - cleanAuthorName works', () => {

@@ -1,137 +1,180 @@
 import assert from 'node:assert';
-import { test, describe, beforeEach, mock } from 'node:test';
+import { test, describe, beforeEach, afterEach, mock } from 'node:test';
 
 import { installChromeMock } from './setup/chrome_mock.ts';
 
-// Mock DOM
-global.window = global;
-global.document = {
-    getElementById: mock.fn((id) => ({
-        id,
-        scrollTop: 0,
-        scrollY: 0,
-        style: {},
-        classList: { add: mock.fn(), remove: mock.fn() },
-        instanceof: true
-    })),
-    querySelectorAll: mock.fn(() => []),
-    querySelector: mock.fn(),
-    createElement: mock.fn(() => ({}))
-};
+// NOTE: These tests run under the Happy DOM global registrator (see tests/setup/happy-dom.ts).
+// `popup_scroll.ts` reaches for `window.addEventListener`, `document.getElementById` and
+// `el instanceof HTMLElement`, none of which can be faked by overwriting `global.window` /
+// `global.document` (Happy DOM installs them as getter-only globals). We therefore drive the
+// real DOM: build real elements, dispatch real `scroll` events, and spy with `mock.method`.
 
-// Mock chrome storage
+/** @type {Array<Record<string, any>>} */
+const storageWrites = [];
+
 installChromeMock({
     storageImpl: {
-        get: mock.fn((keys, cb) => cb({})),
-        set: mock.fn((items, cb) => cb && cb()),
-        remove: mock.fn((keys, cb) => cb && cb())
+        get: (keys, cb) => cb && cb({}),
+        set: (items, cb) => {
+            storageWrites.push(items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => cb && cb()
     }
 });
 
-// Mock storage and sheets
-const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage.ts');
 const { getAllSheetIds } = await import('../modules/sheets.ts');
-
-// Mock popup_dom_utils
-const mock$ = mock.fn((id) => global.document.getElementById(id));
-
-// Import the module under test
 const { setupScrollListeners } = await import('../popup/popup_scroll.ts');
 
+const SHEET_IDS = getAllSheetIds();
+const BASE_SCROLL_IDS = ['prayersResultDiv', 'textArea1_oldText', 'textArea2_generatedRuText'];
+const SHEET_SCROLL_PREFIXES = ['finalResultDiv', 'deletedLog', 'oldList', 'newTelegram'];
+const SHEET_SCROLL_IDS = SHEET_IDS.flatMap(sId => SHEET_SCROLL_PREFIXES.map(prefix => `${prefix}__${sId}`));
+const ALL_SCROLL_IDS = [...BASE_SCROLL_IDS, ...SHEET_SCROLL_IDS];
+
+// popup_scroll debounces saves by 150ms.
+const DEBOUNCE_MS = 150;
+const flushDebounce = () => new Promise(resolve => setTimeout(resolve, DEBOUNCE_MS + 80));
+
+/**
+ * Creates a real scrollable div per id and gives each one a distinct scrollTop
+ * so we can prove the saved payload maps id -> scrollTop correctly.
+ */
+function buildScrollDom(ids = ALL_SCROLL_IDS) {
+    /** @type {Record<string, HTMLElement>} */
+    const elements = {};
+    ids.forEach((id, index) => {
+        const el = document.createElement('div');
+        el.id = id;
+        el.scrollTop = (index + 1) * 10;
+        document.body.appendChild(el);
+        elements[id] = el;
+    });
+    return elements;
+}
+
 describe('popup_scroll tests', () => {
+    /** @type {ReturnType<typeof mock.method>} */
+    let windowAddEventListener;
+
     beforeEach(() => {
-        mock$.mock.resetCalls();
-        global.chrome.runtime.lastError = null;
-        global.chrome.storage.local.get.mock.resetCalls();
-        global.chrome.storage.local.set.mock.resetCalls();
+        storageWrites.length = 0;
+        globalThis.chrome.runtime.lastError = null;
+        globalThis.chrome.storage.local.get.mock.resetCalls();
+        globalThis.chrome.storage.local.set.mock.resetCalls();
+        document.body.innerHTML = '';
+        document.documentElement.scrollTop = 0;
+        // Spy but keep the real implementation so dispatched events still reach handlers.
+        windowAddEventListener = mock.method(window, 'addEventListener');
+    });
+
+    afterEach(() => {
+        // setupScrollListeners() never detaches its window listener; strip it so
+        // suites/tests do not accumulate handlers on the shared window object.
+        for (const call of windowAddEventListener.mock.calls) {
+            const [type, handler, options] = call.arguments;
+            window.removeEventListener(type, handler, options);
+        }
+        mock.restoreAll();
+        document.body.innerHTML = '';
+        document.documentElement.scrollTop = 0;
     });
 
     describe('setupScrollListeners', () => {
         test('should set up scroll listeners on window and elements', () => {
-            const windowAddEventListener = mock.fn();
-            global.window.addEventListener = windowAddEventListener;
-            Object.defineProperty(global.window, 'scrollY', { value: 100, configurable: true, writable: true });
-            
-            const elementAddEventListener = mock.fn();
-            const mockElements = {
-                prayersResultDiv: { scrollTop: 10, addEventListener: elementAddEventListener, instanceof: true },
-                textArea1_oldText: { scrollTop: 20, addEventListener: elementAddEventListener, instanceof: true },
-                textArea2_generatedRuText: { scrollTop: 30, addEventListener: elementAddEventListener, instanceof: true },
-                'finalResultDiv__vp_ss': { scrollTop: 40, addEventListener: elementAddEventListener, instanceof: true },
-                'deletedLog__vp_ss': { scrollTop: 50, addEventListener: elementAddEventListener, instanceof: true },
-                'oldList__vp_ss': { scrollTop: 60, addEventListener: elementAddEventListener, instanceof: true },
-                'newTelegram__vp_ss': { scrollTop: 70, addEventListener: elementAddEventListener, instanceof: true },
-                'finalResultDiv__oparin': { scrollTop: 80, addEventListener: elementAddEventListener, instanceof: true },
-                'deletedLog__oparin': { scrollTop: 90, addEventListener: elementAddEventListener, instanceof: true },
-                'oldList__oparin': { scrollTop: 100, addEventListener: elementAddEventListener, instanceof: true },
-                'newTelegram__oparin': { scrollTop: 110, addEventListener: elementAddEventListener, instanceof: true }
-            };
-            
-            global.document.getElementById = mock.fn((id) => mockElements[id] || null);
-            
+            const elements = buildScrollDom();
+            const elementSpies = Object.fromEntries(
+                Object.entries(elements).map(([id, el]) => [id, mock.method(el, 'addEventListener')])
+            );
+
             setupScrollListeners();
-            
+
             // Verify window scroll listener was added
-            assert.ok(windowAddEventListener.mock.calls.some(c => c[0] === 'scroll'));
-            
-            // Verify element scroll listeners were added
-            assert.ok(elementAddEventListener.mock.calls.some(c => c[0] === 'scroll'));
+            assert.ok(
+                windowAddEventListener.mock.calls.some(c => c.arguments[0] === 'scroll'),
+                'window should get a scroll listener'
+            );
+
+            // Verify every known scroll container got a scroll listener
+            for (const id of ALL_SCROLL_IDS) {
+                assert.ok(
+                    elementSpies[id].mock.calls.some(c => c.arguments[0] === 'scroll'),
+                    `${id} should get a scroll listener`
+                );
+            }
         });
 
         test('should save scroll positions to storage on scroll', async () => {
-            const windowAddEventListener = mock.fn((event, handler) => {
-                // Simulate a scroll event
-                if (event === 'scroll') {
-                    Object.defineProperty(global.window, 'scrollY', { value: 200, configurable: true, writable: true });
-                    handler(new Event('scroll'));
-                }
-            });
-            global.window.addEventListener = windowAddEventListener;
-            Object.defineProperty(global.window, 'scrollY', { value: 100, configurable: true, writable: true });
-            
-            const elementAddEventListener = mock.fn((event, handler) => {
-                if (event === 'scroll') {
-                    handler(new Event('scroll'));
-                }
-            });
-            
-            const mockElements = {
-                prayersResultDiv: { scrollTop: 10, addEventListener: elementAddEventListener, instanceof: true },
-                textArea1_oldText: { scrollTop: 20, addEventListener: elementAddEventListener, instanceof: true },
-                textArea2_generatedRuText: { scrollTop: 30, addEventListener: elementAddEventListener, instanceof: true },
-                'finalResultDiv__vp_ss': { scrollTop: 40, addEventListener: elementAddEventListener, instanceof: true },
-                'deletedLog__vp_ss': { scrollTop: 50, addEventListener: elementAddEventListener, instanceof: true },
-                'oldList__vp_ss': { scrollTop: 60, addEventListener: elementAddEventListener, instanceof: true },
-                'newTelegram__vp_ss': { scrollTop: 70, addEventListener: elementAddEventListener, instanceof: true }
-            };
-            
-            global.document.getElementById = mock.fn((id) => mockElements[id] || null);
-            
+            const elements = buildScrollDom();
+            // window.scrollY is a getter-only in Happy DOM; popup_scroll falls back
+            // to document.documentElement.scrollTop, which is writable.
+            document.documentElement.scrollTop = 200;
+
             setupScrollListeners();
-            
-            // Wait for debounce
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
-            // Verify storage was called with scroll positions
-            assert.ok(global.chrome.storage.local.set.mock.calls.length > 0);
-            const call = global.chrome.storage.local.set.mock.calls[0];
-            const storedData = call.arguments[0];
-            assert.ok(storedData[STORAGE_KEYS.POPUP_SCROLL_POSITIONS]);
-            assert.ok(storedData['tg_scroll_positions']);
-            assert.strictEqual(storedData[STORAGE_KEYS.POPUP_SCROLL_POSITIONS].window, 200);
+            window.dispatchEvent(new Event('scroll'));
+
+            await flushDebounce();
+
+            assert.strictEqual(storageWrites.length, 1, 'exactly one debounced write');
+            const storedData = storageWrites[0];
+
+            const scrolls = storedData[STORAGE_KEYS.POPUP_SCROLL_POSITIONS];
+            assert.ok(scrolls, 'canonical scroll-positions key must be present');
+            assert.strictEqual(scrolls.window, 200);
+
+            for (const id of ALL_SCROLL_IDS) {
+                assert.strictEqual(scrolls[id], elements[id].scrollTop, `scrollTop for ${id}`);
+            }
+
+            // SYH_STORAGE.set() runs items through migrateItemKeys(), which folds the
+            // legacy 'tg_scroll_positions' alias into the canonical key by design.
+            assert.strictEqual(storedData['tg_scroll_positions'], undefined);
         });
 
-        test('should handle missing elements gracefully', () => {
-            const windowAddEventListener = mock.fn();
-            global.window.addEventListener = windowAddEventListener;
-            
-            // Return null for all elements
-            global.document.getElementById = mock.fn(() => null);
-            
+        test('should save scroll positions when a container scrolls', async () => {
+            const elements = buildScrollDom();
+            setupScrollListeners();
+
+            elements.prayersResultDiv.scrollTop = 123;
+            elements.prayersResultDiv.dispatchEvent(new Event('scroll'));
+
+            await flushDebounce();
+
+            assert.strictEqual(storageWrites.length, 1);
+            const scrolls = storageWrites[0][STORAGE_KEYS.POPUP_SCROLL_POSITIONS];
+            assert.strictEqual(scrolls.prayersResultDiv, 123);
+        });
+
+        test('should debounce rapid scroll events into a single write', async () => {
+            buildScrollDom();
+            setupScrollListeners();
+
+            for (let i = 0; i < 5; i++) {
+                window.dispatchEvent(new Event('scroll'));
+            }
+
+            await flushDebounce();
+
+            assert.strictEqual(storageWrites.length, 1, 'bursts collapse into one write');
+        });
+
+        test('should handle missing elements gracefully', async () => {
+            // No elements in the DOM at all.
             assert.doesNotThrow(() => setupScrollListeners());
-            
+
             // Should still add window listener
-            assert.ok(windowAddEventListener.mock.calls.some(c => c[0] === 'scroll'));
+            assert.ok(windowAddEventListener.mock.calls.some(c => c.arguments[0] === 'scroll'));
+
+            window.dispatchEvent(new Event('scroll'));
+            await flushDebounce();
+
+            assert.strictEqual(storageWrites.length, 1);
+            const scrolls = storageWrites[0][STORAGE_KEYS.POPUP_SCROLL_POSITIONS];
+            assert.strictEqual(scrolls.window, 0);
+            for (const id of ALL_SCROLL_IDS) {
+                assert.strictEqual(scrolls[id], 0, `${id} defaults to 0 when missing`);
+            }
         });
     });
 });

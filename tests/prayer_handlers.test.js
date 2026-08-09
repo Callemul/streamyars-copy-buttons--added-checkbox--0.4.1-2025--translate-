@@ -1,515 +1,486 @@
-import test from 'node:test';
+import test, { describe, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-global.window = global;
-global.document = {
-    createElement: (tag) => ({
-        tagName: tag.toUpperCase(),
-        style: {},
-        classList: { add: () => {}, remove: () => {}, contains: () => false },
-        setAttribute: () => {},
-        getAttribute: () => null,
-        appendChild: () => {},
-        removeChild: () => {},
-        querySelector: () => null,
-        querySelectorAll: () => [],
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        closest: () => null,
-        focus: () => {},
-        textContent: '',
-        innerHTML: '',
-        ownerDocument: global.document
-    }),
-    createRange: () => ({
-        selectNodeContents: () => {},
-        collapse: () => {}
-    }),
-    getSelection: () => ({
-        removeAllRanges: () => {},
-        addRange: () => {}
-    }),
-    querySelector: () => null,
-    querySelectorAll: () => [],
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    body: {
-        appendChild: () => {},
-        removeChild: () => {},
-        style: {}
-    }
-};
+import { installChromeMock } from './setup/chrome_mock.ts';
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = global.mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(global.mockStorageStore, items);
-                if (cb) cb();
+// NOTE: This suite previously re-implemented every handler inline and asserted against those local
+// copies, so popup/prayer_handlers.ts was never executed. It now imports the real handlers and runs
+// them against the Happy DOM globals registered in tests/setup/happy-dom.ts, stubbing only true
+// external boundaries (chrome.*, SYH_MESSAGING, clipboard, confirm/alert).
+
+/** @type {Record<string, any>} */
+let storageStore = {};
+
+installChromeMock({
+    storageImpl: {
+        get: (keys, cb) => {
+            const list = Array.isArray(keys) ? keys : [keys];
+            /** @type {Record<string, any>} */
+            const res = {};
+            for (const k of list) {
+                if (k in storageStore) res[k] = storageStore[k];
             }
-        }
-    },
-    tabs: {
-        query: (opts, cb) => {
-            cb([{ url: 'https://streamyard.com/room123' }]);
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(storageStore, items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => {
+            const list = Array.isArray(keys) ? keys : [keys];
+            for (const k of list) delete storageStore[k];
+            if (cb) cb();
         }
     }
+});
+
+let activeTabUrl = 'https://streamyard.com/room123';
+globalThis.chrome.tabs = {
+    query: mock.fn((queryInfo, callback) => callback([{ url: activeTabUrl }])),
+    sendMessage: () => {}
 };
 
-global.mockStorageStore = {};
+const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { SYH_MESSAGING } = await import('../modules/messaging.ts');
+const { CommentService } = await import('../modules/comment_service.ts');
+const { RetentionService } = await import('../modules/retention_service.ts');
+const { AUTHOR_OLD_VALUE_ATTR, FOCUS_BORDER, BLUR_BORDER } = await import('../popup/prayer_focus_rules.ts');
 
-const mockPrayersCache = [
-    { id: 'p1', author: 'John', text: 'Prayer 1', type: 'prayer', icon: '🙏', roomId: 'room1', timestamp: Date.now() },
-    { id: 'p2', author: 'Jane', text: 'Question 1', type: 'question', icon: '❓', roomId: 'room1', timestamp: Date.now() }
-];
+const {
+    handleEditPrayerAuthor,
+    handleDeleteAuthorPrayers,
+    handleWipeAllPrayers,
+    handleKeepCurrentRoomPrayers,
+    handleDeleteSinglePrayer,
+    bindPrayerClickListeners,
+    bindPrayerFocusListeners,
+    bindPrayerToolbarListeners
+} = await import('../popup/prayer_handlers.ts');
 
-const mockElements = {
-    'edit-prayer-btn': { closest: () => ({ querySelector: () => ({ focus: () => {}, textContent: '' }) }) },
-    'del-author-btn': { getAttribute: () => 'John', closest: () => null },
-    '#syh-wipe-prayers': { closest: () => null },
-    '#syh-keep-prayers': { closest: () => null },
-    'del-prayer-btn': { getAttribute: () => 'p1', closest: () => null },
-    '.editable-prayer': { getAttribute: () => 'p1', textContent: 'Updated text', style: {}, closest: () => null },
-    '.editable-author': { getAttribute: () => 'John', textContent: 'John', style: {}, closest: () => null },
-    'copyPrayersBtn': { textContent: 'Copy', addEventListener: () => {} },
-    'prayersResultDiv': { getAttribute: () => 'Test text', closest: () => null },
-    'clearPrayersBtn': { addEventListener: () => {} },
-    'fetchPrayersBtn': { textContent: 'Fetch', addEventListener: () => {} }
-};
+const basePrayers = () => ([
+    { id: 'p1', author: 'John', text: 'Prayer 1', type: 'prayer', icon: '🙏🙏🙏', roomId: 'room1', timestamp: 1 },
+    { id: 'p2', author: 'Jane', text: 'Question 1', type: 'question', icon: '❓', roomId: 'room1', timestamp: 2 },
+    { id: 'p3', author: 'John', text: 'Prayer 2', type: 'prayer', icon: '🙏🙏🙏', roomId: 'room1', timestamp: 3 }
+]);
 
-function getMockElement(selector) {
-    if (selector.startsWith('.')) {
-        return mockElements[selector.substring(1)];
-    }
-    if (selector.startsWith('#')) {
-        return mockElements[selector.substring(1)];
-    }
-    return mockElements[selector] || null;
-}
+/** Full prayer-list markup, matching what prayer_render/prayer_dom_builders produce. */
+const PRAYERS_DOM = `
+<span id="prayersTotalCount"></span>
+<div id="prayersResultDiv">
+    <div class="q-block q-pray">
+        <div class="q-head">
+            <span class="editable-author" contenteditable="true" data-author="John">John</span>
+            <button class="edit-prayer-btn" data-author="John">✏️</button>
+            <button class="del-author-btn" data-author="John">🗑</button>
+        </div>
+        <div class="q-row">
+            <span class="editable-prayer" contenteditable="true" data-id="p1">Prayer 1</span>
+            <button class="del-prayer-btn" data-id="p1">✕</button>
+        </div>
+    </div>
+</div>
+<button id="syh-wipe-prayers">Wipe</button>
+<button id="syh-keep-prayers">Keep</button>
+<button id="copyPrayersBtn">Копіювати</button>
+<button id="clearPrayersBtn">Очистити</button>
+<button id="fetchPrayersBtn">Підтягнути</button>
+`;
 
-global.document.querySelector = (selector) => getMockElement(selector);
-global.document.querySelectorAll = (selector) => [];
-global.document.addEventListener = (event, handler) => {
-    global.mockEventHandlers = global.mockEventHandlers || {};
-    global.mockEventHandlers[event] = handler;
-};
+const readStored = () => storageStore[STORAGE_KEYS.PRAYERS];
 
-let mockRenderPrayers = [];
-let mockSendUnstarMessage = '';
-let mockSendUnstarMessagesForList = [];
+describe('prayer_handlers', () => {
+    /** @type {ReturnType<typeof mock.method>} */
+    let documentAddEventListener;
+    /** @type {string[]} */
+    let confirmMessages;
+    /** @type {string[]} */
+    let alertMessages;
 
-function setupMocks() {
-    global.mockStorageStore = {
-        'syh:prayers': [...mockPrayersCache]
-    };
-    mockRenderPrayers = [];
-    mockSendUnstarMessage = '';
-    mockSendUnstarMessagesForList = [];
-}
+    beforeEach(() => {
+        storageStore = { [STORAGE_KEYS.PRAYERS]: basePrayers() };
+        activeTabUrl = 'https://streamyard.com/room123';
+        globalThis.chrome.runtime.lastError = null;
+        globalThis.chrome.storage.local.get.mock.resetCalls();
+        globalThis.chrome.storage.local.set.mock.resetCalls();
+        globalThis.chrome.tabs.query.mock.resetCalls();
 
-function handleEditPrayerAuthor(editBtn) {
-    const block = editBtn.closest?.('.q-block');
-    const authorSpan = block?.querySelector?.('.editable-author');
-    if (authorSpan) {
-        authorSpan.focus();
-        const range = document.createRange();
-        const sel = window.getSelection();
-        if (sel) {
-            range.selectNodeContents(authorSpan);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    }
-}
+        document.body.innerHTML = PRAYERS_DOM;
 
-function handleDeleteAuthorPrayers(delAuthorBtn) {
-    const authorToDelete = delAuthorBtn.getAttribute('data-author') || '';
-    if (confirm(`Видалити всі прохання від @${authorToDelete}?`)) {
-        global.chrome.storage.local.get(['syh:prayers'], function(result) {
-            let list = result['syh:prayers'] || [];
-            const authorPrayers = list.filter(item => item.author === authorToDelete);
-            mockSendUnstarMessagesForList = authorPrayers;
-            list = list.filter(item => item.author !== authorToDelete);
-            global.chrome.storage.local.set({ 'syh:prayers': list }, function() {
-                mockRenderPrayers = list;
-            });
-        });
-    }
-}
+        confirmMessages = [];
+        alertMessages = [];
+        globalThis.confirm = (message) => { confirmMessages.push(message); return true; };
+        globalThis.alert = (message) => { alertMessages.push(message); };
 
-function handleWipeAllPrayers() {
-    if (confirm("Повністю очистити старі молитви з пам'яті розширення?")) {
-        global.chrome.storage.local.set({ 'syh:prayers': [] }, function() {
-            mockRenderPrayers = [];
-        });
-    }
-}
-
-function handleKeepCurrentRoomPrayers() {
-    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (!tabs[0] || !tabs[0].url) return;
-        try {
-            const url = new URL(tabs[0].url);
-            const currentRoomId = url.pathname.replace(/\//g, '');
-
-            global.chrome.storage.local.get(['syh:prayers'], function(result) {
-                let list = result['syh:prayers'] || [];
-                list.forEach(item => {
-                    if (item.type === 'prayer') {
-                        item.roomId = currentRoomId;
-                        item.timestamp = Date.now();
-                    }
-                });
-                global.chrome.storage.local.set({ 'syh:prayers': list }, function() {
-                    mockRenderPrayers = list;
-                });
-            });
-        } catch {
-            /* ignore URL parse error */
-        }
+        // Keep renderPrayers deterministic and away from the retention clock.
+        mock.method(RetentionService, 'filterFreshPrayers', (list) => list);
+        mock.method(SYH_MESSAGING, 'sendToActiveTab', async () => undefined);
+        documentAddEventListener = mock.method(document, 'addEventListener');
     });
-}
 
-function handleDeleteSinglePrayer(delPrayerBtn) {
-    const id = delPrayerBtn.getAttribute('data-id');
-    global.chrome.storage.local.get(['syh:prayers'], function(result) {
-        let list = result['syh:prayers'] || [];
-        const targetItem = list.find(item => item.id === id);
-        if (targetItem) {
-            mockSendUnstarMessage = targetItem.text;
+    afterEach(() => {
+        for (const call of documentAddEventListener.mock.calls) {
+            const [type, handler, options] = call.arguments;
+            document.removeEventListener(type, handler, options);
         }
-        list = list.filter(item => item.id !== id);
-        global.chrome.storage.local.set({ 'syh:prayers': list }, function() {
-            mockRenderPrayers = list;
+        mock.restoreAll();
+        document.body.innerHTML = '';
+        delete globalThis.confirm;
+        delete globalThis.alert;
+    });
+
+    describe('handleEditPrayerAuthor', () => {
+        test('focuses author span and puts the caret at the end', () => {
+            const editBtn = document.querySelector('.edit-prayer-btn');
+            const authorSpan = document.querySelector('.editable-author');
+
+            const focus = mock.method(authorSpan, 'focus', () => {});
+            const removeAllRanges = mock.fn();
+            const addRange = mock.fn();
+            const selectNodeContents = mock.fn();
+            const collapse = mock.fn();
+
+            mock.method(window, 'getSelection', () => ({ removeAllRanges, addRange }));
+            mock.method(document, 'createRange', () => ({ selectNodeContents, collapse }));
+
+            handleEditPrayerAuthor(editBtn);
+
+            assert.equal(focus.mock.calls.length, 1);
+            assert.equal(selectNodeContents.mock.calls.length, 1);
+            assert.equal(selectNodeContents.mock.calls[0].arguments[0], authorSpan);
+            assert.deepEqual(collapse.mock.calls[0].arguments, [false]);
+            assert.equal(removeAllRanges.mock.calls.length, 1);
+            assert.equal(addRange.mock.calls.length, 1);
+        });
+
+        test('does nothing when the button is outside a prayer block', () => {
+            const orphan = document.createElement('button');
+            orphan.className = 'edit-prayer-btn';
+            document.body.appendChild(orphan);
+
+            const createRange = mock.method(document, 'createRange');
+
+            assert.doesNotThrow(() => handleEditPrayerAuthor(orphan));
+            assert.equal(createRange.mock.calls.length, 0);
         });
     });
-}
 
-test('prayer_handlers: handleEditPrayerAuthor focuses author span and selects text', () => {
-    setupMocks();
-    const mockEditBtn = {
-        closest: () => ({
-            querySelector: () => ({
-                focus: () => {},
-                textContent: 'John'
-            })
-        })
-    };
-    
-    let focusCalled = false;
-    let selectNodeCalled = false;
-    let collapseCalled = false;
-    let removeAllRangesCalled = false;
-    let addRangeCalled = false;
-    
-    const originalCreateRange = document.createRange;
-    document.createRange = () => ({
-        selectNodeContents: () => { selectNodeCalled = true; },
-        collapse: () => { collapseCalled = true; }
+    describe('handleDeleteAuthorPrayers', () => {
+        test('filters out author prayers and calls unstar', () => {
+            handleDeleteAuthorPrayers(document.querySelector('.del-author-btn'));
+
+            assert.deepEqual(confirmMessages, ['Видалити всі прохання від @John?']);
+
+            const unstarred = SYH_MESSAGING.sendToActiveTab.mock.calls.map(c => c.arguments[0].text);
+            assert.deepEqual(unstarred, ['Prayer 1', 'Prayer 2']);
+
+            const list = readStored();
+            assert.equal(list.length, 1);
+            assert.equal(list[0].author, 'Jane');
+        });
+
+        test('does nothing when the confirm is declined', () => {
+            globalThis.confirm = () => false;
+
+            handleDeleteAuthorPrayers(document.querySelector('.del-author-btn'));
+
+            assert.equal(readStored().length, 3);
+            assert.equal(SYH_MESSAGING.sendToActiveTab.mock.calls.length, 0);
+        });
     });
-    
-    const originalGetSelection = window.getSelection;
-    window.getSelection = () => ({
-        removeAllRanges: () => { removeAllRangesCalled = true; },
-        addRange: () => { addRangeCalled = true; }
+
+    describe('handleWipeAllPrayers', () => {
+        test('clears all prayers', () => {
+            handleWipeAllPrayers();
+
+            assert.deepEqual(confirmMessages, ["Повністю очистити старі молитви з пам'яті розширення?"]);
+            assert.deepEqual(readStored(), []);
+        });
+
+        test('does nothing when the confirm is declined', () => {
+            globalThis.confirm = () => false;
+
+            handleWipeAllPrayers();
+
+            assert.equal(readStored().length, 3);
+        });
     });
-    
-    const mockAuthorSpan = { focus: () => { focusCalled = true; } };
-    mockEditBtn.closest = () => ({ querySelector: () => mockAuthorSpan });
-    
-    handleEditPrayerAuthor(mockEditBtn);
-    
-    assert.equal(focusCalled, true);
-    assert.equal(selectNodeCalled, true);
-    assert.equal(collapseCalled, true);
-    assert.equal(removeAllRangesCalled, true);
-    assert.equal(addRangeCalled, true);
-    
-    document.createRange = originalCreateRange;
-    window.getSelection = originalGetSelection;
-});
 
-test('prayer_handlers: handleDeleteAuthorPrayers filters out author prayers and calls unstar', () => {
-    setupMocks();
-    global.confirm = () => true;
-    
-    const mockDelAuthorBtn = { getAttribute: () => 'John' };
-    
-    handleDeleteAuthorPrayers(mockDelAuthorBtn);
-    
-    assert.equal(mockSendUnstarMessagesForList.length, 1);
-    assert.equal(mockSendUnstarMessagesForList[0].author, 'John');
-    assert.equal(mockRenderPrayers.length, 1);
-    assert.equal(mockRenderPrayers[0].author, 'Jane');
-});
+    describe('handleKeepCurrentRoomPrayers', () => {
+        test('updates roomId and timestamp for prayers only', () => {
+            handleKeepCurrentRoomPrayers();
 
-test('prayer_handlers: handleWipeAllPrayers clears all prayers', () => {
-    setupMocks();
-    global.confirm = () => true;
-    
-    handleWipeAllPrayers();
-    
-    assert.deepEqual(mockRenderPrayers, []);
-});
+            const list = readStored();
+            const prayers = list.filter(p => p.type === 'prayer');
+            const question = list.find(p => p.type === 'question');
 
-test('prayer_handlers: handleKeepCurrentRoomPrayers updates roomId for prayers', () => {
-    setupMocks();
-    
-    handleKeepCurrentRoomPrayers();
-    
-    const prayer = mockRenderPrayers.find(p => p.type === 'prayer');
-    assert.equal(prayer.roomId, 'room123');
-    assert.ok(prayer.timestamp > 0);
-});
-
-test('prayer_handlers: handleDeleteSinglePrayer removes prayer and calls unstar', () => {
-    setupMocks();
-    
-    const mockDelPrayerBtn = { getAttribute: () => 'p1' };
-    
-    handleDeleteSinglePrayer(mockDelPrayerBtn);
-    
-    assert.equal(mockSendUnstarMessage, 'Prayer 1');
-    assert.equal(mockRenderPrayers.length, 1);
-    assert.equal(mockRenderPrayers[0].id, 'p2');
-});
-
-test('prayer_handlers: bindPrayerClickListeners handles edit button click', () => {
-    setupMocks();
-    let editHandlerCalled = false;
-    
-    const originalHandleEdit = handleEditPrayerAuthor;
-    global.handleEditPrayerAuthor = (btn) => { editHandlerCalled = true; };
-    
-    const clickEvent = { target: { closest: (sel) => sel === '.edit-prayer-btn' ? { closest: () => ({ querySelector: () => ({ focus: () => {} }) }) } : null } };
-    
-    document.addEventListener('click', (e) => {
-        const target = e.target;
-        const editBtn = target?.closest?.('.edit-prayer-btn');
-        if (editBtn) {
-            global.handleEditPrayerAuthor(editBtn);
-            return;
-        }
-    });
-    
-    // Simulate click
-    const handler = global.mockEventHandlers?.click;
-    if (handler) handler(clickEvent);
-    
-    assert.equal(editHandlerCalled, true);
-    
-    global.handleEditPrayerAuthor = originalHandleEdit;
-});
-
-test('prayer_handlers: bindPrayerFocusListeners updates prayer text on focusout', () => {
-    setupMocks();
-    
-    const mockEditablePrayer = {
-        getAttribute: () => 'p1',
-        textContent: 'Updated prayer text',
-        style: {},
-        closest: () => null
-    };
-    
-    const focusoutEvent = { target: mockEditablePrayer };
-    
-    document.addEventListener('focusout', (e) => {
-        const target = e.target;
-        const el = target?.closest?.('.editable-prayer');
-        if (!el) return;
-        
-        const id = el.getAttribute('data-id');
-        const newText = el.textContent?.trim() || '';
-        
-        global.chrome.storage.local.get(['syh:prayers'], function(result) {
-            const list = result['syh:prayers'] || [];
-            const targetItem = list.find(item => item.id === id);
-            if (targetItem && targetItem.text !== newText) {
-                targetItem.text = newText;
-                global.chrome.storage.local.set({ 'syh:prayers': list });
-                mockRenderPrayers = list;
+            assert.equal(prayers.length, 2);
+            for (const prayer of prayers) {
+                assert.equal(prayer.roomId, 'room123');
+                assert.ok(prayer.timestamp > 1000);
             }
+            // Non-prayer entries stay untouched
+            assert.equal(question.roomId, 'room1');
+            assert.equal(question.timestamp, 2);
+        });
+
+        test('bails out when the active tab has no usable URL', () => {
+            activeTabUrl = 'not a url';
+
+            handleKeepCurrentRoomPrayers();
+
+            assert.equal(readStored()[0].roomId, 'room1');
         });
     });
-    
-    const handler = global.mockEventHandlers?.focusout;
-    if (handler) handler(focusoutEvent);
-    
-    const updatedPrayer = mockRenderPrayers.find(p => p.id === 'p1');
-    assert.equal(updatedPrayer.text, 'Updated prayer text');
-});
 
-test('prayer_handlers: bindPrayerFocusListeners updates author on focusout', () => {
-    setupMocks();
-    
-    const mockEditableAuthor = {
-        getAttribute: (name) => name === 'data-old-val' ? 'John' : 'NewJohn',
-        textContent: 'NewJohn',
-        style: {},
-        closest: () => null
-    };
-    
-    const focusoutEvent = { target: mockEditableAuthor };
-    
-    document.addEventListener('focusout', (e) => {
-        const target = e.target;
-        const el = target?.closest?.('.editable-author');
-        if (!el) return;
-        
-        const oldAuthor = el.getAttribute('data-old-val');
-        const newAuthor = el.textContent?.trim() || '';
-        
-        if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
-            global.chrome.storage.local.get(['syh:prayers'], function(result) {
-                let list = result['syh:prayers'] || [];
-                let updated = false;
-                list.forEach(item => {
-                    if (item.author === oldAuthor) {
-                        item.author = newAuthor;
-                        updated = true;
-                    }
-                });
-                if (updated) {
-                    global.chrome.storage.local.set({ 'syh:prayers': list });
-                    mockRenderPrayers = list;
-                }
-            });
-        }
-    });
-    
-    const handler = global.mockEventHandlers?.focusout;
-    if (handler) handler(focusoutEvent);
-    
-    const updatedPrayer = mockRenderPrayers.find(p => p.author === 'NewJohn');
-    assert.ok(updatedPrayer);
-    assert.equal(updatedPrayer.author, 'NewJohn');
-});
+    describe('handleDeleteSinglePrayer', () => {
+        test('removes the prayer and calls unstar', () => {
+            handleDeleteSinglePrayer(document.querySelector('.del-prayer-btn'));
 
-test('prayer_handlers: bindPrayerToolbarListeners copy button copies text', async () => {
-    setupMocks();
-    
-    let copiedText = '';
-    const originalCopyToClipboard = global.navigator?.clipboard?.writeText;
-    global.navigator = {
-        clipboard: {
-            writeText: async (text) => { copiedText = text; return true; }
-        }
-    };
-    
-    const mockCopyBtn = {
-        textContent: 'Copy',
-        addEventListener: (event, handler) => {
-            if (event === 'click') handler({ target: mockCopyBtn });
-        }
-    };
-    
-    const mockOutputDiv = { getAttribute: () => 'Test prayer text' };
-    
-    global.document.querySelector = (selector) => {
-        if (selector === '#copyPrayersBtn') return mockCopyBtn;
-        if (selector === '#prayersResultDiv') return mockOutputDiv;
-        return null;
-    };
-    
-    // Simulate the copy button click handler
-    const copyHandler = async () => {
-        const outputDiv = global.document.querySelector('#prayersResultDiv');
-        const text = outputDiv ? (outputDiv.getAttribute('data-raw-text') || '') : '';
-        if (!text) return;
-        
-        const success = await global.navigator.clipboard.writeText(text);
-        mockCopyBtn.textContent = success ? "Скопійовано! ✅" : "Помилка ❌";
-    };
-    
-    await copyHandler();
-    
-    assert.equal(copiedText, 'Test prayer text');
-    assert.equal(mockCopyBtn.textContent, 'Скопійовано! ✅');
-    
-    if (originalCopyToClipboard) {
-        global.navigator.clipboard.writeText = originalCopyToClipboard;
-    }
-});
+            const unstarred = SYH_MESSAGING.sendToActiveTab.mock.calls.map(c => c.arguments[0].text);
+            assert.deepEqual(unstarred, ['Prayer 1']);
 
-test('prayer_handlers: bindPrayerToolbarListeners clear button filters prayers', () => {
-    setupMocks();
-    global.confirm = () => true;
-    
-    const mockClearBtn = { addEventListener: (event, handler) => { if (event === 'click') handler(); } };
-    global.document.querySelector = (selector) => selector === '#clearPrayersBtn' ? mockClearBtn : null;
-    
-    const clearHandler = () => {
-        global.chrome.storage.local.get(['syh:prayers'], function(result) {
-            let list = result['syh:prayers'] || [];
-            list = list.filter(item => item.type !== 'prayer');
-            global.chrome.storage.local.set({ 'syh:prayers': list }, function() {
-                mockRenderPrayers = list;
-            });
+            const list = readStored();
+            assert.equal(list.length, 2);
+            assert.ok(!list.some(p => p.id === 'p1'));
         });
-    };
-    
-    clearHandler();
-    
-    assert.equal(mockRenderPrayers.length, 1);
-    assert.equal(mockRenderPrayers[0].type, 'question');
-});
 
-test('prayer_handlers: bindPrayerToolbarListeners fetch button fetches prayers', async () => {
-    setupMocks();
-    
-    let fetchCalled = false;
-    const mockFetchBtn = { 
-        textContent: 'Fetch', 
-        addEventListener: (event, handler) => { if (event === 'click') handler(); } 
-    };
-    
-    global.document.querySelector = (selector) => selector === '#fetchPrayersBtn' ? mockFetchBtn : null;
-    
-    global.SYH_MESSAGING = {
-        sendToActiveTab: async () => [
-            { id: 'p3', author: 'New', text: 'New prayer', type: 'prayer', icon: '🙏', roomId: 'room1', timestamp: Date.now() }
-        ]
-    };
-    
-    const fetchHandler = async () => {
-        const originalText = mockFetchBtn.textContent;
-        mockFetchBtn.textContent = "⌛...";
-        
-        try {
-            const fetched = await global.SYH_MESSAGING.sendToActiveTab();
-            if (fetched && Array.isArray(fetched)) {
-                global.chrome.storage.local.get(['syh:prayers'], function(res) {
-                    let list = res['syh:prayers'] || [];
-                    let addedCount = 0;
-                    
-                    fetched.forEach(f => {
-                        if (!list.find(p => p.text === f.text)) {
-                            list.push(f);
-                            addedCount++;
-                        }
-                    });
-                    
-                    global.chrome.storage.local.set({ 'syh:prayers': list }, function() {
-                        mockRenderPrayers = list;
-                        mockFetchBtn.textContent = originalText;
-                    });
-                });
-            }
-        } catch (err) {
-            mockFetchBtn.textContent = originalText;
-        }
-    };
-    
-    await fetchHandler();
-    
-    assert.equal(mockRenderPrayers.length, 3);
-    assert.ok(mockRenderPrayers.find(p => p.text === 'New prayer'));
+        test('is a no-op for an unknown id', () => {
+            const btn = document.createElement('button');
+            btn.className = 'del-prayer-btn';
+            btn.setAttribute('data-id', 'does-not-exist');
+
+            handleDeleteSinglePrayer(btn);
+
+            assert.equal(readStored().length, 3);
+            assert.equal(SYH_MESSAGING.sendToActiveTab.mock.calls.length, 0);
+        });
+    });
+
+    describe('bindPrayerClickListeners', () => {
+        test('routes an edit button click to handleEditPrayerAuthor', () => {
+            const authorSpan = document.querySelector('.editable-author');
+            const focus = mock.method(authorSpan, 'focus', () => {});
+            mock.method(window, 'getSelection', () => ({ removeAllRanges() {}, addRange() {} }));
+            mock.method(document, 'createRange', () => ({ selectNodeContents() {}, collapse() {} }));
+
+            bindPrayerClickListeners();
+            document.querySelector('.edit-prayer-btn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(focus.mock.calls.length, 1);
+        });
+
+        test('routes a delete-author click to handleDeleteAuthorPrayers', () => {
+            bindPrayerClickListeners();
+            document.querySelector('.del-author-btn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(readStored().length, 1);
+            assert.equal(readStored()[0].author, 'Jane');
+        });
+
+        test('routes a delete-one click to handleDeleteSinglePrayer', () => {
+            bindPrayerClickListeners();
+            document.querySelector('.del-prayer-btn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(readStored().length, 2);
+            assert.ok(!readStored().some(p => p.id === 'p1'));
+        });
+
+        test('routes the wipe button to handleWipeAllPrayers', () => {
+            bindPrayerClickListeners();
+            document.getElementById('syh-wipe-prayers').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.deepEqual(readStored(), []);
+        });
+
+        test('routes the keep-room button to handleKeepCurrentRoomPrayers', () => {
+            bindPrayerClickListeners();
+            document.getElementById('syh-keep-prayers').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(readStored()[0].roomId, 'room123');
+        });
+
+        test('ignores clicks that match no route', () => {
+            bindPrayerClickListeners();
+            document.getElementById('prayersTotalCount').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(readStored().length, 3);
+        });
+    });
+
+    describe('bindPrayerFocusListeners', () => {
+        test('highlights an editable prayer on focusin and clears it on focusout', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-prayer');
+
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            assert.equal(el.style.borderBottom, FOCUS_BORDER);
+
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+            assert.equal(el.style.borderBottom, BLUR_BORDER);
+        });
+
+        test('updates prayer text on focusout', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-prayer');
+            el.textContent = '  Updated prayer text  ';
+
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            const updated = readStored().find(p => p.id === 'p1');
+            assert.equal(updated.text, 'Updated prayer text');
+        });
+
+        test('does not write when the prayer text is unchanged', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-prayer');
+            el.textContent = 'Prayer 1';
+
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            assert.equal(globalThis.chrome.storage.local.set.mock.calls.length, 0);
+        });
+
+        test('records the old author on focusin and renames on focusout', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-author');
+
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            assert.equal(el.getAttribute(AUTHOR_OLD_VALUE_ATTR), 'John');
+
+            el.textContent = 'NewJohn';
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            const renamed = readStored().filter(p => p.author === 'NewJohn');
+            assert.equal(renamed.length, 2);
+            assert.ok(!readStored().some(p => p.author === 'John'));
+        });
+
+        test('skips the rename when the author name did not change', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-author');
+
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            assert.equal(globalThis.chrome.storage.local.set.mock.calls.length, 0);
+        });
+
+        test('skips the rename when the new author name is empty', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-author');
+
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            el.textContent = '   ';
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            assert.equal(globalThis.chrome.storage.local.set.mock.calls.length, 0);
+        });
+    });
+
+    describe('bindPrayerToolbarListeners', () => {
+        test('copy button copies the raw text and restores its label', async () => {
+            const copyToClipboard = mock.method(CommentService, 'copyToClipboard', async () => true);
+            const outputDiv = document.getElementById('prayersResultDiv');
+            outputDiv.setAttribute('data-raw-text', 'Test prayer text');
+
+            const btn = document.getElementById('copyPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            assert.deepEqual(copyToClipboard.mock.calls[0].arguments, ['Test prayer text']);
+            assert.equal(btn.textContent, 'Скопійовано! ✅');
+
+            // The label is restored after the reset delay.
+            await new Promise(resolve => setTimeout(resolve, 2100));
+            assert.equal(btn.textContent, 'Копіювати');
+        });
+
+        test('copy button shows a failure label when the clipboard rejects', async () => {
+            mock.method(CommentService, 'copyToClipboard', async () => false);
+            document.getElementById('prayersResultDiv').setAttribute('data-raw-text', 'Test prayer text');
+
+            const btn = document.getElementById('copyPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            assert.equal(btn.textContent, 'Помилка ❌');
+        });
+
+        test('copy button does nothing when there is no raw text', async () => {
+            const copyToClipboard = mock.method(CommentService, 'copyToClipboard', async () => true);
+
+            const btn = document.getElementById('copyPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            assert.equal(copyToClipboard.mock.calls.length, 0);
+            assert.equal(btn.textContent, 'Копіювати');
+        });
+
+        test('clear button filters out prayer entries and keeps questions', () => {
+            bindPrayerToolbarListeners();
+            document.getElementById('clearPrayersBtn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            const list = readStored();
+            assert.equal(list.length, 1);
+            assert.equal(list[0].type, 'question');
+        });
+
+        test('clear button does nothing when the confirm is declined', () => {
+            globalThis.confirm = () => false;
+
+            bindPrayerToolbarListeners();
+            document.getElementById('clearPrayersBtn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+            assert.equal(readStored().length, 3);
+        });
+
+        test('fetch button merges newly fetched prayers', async () => {
+            SYH_MESSAGING.sendToActiveTab.mock.mockImplementation(async () => ([
+                { id: 'p4', author: 'New', text: 'New prayer', type: 'prayer', icon: '🙏🙏🙏', roomId: 'room1', timestamp: 4 },
+                // Duplicate text is skipped
+                { id: 'p5', author: 'John', text: 'Prayer 1', type: 'prayer', icon: '🙏🙏🙏', roomId: 'room1', timestamp: 5 }
+            ]));
+
+            const btn = document.getElementById('fetchPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            const list = readStored();
+            assert.equal(list.length, 4);
+            assert.ok(list.some(p => p.text === 'New prayer'));
+            assert.equal(btn.textContent, 'Підтягнути');
+            assert.equal(alertMessages.length, 1);
+        });
+
+        test('fetch button reports a failure for a non-list payload', async () => {
+            SYH_MESSAGING.sendToActiveTab.mock.mockImplementation(async () => null);
+
+            const btn = document.getElementById('fetchPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            assert.equal(btn.textContent, 'Підтягнути');
+            assert.equal(readStored().length, 3);
+            assert.equal(alertMessages.length, 1);
+        });
+
+        test('fetch button restores its label when messaging throws', async () => {
+            SYH_MESSAGING.sendToActiveTab.mock.mockImplementation(async () => { throw new Error('boom'); });
+            const consoleError = mock.method(console, 'error', () => {});
+
+            const btn = document.getElementById('fetchPrayersBtn');
+            bindPrayerToolbarListeners();
+            btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            assert.equal(btn.textContent, 'Підтягнути');
+            assert.ok(consoleError.mock.calls.length > 0);
+        });
+    });
 });

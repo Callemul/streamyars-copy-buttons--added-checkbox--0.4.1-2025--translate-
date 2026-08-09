@@ -26,8 +26,8 @@ export function applyDragPercent(left: HTMLElement, right: HTMLElement, percent:
 }
 
 export function saveDividerPosition(sId: string, left: HTMLElement, right: HTMLElement): void {
-    const flexLeft = parseFloat(left.style.flex) || 1;
-    const flexRight = parseFloat(right.style.flex) || 1;
+    const flexLeft = parseFloat(left.style.flexBasis) || 1;
+    const flexRight = parseFloat(right.style.flexBasis) || 1;
     const total = flexLeft + flexRight;
     const posPercent = (flexLeft / total) * 100;
 
