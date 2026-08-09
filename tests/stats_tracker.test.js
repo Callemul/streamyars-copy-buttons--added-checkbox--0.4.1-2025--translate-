@@ -1,27 +1,29 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 
-global.window = global;
+import { installChromeMock } from './setup/chrome_mock.ts';
 
 let mockStorageStore = {};
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(mockStorageStore, items);
-                if (cb) cb();
-            }
+installChromeMock({
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(mockStorageStore, items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { delete mockStorageStore[k]; });
+            if (cb) cb();
         }
     }
-};
+});
 
 const { SYH_STATS_TRACKER } = await import('../modules/stats_tracker.ts');
 
@@ -52,9 +54,13 @@ describe('SYH_STATS_TRACKER Unit Tests', () => {
         const localStorageMap = {
             'streamyard_brand': '{"name":"Канал 1"}'
         };
-        global.localStorage = {
-            getItem: (key) => localStorageMap[key] || null
-        };
+        Object.defineProperty(global, 'localStorage', {
+            value: {
+                getItem: (key) => localStorageMap[key] || null
+            },
+            writable: true,
+            configurable: true
+        });
 
         const brand = SYH_STATS_TRACKER.getBrandFromLocalStorage();
         assert.equal(brand, 'Канал 1');

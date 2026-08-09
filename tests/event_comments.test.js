@@ -1,30 +1,26 @@
 import assert from 'node:assert';
 import { test, describe, beforeEach } from 'node:test';
 
-// Мокаємо window та chrome для Node.js
-if (typeof globalThis.window === 'undefined') {
-    globalThis.window = globalThis;
-}
+import { installChromeMock } from './setup/chrome_mock.ts';
 
+// happy-dom provides window; back chrome.storage.local with an in-memory store.
 let mockStorageStore = {};
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(mockStorageStore, items);
-                if (cb) cb();
-            }
+installChromeMock({
+    runtimeImpl: { id: 'test-id' },
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(mockStorageStore, items);
+            if (cb) cb();
         }
     }
-};
+});
 
 const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_EVENT_COMMENTS } = await import('../modules/event_comments.ts');
 

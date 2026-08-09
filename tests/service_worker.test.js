@@ -1,29 +1,26 @@
 import assert from 'node:assert';
 import { test, describe, beforeEach } from 'node:test';
 
-global.window = global;
+import { installChromeMock } from './setup/chrome_mock.ts';
 
 let badgeText = '';
 let badgeColor = '';
 let mockStorageData = {};
 let storageOnChangedCb = null;
 
-global.chrome = {
-    runtime: { id: 'test-extension-id', getManifest: () => ({ version: '1.0.0', name: 'Test' }) },
-    action: {
-        setBadgeText: async ({ text }) => { badgeText = text; },
-        setBadgeBackgroundColor: async ({ color }) => { badgeColor = color; }
-    },
-    storage: {
-        local: {
-            get: (keys, cb) => cb(mockStorageData),
-            set: (items, cb) => { Object.assign(mockStorageData, items); if (cb) cb(); },
-        },
-        onChanged: {
-            addListener: (cb) => { storageOnChangedCb = cb; }
-        }
+installChromeMock({
+    runtimeImpl: { id: 'test-extension-id', getManifest: () => ({ version: '1.0.0', name: 'Test' }) },
+    storageImpl: {
+        get: (keys, cb) => cb(mockStorageData),
+        set: (items, cb) => { Object.assign(mockStorageData, items); if (cb) cb(); },
+        remove: (keys, cb) => { if (cb) cb(); }
     }
+});
+global.chrome.action = {
+    setBadgeText: async ({ text }) => { badgeText = text; },
+    setBadgeBackgroundColor: async ({ color }) => { badgeColor = color; }
 };
+global.chrome.storage.onChanged.addListener = (cb) => { storageOnChangedCb = cb; };
 
 const { countCheckedItems, updateExtensionBadge } = await import('../background/service-worker.ts');
 

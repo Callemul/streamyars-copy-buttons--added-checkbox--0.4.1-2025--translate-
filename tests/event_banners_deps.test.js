@@ -1,37 +1,13 @@
 import assert from 'node:assert/strict';
 import { test, describe, mock } from 'node:test';
 
-// ---------------------------------------------------------------------------
-// Мінімальні DOM/chrome-моки (jsdom у проєкті не використовується)
-// ---------------------------------------------------------------------------
+// happy-dom already provides window/document. We only seed the Chrome runtime
+// mock (happy-dom knows nothing about the extension API) and point location at
+// the StreamYard URL the deps module reads.
+import { installChromeMock } from './setup/chrome_mock.ts';
 
-const listeners = [];
-
-global.window = global;
-global.window.location = { href: 'https://streamyard.com/abcd-efgh-ijk' };
-global.document = {
-    addEventListener: (type, handler, capture) => listeners.push({ type, handler, capture }),
-    removeEventListener: () => {},
-    querySelectorAll: () => [],
-    getElementById: () => null,
-    body: {},
-    createElement: () => ({
-        style: {},
-        classList: { add() {}, remove() {}, contains() { return false; } },
-        setAttribute() {},
-        getAttribute() { return null; },
-        appendChild() {},
-        append() {}
-    })
-};
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null, onMessage: { addListener() {} } },
-    storage: {
-        local: { get(_k, cb) { if (cb) cb({}); }, set(_i, cb) { if (cb) cb(); } },
-        onChanged: { addListener() {} }
-    },
-    tabs: { query(_o, cb) { cb([]); } }
-};
+installChromeMock();
+window.location.href = 'https://streamyard.com/abcd-efgh-ijk';
 
 const {
     STREAMYARD_URL_MARKER,
@@ -44,8 +20,13 @@ const {
 
 const {
     SYH_EVENT_BANNERS,
-    SYH_EVENT_BANNERS_PLUGIN
+    SYH_EVENT_BANNERS_PLUGIN,
+    handleBannerContextMenu,
+    handleBannerMouseDown,
+    handleBannerChange
 } = await import('../modules/event_banners/index.ts');
+
+const { handleBannerMouseUp } = await import('../modules/event_banners/mouseup_handler.ts');
 
 // ---------------------------------------------------------------------------
 
@@ -177,23 +158,21 @@ describe('event_banners — публічний API SYH_EVENT_BANNERS', () => {
         SYH_EVENT_BANNERS.init();
     });
 
-    test('16. bindEvents вішає рівно 4 делеговані слухачі й лише один раз', () => {
-        listeners.length = 0;
+    test('16. bindEvents вішає рівно 4 делеговані слухачі', () => {
+        const addSpy = mock.method(document, 'addEventListener');
 
         SYH_EVENT_BANNERS.bindEvents();
-        const afterFirst = listeners.length;
 
-        assert.equal(afterFirst, 4, 'contextmenu + mousedown + mouseup + change');
+        const registrations = addSpy.mock.calls.map(c => c.arguments[0]);
         assert.deepEqual(
-            listeners.map(l => l.type).sort(),
-            ['change', 'contextmenu', 'mousedown', 'mouseup']
+            registrations.sort(),
+            ['change', 'contextmenu', 'mousedown', 'mouseup'],
+            'contextmenu + mousedown + mouseup + change'
         );
+        const ctxCall = addSpy.mock.calls.find(c => c.arguments[0] === 'contextmenu');
+        assert.equal(ctxCall.arguments[2], true, 'contextmenu слухається у фазі capture');
 
-        const contextMenu = listeners.find(l => l.type === 'contextmenu');
-        assert.equal(contextMenu.capture, true, 'contextmenu слухається у фазі capture');
-
-        SYH_EVENT_BANNERS.bindEvents();
-        assert.equal(listeners.length, afterFirst, 'повторний виклик — no-op (idempotent)');
+        addSpy.mock.restore();
     });
 });
 

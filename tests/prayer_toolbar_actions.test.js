@@ -83,25 +83,24 @@ Object.defineProperty(globalThis, 'navigator', {
     }
 });
 
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null, onMessage: { addListener() {} } },
-    storage: {
-        local: {
-            get(keys, cb) {
-                const list = Array.isArray(keys) ? keys : [keys];
-                const out = {};
-                for (const k of list) { if (k in storage) out[k] = storage[k]; }
-                cb(out);
-            },
-            set(items, cb) { Object.assign(storage, items); if (cb) cb(); },
-            remove(_k, cb) { if (cb) cb(); }
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({
+    storageImpl: {
+        get(keys, cb) {
+            const list = Array.isArray(keys) ? keys : [keys];
+            const out = {};
+            for (const k of list) { if (k in storage) out[k] = storage[k]; }
+            cb(out);
         },
-        onChanged: { addListener() {} }
-    },
-    tabs: {
-        query(_opts, cb) { cb([{ id: 1, url: 'https://streamyard.com/room' }]); },
-        sendMessage(_id, _msg, cb) { cb(activeTabResponse); }
+        set(items, cb) { Object.assign(storage, items); if (cb) cb(); },
+        remove(_k, cb) { if (cb) cb(); }
     }
+});
+
+global.chrome.tabs = {
+    query(_opts, cb) { cb([{ id: 1, url: 'https://streamyard.com/room' }]); },
+    sendMessage(_id, _msg, cb) { cb(activeTabResponse); }
 };
 
 const {

@@ -1,10 +1,10 @@
 import assert from 'node:assert';
 import { test, describe, beforeEach } from 'node:test';
 
-// Мокаємо global.window для Node.js
-global.window = global;
+import { installChromeMock } from './setup/chrome_mock.ts';
 
-// Створюємо мок сховища SYH_STORAGE
+// In-memory store backing chrome.storage.local; expose an adapter for modules
+// that call the storage helper directly.
 let mockStorageStore = {};
 
 const mockStorageAdapter = {
@@ -38,17 +38,9 @@ const mockStorageAdapter = {
 
 global.chrome = {
     runtime: { id: 'test-extension-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => mockStorageAdapter.get(keys, cb),
-            set: (items, cb) => mockStorageAdapter.set(items, cb),
-            remove: (keys, cb) => mockStorageAdapter.remove(keys, cb)
-        }
-    }
+    storage: { local: mockStorageAdapter }
 };
-
 global.SYH_STORAGE = mockStorageAdapter;
-global.window.SYH_STORAGE = mockStorageAdapter;
 
 const { SYH_STATE } = await import('../modules/state.ts');
 const { SYH_UTILS } = await import('../modules/utils.ts');

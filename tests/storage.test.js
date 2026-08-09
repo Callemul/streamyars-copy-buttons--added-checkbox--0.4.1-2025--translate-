@@ -1,36 +1,19 @@
 import assert from 'node:assert';
 import { test, describe, beforeEach } from 'node:test';
 
-// Мокаємо global.window для Node.js
-global.window = global;
+// happy-dom provides window; seed the Chrome runtime mock (chrome storage has
+// no real fallback to localStorage, so no localStorage override is needed).
+import { installChromeMock } from './setup/chrome_mock.ts';
 
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null },
-    storage: {
-        local: {
-            get: (keys, cb) => {},
-            set: (items, cb) => {},
-            remove: (keys, cb) => {}
-        }
-    }
-};
+installChromeMock();
 
 const { SYH_STORAGE, STORAGE_KEYS, migrateKey, migrateStorageIfNeeded, STORAGE_SCHEMA_VERSION } = await import('../modules/storage.ts');
 
 describe('SYH_STORAGE tests', () => {
 
     beforeEach(() => {
-        global.chrome.runtime.lastError = null;
-        global.chrome.storage.local.get = (keys, cb) => {};
-        global.chrome.storage.local.set = (items, cb) => {};
-        global.chrome.storage.local.remove = (keys, cb) => {};
-        
-        // Mock localStorage to ensure it's not being used and throws if it is
-        global.localStorage = {
-            setItem: () => { throw new Error('localStorage is strictly mocked disabled'); },
-            getItem: () => { throw new Error('localStorage is strictly mocked disabled'); },
-            removeItem: () => { throw new Error('localStorage is strictly mocked disabled'); }
-        };
+        // Re-seed a fresh chrome mock so per-test mutations don't leak.
+        installChromeMock();
     });
 
     test('1: isChromeStorageAvailable() повертає true без chrome.runtime.id', () => {

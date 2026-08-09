@@ -2,28 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 global.window = global;
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = global.mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(global.mockStorageStore, items);
-                if (cb) cb();
-            },
-            remove: (keys, cb) => {
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { delete global.mockStorageStore[k]; });
-                if (cb) cb();
-            }
-        }
-    }
-};
 
 let mockStateCache = {
     youtubeEnabled: true,
@@ -38,6 +16,28 @@ let mockInitializeYouTubeModule = false;
 let mockCleanupYouTubeUI = false;
 
 global.mockStorageStore = {};
+
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = global.mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(global.mockStorageStore, items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { delete global.mockStorageStore[k]; });
+            if (cb) cb();
+        }
+    }
+});
 
 // Mock all dependencies before importing the module
 const originalResolve = global.resolveModuleHooks || [];

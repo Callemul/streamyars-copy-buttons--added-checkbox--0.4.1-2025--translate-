@@ -41,11 +41,11 @@ global.window = global;
 global.document = { createElement: (tag) => makeEl(tag) };
 
 let queriedTabs = [];
-global.chrome = {
-    runtime: { id: 'test-extension-id' },
-    tabs: {
-        query: (_opts, cb) => cb(queriedTabs)
-    }
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({ runtimeImpl: { id: 'test-extension-id' } });
+global.chrome.tabs = {
+    query: (_opts, cb) => cb(queriedTabs)
 };
 
 const {

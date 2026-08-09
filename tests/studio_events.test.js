@@ -74,16 +74,16 @@ global.document = {
     createElement: () => ({ style: {}, setAttribute() {}, append() {}, appendChild() {}, classList: { add() {}, remove() {} } }),
     addEventListener: () => {}
 };
-global.chrome = {
-    runtime: { id: 'test-extension-id' },
-    storage: {
-        local: {
-            get: (k, cb) => cb && cb({}),
-            set: (i, cb) => cb && cb(),
-            remove: (k, cb) => cb && cb()
-        }
+
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({
+    storageImpl: {
+        get: (k, cb) => cb && cb({}),
+        set: (i, cb) => cb && cb(),
+        remove: (k, cb) => cb && cb()
     }
-};
+});
 
 const {
     findMetadataElement,

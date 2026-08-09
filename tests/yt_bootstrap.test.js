@@ -49,23 +49,22 @@ global.document = {
     addEventListener: () => {}
 };
 
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null, onMessage: { addListener() {} } },
-    storage: {
-        local: {
-            get(keys, cb) {
-                const list = Array.isArray(keys) ? keys : [keys];
-                const out = {};
-                for (const k of list) { if (k in storage) out[k] = storage[k]; }
-                cb(out);
-            },
-            set(items, cb) { Object.assign(storage, items); if (cb) cb(); },
-            remove(_k, cb) { if (cb) cb(); }
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({
+    storageImpl: {
+        get(keys, cb) {
+            const list = Array.isArray(keys) ? keys : [keys];
+            const out = {};
+            for (const k of list) { if (k in storage) out[k] = storage[k]; }
+            cb(out);
         },
-        onChanged: { addListener() {} }
-    },
-    tabs: { query(_o, cb) { cb([]); } }
-};
+        set(items, cb) { Object.assign(storage, items); if (cb) cb(); },
+        remove(_k, cb) { if (cb) cb(); }
+    }
+});
+
+global.chrome.tabs = { query(_o, cb) { cb([]); } };
 
 const { canProcessComment, toSelectorString } = await import('../youtube/yt_comment_rules.ts');
 const {

@@ -1,32 +1,31 @@
 import test, { describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-global.window = global;
+import { installChromeMock } from './setup/chrome_mock.ts';
+
 let mockStorageStore = {};
 global.__mockThreads = [];
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(mockStorageStore, items);
-                if (cb) cb();
-            },
-            remove: (keys, cb) => {
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { delete mockStorageStore[k]; });
-                if (cb) cb();
-            }
+installChromeMock({
+    runtimeImpl: { id: 'test-id' },
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(mockStorageStore, items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { delete mockStorageStore[k]; });
+            if (cb) cb();
         }
     }
-};
+});
 
 const { StudioCommentAdapter, retroactiveUpdateVideoComments } = await import('../youtube/studio/studio_adapter.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');

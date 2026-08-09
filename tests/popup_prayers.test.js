@@ -48,20 +48,20 @@ global.document = {
     removeEventListener: mock.fn()
 };
 
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null },
-    storage: {
-        local: {
-            get: mock.fn((keys, cb) => cb({})),
-            set: mock.fn((items, cb) => cb && cb()),
-            remove: mock.fn((keys, cb) => cb && cb())
-        }
-    },
-    tabs: {
-        query: mock.fn((queryInfo, callback) => {
-            callback([{ url: 'https://streamyard.com/room123' }]);
-        })
+import { installChromeMock } from './setup/chrome_mock.ts';
+
+installChromeMock({
+    storageImpl: {
+        get: mock.fn((keys, cb) => cb({})),
+        set: mock.fn((items, cb) => cb && cb()),
+        remove: mock.fn((keys, cb) => cb && cb())
     }
+});
+
+global.chrome.tabs = {
+    query: mock.fn((queryInfo, callback) => {
+        callback([{ url: 'https://streamyard.com/room123' }]);
+    })
 };
 
 global.navigator = Object.defineProperty(global, 'navigator', {

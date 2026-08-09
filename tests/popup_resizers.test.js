@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { installChromeMock } from './setup/chrome_mock.ts';
+
 global.window = global;
 global.document = {
     createElement: (tag) => ({
@@ -49,25 +51,23 @@ global.document = {
     removeEventListener: () => {}
 };
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = global.mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(global.mockStorageStore, items);
-                if (cb) cb();
-            }
+global.chrome = {};
+global.mockStorageStore = {};
+
+installChromeMock({
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = global.mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(global.mockStorageStore, items);
+            if (cb) cb();
         }
     }
-};
-
-global.mockStorageStore = {};
+});
 
 let mockDividerHandlers = {};
 let mockDocHandlers = {};

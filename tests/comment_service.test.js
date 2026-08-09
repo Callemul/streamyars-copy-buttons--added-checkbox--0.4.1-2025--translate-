@@ -1,32 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-// Mock storage for Node environment before importing CommentService
-global.window = global;
+// happy-dom provides window; seed the Chrome runtime mock with an in-memory store.
+import { installChromeMock } from './setup/chrome_mock.ts';
+
 let mockStorageStore = {};
 
-global.chrome = {
-    runtime: { id: 'test-id' },
-    storage: {
-        local: {
-            get: (keys, cb) => {
-                const res = {};
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { res[k] = mockStorageStore[k]; });
-                if (cb) cb(res);
-            },
-            set: (items, cb) => {
-                Object.assign(mockStorageStore, items);
-                if (cb) cb();
-            },
-            remove: (keys, cb) => {
-                const arr = Array.isArray(keys) ? keys : [keys];
-                arr.forEach(k => { delete mockStorageStore[k]; });
-                if (cb) cb();
-            }
+installChromeMock({
+    runtimeImpl: { id: 'test-id' },
+    storageImpl: {
+        get: (keys, cb) => {
+            const res = {};
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { res[k] = mockStorageStore[k]; });
+            if (cb) cb(res);
+        },
+        set: (items, cb) => {
+            Object.assign(mockStorageStore, items);
+            if (cb) cb();
+        },
+        remove: (keys, cb) => {
+            const arr = Array.isArray(keys) ? keys : [keys];
+            arr.forEach(k => { delete mockStorageStore[k]; });
+            if (cb) cb();
         }
     }
-};
+});
 
 const { CommentService } = await import('../modules/comment_service.ts');
 

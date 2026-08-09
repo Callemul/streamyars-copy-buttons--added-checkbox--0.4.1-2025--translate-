@@ -26,9 +26,9 @@ function createRoot(blocks) {
     };
 }
 
-global.window = global;
-global.window.location = { pathname: '/room-42' };
-global.document = createRoot([]);
+// happy-dom provides window/document; point location at the room route the
+// module reads (getRoomId reads window.location.pathname).
+window.location.pathname = '/room-42';
 
 const {
     DEFAULT_PRAYER_AUTHOR,

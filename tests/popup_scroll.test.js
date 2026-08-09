@@ -1,6 +1,8 @@
 import assert from 'node:assert';
 import { test, describe, beforeEach, mock } from 'node:test';
 
+import { installChromeMock } from './setup/chrome_mock.ts';
+
 // Mock DOM
 global.window = global;
 global.document = {
@@ -18,16 +20,13 @@ global.document = {
 };
 
 // Mock chrome storage
-global.chrome = {
-    runtime: { id: 'test-extension-id', lastError: null },
-    storage: {
-        local: {
-            get: mock.fn((keys, cb) => cb({})),
-            set: mock.fn((items, cb) => cb && cb()),
-            remove: mock.fn((keys, cb) => cb && cb())
-        }
+installChromeMock({
+    storageImpl: {
+        get: mock.fn((keys, cb) => cb({})),
+        set: mock.fn((items, cb) => cb && cb()),
+        remove: mock.fn((keys, cb) => cb && cb())
     }
-};
+});
 
 // Mock storage and sheets
 const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
@@ -51,7 +50,7 @@ describe('popup_scroll tests', () => {
         test('should set up scroll listeners on window and elements', () => {
             const windowAddEventListener = mock.fn();
             global.window.addEventListener = windowAddEventListener;
-            global.window.scrollY = 100;
+            Object.defineProperty(global.window, 'scrollY', { value: 100, configurable: true, writable: true });
             
             const elementAddEventListener = mock.fn();
             const mockElements = {
@@ -79,16 +78,16 @@ describe('popup_scroll tests', () => {
             assert.ok(elementAddEventListener.mock.calls.some(c => c[0] === 'scroll'));
         });
 
-        test('should save scroll positions to storage on scroll', () => {
+        test('should save scroll positions to storage on scroll', async () => {
             const windowAddEventListener = mock.fn((event, handler) => {
                 // Simulate a scroll event
                 if (event === 'scroll') {
-                    global.window.scrollY = 200;
+                    Object.defineProperty(global.window, 'scrollY', { value: 200, configurable: true, writable: true });
                     handler(new Event('scroll'));
                 }
             });
             global.window.addEventListener = windowAddEventListener;
-            global.window.scrollY = 100;
+            Object.defineProperty(global.window, 'scrollY', { value: 100, configurable: true, writable: true });
             
             const elementAddEventListener = mock.fn((event, handler) => {
                 if (event === 'scroll') {
