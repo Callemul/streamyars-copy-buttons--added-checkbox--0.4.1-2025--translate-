@@ -1,5 +1,7 @@
 // modules/fuzzy_match.ts
 
+import { maxAllowedDistance, hasApproximateWindow } from './fuzzy_window';
+
 /**
  * Стандартна реалізація відстані Левенштейна (Dynamic Programming)
  */
@@ -40,6 +42,7 @@ export function normalize(s: string): string {
  */
 export function fuzzyIncludes(haystack: string, needle: string, maxErrorRatio = 0.25): boolean {
     if (!haystack || !needle) return false;
+
     const h = normalize(haystack);
     const n = normalize(needle);
     if (!h || !n) return false;
@@ -47,24 +50,7 @@ export function fuzzyIncludes(haystack: string, needle: string, maxErrorRatio = 
     // Швидка перевірка на точний збіг підрядка
     if (h.includes(n)) return true;
 
-    const maxDist = Math.max(1, Math.ceil(n.length * maxErrorRatio));
-    
-    const windowSizes: number[] = [];
-    for (let delta = -3; delta <= 3; delta++) {
-        const sz = n.length + delta;
-        if (sz > 0) windowSizes.push(sz);
-    }
-
-    for (let i = 0; i <= h.length; i++) {
-        for (const winLen of windowSizes) {
-            if (i + winLen > h.length) continue;
-            const window = h.slice(i, i + winLen);
-            if (window.length === 0) continue;
-            if (levenshtein(window, n) <= maxDist) return true;
-        }
-    }
-
-    return false;
+    return hasApproximateWindow(h, n, maxAllowedDistance(n.length, maxErrorRatio), levenshtein);
 }
 
 // Pure ESM exports without window global pollution

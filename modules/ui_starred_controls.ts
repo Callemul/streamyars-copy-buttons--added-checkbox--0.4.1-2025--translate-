@@ -3,8 +3,11 @@
 // Винесено з `modules/ui_comments.ts`, щоб розплутати найскладнішу функцію
 // проєкту за когнітивною складністю (`addStarredTabControls`, cog=26) та
 // згрупувати логіку вкладки «Starred» в одному місці. Розмітка збережена
-// байт-у-байт (див. tests/ui_comments_starred_controls.test.js), а всі три
-// функції реекспортуються з `ui_comments.ts` 1-в-1 для зворотної сумісності.
+// байт-у-байт (див. tests/ui_comments_starred_controls.test.js).
+//
+// Публічна точка входу — саме цей модуль: `ui_comments.ts` НЕ реекспортує ці
+// три функції, інакше виник би цикл `ui_comments` ⇄ `ui_starred_controls`
+// (цей модуль споживає хелпери фільтрації з `ui_comments.ts`).
 
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG, queryBySelectorValue } from './config';
@@ -12,7 +15,7 @@ import {
     bindFilterSearchControls,
     bindFilterDocClickHandler,
     updateFilterTabSelection,
-    scrollToActiveItem
+    scrollToActiveComment
 } from './ui_shared_utils';
 import {
     buildSortedCommentTexts,
@@ -20,54 +23,35 @@ import {
     updateCommentTabCounts,
     renderCommentEmptyState
 } from './ui_comments';
-import { scrollToActiveComment } from './ui_shared_utils';
+import { buildStarredControlsMarkup, STARRED_EMPTY_STATE_MARKUP } from './ui_starred_markup';
+
+/**
+ * Вставляє блок порожнього стану одразу після списку Starred.
+ * Ідемпотентна: якщо блок уже є в документі — нічого не робить.
+ */
+function ensureStarredEmptyState(): void {
+    if (document.querySelector('#syh-empty-state-msg')) return;
+
+    const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    const starredList = queryBySelectorValue(selectors.starredList, document);
+    if (!starredList) return;
+
+    starredList.insertAdjacentHTML('afterend', STARRED_EMPTY_STATE_MARKUP);
+}
 
 export function addStarredTabControls(starredHeaderNode: Element): void {
-    if (starredHeaderNode && !starredHeaderNode.querySelector('.syh-starred-controls')) {
-        const controlsHTML = `
-            <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                <div class="syh-search-wrapper">
-                    <input type="text" id="syh-starred-search" value="${SYH_UI_STATE.searchQuery}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
-                    <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${SYH_UI_STATE.searchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук коментарів">✕</button>
-                    <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані" aria-label="Повернутися до коментаря на екрані">🎯</button>
-                </div>
-                
-                <div role="tablist" aria-label="Фільтри коментарів" style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
-                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі коментарі" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-comment-filter-all">
-                        <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
-                    </button>
-                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'question' ? 'true' : 'false'}" aria-label="Показати питання" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'question' ? 'active' : ''}" data-filter="question" id="syh-comment-filter-question">
-                        <span>❓</span><span class="tab-text">Питання</span><span class="tab-count"></span>
-                    </button>
-                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитви" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-comment-filter-prayer">
-                        <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
-                    </button>
-                    <button role="tab" aria-selected="${SYH_UI_STATE.activeFilter === 'other' ? 'true' : 'false'}" aria-label="Показати інші коментарі" class="syh-filter-btn ${SYH_UI_STATE.activeFilter === 'other' ? 'active' : ''}" data-filter="other" id="syh-comment-filter-other" style="display: none;">
-                        <span>📝</span><span class="tab-text">Інші</span><span class="tab-count"></span>
-                    </button>
-                </div>
-            </div>
-        `;
+    if (!starredHeaderNode) return;
+    if (starredHeaderNode.querySelector('.syh-starred-controls')) return;
 
-        starredHeaderNode.innerHTML = controlsHTML;
+    starredHeaderNode.innerHTML = buildStarredControlsMarkup(
+        SYH_UI_STATE.activeFilter,
+        SYH_UI_STATE.searchQuery
+    );
 
-        const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
+    ensureStarredEmptyState();
 
-        if (!document.querySelector('#syh-empty-state-msg')) {
-            const starredList = queryBySelectorValue(selectors.starredList, document);
-            if (starredList) {
-                starredList.insertAdjacentHTML('afterend', `
-                    <div id="syh-empty-state-msg" class="syh-empty-state">
-                        <div id="syh-empty-query"></div>
-                        <div id="syh-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
-                    </div>
-                `);
-            }
-        }
-
-        bindStarredControls();
-        setTimeout(() => filterStarredComments(), 10);
-    }
+    bindStarredControls();
+    setTimeout(() => filterStarredComments(), 10);
 }
 
 export function bindStarredControls(): void {

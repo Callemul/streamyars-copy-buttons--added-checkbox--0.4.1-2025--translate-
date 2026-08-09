@@ -1,5 +1,5 @@
 import { CommentService } from './comment_service';
-import { SYH_BUS } from './event_bus';
+import { runCommentAction } from './comment_action_runner';
 import type {
     CommentStateCaches,
     PlatformButtons,
@@ -67,85 +67,7 @@ export class CommentInjector {
         buttons: PlatformButtons,
         element: Element
     ): Promise<void> {
-        const ctx = this.adapter.getCommentContext(element);
-        if (!ctx) return;
-        const commentKey = ctx.id;
-
-        let sheetId: string | null = null;
-        if (this.adapter.beforeAction) {
-            const preResult = await this.adapter.beforeAction(type, ctx, element);
-            if (!preResult || !preResult.sheetId) {
-                // beforeAction returned null (e.g., category unresolved) - cancel action
-                return;
-            }
-            sheetId = preResult.sheetId;
-        } else {
-            sheetId = this.adapter.getSheetId(ctx, element);
-        }
-        if (!sheetId) return;
-
-        const currentState = this.adapter.getButtonState
-            ? this.adapter.getButtonState(ctx, commentKey, this.caches)
-            : (this.caches.buttonStates[commentKey] || null);
-        const isUntoggle = currentState === type;
-
-        if (isUntoggle) {
-            // UNTOGGLE (Second press on the SAME active button):
-            await CommentService.saveButtonState(
-                this.adapter.getButtonStatesKey(),
-                this.caches.buttonStates,
-                commentKey,
-                null
-            );
-            this.adapter.applyButtonState(buttons, null, sheetId);
-
-            await CommentService.removeCollectedComment(sheetId, commentKey, ctx.author, ctx.text);
-
-            this.adapter.applyCheckboxState(buttons, false);
-            if (this.adapter.unmarkChecked) {
-                await this.adapter.unmarkChecked(element, commentKey, this.caches);
-            } else {
-                await CommentService.saveCheckboxState(
-                    this.adapter.getCheckboxStatesKey(),
-                    this.caches.checkboxStates,
-                    commentKey,
-                    false
-                );
-            }
-
-            if (this.adapter.afterAction) {
-                await this.adapter.afterAction({ type: null, context: ctx, sheetId, commentKey });
-            }
-            return;
-        }
-
-        const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);
-        await CommentService.copyToClipboard(formatted);
-
-        this.adapter.applyButtonState(buttons, type, sheetId);
-
-        await CommentService.saveButtonState(
-            this.adapter.getButtonStatesKey(),
-            this.caches.buttonStates,
-            commentKey,
-            type
-        );
-
-        const item = this.adapter.buildCollectedItem(commentKey, ctx, type);
-        await CommentService.saveCollectedComment(sheetId, item);
-
-        await this.adapter.markChecked(element, commentKey, this.caches);
-
-        const actionResult = { type, context: ctx, sheetId, commentKey };
-        if (this.adapter.afterAction) {
-            await this.adapter.afterAction(actionResult);
-        }
-
-        SYH_BUS.emit('COMMENT_ACTION', {
-            type: type === 'prayer' ? 'prayer' : 'question',
-            author: ctx.author,
-            text: ctx.text
-        });
+        await runCommentAction(this.adapter, this.caches, type, buttons, element);
     }
 
     private async handleCopyClick(

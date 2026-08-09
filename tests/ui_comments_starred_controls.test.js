@@ -6,8 +6,10 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock();
 
 const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
+// `addStarredTabControls` живе в `ui_starred_controls.ts` (винесено з `ui_comments.ts`),
+// решта хелперів фільтрації лишилися в `ui_comments.ts`.
+const { addStarredTabControls } = await import('../modules/ui_starred_controls.ts');
 const {
-    addStarredTabControls,
     buildSortedCommentTexts,
     evalCategoryMatch,
     updateListItemOrdering,

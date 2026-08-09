@@ -1,16 +1,12 @@
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, queryBySelectorValue, resolveSelectorString, type SelectorValue } from './config';
+import { SYH_CONFIG, queryBySelectorValue, type SelectorValue } from './config';
 import { SYH_UTILS } from './utils';
 import { UiFactory } from './ui_factory';
 import { CommentService } from './comment_service';
 import type { PrayerItem } from './types';
 import {
     updateTabCounts,
-    scrollToActiveItem,
-    restoreCheckboxFromCache,
-    updateFilterTabSelection,
-    bindFilterSearchControls,
-    bindFilterDocClickHandler
+    restoreCheckboxFromCache
 } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';
 
