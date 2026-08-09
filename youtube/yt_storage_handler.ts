@@ -1,6 +1,7 @@
 import { STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
-import { processAllYTComments, stateCache } from './yt_comment_processor';
+import { processAllYTComments } from './yt_comment_processor';
 import { cleanupYouTubeUI, initializeYouTubeModule } from './yt_init';
+import { YT_COLLECTED_SHEET_ID, stateCache } from './yt_state';
 import {
     orEmptyRecord,
     readChangedValue,
@@ -40,7 +41,7 @@ const changeHandlers: Record<string, ChangeHandler> = {
 
 /** Зібрані у Google-таблицю коментарі приїжджають окремим ключем із префіксом аркуша. */
 function applyCollectedListChange(changes: Record<string, any>): void {
-    const collected = readChangedValue(changes, getSheetCollectedStorageKey('vp_ss'));
+    const collected = readChangedValue(changes, getSheetCollectedStorageKey(YT_COLLECTED_SHEET_ID));
     if (collected) {
         stateCache.collectedList = collected;
     }

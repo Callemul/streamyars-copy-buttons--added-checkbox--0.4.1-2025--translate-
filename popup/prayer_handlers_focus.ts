@@ -1,64 +1,79 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { readStoredPrayers } from './prayer_toolbar_actions';
+import {
+    AUTHOR_OLD_VALUE_ATTR,
+    BLUR_BORDER,
+    EDITABLE_AUTHOR_SELECTOR,
+    EDITABLE_PRAYER_SELECTOR,
+    FOCUS_BORDER,
+    applyAuthorRename,
+    applyPrayerTextEdit,
+    readTrimmedText,
+    resolveEditableTarget,
+    shouldRenameAuthor
+} from './prayer_focus_rules';
 import type { PrayerItem } from '../modules/types';
 
-export function bindPrayerFocusListeners(): void {
-    document.addEventListener('focusin', function(e) {
-        const target = e.target as Element | null;
-        const el = target?.closest('.editable-prayer') as HTMLElement | null;
-        if (!el) return;
-        el.style.borderBottom = '1px dashed #2b7de9';
-    });
+type EditableHandler = (el: HTMLElement) => void;
 
-    document.addEventListener('focusout', function(e) {
-        const target = e.target as Element | null;
-        const el = target?.closest('.editable-prayer') as HTMLElement | null;
-        if (!el) return;
-        el.style.borderBottom = '1px dashed transparent';
-
-        const id = el.getAttribute('data-id');
-        const newText = el.textContent?.trim() || '';
-
-        SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-            const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-            const targetItem = list.find(item => item.id === id);
-            if (targetItem && targetItem.text !== newText) {
-                targetItem.text = newText;
-                SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });
-            }
-        });
-    });
-
-    document.addEventListener('focusin', function(e) {
-        const target = e.target as Element | null;
-        const el = target?.closest('.editable-author') as HTMLElement | null;
-        if (!el) return;
-        el.style.borderBottom = '1px dashed #2b7de9';
-        el.setAttribute('data-old-val', el.textContent?.trim() || '');
-    });
-
-    document.addEventListener('focusout', function(e) {
-        const target = e.target as Element | null;
-        const el = target?.closest('.editable-author') as HTMLElement | null;
-        if (!el) return;
-        el.style.borderBottom = '1px dashed transparent';
-
-        const oldAuthor = el.getAttribute('data-old-val');
-        const newAuthor = el.textContent?.trim() || '';
-
-        if (oldAuthor && newAuthor && oldAuthor !== newAuthor) {
-            SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-                const list: PrayerItem[] = result[STORAGE_KEYS.PRAYERS] || [];
-                let updated = false;
-                list.forEach(item => {
-                    if (item.author === oldAuthor) {
-                        item.author = newAuthor;
-                        updated = true;
-                    }
-                });
-                if (updated) {
-                    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });
-                }
-            });
+/** Читає збережений список, застосовує правку і зберігає лише за наявності змін. */
+function updateStoredPrayers(edit: (list: PrayerItem[]) => boolean): void {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+        const list = readStoredPrayers(result, STORAGE_KEYS.PRAYERS);
+        if (edit(list)) {
+            SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });
         }
     });
+}
+
+/** Вішає обробник події фокуса, який спрацьовує лише на потрібному інлайн-полі. */
+function onEditable(eventType: 'focusin' | 'focusout', selector: string, handler: EditableHandler): void {
+    document.addEventListener(eventType, function(e) {
+        const el = resolveEditableTarget(e.target as Element | null, selector);
+        if (el) handler(el);
+    });
+}
+
+/** Підсвічує поле, у яке став курсор. */
+function highlightEditable(el: HTMLElement): void {
+    el.style.borderBottom = FOCUS_BORDER;
+}
+
+/** Знімає підсвітку з поля, з якого пішов курсор. */
+function unhighlightEditable(el: HTMLElement): void {
+    el.style.borderBottom = BLUR_BORDER;
+}
+
+/** Запам'ятовує ім'я автора до правки, щоб потім знайти всі його прохання. */
+function rememberAuthorBeforeEdit(el: HTMLElement): void {
+    highlightEditable(el);
+    el.setAttribute(AUTHOR_OLD_VALUE_ATTR, readTrimmedText(el));
+}
+
+/** Зберігає відредагований текст прохання. */
+function savePrayerTextEdit(el: HTMLElement): void {
+    unhighlightEditable(el);
+
+    const id = el.getAttribute('data-id');
+    const newText = readTrimmedText(el);
+
+    updateStoredPrayers(list => applyPrayerTextEdit(list, id, newText));
+}
+
+/** Зберігає перейменування автора в усіх його проханнях. */
+function saveAuthorRename(el: HTMLElement): void {
+    unhighlightEditable(el);
+
+    const oldAuthor = el.getAttribute(AUTHOR_OLD_VALUE_ATTR);
+    const newAuthor = readTrimmedText(el);
+    if (!shouldRenameAuthor(oldAuthor, newAuthor)) return;
+
+    updateStoredPrayers(list => applyAuthorRename(list, oldAuthor as string, newAuthor));
+}
+
+export function bindPrayerFocusListeners(): void {
+    onEditable('focusin', EDITABLE_PRAYER_SELECTOR, highlightEditable);
+    onEditable('focusout', EDITABLE_PRAYER_SELECTOR, savePrayerTextEdit);
+    onEditable('focusin', EDITABLE_AUTHOR_SELECTOR, rememberAuthorBeforeEdit);
+    onEditable('focusout', EDITABLE_AUTHOR_SELECTOR, saveAuthorRename);
 }
