@@ -3,6 +3,7 @@
 
 import { STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
+import { db } from './popup_storage';
 import { $ } from './popup_dom_utils';
 
 const SHEET_IDS = getAllSheetIds();

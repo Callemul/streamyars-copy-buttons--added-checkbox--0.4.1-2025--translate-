@@ -3,6 +3,7 @@ import { CommentService } from '../modules/comment_service';
 import { CommentInjector } from '../modules/comment_injector';
 import { YouTubeCommentAdapter } from './yt_adapter';
 import type { YTCollectedItem } from '../modules/types';
+import type { CommentStateCaches } from '../modules/comment_platform_adapter';
 export type { YTCollectedItem };
 
 export function getVideoId(): string {

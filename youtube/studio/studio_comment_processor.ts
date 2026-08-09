@@ -39,6 +39,17 @@ export class StudioCommentProcessor {
         this.headerUpdater.setSheetStatsMap(sheetStatsMap);
     }
 
+    /**
+     * Перемальовує лічильники в шапці Studio.
+     * Точка входу для `StudioStorageController.updateHeaderCounters`, який
+     * смикається при кожній зміні storage — без цього методу зовнішній виклик
+     * тихо йшов у `?.()` і лічильники лишалися застарілими до наступного
+     * `processVisibleComments()`.
+     */
+    public updateHeaderCounters(): void {
+        this.headerUpdater.updateHeaderCounters(this.enabled, this.isCommentsPage);
+    }
+
     public async startModule(): Promise<void> {
         if (!this.enabled || !this.isCommentsPage()) return;
 
@@ -94,7 +105,7 @@ export class StudioCommentProcessor {
         }
 
         if (this.scrollHandler) {
-            window.removeEventListener('scroll', this.scrollHandler, { capture: true, passive: true });
+            window.removeEventListener('scroll', this.scrollHandler, { capture: true });
             this.scrollHandler = null;
         }
 

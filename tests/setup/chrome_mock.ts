@@ -31,7 +31,7 @@ function noopCallback(cb) {
  *
  * @param {ChromeMockOptions} [options]
  */
-export function createChromeMock(options = {}) {
+function createChromeMock(options = {}) {
     const {
         withStorage = true,
         withTabs = true,

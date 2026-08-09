@@ -1,5 +1,5 @@
 import { resolveCategoryForVideo } from './studio_category_matcher';
-import type { SheetId } from '../../modules/comment_platform_adapter';
+import type { SheetId } from '../../modules/sheets';
 import { 
     updateStudioButtonsUI, 
     updateStudioBadgeUI, 

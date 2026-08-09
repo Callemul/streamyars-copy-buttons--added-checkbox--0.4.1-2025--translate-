@@ -1,6 +1,6 @@
 import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
 import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine, parseAnsweredIds } from './telegram_parser';
-import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers/index.ts';
+import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers/index';
 import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
 
 export interface SheetCounterStats {

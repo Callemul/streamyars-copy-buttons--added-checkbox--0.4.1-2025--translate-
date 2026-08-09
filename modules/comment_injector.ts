@@ -45,7 +45,7 @@ export class CommentInjector {
     }
 
     private async handleQuestionClick(
-        e: MouseEvent,
+        e: Event,
         buttons: PlatformButtons,
         element: Element
     ): Promise<void> {
@@ -54,7 +54,7 @@ export class CommentInjector {
     }
 
     private async handlePrayerClick(
-        e: MouseEvent,
+        e: Event,
         buttons: PlatformButtons,
         element: Element
     ): Promise<void> {
@@ -149,7 +149,7 @@ export class CommentInjector {
     }
 
     private async handleCopyClick(
-        e: MouseEvent,
+        e: Event,
         btn: HTMLElement,
         element: Element
     ): Promise<void> {

@@ -62,7 +62,7 @@ export class TriggerManager {
         });
     }
 
-    private resolveTriggerCategory(
+    public resolveTriggerCategory(
         lowerWord: string,
         lowerPrayerWords: string[],
         lowerQuestionWords: string[]

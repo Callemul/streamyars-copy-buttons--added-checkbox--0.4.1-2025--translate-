@@ -1,6 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { TG_HEADER_CLEANUP_REGEX } from './parsers/index.ts';
-import { resolveSelector } from './config';
+import { TG_HEADER_CLEANUP_REGEX } from './parsers/index';
+import { resolveSelector, resolveSelectorAll } from './config';
+import type { CleaningLogEntry } from './types';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string | string[]> | null;
@@ -18,7 +19,7 @@ export interface SyhUtils {
     toFuzzy(str: string | null | undefined): string;
     switchKeyboardLayout(str: string | null | undefined): string;
     saveBannerCategory(text: string, type: string): Promise<void>;
-    cleanTelegramHeaders(text: string | null | undefined): string;
+    cleanTelegramHeaders(text: string | null | undefined, cleaningLog?: CleaningLogEntry[]): string;
     isExtensionValid(): boolean;
 }
 
@@ -106,7 +107,7 @@ export const SYH_UTILS: SyhUtils = {
             let elapsedTime = 0;
             const timer = setInterval(() => {
                 const selector = this.SELECTORS?.bannerText || '[class*="Banner__BannerText"]';
-                const banners = document.querySelectorAll(selector);
+                const banners = resolveSelectorAll(selector);
                 for (const banner of banners) {
                     if (banner.textContent?.trim() === bannerText.trim()) {
                         clearInterval(timer);
@@ -288,7 +289,7 @@ export const SYH_UTILS: SyhUtils = {
         });
     },
 
-    cleanTelegramHeaders: function(text: string | null | undefined, cleaningLog?: any[]): string {
+    cleanTelegramHeaders: function(text: string | null | undefined, cleaningLog?: CleaningLogEntry[]): string {
         if (!text) return "";
         const removedMatches: string[] = [];
         const cleaned = text.replace(TG_HEADER_CLEANUP_REGEX, (match, offset) => {

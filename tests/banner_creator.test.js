@@ -7,7 +7,7 @@ import {
     executeBannerCreationLoop,
     SYH_BANNER_CREATOR
 } from '../modules/banner_creator.ts';
-import { SYH_PARSERS } from '../modules/parsers.ts';
+import { SYH_PARSERS } from '../modules/parsers/index.ts';
 import { SYH_UTILS } from '../modules/utils.ts';
 
 const mockLogger = (msg) => { };

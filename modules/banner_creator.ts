@@ -1,10 +1,10 @@
 import { SYH_CONFIG, resolveSelector } from './config';
 import { SYH_UTILS } from './utils';
-import { SYH_PARSERS } from './parsers/index.ts';
+import { SYH_PARSERS } from './parsers/index';
 
 import type { SyhConfig } from './config';
 import type { SyhUtils } from './utils';
-import type { SyhParsers } from './parsers/index.ts';
+import type { SyhParsers } from './parsers/index';
 
 import type { SyhBannerCreator } from './banner_types';
 import { parseRawTextToBanners } from './banner_parser';
@@ -94,7 +94,7 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
     createSingleBanner: async function(text: string): Promise<void> {
         let createBtn: HTMLElement | null = this.SELECTORS?.createBannerButton ? document.querySelector(this.SELECTORS.createBannerButton) : null;
         if (!createBtn) {
-            createBtn = await this.UTILS.waitForElement(this.SELECTORS?.createBannerButton, 2000);
+            createBtn = await this.UTILS.waitForElement(this.SELECTORS?.createBannerButton, 2000) as HTMLElement;
         }
         if (!createBtn) {
             throw new Error("Create banner button not found");

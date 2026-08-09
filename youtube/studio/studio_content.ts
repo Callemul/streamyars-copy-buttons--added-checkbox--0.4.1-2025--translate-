@@ -16,7 +16,7 @@ class StudioModuleController {
         this.storageController = new StudioStorageController();
         this.storageController.handleStateChange = () => this.handleStateChange();
         this.storageController.scheduleProcessComments = (forceUpdate: boolean) => this.scheduleProcessComments(forceUpdate);
-        this.storageController.updateHeaderCounters = () => this.commentProcessor?.updateHeaderCounters?.();
+        this.storageController.updateHeaderCounters = () => this.commentProcessor?.updateHeaderCounters();
 
         this.spaHandler = new StudioSPAHandler(() => this.handleStateChange());
         

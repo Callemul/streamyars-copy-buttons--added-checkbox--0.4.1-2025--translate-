@@ -32,7 +32,7 @@ export function bindTabSwitcher(config: {
     buildContentId: (id: string) => string;
 }): void {
     document.querySelectorAll(config.tabSelector).forEach(btn => {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function (this: HTMLElement) {
             const id = this.getAttribute(config.dataAttr);
             if (!id) return;
             document.querySelectorAll(config.tabSelector).forEach(b => {

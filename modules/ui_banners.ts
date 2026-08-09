@@ -1,5 +1,5 @@
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG } from './config';
+import { SYH_CONFIG, resolveSelector, resolveSelectorAll } from './config';
 import { SYH_UTILS } from './utils';
 import { UiFactory } from './ui_factory';
 import {
@@ -15,7 +15,7 @@ import { renderSharedEmptyState } from './ui_empty_state';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const bannerWrap = bannerNode.querySelector(selectors.bannerWrap);
+    const bannerWrap = resolveSelector(selectors.bannerWrap, bannerNode);
     if (bannerWrap && !bannerWrap.querySelector('.syh-banner-controls')) {
         const container = document.createElement('div');
         container.className = 'syh-banner-controls';
@@ -40,7 +40,7 @@ export function addButtonsToBanner(bannerNode: Element): void {
         container.appendChild(cbWrap);
 
         bannerWrap.appendChild(container);
-        const bannerText = bannerNode.querySelector(selectors.bannerText)?.textContent || '';
+        const bannerText = resolveSelector(selectors.bannerText, bannerNode)?.textContent || '';
 
         restoreCheckboxFromCache(bannerWrap, bannerText);
 
@@ -135,7 +135,7 @@ export function addBannerHeaderControls(headerNode: Element): void {
 
 export function updateMasterCheckboxState(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const bannerBlocks = document.querySelectorAll(selectors.bannerBlock);
+    const bannerBlocks = resolveSelectorAll(selectors.bannerBlock);
     const allBannerCheckboxes: HTMLInputElement[] = [];
     bannerBlocks.forEach(block => {
         const cb = block.querySelector<HTMLInputElement>('.syh-checkbox[data-type="banner"]');
@@ -175,10 +175,10 @@ export function filterBannerListItems(
 
     Array.from(bannerList.children).forEach(liChild => {
         const li = liChild as HTMLElement;
-        const bannerWrap = li.querySelector(selectors.bannerWrap);
+        const bannerWrap = resolveSelector(selectors.bannerWrap, li);
         if (!bannerWrap) return;
 
-        const originalText = bannerWrap.querySelector(selectors.bannerText)?.textContent || '';
+        const originalText = resolveSelector(selectors.bannerText, bannerWrap)?.textContent || '';
         const commentType = categoriesCache[originalText] || 'none';
 
         updateBannerVisuals(bannerWrap, commentType);
@@ -199,7 +199,7 @@ export function filterBannerListItems(
         }
     });
 
-    return { visibleCount, countAbsolute, countSearch: countSearch[activeFilter === 'all' ? 'all' : activeFilter] };
+    return { visibleCount, countAbsolute, countSearch };
 }
 
 export function updateBannerTabCounts(countAbsolute: Record<string, number>): void {

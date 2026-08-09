@@ -1,6 +1,7 @@
 // youtube/yt_ui.ts
 import { YT_SELECTORS } from './yt_selectors';
 import { UiFactory } from '../modules/ui_factory';
+import { resolveSelector } from '../modules/config';
 import { type ButtonStateType } from '../modules/comment_platform_adapter';
 
 export interface CommentData {
@@ -17,7 +18,7 @@ export function extractCommentId(commentNode: Element): string {
     if (!commentNode) return '';
 
     // 1. Пошук посилання з параметром lc=
-    const linkEl = commentNode.querySelector(YT_SELECTORS.commentLink) || 
+    const linkEl = resolveSelector(YT_SELECTORS.commentLink, commentNode) ||
                    commentNode.querySelector('a[href*="lc="]');
     if (linkEl) {
         const href = linkEl.getAttribute('href') || '';
@@ -37,8 +38,8 @@ export function extractCommentId(commentNode: Element): string {
     if (dataCid) return dataCid;
 
     // 4. Фолбек по автору та початку тексту
-    const authorEl = commentNode.querySelector(YT_SELECTORS.commentAuthor);
-    const textEl = commentNode.querySelector(YT_SELECTORS.commentText);
+    const authorEl = resolveSelector(YT_SELECTORS.commentAuthor, commentNode);
+    const textEl = resolveSelector(YT_SELECTORS.commentText, commentNode);
     const author = authorEl?.textContent?.trim() || 'unknown';
     const textSnippet = textEl?.textContent?.trim().slice(0, 20) || 'empty';
     
@@ -56,9 +57,9 @@ export function extractCommentId(commentNode: Element): string {
  * Отримує автора та текст коментаря
  */
 export function extractCommentData(commentNode: Element): { author: string; text: string } {
-    const authorEl = commentNode.querySelector(YT_SELECTORS.commentAuthor) || 
+    const authorEl = resolveSelector(YT_SELECTORS.commentAuthor, commentNode) ||
                      commentNode.querySelector('#author-text');
-    const textEl = commentNode.querySelector(YT_SELECTORS.commentText);
+    const textEl = resolveSelector(YT_SELECTORS.commentText, commentNode);
 
     const author = authorEl?.textContent?.trim().replace(/^@/, '') || 'Автор';
     const originalText = textEl?.getAttribute('data-syh-original-text');
@@ -77,7 +78,7 @@ export function addButtonsToYTComment(commentNode: Element): HTMLElement | null 
         return null;
     }
 
-    const headerAuthor = commentNode.querySelector(YT_SELECTORS.headerAuthor);
+    const headerAuthor = resolveSelector(YT_SELECTORS.headerAuthor, commentNode);
     if (!headerAuthor) return null;
 
     const container = document.createElement('div');
@@ -122,7 +123,7 @@ export function addButtonsToYTComment(commentNode: Element): HTMLElement | null 
     headerAuthor.appendChild(container);
 
     // Додаємо клас user-select: none до тіла коментаря для ПКМ
-    const bodyEl = commentNode.querySelector(YT_SELECTORS.commentBody);
+    const bodyEl = resolveSelector(YT_SELECTORS.commentBody, commentNode);
     if (bodyEl) {
         bodyEl.classList.add('syh-yt-comment-body');
     }

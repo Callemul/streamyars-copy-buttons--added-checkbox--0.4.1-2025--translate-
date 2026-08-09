@@ -40,6 +40,13 @@ export interface SyhStatsExporter {
         st2: StatsSummary;
         st3: StatsSummary;
     } | null;
+    getSummaryData(dataObj: StreamChartSession | null): {
+        overall: StatsSummary;
+        initialViewers: number;
+        st1: StatsSummary;
+        st2: StatsSummary;
+        st3: StatsSummary;
+    } | null;
     calculatePhaseStats(dataObj: StreamChartSession): {
         overall: StatsSummary;
         initialViewers: number;

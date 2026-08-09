@@ -1,6 +1,7 @@
 // modules/anti_afk.ts
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_I18N } from './i18n';
+import { SYH_BUS } from './event_bus';
 
 /**
  * ============================================================================
@@ -90,9 +91,7 @@ export function checkAndClickAntiAfk(
             try {
                 console.log("[SYH Anti-AFK] AFK таймаут перехоплено! Натискаю 'Stay in the studio'.");
                 (btn as HTMLElement).click();
-                if (typeof SYH_BUS !== 'undefined') {
-                    SYH_BUS.emit('ANTI_AFK_TRIGGERED', { timestamp: Date.now() });
-                }
+                SYH_BUS.emit('ANTI_AFK_TRIGGERED', { timestamp: Date.now() });
                 return true;
             } catch (err) {
                 console.warn("[SYH Anti-AFK] Помилка при натисканні кнопки Stay in studio:", err);

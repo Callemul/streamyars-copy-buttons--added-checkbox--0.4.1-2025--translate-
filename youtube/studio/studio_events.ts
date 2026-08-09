@@ -62,7 +62,7 @@ export function saveStudioCollectedItem(
     sheetId: SheetId,
     item: { id: string; author: string; text: string; type: 'question' | 'prayer'; timestamp: number; videoId: string; videoTitle: string }
 ): Promise<void> {
-    return CommentService.saveCollectedComment(sheetId, item);
+    return CommentService.saveCollectedComment(sheetId, item).then(() => undefined);
 }
 
 interface VideoIdentity {

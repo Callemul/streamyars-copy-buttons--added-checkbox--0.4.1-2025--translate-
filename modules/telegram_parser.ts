@@ -12,7 +12,7 @@ import {
     TG_HEADER_A_REGEX,
     TG_HEADER_B_REGEX,
     RELATIVE_TIME_LINE_REGEX
-} from './parsers/index.ts';
+} from './parsers/index';
 import { SYH_UTILS } from './utils';
 import type { CleaningLogEntry, DeletedLogEntry } from './types';
 
@@ -29,7 +29,7 @@ export {
     TG_HEADER_B_REGEX,
     TG_HEADER_CLEANUP_REGEX,
     RELATIVE_TIME_LINE_REGEX
-} from './parsers/index.ts';
+} from './parsers/index';
 
 export interface TelegramQuestionItem {
     author: string;
