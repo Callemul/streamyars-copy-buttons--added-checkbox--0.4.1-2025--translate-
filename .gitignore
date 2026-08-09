@@ -42,3 +42,47 @@ coverage/
 .codesearch.db*
 .codesearch/
 .fallow/
+
+
+
+
+
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+*.timestamp-*.mjs
+
+# ==========================================
+# Local Environment Variables
+# ==========================================
+.env
+.env.local
+.env.*.local
+
+# ==========================================
+# Vite & Bundler cache/temp files
+# ==========================================
+.eslintcache
+.vite/
+.parcel-cache
+.nuxt/
+
+# ==========================================
+# Static Analysis Reports & Tool Outputs
+# ==========================================
+# Fallow analysis reports
+fallow-targets.json
+fallow_*.json
+.fallow-*.json
+health_*.json
+health_report.json
+
+# Test, lint and build output logs (txt/log)
+build_final.txt
+build_output*.txt
+lint_output*.txt
+test_output*.txt
+
+# ==========================================
+# AI / Chat logs
+# ==========================================
+чат з ШІ
