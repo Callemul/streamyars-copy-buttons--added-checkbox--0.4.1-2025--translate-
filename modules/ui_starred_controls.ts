@@ -6,8 +6,8 @@
 // байт-у-байт (див. tests/ui_comments_starred_controls.test.js).
 //
 // Публічна точка входу — саме цей модуль: `ui_comments.ts` НЕ реекспортує ці
-// три функції, інакше виник би цикл `ui_comments` ⇄ `ui_starred_controls`
-// (цей модуль споживає хелпери фільтрації з `ui_comments.ts`).
+// три функції. Хелпери фільтрації беремо напряму з `ui_comments_filter.ts`
+// (а не через фасад `ui_comments.ts`), щоб залежність лишалась однонапрямною.
 
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG, queryBySelectorValue } from './config';
@@ -22,7 +22,7 @@ import {
     filterCommentListItems,
     updateCommentTabCounts,
     renderCommentEmptyState
-} from './ui_comments';
+} from './ui_comments_filter';
 import { buildStarredControlsMarkup, STARRED_EMPTY_STATE_MARKUP } from './ui_starred_markup';
 
 /**

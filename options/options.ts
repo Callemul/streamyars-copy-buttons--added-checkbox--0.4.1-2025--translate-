@@ -3,7 +3,8 @@ import { CommentService } from '../modules/comment_service';
 import type { StudioOverrideLogEntry } from '../modules/types';
 import { validateImportedConfig, extractImportedItems } from './validation';
 import { DEFAULT_OPTIONS, type OptionsState } from './defaults';
-import { populateFormElements } from './form';
+import { populateFormElements, readOptionsFromForm } from './form';
+import { buildStudioLogReport, renderStudioLogRows } from './studio_log';
 
 class OptionsController {
     private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -63,41 +64,17 @@ class OptionsController {
     }
 
     private saveSettings(): void {
-        const sschoolVal = (document.getElementById('optSschoolName') as HTMLInputElement)?.value.trim() || DEFAULT_OPTIONS.newTitleSS;
-        const preachVal = (document.getElementById('optPreachName') as HTMLInputElement)?.value.trim() || DEFAULT_OPTIONS.newTitlePreach;
-        const langVal = (document.getElementById('optLanguage') as HTMLSelectElement)?.value || DEFAULT_OPTIONS.ui_locale;
-        const antiAfkVal = (document.getElementById('optAntiAfkEnabled') as HTMLInputElement)?.checked;
-        const antiAfkIntervalVal = parseInt((document.getElementById('optAntiAfkInterval') as HTMLInputElement)?.value || '30', 10);
-        const autoHealVal = (document.getElementById('optAutoHealEnabled') as HTMLInputElement)?.checked;
-        const truncVal = parseInt((document.getElementById('optTruncationLength') as HTMLInputElement)?.value || '195', 10);
-        const showCopyVal = (document.getElementById('optShowCopyButtons') as HTMLInputElement)?.checked;
-        const compactSecondaryVal = (document.getElementById('optCompactSecondaryTabs') as HTMLInputElement)?.checked;
-        const youtubeEnabledVal = (document.getElementById('optYouTubeEnabled') as HTMLInputElement)?.checked;
-        const studioEnabledVal = (document.getElementById('optStudioEnabled') as HTMLInputElement)?.checked;
+        const newOptions = readOptionsFromForm(DEFAULT_OPTIONS);
 
         SYH_STORAGE.get([STORAGE_KEYS.DB], (result) => {
             const currentDb = result[STORAGE_KEYS.DB] || {};
-            currentDb.newTitleSS = sschoolVal;
-            currentDb.newTitlePreach = preachVal;
-
-            const newOptions: OptionsState = {
-                newTitleSS: sschoolVal,
-                newTitlePreach: preachVal,
-                ui_locale: langVal,
-                anti_afk_enabled: antiAfkVal,
-                anti_afk_interval_sec: antiAfkIntervalVal,
-                auto_heal_enabled: autoHealVal,
-                text_truncation_length: truncVal,
-                show_copy_buttons: showCopyVal,
-                compact_secondary_tabs_default: compactSecondaryVal,
-                youtube_enabled: youtubeEnabledVal,
-                studio_enabled: studioEnabledVal
-            };
+            currentDb.newTitleSS = newOptions.newTitleSS;
+            currentDb.newTitlePreach = newOptions.newTitlePreach;
 
             SYH_STORAGE.set({
                 [STORAGE_KEYS.DB]: currentDb,
                 [STORAGE_KEYS.OPTIONS]: newOptions,
-                [STORAGE_KEYS.STUDIO_ENABLED]: studioEnabledVal
+                [STORAGE_KEYS.STUDIO_ENABLED]: newOptions.studio_enabled
             }, () => {
                 this.showToast('✅ Налаштування успішно збережено!');
             });
@@ -110,44 +87,7 @@ class OptionsController {
             const tbody = document.getElementById('studioLogBody');
             if (!tbody) return;
 
-            tbody.innerHTML = '';
-            if (logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding: 12px; text-align: center; color: var(--text-muted);">Записи у лозі відсутні</td></tr>';
-                return;
-            }
-
-            logs.slice().reverse().forEach(entry => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid var(--border)';
-
-                const timeTd = document.createElement('td');
-                timeTd.style.padding = '6px 8px';
-                timeTd.textContent = entry.timestamp ? new Date(entry.timestamp).toLocaleString('uk-UA') : '—';
-
-                const chanTd = document.createElement('td');
-                chanTd.style.padding = '6px 8px';
-                chanTd.textContent = entry.channelLabel || entry.channelKey || '—';
-
-                const videoTd = document.createElement('td');
-                videoTd.style.padding = '6px 8px';
-                videoTd.textContent = entry.videoTitle || '—';
-
-                const autoTd = document.createElement('td');
-                autoTd.style.padding = '6px 8px';
-                autoTd.textContent = entry.autoDetectedSheet ? (entry.autoDetectedSheet) : 'Не визначено';
-
-                const assignedTd = document.createElement('td');
-                assignedTd.style.padding = '6px 8px';
-                assignedTd.style.fontWeight = 'bold';
-                assignedTd.textContent = entry.assignedSheet || '—';
-
-                tr.appendChild(timeTd);
-                tr.appendChild(chanTd);
-                tr.appendChild(videoTd);
-                tr.appendChild(autoTd);
-                tr.appendChild(assignedTd);
-                tbody.appendChild(tr);
-            });
+            renderStudioLogRows(tbody, logs);
         });
     }
 
@@ -159,17 +99,7 @@ class OptionsController {
                 return;
             }
 
-            const lines = logs.map(entry => {
-                const time = entry.timestamp ? new Date(entry.timestamp).toLocaleString('uk-UA') : '—';
-                const channel = entry.channelLabel || entry.channelKey || '—';
-                const auto = entry.autoDetectedSheet ? (entry.autoDetectedSheet) : 'Не визначено';
-                const assigned = entry.assignedSheet || '—';
-                return `[${time}] Канал: ${channel} | Відео: "${entry.videoTitle}" | Авто: ${auto} => Ручний вибір: ${assigned}`;
-            });
-
-            const textToCopy = `=== YouTube Studio Manual Override Log (${logs.length} записів) ===\n\n` + lines.join('\n');
-
-            const success = await CommentService.copyToClipboard(textToCopy);
+            const success = await CommentService.copyToClipboard(buildStudioLogReport(logs));
             if (success) {
                 this.showToast('📋 Лог корекцій YouTube Studio скопійовано!');
             } else {

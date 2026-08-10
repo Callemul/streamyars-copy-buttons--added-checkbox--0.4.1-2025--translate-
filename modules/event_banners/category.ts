@@ -5,7 +5,9 @@ import { resolveBannerContext } from './helpers';
 export function handleCreateBannersAction(bannerCreator: any): void {
     const text = prompt("Вставте список питань для створення банерів:", "");
     if (text && bannerCreator) {
-        bannerCreator.processAndCreateBanners(text);
+        Promise.resolve(bannerCreator.processAndCreateBanners(text)).catch((error: unknown) => {
+            console.error('[SYH] processAndCreateBanners failed', error);
+        });
     }
 }
 
