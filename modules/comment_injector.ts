@@ -6,6 +6,9 @@ import type {
     CommentPlatformAdapter
 } from './comment_platform_adapter';
 
+/** Таймери «спалаху» кнопки копіювання, щоб скасовувати попередній перед новим. */
+const copyFlashTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
 export class CommentInjector {
     private adapter: CommentPlatformAdapter;
     private caches: CommentStateCaches;
@@ -81,15 +84,28 @@ export class CommentInjector {
         const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);
         const success = await CommentService.copyToClipboard(formatted);
 
-        const origHtml = btn.innerHTML;
-        const origTitle = btn.title;
+        // Оригінальний вміст/заголовок захоплюємо ЛИШЕ один раз на цикл «спокою»,
+        // щоб повторний швидкий клік не зберіг стан спалаху (✓/❌) замість оригіналу
+        // (див. audit copy-button-stuck-flash-state).
+        if (btn.dataset.syhCopyOrigHtml === undefined) {
+            btn.dataset.syhCopyOrigHtml = btn.innerHTML;
+            btn.dataset.syhCopyOrigTitle = btn.title;
+        }
+
         btn.innerHTML = success ? '✓' : '❌';
         btn.classList.add('syh-copied-flash');
-        setTimeout(() => {
-            btn.innerHTML = origHtml;
-            btn.title = origTitle;
+
+        // Скасовуємо попередній таймер відновлення, щоб не лишати осиротілих таймерів.
+        const prev = copyFlashTimers.get(btn);
+        if (prev) clearTimeout(prev);
+        copyFlashTimers.set(btn, setTimeout(() => {
+            btn.innerHTML = btn.dataset.syhCopyOrigHtml ?? '📋';
+            btn.title = btn.dataset.syhCopyOrigTitle ?? '';
             btn.classList.remove('syh-copied-flash');
-        }, 1200);
+            delete btn.dataset.syhCopyOrigHtml;
+            delete btn.dataset.syhCopyOrigTitle;
+            copyFlashTimers.delete(btn);
+        }, 1200));
     }
 
     private async handleCheckboxChange(

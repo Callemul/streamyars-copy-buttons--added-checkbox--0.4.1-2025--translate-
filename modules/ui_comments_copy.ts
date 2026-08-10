@@ -27,6 +27,8 @@ const IDLE_ICON = '📋';
 const SUCCESS_ICON = '✅';
 const SUCCESS_ANIMATION_CLASS = 'syh-copied-anim';
 const SUCCESS_ICON_RESET_MS = 1800;
+/** Скасування попереднього таймера спалаху, щоб не лишати осиротілих таймерів. */
+const copyFlashTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 /** Ширина, яку кнопка «з'їдає» в шапці вкладки. */
 const TAB_PADDING_RIGHT = '28px';
 
@@ -111,10 +113,13 @@ export function flashCopyIcon(copyBtn: HTMLElement): void {
 
     iconSpan.textContent = SUCCESS_ICON;
     copyBtn.classList.add(SUCCESS_ANIMATION_CLASS);
-    setTimeout(() => {
+
+    const prev = copyFlashTimers.get(copyBtn);
+    if (prev) clearTimeout(prev);
+    copyFlashTimers.set(copyBtn, setTimeout(() => {
         iconSpan.textContent = IDLE_ICON;
         copyBtn.classList.remove(SUCCESS_ANIMATION_CLASS);
-    }, SUCCESS_ICON_RESET_MS);
+    }, SUCCESS_ICON_RESET_MS));
 }
 
 async function handleStarredCopyClick(copyBtn: HTMLElement, e: MouseEvent): Promise<void> {

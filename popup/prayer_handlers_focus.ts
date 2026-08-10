@@ -1,5 +1,6 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { readStoredPrayers } from './prayer_toolbar_actions';
+import { renderPrayers } from './prayer_render';
 import {
     AUTHOR_OLD_VALUE_ATTR,
     BLUR_BORDER,
@@ -57,7 +58,13 @@ function savePrayerTextEdit(el: HTMLElement): void {
     const id = el.getAttribute('data-id');
     const newText = readTrimmedText(el);
 
-    updateStoredPrayers(list => applyPrayerTextEdit(list, id, newText));
+    updateStoredPrayers(list => {
+        const changed = applyPrayerTextEdit(list, id, newText);
+        // Інлайн-правка змінює джерело істини (сховище), тож перерендер
+        // синхронізує DOM (зокрема data-raw-text контейнера для «📋 Копіювати»).
+        if (changed) renderPrayers(list);
+        return changed;
+    });
 }
 
 /** Зберігає перейменування автора в усіх його проханнях. */
@@ -68,7 +75,14 @@ function saveAuthorRename(el: HTMLElement): void {
     const newAuthor = readTrimmedText(el);
     if (!shouldRenameAuthor(oldAuthor, newAuthor)) return;
 
-    updateStoredPrayers(list => applyAuthorRename(list, oldAuthor as string, newAuthor));
+    updateStoredPrayers(list => {
+        const changed = applyAuthorRename(list, oldAuthor as string, newAuthor);
+        // Перерендер синхронізує DOM: data-author на кнопках видалення автора
+        // оновлюється під нове ім'я, тож подальше видалення працює коректно
+        // (див. audit stale-data-author-after-inline-rename).
+        if (changed) renderPrayers(list);
+        return changed;
+    });
 }
 
 export function bindPrayerFocusListeners(): void {

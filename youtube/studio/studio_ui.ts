@@ -2,6 +2,7 @@
 import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 import { UiFactory } from '../../modules/ui_factory';
+import { formatCategoryLabel } from './studio_header_badge_markup';
 
 export interface StudioCommentUIElements {
     copyBtn: HTMLButtonElement;
@@ -233,16 +234,7 @@ export function updateStudioCheckedClass(threadEl: HTMLElement, isChecked: boole
     }
 }
 
-/**
- * Formats specific words inside the category labels to make them bold.
- */
-function formatCategoryLabel(label: string): string {
-    if (label === 'Время перемен СШ') return 'Время перемен <b>СШ</b>';
-    if (label === 'Молчанов СШ') return 'Молчанов <b>СШ</b>';
-    if (label === 'Опарин проповеди') return '<b>Опарин</b> проповеди';
-    if (label === 'Молчанов проповеди') return '<b>Молчанов</b> проповеди';
-    if (label.includes('СШ')) return label.replace('СШ', '<b>СШ</b>');
-    return label;
-}
+// `formatCategoryLabel` імпортується з `studio_header_badge_markup` як єдине
+// джерело правди (SSOT) — усуває дублювання з іншим порядком/підсвічуванням.
 
 // Pure ESM module export

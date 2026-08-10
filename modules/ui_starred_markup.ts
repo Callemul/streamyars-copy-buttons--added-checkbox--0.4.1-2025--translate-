@@ -13,6 +13,8 @@
 //   - вкладка "other" завжди рендериться з style="display: none;";
 //   - між блоком пошуку та tablist є рядок із 16 пробілів.
 
+import { escapeAttr } from './escape_html';
+
 interface FilterTabSpec {
     /** Значення data-filter та суфікс id="syh-comment-filter-…". */
     key: string;
@@ -59,7 +61,7 @@ export function buildStarredControlsMarkup(activeFilter: string, searchQuery: st
     return `
             <div class="syh-starred-controls" style="margin-top: 10px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
                 <div class="syh-search-wrapper">
-                    <input type="text" id="syh-starred-search" value="${searchQuery}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                    <input type="text" id="syh-starred-search" value="${escapeAttr(searchQuery)}" placeholder="🔍 Пошук по імені або тексту..." aria-label="Пошук по імені або тексту" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
                     <button id="syh-clear-search-btn" class="syh-clear-search" style="display: ${searchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук коментарів">✕</button>
                     <button id="syh-scroll-to-active-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до коментаря на екрані" aria-label="Повернутися до коментаря на екрані">🎯</button>
                 </div>

@@ -9,6 +9,7 @@ const {
     buildStarredControlsMarkup,
     STARRED_EMPTY_STATE_MARKUP
 } = await import('../modules/ui_starred_markup.ts');
+const { escapeHtml, escapeAttr } = await import('../modules/escape_html.ts');
 
 /**
  * Юніт-тести чистого білдера розмітки, винесеного з `addStarredTabControls`
@@ -41,6 +42,24 @@ describe('ui_starred_markup — buildStarredControlsMarkup', () => {
         const html = buildStarredControlsMarkup('all', '');
         const order = [...html.matchAll(/data-filter="([a-z]+)"/g)].map(m => m[1]);
         assert.deepStrictEqual(order, FILTERS);
+    });
+
+    test('3b. екранує searchQuery у value інпута (захист від HTML-ін\'єкції / self-XSS)', () => {
+        const malicious = '" onfocus="alert(1)" x="';
+        const html = buildStarredControlsMarkup('all', malicious);
+        const host = document.createElement('div');
+        host.innerHTML = html;
+        const search = host.querySelector('#syh-starred-search');
+        // Лапка не вирвається з атрибуту: окремий onfocus НЕ зʼявляється,
+        // а введення зберігається як текст значення.
+        assert.equal(search.getAttribute('onfocus'), null, 'інʼєкція onfocus відсутня');
+        assert.equal(search.getAttribute('value'), malicious, 'value містить введення як текст');
+    });
+
+    test('3c. escapeAttr/escapeHtml нейтралізують < > & " \' (вектор <img onerror>)', () => {
+        const malicious = '<img src=x onerror=alert(1)>';
+        assert.equal(escapeHtml(malicious), '&lt;img src=x onerror=alert(1)&gt;');
+        assert.equal(escapeAttr('a"b'), 'a&quot;b');
     });
 
     test('4. рівно одна вкладка активна для кожного відомого фільтра', () => {

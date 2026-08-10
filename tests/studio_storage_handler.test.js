@@ -7,6 +7,7 @@ installChromeMock();
 
 const { StudioStorageController, createStorageChangeHandler } = await import('../youtube/studio/studio_storage_handler.ts');
 const { getSheetCollectedStorageKey } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage_keys.ts');
 const SHEET_IDS = (await import('../modules/sheets.ts')).SHEET_IDS;
 
 describe('studio_storage_handler — StudioStorageController (характеризація)', () => {
@@ -50,14 +51,13 @@ describe('studio_storage_handler — StudioStorageController (характери
         assert.strictEqual(ctrl.caches.collectedItems.length, 2);
     });
 
-    test('3. enabled читається з ключа syh:studio:enabled (поточна, зламана, реалізація)', async () => {
-        // УВАГА: це характеризує ПОТОЧНУ поведінку. Options пише в
-        // STORAGE_KEYS.STUDIO_ENABLED ('syh:core:studio_enabled'), а контролер
-        // читає з локального 'syh:studio:enabled' (див. audit). Якщо написати в
-        // правильний ключ — значення проігнорується і enabled лишиться true.
+    test('3. enabled читається з канонічного ключа STORAGE_KEYS.STUDIO_ENABLED (syh:core:studio_enabled)', async () => {
+        // Виправлено: контролер тепер читає той самий ключ, що й Options
+        // (див. audit studio-enabled-storage-key-mismatch). Значення в
+        // правильному ключі враховується.
         installChromeMock({
             storageData: {
-                'syh:studio:enabled': false,
+                [STORAGE_KEYS.STUDIO_ENABLED]: false,
                 [getSheetCollectedStorageKey(SHEET_IDS.VP_SS)]: []
             }
         });
@@ -131,7 +131,7 @@ describe('studio_storage_handler — StudioStorageController (характери
         const stateChange = mock.fn();
         ctrl.handleStateChange = stateChange;
 
-        ctrl.handleStorageChange({ 'syh:studio:enabled': { newValue: false } });
+        ctrl.handleStorageChange({ [STORAGE_KEYS.STUDIO_ENABLED]: { newValue: false } });
         assert.strictEqual(ctrl.enabled, false);
         assert.strictEqual(stateChange.mock.calls.length, 1);
     });

@@ -1,5 +1,6 @@
 // youtube/studio/studio_storage_handler.ts
 import { SYH_STORAGE } from '../../modules/storage';
+import { STORAGE_KEYS } from '../../modules/storage_keys';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 import { getAllSheetIds as getSheetIds } from '../../modules/sheets';
@@ -9,7 +10,7 @@ import type { SheetHeaderStats } from './studio_header_counters';
 import { buildCollectedAggregation } from './studio_aggregator';
 import { type StudioModuleCaches } from './studio_init';
 
-const STUDIO_ENABLED_KEY = 'syh:studio:enabled';
+const STUDIO_ENABLED_KEY = STORAGE_KEYS.STUDIO_ENABLED;
 
 type ChangeHandler = (controller: StudioStorageController, newValue: any) => void;
 

@@ -355,6 +355,28 @@ describe('prayer_handlers', () => {
             assert.ok(!readStored().some(p => p.author === 'John'));
         });
 
+        test('after rename, delete button reflects new author (старий data-author більше не заважає видаленню)', () => {
+            bindPrayerFocusListeners();
+            const el = document.querySelector('.editable-author');
+
+            el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            el.textContent = 'NewJohn';
+            el.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+
+            // renderPrayers, викликаний після перейменування, синхронно перебудовує
+            // перший блок автора з актуальним data-author (див. audit
+            // stale-data-author-after-inline-rename).
+            const delBtn = document.querySelector('.del-author-btn');
+            assert.equal(delBtn.getAttribute('data-author'), 'NewJohn',
+                'data-author синхронізовано зі сховищем після перейменування');
+
+            handleDeleteAuthorPrayers(delBtn);
+            assert.deepEqual(confirmMessages, ['Видалити всі прохання від @NewJohn?']);
+            const list = readStored();
+            assert.equal(list.length, 1);
+            assert.equal(list[0].author, 'Jane');
+        });
+
         test('skips the rename when the author name did not change', () => {
             bindPrayerFocusListeners();
             const el = document.querySelector('.editable-author');

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test, { describe, beforeEach } from 'node:test';
+import test, { describe, beforeEach, mock } from 'node:test';
 
 import { installChromeMock } from './setup/chrome_mock.ts';
 
@@ -437,6 +437,35 @@ describe('comment_injector — копіювання, чекбокс і конт�
         const h = createHarness();
         await h.fire('copy:click');
         assert.equal(h.buttons.copyBtn.innerHTML, '❌');
+    });
+
+    test('38. швидкий повторний клік не лишає кнопку на ✓ (rapid-click)', async (t) => {
+        t.mock.timers.enable({ apis: ['setTimeout'] });
+        CommentService.copyToClipboard = async () => true;
+        const h = createHarness();
+        h.buttons.copyBtn.innerHTML = '📋';
+        await h.fire('copy:click');
+        await h.fire('copy:click');
+        // Оригінал захоплено лише один раз — спалах (✓) не стає «оригіналом».
+        assert.equal(h.buttons.copyBtn.dataset.syhCopyOrigHtml, '📋');
+        t.mock.timers.tick(1300);
+        assert.equal(h.buttons.copyBtn.innerHTML, '📋', 'кнопка повернула оригінал, не лишилась на ✓');
+        t.mock.timers.reset();
+    });
+
+    test('39. другий клік → ❌, але після таймерів — оригінал (не брешивий ✓)', async (t) => {
+        t.mock.timers.enable({ apis: ['setTimeout'] });
+        CommentService.copyToClipboard = async () => true;
+        const h = createHarness();
+        h.buttons.copyBtn.innerHTML = '📋';
+        await h.fire('copy:click');
+        assert.equal(h.buttons.copyBtn.innerHTML, '✓');
+        CommentService.copyToClipboard = async () => false;
+        await h.fire('copy:click');
+        assert.equal(h.buttons.copyBtn.innerHTML, '❌');
+        t.mock.timers.tick(1300);
+        assert.equal(h.buttons.copyBtn.innerHTML, '📋', 'після спалаху показано справжній оригінал');
+        t.mock.timers.reset();
     });
 
     test('35. копіювання без контексту нічого не робить', async () => {

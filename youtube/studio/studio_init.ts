@@ -1,4 +1,6 @@
 import { SYH_STORAGE, getSheetCollectedStorageKey } from '../../modules/storage';
+import { STORAGE_KEYS } from '../../modules/storage_keys';
+import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
 import { SYH_CONFIG } from '../../modules/config';
 import { cleanupStudioState, STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
@@ -44,15 +46,15 @@ async function loadStorageData(
     const sheetIds = getAllSheetIds();
     const collectedKeys = sheetIds.map((sId) => getSheetCollectedStorageKey(sId));
     const keysToFetch = [
-        'syh:studio:enabled',
-        'syh:studio:videoMap',
+        STORAGE_KEYS.STUDIO_ENABLED,
+        VIDEO_MAP_STORAGE_KEY,
         STUDIO_BUTTON_STATE_KEY,
         STUDIO_CHECKBOX_STATE_KEY,
         ...collectedKeys
     ];
 
     const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToFetch);
-    caches.videoSheetMap = res['syh:studio:videoMap'] || {};
+    caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
     caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
     caches.checkboxStates = res[STUDIO_CHECKBOX_STATE_KEY] || {};
 

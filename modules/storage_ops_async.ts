@@ -80,13 +80,49 @@ export function storageRemoveAsync(
     });
 }
 
+/**
+ * Серіалізація read-modify-write для `updateAsync` на рівні набору ключів.
+ * Усуває race condition (втрачене оновлення) та write-amplification у межах
+ * одного JS-контексту. Див. audit storage-updateasync-lost-update-race.
+ */
+const updateQueues = new Map<string, Promise<unknown>>();
+
+function queueKey(keys: StorageKeyValues | StorageKeyValues[]): string {
+    const list = Array.isArray(keys) ? [...keys] : [keys];
+    return list
+        .map(k => String(k))
+        .sort()
+        .join('|');
+}
+
 export async function storageUpdateAsync<T = Record<string, any>>(
     this: StorageAdapter,
     keys: StorageKeyValues | StorageKeyValues[],
     updateFn: (current: T) => T | Promise<T>
 ): Promise<T> {
-    const currentData = await this.getAsync<T>(keys);
-    const updatedData = await updateFn(currentData);
-    await this.setAsync(updatedData as Record<string, any>);
-    return updatedData;
+    const lane = queueKey(keys);
+    const previous = updateQueues.get(lane) ?? Promise.resolve();
+
+    const run = previous.then(async () => {
+        const currentData = await this.getAsync<T>(keys);
+        const updatedData = await updateFn(currentData);
+
+        // Пишемо лише ті ключі, значення яких справді змінилося, щоб не
+        // затерти сусідні ключі паралельних записів (write-amplification).
+        const changed: Record<string, any> = {};
+        for (const [k, v] of Object.entries(updatedData as Record<string, any>)) {
+            if ((currentData as Record<string, any>)[k] !== v) {
+                changed[k] = v;
+            }
+        }
+        if (Object.keys(changed).length > 0) {
+            await this.setAsync(changed);
+        }
+        return updatedData;
+    });
+
+    // Черга не має «залипати» через помилку одного оновлення: зберігаємо
+    // поглинутий проміс, але повертаємо оригінальний (з реджектом) викликачу.
+    updateQueues.set(lane, run.catch(() => undefined));
+    return run as Promise<T>;
 }

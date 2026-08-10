@@ -95,6 +95,14 @@ describe('ui_comments — addStarredTabControls (golden markup)', () => {
         assert.strictEqual(hdr.querySelector('#syh-starred-search').getAttribute('value'), 'текст пошуку');
     });
 
+    test('8b. пошуковий запит із лапками не ін\'єктує атрибути (XSS)', () => {
+        const malicious = '" onfocus="alert(1)" x="';
+        const hdr = renderControls('all', malicious);
+        const input = hdr.querySelector('#syh-starred-search');
+        assert.equal(input.getAttribute('onfocus'), null, 'інʼєкція onfocus відсутня');
+        assert.equal(input.getAttribute('value'), malicious, 'value містить введення як текст');
+    });
+
     test('9. рендеряться рівно 4 вкладки фільтрів у фіксованому порядку', () => {
         const hdr = renderControls('all', '');
         const filters = Array.from(hdr.querySelectorAll('.syh-filter-btn')).map(b => b.dataset.filter);

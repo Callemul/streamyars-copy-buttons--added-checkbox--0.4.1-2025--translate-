@@ -52,7 +52,7 @@ export interface StorageSchema {
     [STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP]?: Record<string, string>;
     [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]?: Record<string, any>;
     [STORAGE_KEYS.POPUP_ACTIVE_TAB]?: string;
-    [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]?: Record<string, string>;
+    [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]?: string;
     [STORAGE_KEYS.POPUP_SCROLL_POSITIONS]?: Record<string, number>;
     [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]?: Record<string, { width?: number; height?: number }>;
     [STORAGE_KEYS.INSTALLED_AT]?: number;

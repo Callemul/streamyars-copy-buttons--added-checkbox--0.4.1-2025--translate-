@@ -317,3 +317,74 @@ describe('SYH_STORAGE — динамічний this-диспатч (контра
         assert.deepStrictEqual(seen, { 'syh:test:x': 20 });
     });
 });
+
+describe('updateAsync — атомарність (race condition)', () => {
+    function mockStore(store) {
+        global.chrome.storage.local.get = (keys, cb) => {
+            const res = {};
+            const list = Array.isArray(keys) ? keys : [keys];
+            for (const k of list) if (k in store) res[k] = store[k];
+            cb(res);
+        };
+        global.chrome.storage.local.set = (items, cb) => { Object.assign(store, items); cb(); };
+    }
+
+    test('100 паралельних інкрементів одного ключа дають рівно +100 (без втрати оновлень)', async () => {
+        const store = { 'syh:race:counter': 5 };
+        mockStore(store);
+
+        const promises = [];
+        for (let i = 0; i < 100; i++) {
+            promises.push(SYH_STORAGE.updateAsync('syh:race:counter', (cur) => ({
+                'syh:race:counter': (cur['syh:race:counter'] || 0) + 1
+            })));
+        }
+        await Promise.all(promises);
+
+        assert.strictEqual(store['syh:race:counter'], 105);
+    });
+
+    test('updateAsync([a,b]) із зміною лише a не перезаписує b (без write-amplification)', async () => {
+        const store = { a: 1, b: 2 };
+        let written = null;
+        global.chrome.storage.local.get = (keys, cb) => {
+            const res = {};
+            for (const k of (Array.isArray(keys) ? keys : [keys])) if (k in store) res[k] = store[k];
+            cb(res);
+        };
+        global.chrome.storage.local.set = (items, cb) => { written = items; Object.assign(store, items); cb(); };
+
+        await SYH_STORAGE.updateAsync(['a', 'b'], (cur) => ({ a: cur.a + 1, b: cur.b }));
+
+        assert.deepStrictEqual(written, { a: 2 }, 'записується лише змінений ключ');
+        assert.strictEqual(store.a, 2);
+        assert.strictEqual(store.b, 2, 'сусідній ключ не затерто');
+    });
+
+    test('виняток у updateFn реджектить проміс і не блокує наступні виклики', async () => {
+        const store = { k: 1 };
+        mockStore(store);
+
+        await assert.rejects(
+            SYH_STORAGE.updateAsync('k', () => { throw new Error('boom'); }),
+            /boom/
+        );
+
+        const updated = await SYH_STORAGE.updateAsync('k', (cur) => ({ k: cur.k + 10 }));
+        assert.strictEqual(updated.k, 11);
+        assert.strictEqual(store.k, 11, 'черга не «залипла» після помилки');
+    });
+
+    test('два updateAsync на різні ключі обидва завершуються коректно', async () => {
+        const store = { x: 1, y: 1 };
+        mockStore(store);
+
+        await Promise.all([
+            SYH_STORAGE.updateAsync('x', (cur) => ({ x: cur.x + 1 })),
+            SYH_STORAGE.updateAsync('y', (cur) => ({ y: cur.y + 1 }))
+        ]);
+
+        assert.strictEqual(store.x, 2);
+        assert.strictEqual(store.y, 2);
+    });
+});

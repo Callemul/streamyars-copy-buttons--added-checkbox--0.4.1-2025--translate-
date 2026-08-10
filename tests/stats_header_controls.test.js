@@ -421,7 +421,7 @@ describe('stats header controls — попередження про невідп
         assert.equal(tab.dataset.originalTitle, undefined);
     });
 
-    test('27. порожній бренд лише скидає стилі, але НЕ відновлює title (історичний квірк)', () => {
+    test('27. порожній бренд скидає стилі І відновлює title (баг виправлено)', () => {
         const tab = q('#broadcast-aside-tab-assets');
         tab.dataset.originalTitle = 'Media assets';
         tab.setAttribute('title', WARNING_TITLE);
@@ -431,8 +431,8 @@ describe('stats header controls — попередження про невідп
         runHeaderInjection();
 
         assert.equal(tab.style.cssText, '');
-        assert.equal(tab.getAttribute('title'), WARNING_TITLE, 'title навмисно НЕ відновлюється');
-        assert.equal(tab.dataset.originalTitle, 'Media assets');
+        assert.equal(tab.getAttribute('title'), 'Media assets', 'title відновлено разом зі скиданням стилю');
+        assert.equal(tab.dataset.originalTitle, undefined, 'originalTitle очищено після відновлення');
     });
 
     test('28. fallback-селектор [id*="tab-assets"] теж підхоплюється', () => {

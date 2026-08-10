@@ -3,6 +3,8 @@
  * Відображення стану "порожньо" для списків коментарів та банерів
  */
 
+import { escapeHtml } from './escape_html';
+
 export interface EmptyStateCategorySuggestion {
     key: string;
     label: string;
@@ -59,7 +61,7 @@ function setupSuggestionClickHandlers(config: SharedEmptyStateConfig): void {
 function renderEmptyStateWithSearch(config: SharedEmptyStateConfig, emptyState: HTMLElement, emptyQuery: Element, emptySuggestion: HTMLElement | null): void {
     const suggestionLinks = buildSuggestionLinks(config);
     
-    const messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${config.searchQuery}"</b><br><br>
+    const messageHTML = `Нічого не знайдено за запитом: <b style="color: #e74c3c;">"${escapeHtml(config.searchQuery)}"</b><br><br>
     <a href="#" id="${config.clearLinkId}" style="color: #005DF7; text-decoration: none; font-weight: bold; background: #e3f2fd; padding: 5px 10px; border-radius: 4px;">Скинути пошук ✕</a>`;
 
     if (suggestionLinks.length > 0) {

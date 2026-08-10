@@ -1,7 +1,7 @@
 # [2026-08-09] — KILO — Аудит: латентний баг «розбіжність ключа studio_enabled між Options і Studio»
 
 > **Контекст виявлення:** знайдено під час рефакторингу CRAP-хотспотів за звітом Fallow (етап 3, модулі `youtube/studio/storage_handler`, `studio_init`).
-> **Статус:** ⛔ НЕ ВИПРАВЛЕНО. Рефакторинг зберігає поведінку 1-в-1. Виправлення потребує окремого погодження.
+> **Статус:** ✅ ВИПРАВЛЕНО (2026-08-10). `studio_storage_handler.ts` та `studio_init.ts` читають `STUDIO_ENABLED` із `STORAGE_KEYS` (канонічний `syh:core:studio_enabled`), а `videoMap` — через `VIDEO_MAP_STORAGE_KEY`. Options і Studio тепер узгоджені.
 
 ---
 

@@ -105,8 +105,10 @@ function restoreMediaTabTitle(mediaTabBtn: HTMLElement): void {
 /**
  * Підсвічує вкладку медіа червоним, якщо йде «Суботня школа», а бренд — інший.
  *
- * ⚠️ Історичний квірк збережено 1-в-1: коли бренд НЕ визначено (`''`), стилі
- * скидаються, але початковий `title` НЕ відновлюється.
+ * Скидання стилю та відновлення початкового `title` атомарні: виконуються в одній
+ * гілці «не попередження», незалежно від того, чи визначено бренд. Це виправляє
+ * латентний баг, коли порожній `brandName` скидав стиль, але лишав попереджувальний
+ * `title` (див. audit stats-mediatab-title-stuck).
  */
 export function checkSabbathSchoolBrandMismatch(brandName: string, isSabbathSchool: boolean): void {
     const mediaTabBtn = findMediaTabButton();
@@ -118,5 +120,5 @@ export function checkSabbathSchoolBrandMismatch(brandName: string, isSabbathScho
     }
 
     mediaTabBtn.style.cssText = '';
-    if (brandName) restoreMediaTabTitle(mediaTabBtn);
+    restoreMediaTabTitle(mediaTabBtn);
 }

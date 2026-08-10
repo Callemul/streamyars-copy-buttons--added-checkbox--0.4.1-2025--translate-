@@ -2,7 +2,7 @@
 
 > **Контекст виявлення:** знайдено під час рефакторингу CRAP-хотспотів за звітом Fallow (етап 3, `modules/ui_starred_controls.ts`, модуль `addStarredTabControls`). Вынос размітки в чисту функцію `buildStarredControlsMarkup` (новий `modules/ui_starred_markup.ts`) дозволив легко ємпірично підтвердити уразливість.
 
-> **Статус:** ⛔ НЕ ВИПРАВЛЕНО. Рефакторинг зберігає поведінку 1-в-1. Виправлення потребує окремого погодження (це UX/функціональна зміна, а не чистий рефакторинг).
+> **Статус:** ✅ ВИПРАВЛЕНО (2026-08-10). Додано `modules/escape_html.ts` (`escapeHtml`/`escapeAttr`); `buildStarredControlsMarkup` екранує `value`, `renderSharedEmptyState` екранує `searchQuery`. Self-XSS усунуто. Додано регрес-тести в `tests/ui_starred_markup.test.js` та `tests/ui_comments_starred_controls.test.js`.
 
 ---
 
