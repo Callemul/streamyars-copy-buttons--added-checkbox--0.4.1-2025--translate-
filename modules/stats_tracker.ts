@@ -3,8 +3,8 @@ import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
 import { SYH_UTILS } from './utils';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
-import { UiFactory } from './ui_factory';
 import { getOrCreateTodaySession, searchBrandNameInObject } from './stats_session';
+import { injectHeaderButtons, isHeaderControlsMounted } from './stats_header_controls';
 
 // Реекспорт чистих хелперів для зворотної сумісності публічного API.
 export { getOrCreateTodaySession, searchBrandNameInObject };
@@ -56,136 +56,10 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     setupObservers: function(): void {
         const self = this;
         self.lastKnownBrand = "";
-        
-        function detectBrandAndSabbathSchool(): { brandName: string; isSabbathSchool: boolean } {
-            const brandNode = document.querySelector('[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1, [aria-controls="brand-select-menu"]');
-            let brandName = "";
 
-            if (brandNode) {
-                const rawText = brandNode.textContent ? brandNode.textContent.replace(/chevron-down/gi, "").trim() : "";
-                if (rawText && rawText !== "Share ▾" && rawText !== "Return to dashboard") {
-                    brandName = rawText;
-                    self.lastKnownBrand = rawText;
-                }
-            } else {
-                brandName = self.getBrandFromLocalStorage() || self.lastKnownBrand;
-                if (brandName) {
-                    self.lastKnownBrand = brandName;
-                }
-            }
+        const injectControls = (): void => injectHeaderButtons(self);
 
-            const titleNode = document.querySelector('[data-testid="header-title-wrap"] p') as HTMLElement | null;
-            const titleText = titleNode ? titleNode.innerText.toLowerCase() : "";
-
-            const isSabbathSchool = (titleText.includes("суббот") || titleText.includes("субот")) && 
-                                    titleText.includes("молчанов") && 
-                                    titleText.includes("опар");
-
-            return { brandName, isSabbathSchool };
-        }
-
-        function createHeaderControlContainer(): HTMLElement {
-            const btnContainer = document.createElement('div');
-            btnContainer.id = 'syh-header-controls';
-            btnContainer.style.cssText = 'display: flex; gap: 8px; margin: 0 15px; flex-shrink: 0; z-index: 100; align-items: center;';
-
-            const btnQ = UiFactory.createButton({
-                action: 'phase-questions',
-                icon: '❓ Старт: Питання',
-                title: 'Натисни, коли починається блок питань',
-                onClick: () => self.markPhase('questions', btnQ)
-            });
-            btnQ.style.cssText = 'background: #f39c12; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-
-            const btnP = UiFactory.createButton({
-                action: 'phase-prayers',
-                icon: '🙏 Старт: Молитви',
-                title: 'Натисни, коли починається молитовний блок',
-                onClick: () => self.markPhase('prayers', btnP)
-            });
-            btnP.style.cssText = 'background: #005DF7; color: white; border: none; border-radius: 4px; padding: 0 10px; cursor: pointer; font-weight: bold; font-size: 12px; height: 28px; transition: 0.2s;';
-
-            const btnAnalytics = document.createElement('button');
-            btnAnalytics.id = 'syh-analytics-btn';
-            btnAnalytics.innerText = '📈 Аналітика';
-            btnAnalytics.setAttribute('aria-label', 'Відкрити аналітику');
-            btnAnalytics.style.cssText = 'background: #28a745; color: white; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; font-weight: bold; font-size: 13px; height: 28px; margin-left: 10px;';
-            btnAnalytics.onclick = () => self.showAnalyticsModal();
-
-            const btnInfo = document.createElement('button');
-            btnInfo.id = 'syh-info-btn';
-            btnInfo.innerHTML = 'ⓘ';
-            btnInfo.title = 'Оновлення та Інструкції';
-            btnInfo.setAttribute('aria-label', 'Відкрити довідку та оновлення');
-            btnInfo.style.cssText = 'background: #4F5461; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: bold; font-size: 15px; margin-left: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;';
-            btnInfo.onmouseover = () => btnInfo.style.background = '#636979';
-            btnInfo.onmouseout = () => btnInfo.style.background = '#4F5461';
-            btnInfo.onclick = () => {
-                const globalModal = (window as any).SYH_INFO_MODAL;
-                if (globalModal && typeof globalModal.showModal === 'function') {
-                    globalModal.showModal();
-                } else {
-                    console.warn("[SYH] Модуль info_modal недоступний.");
-                }
-            };
-
-            btnContainer.appendChild(btnQ);
-            btnContainer.appendChild(btnP);
-            btnContainer.appendChild(btnAnalytics);
-            btnContainer.appendChild(btnInfo);
-
-            self.restoreButtonStates(btnQ, btnP);
-            return btnContainer;
-        }
-
-        function checkSabbathSchoolBrandMismatch(brandName: string, isSabbathSchool: boolean): void {
-            const mediaTabBtn = (document.getElementById('broadcast-aside-tab-assets') || document.querySelector('[id*="tab-assets"]')) as HTMLElement | null;
-            if (!mediaTabBtn) return;
-
-            if (brandName) {
-                const isBrandCorrect = brandName.toLowerCase().includes("суббот") || 
-                                       brandName.toLowerCase().includes("субот");
-
-                if (isSabbathSchool && !isBrandCorrect) {
-                    if (!mediaTabBtn.dataset.originalTitle) {
-                        mediaTabBtn.dataset.originalTitle = mediaTabBtn.getAttribute('title') || mediaTabBtn.getAttribute('aria-label') || "Media assets";
-                    }
-                    mediaTabBtn.setAttribute('title', '⚠️ ПОМИЛКА: Папка медіа має бути "Субботняя школа"!');
-                    mediaTabBtn.style.cssText = 'background: #e74c3c !important; color: white !important; border: 1px solid #ff4757 !important; animation: syhActivePulse 1.5s infinite alternate !important;';
-                } else {
-                    mediaTabBtn.style.cssText = '';
-                    if (mediaTabBtn.dataset.originalTitle) {
-                        mediaTabBtn.setAttribute('title', mediaTabBtn.dataset.originalTitle);
-                        delete mediaTabBtn.dataset.originalTitle;
-                    }
-                }
-            } else {
-                mediaTabBtn.style.cssText = '';
-            }
-        }
-
-        function injectHeaderButtons(): void {
-            const headerCenter = document.querySelector('[data-testid="header-center"]') as HTMLElement | null;
-            const statusWrap = document.querySelector('[data-testid="header-status-wrap"]');
-            
-            if (headerCenter && statusWrap) {
-                const { brandName, isSabbathSchool } = detectBrandAndSabbathSchool();
-
-                let btnContainer = document.getElementById('syh-header-controls');
-                if (!btnContainer) {
-                    headerCenter.style.display = 'flex';
-                    headerCenter.style.alignItems = 'center';
-                    headerCenter.style.flexDirection = 'row';
-
-                    btnContainer = createHeaderControlContainer();
-                    headerCenter.insertBefore(btnContainer, statusWrap);
-                }
-
-                checkSabbathSchoolBrandMismatch(brandName, isSabbathSchool);
-            }
-        }
-
-        setTimeout(injectHeaderButtons, 1000); 
+        setTimeout(injectControls, 1000);
 
         if (self.observer) {
             self.observer.disconnect();
@@ -195,8 +69,8 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
             if (self.pendingRAF !== null) return;
             self.pendingRAF = requestAnimationFrame(() => {
                 self.pendingRAF = null;
-                if (!document.getElementById('syh-header-controls')) {
-                    injectHeaderButtons();
+                if (!isHeaderControlsMounted()) {
+                    injectControls();
                 }
             });
         });

@@ -1,113 +1,90 @@
 // popup/popup_ui_state_restorer.ts
 // UI state restoration (tabs, subtabs, textarea sizes, translit, scroll)
+//
+// Файл свідомо тонкий: чисті правила живуть у `popup_ui_state_rules.ts`,
+// точкові DOM-записи — у `popup_ui_state_appliers.ts`, а перемикання вкладок —
+// у спільному `popup_dom_utils.restoreActiveTabState` (раніше ця логіка була
+// продубльована тут двічі — для вкладок і для підвкладок).
 
 import { STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { db } from './popup_storage';
-import { $ } from './popup_dom_utils';
+import { restoreActiveTabState } from './popup_dom_utils';
+import { readStoredValue, buildScrollTargetIds } from './popup_ui_state_rules';
+import {
+    applyStoredElementSizes,
+    applyScrollTop,
+    applyInputValue,
+    type StoredElementSize
+} from './popup_ui_state_appliers';
 
 const SHEET_IDS = getAllSheetIds();
+const SCROLL_TARGET_IDS = buildScrollTargetIds(SHEET_IDS);
+
+/** Затримка перед відновленням скролу: дає розмітці домалюватися. */
+const SCROLL_RESTORE_DELAY_MS = 100;
 
 export function restoreDbState(result: Record<string, any>): void {
     if (result[STORAGE_KEYS.DB]) {
         Object.assign(db, result[STORAGE_KEYS.DB]);
-        const sschoolName = $(`sschoolName`) as HTMLInputElement | null;
-        if (db.newTitleSS && sschoolName) sschoolName.value = db.newTitleSS as string;
-        const preachName = $(`preachNameInput`) as HTMLInputElement | null;
-        if (db.newTitlePreach && preachName) preachName.value = db.newTitlePreach as string;
+        applyInputValue('sschoolName', db.newTitleSS as string | undefined);
+        applyInputValue('preachNameInput', db.newTitlePreach as string | undefined);
     }
 }
 
 export function restoreActiveTabUI(result: Record<string, any>): void {
-    const activeTabVal = result[STORAGE_KEYS.POPUP_ACTIVE_TAB] ?? result.tg_active_tab;
-    if (activeTabVal) {
-        document.querySelectorAll('.tab-link').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        const activeTabLink = document.querySelector<HTMLButtonElement>(`.tab-link[data-tab="${activeTabVal}"]`);
-        if (activeTabLink) {
-            activeTabLink.classList.add('active');
-            activeTabLink.setAttribute('aria-selected', 'true');
-        }
-        const activeTabContent = document.getElementById(activeTabVal);
-        if (activeTabContent) activeTabContent.classList.add('active');
-    }
+    const activeTabVal = readStoredValue<string>(result, STORAGE_KEYS.POPUP_ACTIVE_TAB, 'tg_active_tab');
+    if (!activeTabVal) return;
+
+    restoreActiveTabState({
+        tabSelector: '.tab-link',
+        contentSelector: '.tab-content',
+        dataAttr: 'data-tab',
+        activeId: activeTabVal
+    });
 }
 
 export function restoreActiveSubtabUI(result: Record<string, any>): void {
-    const activeSubtabVal = result[STORAGE_KEYS.POPUP_ACTIVE_SUBTAB] ?? result.tg_active_subtab;
-    if (activeSubtabVal && SHEET_IDS.includes(activeSubtabVal)) {
-        document.querySelectorAll('.subtab-button').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.sheet-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        const activeSubtab = document.querySelector<HTMLButtonElement>(`.subtab-button[data-sheet="${activeSubtabVal}"]`);
-        if (activeSubtab) {
-            activeSubtab.classList.add('active');
-            activeSubtab.setAttribute('aria-selected', 'true');
-        }
-        const activeSheet = document.getElementById(`sheet-content-${activeSubtabVal}`);
-        if (activeSheet) activeSheet.classList.add('active');
-    }
+    const activeSubtabVal = readStoredValue<string>(result, STORAGE_KEYS.POPUP_ACTIVE_SUBTAB, 'tg_active_subtab');
+    if (!activeSubtabVal || !SHEET_IDS.includes(activeSubtabVal)) return;
+
+    restoreActiveTabState({
+        tabSelector: '.subtab-button',
+        contentSelector: '.sheet-content',
+        dataAttr: 'data-sheet',
+        activeId: activeSubtabVal,
+        buildContentId: (sId) => `sheet-content-${sId}`
+    });
 }
 
 export function restoreTextareaSizesUI(result: Record<string, any>): void {
-    const textareaSizes = result[STORAGE_KEYS.POPUP_TEXTAREA_SIZES] ?? result.tg_textarea_sizes;
-    if (textareaSizes) {
-        for (const id in textareaSizes) {
-            const el = document.getElementById(id);
-            if (el && el instanceof HTMLElement) {
-                if (textareaSizes[id].width) el.style.width = textareaSizes[id].width;
-                if (textareaSizes[id].height) el.style.height = textareaSizes[id].height;
-            }
-        }
-    }
+    const textareaSizes = readStoredValue<Record<string, StoredElementSize>>(
+        result, STORAGE_KEYS.POPUP_TEXTAREA_SIZES, 'tg_textarea_sizes'
+    );
+    if (!textareaSizes) return;
+
+    applyStoredElementSizes(textareaSizes);
 }
 
 export function restoreTranslitStateUI(result: Record<string, any>): void {
-    const translitOldVal = result[STORAGE_KEYS.POPUP_TRANSLIT_OLD] ?? result.tg_translit_old;
-    if (translitOldVal) {
-        const el = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
-        if (el) el.value = translitOldVal;
-    }
-
-    const translitNewVal = result[STORAGE_KEYS.POPUP_TRANSLIT_NEW] ?? result.tg_translit_new;
-    if (translitNewVal) {
-        const el = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
-        if (el) el.value = translitNewVal;
-    }
+    applyInputValue(
+        'textArea1_oldText',
+        readStoredValue<string>(result, STORAGE_KEYS.POPUP_TRANSLIT_OLD, 'tg_translit_old')
+    );
+    applyInputValue(
+        'textArea2_generatedRuText',
+        readStoredValue<string>(result, STORAGE_KEYS.POPUP_TRANSLIT_NEW, 'tg_translit_new')
+    );
 }
 
 export function restoreScrollPositionsUI(result: Record<string, any>): void {
-    const scrollPositions = result[STORAGE_KEYS.POPUP_SCROLL_POSITIONS] ?? result.tg_scroll_positions;
-    if (scrollPositions) {
-        const scrolls = scrollPositions;
-        setTimeout(() => {
-            if (scrolls.window !== undefined) window.scrollTo(0, scrolls.window);
-            const prayersResultDiv = $(`prayersResultDiv`) as HTMLElement | null;
-            if (prayersResultDiv) prayersResultDiv.scrollTop = scrolls.prayersResultDiv || 0;
-            const ta1 = $(`textArea1_oldText`) as HTMLTextAreaElement | null;
-            if (ta1) ta1.scrollTop = scrolls.textArea1_oldText || 0;
-            const ta2 = $(`textArea2_generatedRuText`) as HTMLTextAreaElement | null;
-            if (ta2) ta2.scrollTop = scrolls.textArea2_generatedRuText || 0;
+    const scrolls = readStoredValue<Record<string, number>>(
+        result, STORAGE_KEYS.POPUP_SCROLL_POSITIONS, 'tg_scroll_positions'
+    );
+    if (!scrolls) return;
 
-            SHEET_IDS.forEach(sId => {
-                const fr = $(`finalResultDiv__${sId}`) as HTMLElement | null;
-                if (fr) fr.scrollTop = scrolls[`finalResultDiv__${sId}`] || 0;
-                const dl = $(`deletedLog__${sId}`) as HTMLElement | null;
-                if (dl) dl.scrollTop = scrolls[`deletedLog__${sId}`] || 0;
-                const ol = $(`oldList__${sId}`) as HTMLElement | null;
-                if (ol) ol.scrollTop = scrolls[`oldList__${sId}`] || 0;
-                const nt = $(`newTelegram__${sId}`) as HTMLElement | null;
-                if (nt) nt.scrollTop = scrolls[`newTelegram__${sId}`] || 0;
-            });
-        }, 100);
-    }
+    setTimeout(() => {
+        if (scrolls.window !== undefined) window.scrollTo(0, scrolls.window);
+        SCROLL_TARGET_IDS.forEach(id => applyScrollTop(id, scrolls[id]));
+    }, SCROLL_RESTORE_DELAY_MS);
 }
