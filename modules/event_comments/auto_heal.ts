@@ -7,9 +7,12 @@
 //
 // Тут лишився лише життєвий цикл сканера: guard на живий runtime розширення,
 // реєстрація в `SYH_DOM_OBSERVER` та батчинг проходів через один кадр
-// анімації. Поведінка збережена 1-в-1
-// (`tests/event_comments_auto_heal.test.js`,
+// анімації (`tests/event_comments_auto_heal.test.js`,
 //  `tests/event_comments_auto_heal_scanner.test.js`).
+//
+// `runAutoHeal` лишається синхронним (його викликають і з rAF-колбека, і
+// напряму з `bindAutoHealScanner`), тож асинхронний прохід «привиди»
+// запускається без очікування, але з обов'язковим `.catch()`.
 
 import type { SyhEventComments } from './types';
 import { resolveSelectorString } from '../config';
@@ -38,8 +41,16 @@ export function runAutoHeal(self: SyhEventComments): void {
         return;
     }
 
+    // Порядок важливий: cover-кнопки виставляють чекбокси, і лише потім
+    // прохід «привиди» читає підсумковий стан DOM.
     processCoverButtons(self);
-    processGhostComments(self);
+
+    // Прохід «привиди» асинхронний (чекає на storage). Тут його свідомо не
+    // очікуємо — але й не лишаємо «плаваючим»: будь-яке відхилення гаситься
+    // логом, щоб не було `unhandledrejection` у content script.
+    void processGhostComments(self).catch(err =>
+        console.warn('[SYH] Auto-Heal: прохід «привиди» завершився помилкою:', err)
+    );
 }
 
 /**

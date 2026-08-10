@@ -8,12 +8,15 @@
 // файла на `popup_sheet_log_restorer.ts` + `popup_sheet_field_restorer.ts`.
 //
 // Навмисно зафіксовані «дивацтва» чинної реалізації (поведінка 1-в-1):
-//   - `count === 0` у видимому лозі НЕ перезаписує лічильник (лишається старий текст);
-//   - `rawCount` рахується через `Number()`, тож рядок "7" стає числом 7,
-//     а сміття ("abc") стає NaN і не проходить `count > 0`;
+//   - `rawCount` рахується через `Number()`, тож рядок "7" стає числом 7;
 //   - лічильник рядків береться з DOM ПІСЛЯ підстановки html;
 //   - для «чистого» лога віднімається рядок заголовка таблиці (`tr` - 1);
 //   - `dividerPos` має «легасі»-фолбек, ідентичний канонічному ключу.
+//
+// Лічильник журналу після виправлення
+// (`audit_2026-08-10_KILO_sheet-log-counter-lost-on-restore.md`):
+//   - «(N)» пишеться ЗАВЖДИ, включно з «(0)» — як у живому рендері;
+//   - збережений `0`/`NaN`/відсутність значення → фолбек на підрахунок із DOM.
 
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
@@ -49,6 +52,7 @@ installChromeMock({
 const { POPUP_SHEET_KEYS } = await import('../modules/storage.ts');
 const { renderSheetTemplates } = await import('../popup/popup_sheet_renderer.ts');
 const { restoreSingleSheetState } = await import('../popup/popup_sheet_state_restorer.ts');
+const { renderTelegramDeletedLog } = await import('../popup/popup_telegram_renderers.ts');
 
 const SID = 'vp_ss';
 
@@ -237,26 +241,25 @@ describe('popup_sheet_state_restorer — restoreSingleSheetState (характе
             assert.equal($id(`deletedLogCount__${SID}`).textContent, '(3)');
         });
 
-        test('11. rawCount відсутній і html відсутній → 0, лічильник НЕ пишеться', () => {
+        test('11. rawCount відсутній і html відсутній → порожній журнал показує "(0)"', () => {
             $id(`deletedLogCount__${SID}`).textContent = '(старе)';
 
             restoreSingleSheetState(SID, {
                 [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true
             });
 
-            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(старе)');
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(0)');
         });
 
-        test('12. КВІРК: rawCount === 0 не перезаписує лічильник (умова `count > 0`)', () => {
+        test('12. rawCount === 0 без html перезаписує старий текст на "(0)"', () => {
             $id(`deletedLogCount__${SID}`).textContent = '(99)';
 
             restoreSingleSheetState(SID, {
                 [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true,
-                [POPUP_SHEET_KEYS.deletedLogHtml(SID)]: DEL_ROWS_HTML,
                 [POPUP_SHEET_KEYS.deletedLogCount(SID)]: 0
             });
 
-            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(99)');
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(0)');
         });
 
         test('13. КВІРК: rawCount у вигляді рядка приводиться через Number()', () => {
@@ -268,15 +271,16 @@ describe('popup_sheet_state_restorer — restoreSingleSheetState (характе
             assert.equal($id(`deletedLogCount__${SID}`).textContent, '(7)');
         });
 
-        test('14. КВІРК: нечисловий rawCount дає NaN і не проходить `count > 0`', () => {
+        test('14. нечисловий rawCount → фолбек на підрахунок із DOM', () => {
             $id(`deletedLogCount__${SID}`).textContent = '(до)';
 
             restoreSingleSheetState(SID, {
                 [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.deletedLogHtml(SID)]: DEL_ROWS_HTML,
                 [POPUP_SHEET_KEYS.deletedLogCount(SID)]: 'abc'
             });
 
-            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(до)');
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(3)');
         });
 
         test('15. detailsOpen=false → атрибут open знімається, блок лишається показаним', () => {
@@ -326,7 +330,7 @@ describe('popup_sheet_state_restorer — restoreSingleSheetState (характе
             assert.equal($id(`cleanedLogCount__${SID}`).textContent, '(2)');
         });
 
-        test('19. html без таблиці → 0 рядків, лічильник не пишеться', () => {
+        test('19. html без таблиці → 0 рядків, лічильник показує "(0)"', () => {
             $id(`cleanedLogCount__${SID}`).textContent = '(до)';
 
             restoreSingleSheetState(SID, {
@@ -334,7 +338,7 @@ describe('popup_sheet_state_restorer — restoreSingleSheetState (характе
                 [POPUP_SHEET_KEYS.cleanedLogHtml(SID)]: '<p>без таблиці</p>'
             });
 
-            assert.equal($id(`cleanedLogCount__${SID}`).textContent, '(до)');
+            assert.equal($id(`cleanedLogCount__${SID}`).textContent, '(0)');
         });
 
         test('20. явний rawCount перекриває підрахунок із DOM', () => {
@@ -446,6 +450,69 @@ describe('popup_sheet_state_restorer — restoreSingleSheetState (характе
             assert.doesNotThrow(() => restoreSingleSheetState('not-a-sheet', {
                 'syh:popup:sheet:not-a-sheet:oldList': 'x'
             }));
+        });
+    });
+
+    // Регресія до `audit_2026-08-10_KILO_sheet-log-counter-lost-on-restore.md`:
+    // лічильник журналу більше не «зникає» на нулі та не мовчить на `NaN`.
+    describe('лічильник журналу після відновлення (регресія)', () => {
+        test('31. збережений count = 0 при 3 рядках у html → показує "(3)"', () => {
+            restoreSingleSheetState(SID, {
+                [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.deletedLogHtml(SID)]: DEL_ROWS_HTML,
+                [POPUP_SHEET_KEYS.deletedLogCount(SID)]: 0
+            });
+
+            assert.equal($id(`deletedLog__${SID}`).innerHTML, DEL_ROWS_HTML);
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(3)');
+        });
+
+        test('32. зіпсований count без html → "(0)", а не мовчазний NaN', () => {
+            $id(`deletedLogCount__${SID}`).textContent = '(до)';
+
+            restoreSingleSheetState(SID, {
+                [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.deletedLogCount(SID)]: 'abc'
+            });
+
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, '(0)');
+        });
+
+        test('33. порожній журнал показує "(0)" і в живому рендері, і після відновлення', () => {
+            renderTelegramDeletedLog($id(`deletedLog__${SID}`), [], SID);
+
+            const liveText = $id(`deletedLogCount__${SID}`).textContent;
+            assert.equal(liveText, '(0)', 'живий рендер');
+
+            const emptyLogHtml = $id(`deletedLog__${SID}`).innerHTML;
+            $id(`deletedLogCount__${SID}`).textContent = '';
+
+            restoreSingleSheetState(SID, {
+                [POPUP_SHEET_KEYS.deletedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.deletedLogHtml(SID)]: emptyLogHtml,
+                [POPUP_SHEET_KEYS.deletedLogCount(SID)]: 0
+            });
+
+            assert.equal($id(`deletedLogCount__${SID}`).textContent, liveText, 'після відновлення');
+        });
+
+        test('34. лог очищених: count = 0 при таблиці на 2 рядки → "(2)" (заголовок віднято)', () => {
+            restoreSingleSheetState(SID, {
+                [POPUP_SHEET_KEYS.cleanedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.cleanedLogHtml(SID)]: CLEAN_TABLE_HTML,
+                [POPUP_SHEET_KEYS.cleanedLogCount(SID)]: 0
+            });
+
+            assert.equal($id(`cleanedLogCount__${SID}`).textContent, '(2)');
+        });
+
+        test('35. лог очищених: таблиця лише із заголовком → "(0)", ніколи "(-1)"', () => {
+            restoreSingleSheetState(SID, {
+                [POPUP_SHEET_KEYS.cleanedLogDetailsVisible(SID)]: true,
+                [POPUP_SHEET_KEYS.cleanedLogHtml(SID)]: '<table class="clean-table"><tr><th>h</th></tr></table>'
+            });
+
+            assert.equal($id(`cleanedLogCount__${SID}`).textContent, '(0)');
         });
     });
 });

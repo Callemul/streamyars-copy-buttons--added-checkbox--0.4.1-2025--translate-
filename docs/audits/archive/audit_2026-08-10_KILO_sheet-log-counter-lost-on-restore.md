@@ -4,7 +4,13 @@
 > Конкретно — під час розбиття `popup/popup_sheet_state_restorer.ts` (функція
 > `restoreSheetLog`, cyclomatic 10 / cognitive 16 — **єдина продакшн-знахідка
 > складності** у `fallow health --max-crap 30`, звіт Fallow 3.14.0).
-> **Статус:** ⛔ НЕ ВИПРАВЛЕНО. Рефакторинг зберігає поведінку 1-в-1. Виправлення потребує окремого погодження.
+> **Статус:** ✅ ВИПРАВЛЕНО (2026-08-10). `applyLogCount` пише «(N)» **завжди**
+> (умову `count > 0` прибрано), а `resolveLogCount` через новий `readStoredCount`
+> вважає збережений лічильник відсутнім, коли він `undefined`/`null`/`NaN`/`0`, і
+> падає на підрахунок із DOM (`Number.isFinite`). Це закриває і «зниклий (0)»,
+> і тихий `NaN`, і сценарій A (stored = 0 при 12 рядках у html → показує `(12)`).
+> Сигнатуру `collectTelegramSheetStateFromDOM` НЕ змінювали — публічний API і
+> `tests/telegram_parser.test.js` лишилися недоторканими.
 
 ---
 
@@ -119,18 +125,19 @@ setTextContent(`deletedLogCount__${sheetId}`, '(0)');   // показує "(0)"
 редагування storage або невдалої міграції) дає `NaN`. `NaN > 0` — хибно, тож
 лічильник так само мовчки не оновлюється. Жодного попередження в консоль.
 
-## 3. Пропоноване виправлення (приклад коду, який НЕ був застосований)
+## 3. Пропоноване виправлення (застосовано)
 
 Розділити два різні поняття: «лічильник не задано» і «лічильник дорівнює нулю».
 
 ```ts
 // popup/popup_sheet_log_restorer.ts
 
-/** Валідне збережене число, або null, якщо значення відсутнє/зіпсоване. */
+/** Валідне збережене число, або null, якщо значення відсутнє/зіпсоване/нульове. */
 function readStoredCount(rawCount: unknown): number | null {
     if (rawCount === undefined || rawCount === null) return null;
     const parsed = Number(rawCount);
-    return Number.isFinite(parsed) ? parsed : null;   // NaN → падаємо на підрахунок з DOM
+    if (!Number.isFinite(parsed) || parsed === 0) return null;  // NaN і 0 → підрахунок з DOM
+    return parsed;
 }
 
 function resolveLogCount(sheetId, html, rawCount, countFromDom): number {
@@ -144,21 +151,27 @@ function applyLogCount(targetCountId: string, sheetId: string, count: number): v
 }
 ```
 
-Додатково — прибрати саму пастку в писачі стану:
+> `0` теж трактується як «не порахували»: саме такий дефолт віддає
+> `collectTelegramSheetStateFromDOM`, тож підрахунок із DOM — єдине джерело
+> правди, коли збереженого числа фактично немає. Якщо у DOM рядків немає,
+> фолбек природно повертає `0`, і користувач бачить `(0)` — як у живому рендері.
+
+### Що НЕ застосовано
+
+Сигнатуру `collectTelegramSheetStateFromDOM` свідомо залишено без змін
+(з дефолтами `= 0`), щоб не ламати публічний експорт `modules/telegram_parser.ts`
+і `tests/telegram_parser.test.js` — див. § 3.2 п. 3. Пастку закрито з боку
+читача: фолбек на DOM робить синтетичний `0` нешкідливим.
 
 ```ts
-// modules/telegram_parser.ts — зробити лічильники обов'язковими,
-// щоб виклик без них не компілювався:
+// modules/telegram_parser.ts — НЕ ЗМІНЕНО:
 export function collectTelegramSheetStateFromDOM(
     sheetId: string,
-    deletedLogCount: number,     // ← без дефолту
-    cleanedLogCount: number,     // ← без дефолту
+    deletedLogCount: number = 0,
+    cleanedLogCount: number = 0,
     getElementByIdFn = ...
 ): TelegramSheetDOMState
 ```
-
-…або, якщо сигнатуру ламати не можна, рахувати лічильники з DOM прямо в
-`collectTelegramSheetStateFromDOM`, коли їх не передали.
 
 ## 3.1 Що зміниться для користувача
 
@@ -207,18 +220,28 @@ export function collectTelegramSheetStateFromDOM(
 
 ## 5. Перевірка після виправлення (чек-лист)
 
-- [ ] `tests/popup_sheet_state_restorer.test.js` № 11, 12, 14, 19 переписані з
-      «квірк» на нову очікувану поведінку (лічильник пишеться завжди).
-- [ ] Доданий тест: `deletedLogCount = 0` + непорожній `deletedLogHtml` з 3
-      рядками `.del-row` → показує `(3)`, а не `(0)` і не порожньо.
-- [ ] Доданий тест: `deletedLogCount = "abc"` → фолбек на підрахунок із DOM.
-- [ ] Доданий тест: порожній журнал → після відновлення `(0)`, як у живому рендері.
-- [ ] Перевірено, що `restoreSheetCleanedLog` і далі віднімає рядок заголовка
-      (`.clean-table tr` − 1) і не показує `(-1)` для таблиці без даних.
-- [ ] `npm run test` — усі тести зелені.
-- [ ] `npx tsc --noEmit` — 0 помилок.
-- [ ] `npm run lint` — 0 errors.
-- [ ] `npx fallow dead-code --format json` — без нових `unused-*` у змінених файлах.
+- [x] `tests/popup_sheet_state_restorer.test.js` № 11, 12, 14, 19 переписані з
+      «квірк» на нову очікувану поведінку (лічильник пишеться завжди):
+      № 11 → порожній журнал після відновлення показує `(0)`;
+      № 12 → `rawCount === 0` не лишає старий текст, а пише `(0)`;
+      № 14 → `rawCount === 'abc'` → фолбек на підрахунок із DOM `(3)`;
+      № 19 → html без таблиці → `(0)`.
+- [x] Доданий тест № 31: `deletedLogCount = 0` + непорожній `deletedLogHtml` з 3
+      рядками `.del-row` → показує `(3)`, а не `(0)` і не порожньо (сценарій A).
+- [x] Доданий тест № 32: `deletedLogCount = "abc"` без html → `(0)`, а не мовчазний `NaN`.
+- [x] Доданий тест № 33: порожній журнал → `(0)` і в живому рендері
+      (`renderTelegramDeletedLog`), і після відновлення — значення збігаються.
+- [x] Доданий тест № 34: `cleanedLogCount = 0` + таблиця на 2 рядки → `(2)`.
+- [x] Перевірено тестом № 35, що `restoreSheetCleanedLog` і далі віднімає рядок
+      заголовка (`.clean-table tr` − 1) і показує `(0)`, а не `(-1)`, для таблиці
+      без даних.
+- [x] `npm run test` — **1508/1508 зелені** (було 1498, +10 нових).
+- [x] `npx tsc --noEmit` — 0 помилок.
+- [x] `npm run lint` — 0 errors (3 успадковані warnings).
+- [x] `npx fallow dead-code --circular-deps --format json` — `total_issues: 0`,
+      без нових `unused-*` у змінених файлах.
+- [x] `tests/telegram_parser.test.js` і `tests/popup_sheet_clear.test.js` зелені —
+      публічний API `collectTelegramSheetStateFromDOM` не змінювався.
 - [ ] Ручна перевірка (`docs/manual testing/`): обробити аркуш без видалень →
       закрити/відкрити popup → заголовок стабільно показує `(0)`.
 

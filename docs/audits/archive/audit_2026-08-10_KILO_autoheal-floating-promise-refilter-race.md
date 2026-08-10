@@ -4,7 +4,13 @@
 > Конкретно — під час розбиття `modules/event_comments/auto_heal.ts`
 > (`refactoring target`, `priority 26.0`, `complexity_density 0.40` — **найвища
 > щільність складності у проєкті**, MI 80.8, fan-in 3; звіт Fallow 3.14.0).
-> **Статус:** ⛔ НЕ ВИПРАВЛЕНО. Рефакторинг зберігає поведінку 1-в-1. Виправлення потребує окремого погодження.
+> **Статус:** ✅ ВИПРАВЛЕНО (2026-08-10). `processGhostComments` став `async`: привиди
+> збираються в масив, усі `removeFromDatabase` очікуються через `Promise.allSettled`
+> з індивідуальним `try/catch` (жодного `unhandledrejection`), візуали скидаються
+> ПІСЛЯ фактичного оновлення бази, а `filterStarredComments()` викликається рівно
+> ОДИН раз на прохід замість N таймерів по 100 мс. `runAutoHeal` лишився синхронним
+> і запускає прохід через `void processGhostComments(self).catch(warn)`; порядок
+> `processCoverButtons` → `processGhostComments` збережено.
 
 ---
 
@@ -123,7 +129,7 @@ function resetCommentVisuals(self: SyhEventComments, commentBlock: Element): voi
 ніж кеш content script — пряме порушення правила Single Source of Truth
 з `AGENTS.md`.
 
-## 3. Пропоноване виправлення (приклад коду, який НЕ був застосований)
+## 3. Пропоноване виправлення (застосовано)
 
 Зробити прохід асинхронним, дочекатися всіх видалень і перефільтрувати **один раз**.
 
@@ -245,23 +251,31 @@ rules: {
 
 ## 5. Перевірка після виправлення (чек-лист)
 
-- [ ] `tests/event_comments_auto_heal.test.js` № 5 переписано з очікування
-      `setTimeout(110)` на `await` результату проходу.
-- [ ] `tests/event_comments_auto_heal_scanner.test.js` № 19 переписано так само;
-      № 15–18 (батчинг rAF і `document.hidden`) лишаються зеленими без змін.
-- [ ] Доданий тест: 3 привиди → `filterStarredComments` викликано **рівно 1 раз**.
-- [ ] Доданий тест: `removeFromDatabase` відхиляється → прохід не кидає назовні,
+- [x] `tests/event_comments_auto_heal.test.js` № 5 переписано з очікування
+      `setTimeout(110)` на `await` результату проходу (хелпер `flushGhostPass`);
+      № 9 (`UI === null`) теж переведено на `await`.
+- [x] `tests/event_comments_auto_heal_scanner.test.js` № 19 переписано так само;
+      № 15–18 (батчинг rAF і `document.hidden`) лишилися зеленими без змін.
+- [x] Доданий тест № 21: 3 привиди → `filterStarredComments` викликано **рівно 1 раз**.
+- [x] Доданий тест № 22: `removeFromDatabase` відхиляється → прохід не кидає назовні,
       у консоль іде `warn`, решта привидів усе одно обробляється.
-- [ ] Доданий тест: `unhandledrejection` не реєструється під час проходу.
-- [ ] Доданий тест: порядок збережено — `processCoverButtons` перед `processGhostComments`.
-- [ ] `npm run test` — усі тести зелені.
-- [ ] `npx tsc --noEmit` — 0 помилок.
-- [ ] `npm run lint` — 0 errors.
-- [ ] `npx fallow dead-code --format json` — без нових `unused-*` у змінених файлах.
-- [ ] `npx fallow health --max-crap 30` — `auto_heal*` не з'явився серед
-      complexity findings після переходу на async.
+- [x] Доданий тест № 23: `unhandledrejection` не реєструється під час проходу.
+- [x] Доданий тест № 24: порядок збережено — `processCoverButtons` перед `processGhostComments`
+      (на момент виклику `removeFromDatabase` чекбокс cover-кнопки вже виставлений).
+- [x] Доданий тест № 25: без привидів прохід не викликає перефільтрування.
+- [x] `npm run test` — **1508/1508 зелені** (було 1498, +10 нових).
+- [x] `npx tsc --noEmit` — 0 помилок.
+- [x] `npm run lint` — 0 errors (3 успадковані warnings).
+- [x] `npx fallow dead-code --circular-deps --format json` — `total_issues: 0`,
+      без нових `unused-*` у змінених файлах.
+- [x] `npx fallow health --max-crap 30` — `auto_heal*` не з'явився серед
+      complexity findings після переходу на async (усі 8 знахідок — у `tests/`).
 - [ ] Ручна перевірка в StreamYard: зняти зірку з 5+ коментарів поспіль →
       список не «стрибає», жоден коментар не повертається.
+
+> Правило `@typescript-eslint/no-floating-promises` НЕ вмикалося: воно потребує
+> type-aware конфігурації і підсвітить інші місця проєкту — окремий обсяг робіт
+> (див. § 3.2 п. 6 і § 6 п. 2).
 
 ## 6. Побічні спостереження
 

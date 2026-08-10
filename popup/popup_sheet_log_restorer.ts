@@ -9,9 +9,13 @@
 // ще чотири умови. Тепер гілка «видимий» — окрема лінійна функція, а робота з
 // `<details>` та лічильником винесена у власні кроки.
 //
-// Поведінка збережена 1-в-1, включно з квірками:
-//   - `count === 0` (і `NaN`) НЕ перезаписує текст лічильника;
-//   - `rawCount` приводиться через `Number()`, тож рядок "7" стає числом;
+// Поведінка лічильника (див.
+// `audit_2026-08-10_KILO_sheet-log-counter-lost-on-restore.md`):
+//   - «(N)» пишеться ЗАВЖДИ, бо `(0)` — теж валідний стан, який показує
+//     живий рендер (`renderTelegramDeletedLog`);
+//   - збережений лічильник вважається відсутнім, коли він `undefined`/`null`,
+//     нечисловий (`NaN`) або `0` — у цих випадках рахуємо рядки з DOM;
+//   - `Number()` збережено: рядок "7" стає числом 7;
 //   - кількість рядків рахується з DOM уже ПІСЛЯ підстановки html;
 //   - невидимий журнал очищає лічильник у порожній рядок.
 
@@ -42,8 +46,27 @@ interface LogRestoreConfig {
 }
 
 /**
- * Кількість записів: збережене значення має пріоритет над підрахунком із DOM.
- * `Number()` збережено 1-в-1 — рядок "7" дає 7, сміття дає `NaN`.
+ * Збережений лічильник як число, або `null`, якщо покладатися на нього не можна.
+ *
+ * `null` повертається для трьох випадків, які означають одне й те саме —
+ * «значення не порахували»:
+ *   - ключа немає у сховищі (`undefined`/`null`);
+ *   - значення зіпсоване й `Number()` дає `NaN` (напр. рядок "abc");
+ *   - значення дорівнює `0`, тоді як html журналу може містити реальні рядки
+ *     (`collectTelegramSheetStateFromDOM` має дефолт `0` для обох лічильників).
+ */
+function readStoredCount(rawCount: unknown): number | null {
+    if (rawCount === undefined || rawCount === null) return null;
+
+    const parsed = Number(rawCount);
+    if (!Number.isFinite(parsed) || parsed === 0) return null;
+
+    return parsed;
+}
+
+/**
+ * Кількість записів: валідне збережене значення має пріоритет,
+ * інакше — підрахунок із щойно вставленого html.
  */
 function resolveLogCount(
     sheetId: string,
@@ -51,17 +74,13 @@ function resolveLogCount(
     rawCount: any,
     countFromDom: LogCountResolver
 ): number {
-    if (rawCount !== undefined && rawCount !== null) {
-        return Number(rawCount);
-    }
-    return countFromDom(sheetId, html);
+    const stored = readStoredCount(rawCount);
+    return stored ?? countFromDom(sheetId, html);
 }
 
-/** Пише «(N)» лише для додатної кількості (`NaN` та 0 лишають текст як є). */
+/** Пише «(N)» завжди: `0` — валідний стан, а не «лічильника немає». */
 function applyLogCount(targetCountId: string, sheetId: string, count: number): void {
-    if (count > 0) {
-        setTextContent(`${targetCountId}${sheetId}`, `(${count})`);
-    }
+    setTextContent(`${targetCountId}${sheetId}`, `(${count})`);
 }
 
 /** Синхронізує розкриття `<details>` і завжди повертає блоку видимість. */

@@ -108,6 +108,21 @@ const GHOST_HTML = `
     </div>
 `;
 
+/** Блок-привид із заданим текстом (для сценаріїв із кількома привидами). */
+const ghostHtml = (text) => `
+    <div class="test-comment-block" data-syh-type="prayer">
+        <div class="test-comment-text">${text}</div>
+        <button class="test-star-button" aria-selected="false"></button>
+    </div>
+`;
+
+/**
+ * Дає асинхронному проходу «привиди» повністю доопрацювати.
+ * Один макротаск гарантовано зливає всю чергу мікротасків
+ * (`Promise.allSettled` → скидання візуалів → перефільтрування).
+ */
+const flushGhostPass = () => new Promise(resolve => setTimeout(resolve, 0));
+
 describe('event_comments auto_heal — життєвий цикл сканера (характеризація)', () => {
     beforeEach(() => {
         mockStorageStore = {};
@@ -368,20 +383,24 @@ describe('event_comments auto_heal — життєвий цикл сканера 
     });
 
     describe('взаємодія з UI при видаленні привида', () => {
-        test('19. filterStarredComments викликається із затримкою 100 мс', async () => {
+        test('19. візуали й перефільтрування виконуються ПІСЛЯ оновлення бази', async () => {
             document.body.innerHTML = GHOST_HTML;
             const self = createMockSelf();
 
             runAutoHeal(self);
 
-            assert.equal(self.calls.updateCommentVisuals.length, 1);
-            assert.equal(self.calls.filterStarredComments, 0, 'виклик відкладений');
+            assert.deepEqual(self.calls.removeFromDatabase, ['Привид'], 'видалення стартує одразу');
+            assert.equal(self.calls.updateCommentVisuals.length, 0, 'візуали чекають на базу');
+            assert.equal(self.calls.filterStarredComments, 0, 'перефільтрування чекає на базу');
 
-            await new Promise(resolve => setTimeout(resolve, 130));
+            await flushGhostPass();
+
+            assert.equal(self.calls.updateCommentVisuals.length, 1);
+            assert.equal(self.calls.updateCommentVisuals[0].type, 'none');
             assert.equal(self.calls.filterStarredComments, 1);
         });
 
-        test('20. UI без filterStarredComments не ламає видалення привида', () => {
+        test('20. UI без filterStarredComments не ламає видалення привида', async () => {
             document.body.innerHTML = GHOST_HTML;
             const self = createMockSelf({
                 UI: { updateCommentVisuals: () => {} }
@@ -389,6 +408,113 @@ describe('event_comments auto_heal — життєвий цикл сканера 
 
             assert.doesNotThrow(() => runAutoHeal(self));
             assert.deepEqual(self.calls.removeFromDatabase, ['Привид']);
+
+            await flushGhostPass();
+        });
+    });
+
+    // Регресія до `audit_2026-08-10_KILO_autoheal-floating-promise-refilter-race.md`:
+    // прохід «привиди» більше не лишає плаваючих промісів і не перемальовує
+    // список по одному разу на кожного привида.
+    describe('асинхронний прохід «привиди» (регресія)', () => {
+        test('21. три привиди → filterStarredComments викликано рівно один раз', async () => {
+            document.body.innerHTML = ghostHtml('Привид 1') + ghostHtml('Привид 2') + ghostHtml('Привид 3');
+            const self = createMockSelf();
+
+            runAutoHeal(self);
+            await flushGhostPass();
+
+            assert.deepEqual(self.calls.removeFromDatabase, ['Привид 1', 'Привид 2', 'Привид 3']);
+            assert.equal(self.calls.updateCommentVisuals.length, 3);
+            assert.equal(self.calls.filterStarredComments, 1, 'рівно одне перефільтрування на прохід');
+        });
+
+        test('22. відхилення removeFromDatabase → warn у консоль, прохід не падає', async () => {
+            document.body.innerHTML = ghostHtml('Битий') + ghostHtml('Цілий');
+            const warn = mock.method(console, 'warn', () => {});
+
+            const attempted = [];
+            const self = createMockSelf({
+                removeFromDatabase: (text) => {
+                    attempted.push(text);
+                    return text === 'Битий'
+                        ? Promise.reject(new Error('storage down'))
+                        : Promise.resolve();
+                }
+            });
+
+            assert.doesNotThrow(() => runAutoHeal(self));
+            await flushGhostPass();
+
+            assert.deepEqual(attempted, ['Битий', 'Цілий'], 'решта привидів усе одно обробляється');
+            assert.equal(warn.mock.callCount(), 1);
+            assert.match(String(warn.mock.calls[0].arguments[0]), /Auto-Heal/);
+            assert.equal(self.calls.filterStarredComments, 1, 'прохід дійшов до кінця');
+            warn.mock.restore();
+        });
+
+        test('23. відхилення storage не реєструє unhandledrejection', async () => {
+            document.body.innerHTML = GHOST_HTML;
+            const warn = mock.method(console, 'warn', () => {});
+
+            const captured = [];
+            const onUnhandled = (reason) => captured.push(reason);
+            process.on('unhandledRejection', onUnhandled);
+
+            try {
+                const self = createMockSelf({
+                    removeFromDatabase: () => Promise.reject(new Error('Extension context invalidated'))
+                });
+
+                runAutoHeal(self);
+
+                await flushGhostPass();
+                await new Promise(resolve => setTimeout(resolve, 20));
+
+                assert.equal(self.calls.filterStarredComments, 1);
+            } finally {
+                process.off('unhandledRejection', onUnhandled);
+                warn.mock.restore();
+            }
+
+            assert.deepEqual(captured, [], 'жодного незакритого відхилення');
+        });
+
+        test('24. порядок проходів: cover-кнопки відпрацьовують ДО «привидів»', async () => {
+            document.body.innerHTML = `
+                <div class="test-comment-block" data-syh-type="prayer">
+                    <div class="test-comment-text">Прихований привид</div>
+                    <button class="test-star-button" aria-selected="false"></button>
+                    <button data-testid="show-comment-button">Hide</button>
+                    <input class="syh-checkbox" data-type="comment" type="checkbox">
+                </div>
+            `;
+
+            let checkboxAtRemoval = null;
+            const self = createMockSelf({
+                removeFromDatabase: (text) => {
+                    checkboxAtRemoval = document.querySelector('.syh-checkbox').checked;
+                    self.calls.removeFromDatabase.push(text);
+                    return Promise.resolve();
+                }
+            });
+
+            runAutoHeal(self);
+            await flushGhostPass();
+
+            assert.deepEqual(self.calls.removeFromDatabase, ['Прихований привид']);
+            assert.equal(checkboxAtRemoval, true, 'processCoverButtons уже виставив чекбокс');
+        });
+
+        test('25. немає привидів → жодного перефільтрування (порожня робота не планується)', async () => {
+            document.body.innerHTML = COVER_BUTTON_HTML;
+            const self = createMockSelf();
+
+            runAutoHeal(self);
+            await flushGhostPass();
+
+            assert.equal(self.calls.removeFromDatabase.length, 0);
+            assert.equal(self.calls.filterStarredComments, 0);
         });
     });
 });

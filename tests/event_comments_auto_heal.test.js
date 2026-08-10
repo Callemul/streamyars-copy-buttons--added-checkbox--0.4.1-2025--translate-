@@ -46,6 +46,13 @@ const TEST_SELECTORS = {
 
 let currentSelf = null;
 
+/**
+ * Дає асинхронному проходу «привиди» повністю доопрацювати.
+ * Один макротаск гарантовано зливає всю чергу мікротасків
+ * (`Promise.allSettled` → скидання візуалів → перефільтрування).
+ */
+const flushGhostPass = () => new Promise(resolve => setTimeout(resolve, 0));
+
 function createMockSelf(overrides = {}) {
     const calls = {
         removeFromDatabase: [],
@@ -197,11 +204,14 @@ describe('event_comments auto_heal — bindAutoHealScanner ghost removal', () =>
 
         assert.equal(self.calls.removeFromDatabase.length, 1);
         assert.equal(self.calls.removeFromDatabase[0], 'Ghost prayer');
+
+        // Візуали й перефільтрування тепер чекають на факт запису в базу,
+        // а не на фіксований таймер у 100 мс.
+        await flushGhostPass();
+
         assert.equal(self.calls.updateCommentVisuals.length, 1);
         assert.equal(self.calls.updateCommentVisuals[0].type, 'none');
-
-        await new Promise(r => setTimeout(r, 110));
-        assert.ok(self.calls.filterStarredComments >= 1);
+        assert.equal(self.calls.filterStarredComments, 1);
     });
 
     test('6. коментар з зіркою (aria-selected=true) → жодного видалення', () => {
@@ -246,7 +256,7 @@ describe('event_comments auto_heal — bindAutoHealScanner ghost removal', () =>
 // ---------------------------------------------------------------------------
 
 describe('event_comments auto_heal — UI оптимізація', () => {
-    test('9. без UI → видалення з БД, але без оновлення візуалу', () => {
+    test('9. без UI → видалення з БД, але без оновлення візуалу', async () => {
         document.body.innerHTML = `
             <div class="test-comment-block" data-syh-type="prayer">
                 <div class="test-comment-text">No UI prayer</div>
@@ -257,6 +267,10 @@ describe('event_comments auto_heal — UI оптимізація', () => {
         bindAutoHealScanner(self);
 
         assert.equal(self.calls.removeFromDatabase.length, 1);
+
+        await flushGhostPass();
+
         assert.equal(self.calls.updateCommentVisuals.length, 0);
+        assert.equal(self.calls.filterStarredComments, 0);
     });
 });
