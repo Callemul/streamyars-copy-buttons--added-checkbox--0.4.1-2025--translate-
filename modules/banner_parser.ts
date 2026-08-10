@@ -1,27 +1,51 @@
-import { EMOJI_NUMBER_CONTAINS_REGEX, splitPrayerSection, QUESTION_START_REGEX, QUESTION_SPLIT_REGEX, STANDARD_NUMBER_START_REGEX, SECTION_HEADER_SPLIT_REGEX } from './parsers/index';
-import { SABBATH_SCHOOL_KEYWORDS_REGEX } from './channel_config';
+import { splitPrayerSection } from './parsers/index';
 import type { SyhParsers } from './parsers/index';
 import type { SyhUtils } from './utils';
 import type { BannerItem } from './banner_types';
+import {
+    detectBlockCategory,
+    detectBlockFormat,
+    readFirstNonEmptyLine,
+    splitIntoMessages,
+    BLOCK_FORMAT_LOG_MESSAGES,
+    type BlockFormat
+} from './banner_parser_rules';
 
-export function detectBlockCategory(firstLine: string, defaultCat: string): string {
-    const isQuestionStart = QUESTION_START_REGEX.test(firstLine);
-    if (!isQuestionStart && firstLine) {
-        const headerMatch = firstLine.split(QUESTION_SPLIT_REGEX);
-        const headerText = (headerMatch[0] || "").trim().toUpperCase();
-        if (headerText.includes("МОЛИТВ") || headerText.includes("ПРОХАН") || headerText.includes("🙏")) {
-            return "prayer";
-        }
-        if (headerText.includes("СУББОТ") || headerText.includes("СУБОТ") || headerText.includes("УРОК")) {
-            return "stream";
-        }
-        if (headerText.includes("ВОПРОС") || headerText.includes("ПИТАН") || headerText.includes("???") || headerText.includes("❓")) {
-            return "audience";
-        }
+// Публічний контракт модуля лишається незмінним: `detectBlockCategory`
+// історично імпортують із `./banner_parser` (і далі — з `./banner_creator`).
+export { detectBlockCategory } from './banner_parser_rules';
+
+/** Як кожен формат перетворюється на список питань і чи вважається «стандартним». */
+const FORMAT_HANDLERS: Readonly<Record<BlockFormat, {
+    read: (parsers: SyhParsers, text: string) => string[];
+    isStandard: boolean;
+    /** Формат, що жорстко перекриває категорію блока (лише «Суботня школа»). */
+    forcedCategory?: string;
+}>> = {
+    'sabbath-school': {
+        read: (parsers, text) => parsers.parseSabbathSchoolUnnumberedQuestions(text),
+        isStandard: false,
+        forcedCategory: 'stream'
+    },
+    'emoji': {
+        read: (parsers, text) => parsers.parseEmojiNumberedQuestions(text),
+        isStandard: false
+    },
+    'standard': {
+        read: (parsers, text) => parsers.parseStandardNumberedQuestions(text),
+        isStandard: true
     }
-    return defaultCat;
-}
+};
 
+/**
+ * Розбирає один блок тексту на банери.
+ *
+ * Раніше — функція з cyclomatic 10 / cognitive 12 (severity critical за
+ * `fallow health`) із трьома розлогими гілками формату. Тепер вибір формату
+ * декларативний (`FORMAT_HANDLERS`), а правила живуть у `./banner_parser_rules`.
+ * Поведінка збережена 1-в-1, включно з текстами логів і перекриттям категорії
+ * для «Суботньої школи».
+ */
 export function parseBlock(
     text: string,
     defaultCat: string,
@@ -29,56 +53,55 @@ export function parseBlock(
     logger?: (msg: string) => void
 ): BannerItem[] {
     if (!text.trim()) return [];
-    let blockQuestions: string[];
-    let isStd = false;
 
-    const firstLine = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0)[0] || "";
-    let blockCategory = detectBlockCategory(firstLine, defaultCat);
+    const format = detectBlockFormat(text);
+    const handler = FORMAT_HANDLERS[format];
 
-    if (SABBATH_SCHOOL_KEYWORDS_REGEX.test(text) && !STANDARD_NUMBER_START_REGEX.test(text) && !EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
-        if (logger) logger("Формат: Суботня Школа (без нумерації)");
-        blockQuestions = parsers.parseSabbathSchoolUnnumberedQuestions(text);
-        blockCategory = "stream";
-    } else if (EMOJI_NUMBER_CONTAINS_REGEX.test(text)) {
-        if (logger) logger("Формат: Емодзі 1️⃣");
-        blockQuestions = parsers.parseEmojiNumberedQuestions(text);
-    } else {
-        if (logger) logger("Формат: Стандартний 1.");
-        blockQuestions = parsers.parseStandardNumberedQuestions(text);
-        isStd = true;
-    }
+    if (logger) logger(BLOCK_FORMAT_LOG_MESSAGES[format]);
 
-    return blockQuestions.map((q: string) => ({ text: q, category: blockCategory, isStandard: isStd }));
+    const category = handler.forcedCategory ?? detectBlockCategory(readFirstNonEmptyLine(text), defaultCat);
+    const blockQuestions = handler.read(parsers, text);
+
+    return blockQuestions.map((q: string) => ({ text: q, category, isStandard: handler.isStandard }));
 }
 
+/**
+ * Прибирає системні заголовки Telegram, якщо утиліта доступна.
+ * `SyhUtils` може прийти частково ініціалізованим, тому потрібен фолбек-тотожність.
+ */
+function resolveTelegramCleaner(utils: SyhUtils): (text: string) => string {
+    return utils.cleanTelegramHeaders ? utils.cleanTelegramHeaders.bind(utils) : ((t: string) => t);
+}
+
+/**
+ * Повний конвеєр: сирий текст → список банерів.
+ *
+ * `hasStandardFormat` навмисно рахується ЛИШЕ по блоку питань: молитовна секція
+ * на цей прапорець не впливає (поведінка оригіналу, збережена 1-в-1).
+ */
 export function parseRawTextToBanners(
     rawText: string,
     parsers: SyhParsers,
     utils: SyhUtils,
     logger?: (msg: string) => void
 ): { bannersToCreate: BannerItem[]; hasStandardFormat: boolean } {
-    let bannersToCreate: BannerItem[] = [];
+    const bannersToCreate: BannerItem[] = [];
     let hasStandardFormat = false;
 
-    const cleaner = utils.cleanTelegramHeaders ? utils.cleanTelegramHeaders.bind(utils) : ((t: string) => t);
-    const cleanedText = cleaner(rawText);
+    const cleanedText = resolveTelegramCleaner(utils)(rawText);
 
-    let messages = cleanedText.split(SECTION_HEADER_SPLIT_REGEX).map((m: string) => m.trim()).filter(Boolean);
-    if (messages.length === 0) messages = [cleanedText];
-
-    for (const msg of messages) {
+    for (const msg of splitIntoMessages(cleanedText)) {
         const { questionsText, prayersText } = splitPrayerSection(msg);
 
         if (questionsText.trim()) {
-            const qItems = parseBlock(questionsText, "stream", parsers, logger);
-            bannersToCreate = bannersToCreate.concat(qItems);
+            const qItems = parseBlock(questionsText, 'stream', parsers, logger);
+            qItems.forEach(item => bannersToCreate.push(item));
             if (qItems.some(item => item.isStandard)) {
                 hasStandardFormat = true;
             }
         }
         if (prayersText.trim()) {
-            const pItems = parseBlock(prayersText, "prayer", parsers, logger);
-            bannersToCreate = bannersToCreate.concat(pItems);
+            parseBlock(prayersText, 'prayer', parsers, logger).forEach(item => bannersToCreate.push(item));
         }
     }
 

@@ -38,11 +38,22 @@ function readChildNodeText(node: Node): string {
 }
 
 /**
+ * СИРА конкатенація тексту дітей контейнера: без `trim` і без фолбеку.
+ *
+ * Єдине джерело правди для обходу `#content-text`. Раніше цей самий обхід був
+ * продубльований інлайном у `comment_context.ts` (стрілка з cognitive 15,
+ * severity critical за `fallow health`) — там потрібен саме сирий результат,
+ * бо порожній текст замінюється на `'[comment]'`, а не на `textContent`.
+ */
+export function readCommentNodesText(el: HTMLElement): string {
+    const children: Node[] = el.childNodes ? Array.from(el.childNodes) : [];
+    return children.map(readChildNodeText).join('');
+}
+
+/**
  * Склеює текст контейнера коментаря.
  * Якщо обхід дітей дав порожній результат — фолбек на `textContent` контейнера.
  */
 export function extractCommentText(el: HTMLElement): string {
-    const children: Node[] = el.childNodes ? Array.from(el.childNodes) : [];
-    const text = children.map(readChildNodeText).join('');
-    return text.trim() || (el.textContent || '').trim();
+    return readCommentNodesText(el).trim() || (el.textContent || '').trim();
 }

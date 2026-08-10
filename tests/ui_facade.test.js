@@ -332,8 +332,8 @@ describe('ui — restoreDomCheckboxes', () => {
         assert.equal(box.checked, true, 'порожній textKey => жодного запису в DOM');
     });
 
-    test('13. падає на дефолтні StreamYard-селектори, коли конфіг їх не задає', () => {
-        SYH_UI_STATE.SELECTORS = {};
+    test('13. відновлює стан за дефолтні StreamYard-селектори з SYH_CONFIG', () => {
+        SYH_UI_STATE.SELECTORS = SYH_CONFIG.SELECTORS;
         SYH_UI_STATE.STATE = { itemStates: { 'Через дефолт': true } };
 
         const wrap = document.createElement('div');
@@ -606,12 +606,15 @@ describe('ui — декомпозовані одиниці', () => {
         assert.equal(getCheckboxTextKey(bannerBox, SELECTORS_FIXTURE), 'Текст банера');
     });
 
-    test('30. getCheckboxTextKey бере ПЕРШИЙ селектор зі списку-масиву', async () => {
+    test('30. getCheckboxTextKey розвʼязує масив-селектор пріоритетним перебором (як write-path), а не лише [0]', async () => {
         const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
 
+        // Регресія на audit_2026-08-10_KILO_checkbox-text-key-mismatch:
+        // read-path має збігатися з write-path (queryBySelectorValue), який
+        // перебирає масив через CSS-групу, а не бере лише перший елемент.
         document.body.innerHTML = `
-            <div class="primary-wrap">
-                <span class="primary-text">Через масив</span>
+            <div class="fallback-wrap">
+                <span class="fallback-text">Через фолбек-масив</span>
                 <input type="checkbox" class="syh-checkbox" data-type="comment">
             </div>
         `;
@@ -622,7 +625,51 @@ describe('ui — декомпозовані одиниці', () => {
             commentText: ['.primary-text', '.fallback-text']
         });
 
-        assert.equal(key, 'Через масив');
+        assert.equal(key, 'Через фолбек-масив', 'знайдено через другий член масиву');
+    });
+
+    test('30a. read- і write-path дають однаковий ключ (реальний масив commentText)', async () => {
+        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { queryBySelectorValue } = await import('../modules/config.ts');
+
+        // Реальний конфіг StreamYard: commentText — масив із class- та data-testid-варіантів.
+        document.body.innerHTML = `
+            <div class="PlatformComment__Wrap" data-testid="platform-comment">
+                <span data-testid="comment-content">Текст коментаря</span>
+                <input type="checkbox" class="syh-checkbox" data-type="comment">
+            </div>
+        `;
+
+        const commentBlock = document.querySelector('[data-testid="platform-comment"]');
+        const box = document.querySelector('.syh-checkbox');
+
+        // Те, що пишуть handleCheckboxChange / applyCommentActionState:
+        const writeKey = queryBySelectorValue(SYH_CONFIG.SELECTORS.commentText, commentBlock)?.textContent || '';
+        // Те, що читає restoreDomCheckboxes:
+        const readKey = getCheckboxTextKey(box, SYH_CONFIG.SELECTORS);
+
+        assert.equal(writeKey, 'Текст коментаря');
+        assert.equal(readKey, writeKey, 'read- і write-path дають однаковий ключ');
+    });
+
+    test('30b. на fallback-лейауті (лише data-testid у DOM) стан відновлюється, а не губиться', async () => {
+        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { queryBySelectorValue } = await import('../modules/config.ts');
+
+        document.body.innerHTML = `
+            <div data-testid="platform-comment">
+                <span data-testid="comment-content">Лише фолбек</span>
+                <input type="checkbox" class="syh-checkbox" data-type="comment">
+            </div>
+        `;
+
+        const commentBlock = document.querySelector('[data-testid="platform-comment"]');
+        const box = document.querySelector('.syh-checkbox');
+        const writeKey = queryBySelectorValue(SYH_CONFIG.SELECTORS.commentText, commentBlock)?.textContent || '';
+        const readKey = getCheckboxTextKey(box, SYH_CONFIG.SELECTORS);
+
+        assert.equal(writeKey, 'Лише фолбек');
+        assert.equal(readKey, writeKey, 'ключ не порожній — стан відновиться після перезавантаження');
     });
 
     test('31. getCheckboxTextKey повертає порожній рядок для чужого/відсутнього типу', async () => {

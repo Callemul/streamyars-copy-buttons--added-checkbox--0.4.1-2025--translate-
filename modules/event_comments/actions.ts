@@ -1,7 +1,7 @@
 import type { SyhEventComments, CopyPayload, CopyablePayload } from './types';
-import { queryBySelectorValue } from '../config';
 import { SYH_BUS } from '../event_bus';
-import { CommentService } from '../comment_service';
+import { markCommentByActionType } from './action_marking';
+import { syncCommentCardState } from './action_dom_sync';
 
 /**
  * Рантайм-еквівалент попередньої перевірки `if (payload.textToCopy)`.
@@ -15,6 +15,34 @@ function hasTextToCopy(payload: CopyPayload): payload is CopyablePayload {
     return Boolean(payload.textToCopy);
 }
 
+/**
+ * Сповіщає шину про дію та показує банер копіювання.
+ * `UTILS` може бути `null` до `init()`, тому банер — опційний ефект.
+ */
+function announceCopiedComment(
+    self: SyhEventComments,
+    payload: CopyablePayload,
+    author: string,
+    commentText: string
+): void {
+    SYH_BUS.emit('COMMENT_ACTION', {
+        type: payload.actionType,
+        author: author,
+        text: commentText
+    });
+
+    if (self.UTILS) {
+        self.UTILS.copyAndShowBanner(payload.textToCopy, payload.header);
+    }
+}
+
+/**
+ * Оркестратор дії над коментарем: відмітка → сповіщення/копіювання → DOM-синхронізація.
+ *
+ * Раніше це була монолітна функція (cyclomatic 12 / cognitive 15, severity critical
+ * за `fallow health`). Тіло розкладено на три однорідні кроки у сусідніх модулях;
+ * порядок ефектів і всі умови збережено 1-в-1.
+ */
 export function applyCommentActionState(
     self: SyhEventComments,
     payload: CopyPayload,
@@ -22,38 +50,10 @@ export function applyCommentActionState(
     commentText: string,
     commentBlock: Element
 ): void {
-    if (payload.actionType === 'question') {
-        self.saveToDatabase(author, commentText, "question", "❓");
-        if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'question');
-    } else if (payload.actionType === 'prayer' && payload.prayerIcon) {
-        self.saveToDatabase(author, commentText, "prayer", payload.prayerIcon);
-        if (self.UI) self.UI.updateCommentVisuals(commentBlock, 'prayer');
-        SYH_BUS.emit('PRAYER_MARKED', { author, text: commentText, icon: payload.prayerIcon });
-    }
+    markCommentByActionType(self, payload, author, commentText, commentBlock);
 
-    if (hasTextToCopy(payload)) {
-        SYH_BUS.emit('COMMENT_ACTION', {
-            type: payload.actionType,
-            author: author,
-            text: commentText
-        });
+    if (!hasTextToCopy(payload)) return;
 
-        if (self.UTILS) {
-            self.UTILS.copyAndShowBanner(payload.textToCopy, payload.header);
-        }
-
-        const checkboxNode = commentBlock.querySelector<HTMLInputElement>('.syh-checkbox[data-type="comment"]');
-        if (checkboxNode) {
-            checkboxNode.checked = true;
-            checkboxNode.dispatchEvent(new Event('change', { bubbles: true }));
-            CommentService.setStreamYardCheckboxState(commentText, true);
-        }
-
-        commentBlock.querySelectorAll<HTMLInputElement>('.syh-checkbox').forEach(cb => cb.checked = true);
-
-        const starBtnNode = queryBySelectorValue<HTMLElement>(self.SELECTORS?.starButton, commentBlock);
-        if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
-            starBtnNode.click();
-        }
-    }
+    announceCopiedComment(self, payload, author, commentText);
+    syncCommentCardState(self, commentBlock, commentText);
 }

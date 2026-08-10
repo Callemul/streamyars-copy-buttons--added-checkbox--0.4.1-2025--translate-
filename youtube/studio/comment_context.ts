@@ -1,7 +1,22 @@
 import type { CommentContext } from '../../modules/comment_platform_adapter';
 import type { StudioCommentUIElements } from './studio_ui';
 import type { StudioEventCaches } from './state_resolvers';
+import { readCommentAuthor, readCommentBodyText, readVideoRef } from './comment_context_fields';
 
+/** Підстановка для коментаря, з якого не вдалося витягти жодного тексту. */
+const EMPTY_TEXT_PLACEHOLDER = '[comment]';
+
+/**
+ * Збирає `CommentContext` картки Studio для відновлення її UI-стану.
+ *
+ * Раніше — монолітна функція на 50 рядків (cyclomatic 13 / cognitive 12,
+ * severity critical за `fallow health`) із вкладеним обходом DOM-вузлів
+ * (cognitive 15). Читання окремих полів винесено в `./comment_context_fields`,
+ * обхід вузлів — у спільний `./studio_comment_text`. Поведінка збережена 1-в-1.
+ *
+ * `channelKey` і `caches` лишаються в сигнатурі заради контракту викликачів
+ * (`./ui_restorers`), хоча тіло ними не користується — див. звіт аудиту.
+ */
 export function getCommentContextForRestore(
     element: HTMLElement,
     commentKey: string,
@@ -12,42 +27,15 @@ export function getCommentContextForRestore(
     const ui = getStudioUI(element);
     if (!ui) return null;
 
-    const authorEl = element.querySelector<HTMLElement>('#metadata #name .author-text, #metadata #name, #name .author-text, #name');
-    const author = authorEl ? authorEl.textContent?.trim() || '' : '';
-
-    const contentEl = element.querySelector<HTMLElement>('#content-text, ytcp-comment-text #content-text, .content-text');
-    let text = '';
-    if (contentEl) {
-        const children = contentEl.childNodes ? Array.from(contentEl.childNodes) : [];
-        children.forEach((node) => {
-            if (node.nodeType === 3) {
-                text += node.textContent || '';
-            } else if (node.nodeType === 1) {
-                const elem = node as HTMLElement;
-                if (elem.tagName === 'IMG' && (elem as HTMLImageElement).alt) {
-                    text += (elem as HTMLImageElement).alt;
-                } else if (typeof elem.querySelector === 'function') {
-                    const img = elem.querySelector<HTMLImageElement>('img[alt]');
-                    if (img && img.alt) {
-                        text += img.alt;
-                    } else {
-                        text += elem.textContent || '';
-                    }
-                } else {
-                    text += elem.textContent || '';
-                }
-            }
-        });
-    }
-
-    const videoTitle = element.querySelector<HTMLElement>('#video-title, .video-title-text')?.textContent?.trim() || '';
-    const videoHref = element.querySelector<HTMLAnchorElement>('ytcp-comment-video-thumbnail a#body, #video-title a, a.ytcp-comment-video-thumbnail')?.href || null;
-    const videoKey = videoHref ? new URL(videoHref, 'https://studio.youtube.com').pathname + new URL(videoHref, 'https://studio.youtube.com').search : videoTitle;
+    // Порядок читань збережено з оригіналу: автор → текст → відео.
+    const author = readCommentAuthor(element);
+    const text = readCommentBodyText(element);
+    const { videoTitle, videoKey } = readVideoRef(element);
 
     return {
         id: commentKey,
         author,
-        text: text || '[comment]',
+        text: text || EMPTY_TEXT_PLACEHOLDER,
         videoId: videoKey || '',
         videoTitle: videoTitle || ''
     };

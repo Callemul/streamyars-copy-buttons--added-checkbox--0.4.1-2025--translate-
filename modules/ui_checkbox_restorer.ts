@@ -13,36 +13,35 @@
  *   • непорожній textKey  — завжди перетираємо `checked` (у т.ч. на false).
  */
 
-import { SYH_CONFIG, resolveFirstSelector, type SelectorValue } from './config';
+import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from './config';
 import { SYH_UI_STATE } from './ui_state';
-
-/** Дефолтні селектори StreamYard на випадок, коли конфіг їх не задає. */
-const DEFAULT_COMMENT_BLOCK = '[class*="PlatformComment__Wrap"]';
-const DEFAULT_COMMENT_TEXT = '[class*="PlatformCommentShell__ContentSpan"]';
-const DEFAULT_BANNER_BLOCK = '[class*="Banner__LiWrap"]';
-const DEFAULT_BANNER_TEXT = '[class*="Banner__BannerText"]';
 
 /**
  * Текст елемента, до якого прив'язаний чекбокс. Саме він є ключем у
  * `itemStates`, тому порожній рядок означає «стан застосовувати нікуди».
+ *
+ * ВАЖЛИВО: ключ читається тим самим пріоритетним перебором `SelectorValue`,
+ * що й на write-path (`handleCheckboxChange`, `applyCommentActionState` →
+ * `action_dom_sync`). Раніше read-path брав лише `resolveFirstSelector` ([0])
+ * і мав власні `DEFAULT_*`-фолбеки, тому на лейаутах StreamYard із
+ * fallback-розміткою записаний стан ніколи не відновлювався. Див. аудит
+ * `audit_2026-08-10_KILO_checkbox-text-key-mismatch`.
  */
 export function getCheckboxTextKey(
     checkbox: HTMLInputElement,
     selectors: Record<string, SelectorValue>
 ): string {
     const type = checkbox.dataset.type;
-    const selCommentBlock = resolveFirstSelector(selectors.commentBlock) || '';
-    const selCommentText = resolveFirstSelector(selectors.commentText) || '';
-    const selBannerBlock = resolveFirstSelector(selectors.bannerBlock) || '';
-    const selBannerText = resolveFirstSelector(selectors.bannerText) || '';
 
     if (type === 'comment') {
-        const commentBlock = checkbox.closest(selCommentBlock || DEFAULT_COMMENT_BLOCK);
-        return commentBlock?.querySelector(selCommentText || DEFAULT_COMMENT_TEXT)?.textContent || "";
+        const commentBlock = closestBySelectorValue(checkbox, selectors.commentBlock);
+        if (!commentBlock) return "";
+        return queryBySelectorValue(selectors.commentText, commentBlock)?.textContent || "";
     }
     if (type === 'banner') {
-        const bannerBlock = checkbox.closest(selBannerBlock || DEFAULT_BANNER_BLOCK);
-        return bannerBlock?.querySelector(selBannerText || DEFAULT_BANNER_TEXT)?.textContent || "";
+        const bannerBlock = closestBySelectorValue(checkbox, selectors.bannerBlock);
+        if (!bannerBlock) return "";
+        return queryBySelectorValue(selectors.bannerText, bannerBlock)?.textContent || "";
     }
     return "";
 }
