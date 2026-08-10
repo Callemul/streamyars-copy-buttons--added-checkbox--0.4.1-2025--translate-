@@ -1,57 +1,61 @@
+/**
+ * TriggerManager — тонкий оркестратор тригерних слів.
+ *
+ * Після рефакторингу клас лише тримає стан і делегує:
+ *   - `trigger_words.ts`    — правила конфігурації списків слів і селекторів;
+ *   - `trigger_regex.ts`    — побудова та кешування регулярок;
+ *   - `trigger_category.ts` — визначення тематики збігу.
+ *
+ * Публічний контракт (властивості + чотири методи) не змінився: він зафіксований
+ * у `tests/trigger_manager.test.js` і використовується `TriggerHighlighter`,
+ * `CommentProcessor` та фасадом `CommentAssistantService`.
+ */
+
 import type { SelectorValue } from '../config';
+import {
+    resolveInitialTriggerWords,
+    resolveInitialSelectors,
+    applyTriggerWordsUpdate,
+    type TriggerWordSet
+} from './trigger_words';
+import { TriggerRegexCache } from './trigger_regex';
+import { resolveTriggerCategory, type TriggerCategory } from './trigger_category';
 
 export class TriggerManager {
     public triggerWords: string[];
     public triggerWordsQuestion: string[];
     public triggerWordsPrayer: string[];
     public selectors: Record<string, SelectorValue>;
-    private regexCache: Map<string, RegExp> = new Map();
+    private regexCache: TriggerRegexCache = new TriggerRegexCache();
 
     constructor(config: any = {}) {
-        this.triggerWordsQuestion = config?.TRIGGER_WORDS_QUESTION || ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'];
-        this.triggerWordsPrayer = config?.TRIGGER_WORDS_PRAYER || ['молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба'];
-        this.triggerWords = config?.TRIGGER_WORDS || [...this.triggerWordsQuestion, ...this.triggerWordsPrayer];
-        this.selectors = (config?.SELECTORS as Record<string, SelectorValue>) || {
-            commentBlock: '[class*="PlatformComment__Wrap"]',
-            commentText: '[class*="PlatformCommentShell__ContentSpan"]'
-        };
+        const words = resolveInitialTriggerWords(config);
+        this.triggerWords = words.triggerWords;
+        this.triggerWordsQuestion = words.triggerWordsQuestion;
+        this.triggerWordsPrayer = words.triggerWordsPrayer;
+        this.selectors = resolveInitialSelectors(config);
     }
 
     public init(config?: any) {
-        if (config?.TRIGGER_WORDS_QUESTION) {
-            this.triggerWordsQuestion = config.TRIGGER_WORDS_QUESTION;
-        }
-        if (config?.TRIGGER_WORDS_PRAYER) {
-            this.triggerWordsPrayer = config.TRIGGER_WORDS_PRAYER;
-        }
-        if (config?.TRIGGER_WORDS) {
-            this.triggerWords = config.TRIGGER_WORDS;
-        } else if (config?.TRIGGER_WORDS_QUESTION || config?.TRIGGER_WORDS_PRAYER) {
-            this.triggerWords = [...this.triggerWordsQuestion, ...this.triggerWordsPrayer];
-        }
+        const current: TriggerWordSet = {
+            triggerWords: this.triggerWords,
+            triggerWordsQuestion: this.triggerWordsQuestion,
+            triggerWordsPrayer: this.triggerWordsPrayer
+        };
+        const next = applyTriggerWordsUpdate(current, config);
+        this.triggerWords = next.triggerWords;
+        this.triggerWordsQuestion = next.triggerWordsQuestion;
+        this.triggerWordsPrayer = next.triggerWordsPrayer;
+
         this.regexCache.clear();
+
         if (config?.SELECTORS) {
             this.selectors = config.SELECTORS;
         }
     }
 
     public createTriggerRegExp(word: string): RegExp {
-        const lowerWord = word.toLowerCase();
-        if (this.regexCache.has(lowerWord)) {
-            const cached = this.regexCache.get(lowerWord)!;
-            cached.lastIndex = 0;
-            return cached;
-        }
-
-        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        let rx: RegExp;
-        try {
-            rx = new RegExp(`(?<![\\p{L}\\p{N}])(${escapedWord})(?![\\p{L}\\p{N}])`, 'giu');
-        } catch {
-            rx = new RegExp(`(^|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])(${escapedWord})($|[^a-zA-Z0-9а-яА-ЯёЁіІїЇєЄґҐ])`, 'gi');
-        }
-        this.regexCache.set(lowerWord, rx);
-        return rx;
+        return this.regexCache.get(word);
     }
 
     public hasTrigger(text: string): boolean {
@@ -66,12 +70,7 @@ export class TriggerManager {
         lowerWord: string,
         lowerPrayerWords: string[],
         lowerQuestionWords: string[]
-    ): { categoryClass: string; categoryName: string } {
-        const isPrayer = lowerPrayerWords.includes(lowerWord);
-        const isQuestion = lowerQuestionWords.includes(lowerWord);
-        return {
-            categoryClass: isPrayer ? 'syh-trigger-prayer' : (isQuestion ? 'syh-trigger-question' : ''),
-            categoryName: isPrayer ? 'prayer' : (isQuestion ? 'question' : 'other')
-        };
+    ): TriggerCategory {
+        return resolveTriggerCategory(lowerWord, lowerPrayerWords, lowerQuestionWords);
     }
 }
