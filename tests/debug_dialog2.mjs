@@ -1,7 +1,7 @@
 import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock({ runtimeImpl: { id: 't' } });
 
-const { bindContextMenuHandlers } = await import('../modules/event_comments/handlers.ts');
+const { bindContextMenuHandlers } = await import('../modules/event_comments/handlers/context_menu.ts');
 
 document.body.innerHTML = `
 <div class="test-comment-block">

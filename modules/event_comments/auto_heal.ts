@@ -1,58 +1,33 @@
-import type { SyhEventComments } from './types';
-import { closestBySelectorValue, queryBySelectorValue, resolveSelectorString } from '../config';
-import { SYH_DOM_OBSERVER } from '../dom_observer';
-import { CommentService } from '../comment_service';
-import { SYH_COMMENT_ASSISTANT } from '../comment_assistant/index';
+// modules/event_comments/auto_heal.ts
+//
+// Auto-Heal: періодичне вирівнювання нашого стану з тим, що реально показує
+// StreamYard. Складається з двох незалежних проходів, які тепер живуть окремо:
+//   - `./auto_heal_cover_buttons` — коментарі, приховані платформою;
+//   - `./auto_heal_ghosts`        — записи в базі без зірки в UI.
+//
+// Тут лишився лише життєвий цикл сканера: guard на живий runtime розширення,
+// реєстрація в `SYH_DOM_OBSERVER` та батчинг проходів через один кадр
+// анімації. Поведінка збережена 1-в-1
+// (`tests/event_comments_auto_heal.test.js`,
+//  `tests/event_comments_auto_heal_scanner.test.js`).
 
+import type { SyhEventComments } from './types';
+import { resolveSelectorString } from '../config';
+import { SYH_DOM_OBSERVER } from '../dom_observer';
+import { processCoverButtons } from './auto_heal_cover_buttons';
+import { processGhostComments } from './auto_heal_ghosts';
+
+/** Фолбек-селектор блоку коментаря, коли конфіг його не задає. */
+const FALLBACK_COMMENT_SELECTOR = '[class*="PlatformComment__Wrap"]';
+
+/**
+ * Чи живий контекст розширення.
+ *
+ * Після перезавантаження/оновлення розширення `chrome.runtime.id` зникає, і
+ * будь-яке звернення до API кидає «Extension context invalidated».
+ */
 function isExtensionRuntime(): boolean {
     return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
-}
-
-function processCoverButtons(self: SyhEventComments): void {
-    const coverButtons = document.querySelectorAll('[data-testid="show-comment-button"]');
-    coverButtons.forEach((btn: Element) => {
-        if (!isHideButton(btn)) return;
-
-        const commentBlock = closestBySelectorValue(btn, self.SELECTORS?.commentBlock);
-        if (!commentBlock) return;
-
-        const checkbox = commentBlock.querySelector<HTMLInputElement>('.syh-checkbox[data-type="comment"]');
-        if (!checkbox || checkbox.checked) return;
-
-        checkbox.checked = true;
-        const textKey = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent;
-        if (textKey) {
-            CommentService.setStreamYardCheckboxState(textKey, true);
-        }
-        SYH_COMMENT_ASSISTANT.processComment(commentBlock);
-    });
-}
-
-function isHideButton(btn: Element): boolean {
-    return btn.textContent?.includes('Hide') || !!btn.querySelector('.lucide-circle-minus');
-}
-
-function processSyhComments(self: SyhEventComments): void {
-    const syhComments = document.querySelectorAll('[data-syh-type="prayer"], [data-syh-type="question"]');
-    syhComments.forEach((commentBlock: Element) => {
-        const starBtn = queryBySelectorValue(self.SELECTORS?.starButton, commentBlock);
-        if (!starBtn || starBtn.getAttribute('aria-selected') !== 'false') return;
-        if (commentBlock.getAttribute('data-syh-just-added') === 'true') return;
-
-        const text = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent;
-        if (!text) return;
-
-        console.log("[SYH] Auto-Heal: Виявлено коментар без зірки. Очищую з бази.");
-        self.removeFromDatabase(text);
-
-        const ui = self.UI;
-        if (ui) {
-            ui.updateCommentVisuals(commentBlock, 'none');
-            if (typeof ui.filterStarredComments === 'function') {
-                setTimeout(() => ui.filterStarredComments(), 100);
-            }
-        }
-    });
 }
 
 export function runAutoHeal(self: SyhEventComments): void {
@@ -64,7 +39,26 @@ export function runAutoHeal(self: SyhEventComments): void {
     }
 
     processCoverButtons(self);
-    processSyhComments(self);
+    processGhostComments(self);
+}
+
+/**
+ * Згортає серію мутацій DOM в один прохід за кадр.
+ * На прихованій вкладці кадрів немає — робота просто пропускається.
+ */
+function createFrameBatchedTrigger(self: SyhEventComments): () => void {
+    let rafScheduled = false;
+
+    return () => {
+        if (document.hidden) return;
+        if (rafScheduled) return;
+
+        rafScheduled = true;
+        requestAnimationFrame(() => {
+            rafScheduled = false;
+            runAutoHeal(self);
+        });
+    };
 }
 
 export function bindAutoHealScanner(self: SyhEventComments): void {
@@ -74,19 +68,9 @@ export function bindAutoHealScanner(self: SyhEventComments): void {
     }
 
     const commentSelector = resolveSelectorString(self.SELECTORS?.commentBlock)
-        || '[class*="PlatformComment__Wrap"]';
+        || FALLBACK_COMMENT_SELECTOR;
 
-    let rafScheduled = false;
-    const triggerAutoHeal = () => {
-        if (document.hidden) return;
-        if (!rafScheduled) {
-            rafScheduled = true;
-            requestAnimationFrame(() => {
-                rafScheduled = false;
-                runAutoHeal(self);
-            });
-        }
-    };
+    const triggerAutoHeal = createFrameBatchedTrigger(self);
 
     self.unregisterAutoHeal = SYH_DOM_OBSERVER.register(
         commentSelector,

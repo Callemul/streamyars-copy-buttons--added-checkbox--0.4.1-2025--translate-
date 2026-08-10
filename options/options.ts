@@ -1,201 +1,77 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { CommentService } from '../modules/comment_service';
-import type { StudioOverrideLogEntry } from '../modules/types';
-import { validateImportedConfig, extractImportedItems } from './validation';
+// options/options.ts
+//
+// Точка входу сторінки налаштувань: збирає докупи незалежні модулі й
+// підписується на кнопки. Це найвищий refactoring target звіту Fallow 3.14
+// (`priority 32.1`, hotspot 33.7 — 16 комітів, «accelerating trend»).
+//
+// Раніше `OptionsController` тримав усе: навігацію, форму, storage, Blob/FileReader,
+// журнал Studio і таймер тоста. Тепер кожна відповідальність має власний файл:
+//   - `./options_navigation`    — меню секцій;
+//   - `./options_toast`         — сповіщення (єдиний володар таймера);
+//   - `./options_settings_io`   — завантаження/збереження/скидання налаштувань;
+//   - `./options_config_io`     — експорт/імпорт JSON-конфігурації;
+//   - `./options_studio_log`    — журнал ручних корекцій YouTube Studio.
+//
+// Контролер лишає лише проводку: «яка кнопка → яка дія → що показати».
+// Поведінка збережена 1-в-1 (`tests/options_settings.test.js`,
+// `tests/options_config.test.js`, `tests/options_controller_io.test.js`).
+
+import { validateImportedConfig } from './validation';
 import { DEFAULT_OPTIONS, type OptionsState } from './defaults';
-import { populateFormElements, readOptionsFromForm } from './form';
-import { buildStudioLogReport, renderStudioLogRows } from './studio_log';
+import { populateFormElements } from './form';
+import { initSectionNavigation } from './options_navigation';
+import { createToastController } from './options_toast';
+import { loadSettingsIntoForm, saveSettingsFromForm, resetSettingsToDefaults } from './options_settings_io';
+import { exportConfig, importConfig } from './options_config_io';
+import { loadStudioLog, copyStudioLog, clearStudioLog } from './options_studio_log';
+
+/** Прив'язує обробник кліку, якщо кнопка присутня в розмітці. */
+function onClick(id: string, handler: () => void): void {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', handler);
+}
 
 class OptionsController {
-    private toastTimer: ReturnType<typeof setTimeout> | null = null;
+    private readonly toast = createToastController();
 
     constructor() {
-        this.initNavigation();
+        initSectionNavigation();
         this.initEvents();
         this.loadSettings();
     }
 
-    private initNavigation(): void {
-        const navItems = document.querySelectorAll<HTMLButtonElement>('.nav-item');
-        const sections = document.querySelectorAll<HTMLElement>('.content-section');
-
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const targetId = item.getAttribute('data-target');
-                navItems.forEach(n => n.classList.remove('active'));
-                sections.forEach(s => s.classList.remove('active'));
-
-                item.classList.add('active');
-                if (targetId) {
-                    const targetSec = document.getElementById(targetId);
-                    if (targetSec) targetSec.classList.add('active');
-                }
-            });
-        });
-    }
+    private notify = (message: string): void => {
+        this.toast.show(message);
+    };
 
     private initEvents(): void {
-        const saveBtn = document.getElementById('saveTopBtn');
-        if (saveBtn) saveBtn.addEventListener('click', () => this.saveSettings());
-
-        const exportBtn = document.getElementById('exportConfigBtn');
-        if (exportBtn) exportBtn.addEventListener('click', () => this.exportConfig());
+        onClick('saveTopBtn', () => this.saveSettings());
+        onClick('exportConfigBtn', () => exportConfig(this.notify));
+        onClick('resetDefaultsBtn', () => this.resetDefaults());
+        onClick('copyStudioLogBtn', () => copyStudioLog(this.notify));
+        onClick('clearStudioLogBtn', () => clearStudioLog(this.notify));
 
         const importInput = document.getElementById('importConfigFile') as HTMLInputElement;
-        if (importInput) importInput.addEventListener('change', (e) => this.importConfig(e));
-
-        const resetBtn = document.getElementById('resetDefaultsBtn');
-        if (resetBtn) resetBtn.addEventListener('click', () => this.resetDefaults());
-
-        const copyLogBtn = document.getElementById('copyStudioLogBtn');
-        if (copyLogBtn) copyLogBtn.addEventListener('click', () => this.copyStudioLog());
-
-        const clearLogBtn = document.getElementById('clearStudioLogBtn');
-        if (clearLogBtn) clearLogBtn.addEventListener('click', () => this.clearStudioLog());
+        if (importInput) {
+            importInput.addEventListener('change', (e) => {
+                importConfig(e, () => this.loadSettings(), this.notify);
+            });
+        }
     }
 
     private loadSettings(): void {
-        SYH_STORAGE.get([STORAGE_KEYS.DB, STORAGE_KEYS.OPTIONS, STORAGE_KEYS.STUDIO_ENABLED], (result) => {
-            const db = result[STORAGE_KEYS.DB] || {};
-            const opts: Partial<OptionsState> = result[STORAGE_KEYS.OPTIONS] || {};
-            populateFormElements(db, opts, DEFAULT_OPTIONS, result[STORAGE_KEYS.STUDIO_ENABLED]);
-            this.loadStudioLog();
-        });
+        loadSettingsIntoForm(() => loadStudioLog());
     }
 
     private saveSettings(): void {
-        const newOptions = readOptionsFromForm(DEFAULT_OPTIONS);
-
-        SYH_STORAGE.get([STORAGE_KEYS.DB], (result) => {
-            const currentDb = result[STORAGE_KEYS.DB] || {};
-            currentDb.newTitleSS = newOptions.newTitleSS;
-            currentDb.newTitlePreach = newOptions.newTitlePreach;
-
-            SYH_STORAGE.set({
-                [STORAGE_KEYS.DB]: currentDb,
-                [STORAGE_KEYS.OPTIONS]: newOptions,
-                [STORAGE_KEYS.STUDIO_ENABLED]: newOptions.studio_enabled
-            }, () => {
-                this.showToast('✅ Налаштування успішно збережено!');
-            });
-        });
-    }
-
-    private loadStudioLog(): void {
-        SYH_STORAGE.get([STORAGE_KEYS.STUDIO_OVERRIDE_LOG], (res) => {
-            const logs: StudioOverrideLogEntry[] = res[STORAGE_KEYS.STUDIO_OVERRIDE_LOG] || [];
-            const tbody = document.getElementById('studioLogBody');
-            if (!tbody) return;
-
-            renderStudioLogRows(tbody, logs);
-        });
-    }
-
-    private copyStudioLog(): void {
-        SYH_STORAGE.get([STORAGE_KEYS.STUDIO_OVERRIDE_LOG], async (res) => {
-            const logs: StudioOverrideLogEntry[] = res[STORAGE_KEYS.STUDIO_OVERRIDE_LOG] || [];
-            if (logs.length === 0) {
-                this.showToast('ℹ️ Лог порожній, нічого копіювати');
-                return;
-            }
-
-            const success = await CommentService.copyToClipboard(buildStudioLogReport(logs));
-            if (success) {
-                this.showToast('📋 Лог корекцій YouTube Studio скопійовано!');
-            } else {
-                alert('Не вдалося скопіювати лог в буфер обміну');
-            }
-        });
-    }
-
-    private clearStudioLog(): void {
-        if (confirm('Очистити лог ручних корекцій категорій YouTube Studio?')) {
-            SYH_STORAGE.set({ [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]: [] }, () => {
-                this.loadStudioLog();
-                this.showToast('🗑 Лог Studio успішно очищено');
-            });
-        }
-    }
-
-    private exportConfig(): void {
-        const allKeys = Object.values(STORAGE_KEYS);
-        SYH_STORAGE.get(allKeys, (result) => {
-            const exportData: Record<string, any> = {
-                app: 'StreamYard Helper',
-                timestamp: new Date().toISOString(),
-                version: result[STORAGE_KEYS.VERSION] || '1.0.0',
-                db: result[STORAGE_KEYS.DB] || {},
-                syh_options: result[STORAGE_KEYS.OPTIONS] || DEFAULT_OPTIONS
-            };
-
-            for (const key of allKeys) {
-                if (result[key] !== undefined) {
-                    exportData[key] = result[key];
-                }
-            }
-
-            const jsonStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([jsonStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `streamyard_helper_config_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            this.showToast('📥 Налаштування та стан успішно експортовано');
-        });
-    }
-
-    private importConfig(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (!input.files || input.files.length === 0) return;
-
-        const file = input.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const imported = JSON.parse(e.target?.result as string);
-                if (validateImportedConfig(imported)) {
-                    const itemsToSave = extractImportedItems(imported);
-
-                    SYH_STORAGE.set(itemsToSave, () => {
-                        this.loadSettings();
-                        this.showToast('📤 Налаштування та стан успішно імпортовано!');
-                    });
-                } else {
-                    alert('Некоректний формат файлу конфігурації.');
-                }
-            } catch {
-                alert('Помилка при зчитуванні JSON файлу.');
-            }
-        };
-        reader.readAsText(file);
+        saveSettingsFromForm(() => this.notify('✅ Налаштування успішно збережено!'));
     }
 
     private resetDefaults(): void {
-        if (confirm('Ви впевнені, що хочете скинути всі налаштування до стандартних?')) {
-            SYH_STORAGE.set({
-                [STORAGE_KEYS.DB]: { newTitleSS: DEFAULT_OPTIONS.newTitleSS, newTitlePreach: DEFAULT_OPTIONS.newTitlePreach },
-                [STORAGE_KEYS.OPTIONS]: DEFAULT_OPTIONS
-            }, () => {
-                this.loadSettings();
-                this.showToast('⚠️ Налаштування скинуто до початкових!');
-            });
-        }
-    }
-
-    private showToast(msg: string): void {
-        const toast = document.getElementById('toastNotification');
-        if (!toast) return;
-        toast.textContent = msg;
-        toast.classList.add('show');
-
-        if (this.toastTimer) clearTimeout(this.toastTimer);
-        this.toastTimer = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        resetSettingsToDefaults(() => {
+            this.loadSettings();
+            this.notify('⚠️ Налаштування скинуто до початкових!');
+        });
     }
 }
 
