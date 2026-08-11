@@ -712,3 +712,38 @@ describe('resolveCategoryForVideo integration', () => {
         assert.equal(res.source, 'unresolved');
     });
 });
+
+// ---------------------------------------------------------------------------
+// Характеризаційні тести на винесений модуль резолюції категорій
+// (`youtube/studio/studio_category_resolution.ts`). Фіксують 1-в-1 поведінку
+// обгортки `resolveStudioVideoCategory` над `resolveCategoryForVideo`.
+
+const { resolveStudioVideoCategory } = await import('../youtube/studio/studio_category_resolution.ts');
+
+function makeCaches(videoSheetMap = {}) {
+    return { videoSheetMap };
+}
+
+describe('resolveStudioVideoCategory (extracted helper)', () => {
+    test('передає заголовок/відео як є у resolveCategoryForVideo і повертає sheetId оверрайду', () => {
+        const caches = makeCaches({ 'video-123': { sheetId: 'oparin', source: 'manual' } });
+        const res = resolveStudioVideoCategory('Any Title', 'video-123', 'vp', caches);
+        assert.equal(res.sheetId, 'oparin');
+        assert.equal(res.source, 'manual');
+    });
+
+    test('підміняє undefined заголовок на порожній рядок (як робив адаптер)', () => {
+        // Раніше адаптер кликав resolveCategoryForVideo(ctx.videoTitle || '', ...).
+        // Порожній заголовок без оверрайду не має авто-збігу → 'unresolved'
+        // (це саме те, що повертав адаптер до рефакторингу).
+        const caches = makeCaches({});
+        const res = resolveStudioVideoCategory(undefined, 'video-456', 'vp', caches);
+        assert.equal(res.source, 'unresolved');
+    });
+
+    test('читає videoSheetMap саме з caches.videoSheetMap', () => {
+        const caches = makeCaches({ 'video-999': { sheetId: 'qanda', source: 'manual' } });
+        const res = resolveStudioVideoCategory('Title', 'video-999', 'vp', caches);
+        assert.equal(res.sheetId, 'qanda');
+    });
+});
