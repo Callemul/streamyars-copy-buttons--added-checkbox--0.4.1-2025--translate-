@@ -1,27 +1,42 @@
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
-import { SYH_BUS } from './event_bus';
-import { SYH_STATE } from './state';
-import { RetentionService } from './retention_service';
+/**
+ * StreamYard Helper — фасад доменної логіки коментарів.
+ *
+ * Раніше — клас на 260 рядків (cyclomatic 54), у якому поряд жили чотири
+ * незалежні відповідальності. Реалізацію винесено у вузькі модулі:
+ *   - `./comment_clipboard`        — форматування та запис у буфер обміну;
+ *   - `./comment_collected_store`  — списки зібраних коментарів по аркушах;
+ *   - `./comment_state_store`      — стани кнопок і чекбоксів;
+ *   - `./prayer_record_store`      — база молитов/питань із TTL;
+ *   - `./comment_types`            — доменні типи.
+ *
+ * Тут лишилося ЛИШЕ делегування. Це навмисно: 28 файлів імпортують
+ * `CommentService` (найбільший fan-in у проєкті), а тести підмінюють його
+ * статичні методи присвоєнням (`CommentService.copyToClipboard = ...`).
+ * Тому статичний клас-фасад збережено 1-в-1, разом із реекспортом типів
+ * `CommentPayload` / `PrayerRecord`, які історично імпортують саме звідси.
+ */
+import { formatCommentForClipboard, writeTextToClipboard } from './comment_clipboard';
+import {
+    saveCollectedComment,
+    removeCollectedComment,
+    clearAllCollectedForSheet
+} from './comment_collected_store';
+import {
+    setStreamYardCheckboxState,
+    getStreamYardCheckboxState,
+    subscribeToStateChanges,
+    saveButtonState,
+    saveCheckboxState
+} from './comment_state_store';
+import { savePrayerRecord, removePrayerRecord } from './prayer_record_store';
+import type {
+    ButtonStateValue,
+    CheckboxStateEntry,
+    CommentPayload,
+    PrayerRecord
+} from './comment_types';
 
-export interface CommentPayload {
-    id: string;
-    author: string;
-    text: string;
-    type: 'question' | 'prayer';
-    timestamp: number;
-    videoId?: string;
-    videoTitle?: string;
-    roomId?: string;
-}
-
-export interface PrayerRecord {
-    author: string;
-    text: string;
-    type: string;
-    icon: string;
-    roomId: string;
-    timestamp: number;
-}
+export type { CommentPayload, PrayerRecord } from './comment_types';
 
 /**
  * Єдиний доменний сервіс бізнес-логіки коментарів для StreamYard, YouTube та YouTube Studio
@@ -31,66 +46,14 @@ export class CommentService {
      * Стандартне форматування тексту коментаря для буфера обміну
      */
     public static formatForClipboard(author: string, text: string): string {
-        const cleanAuthor = (author || '').trim().replace(/^@+/, '');
-        const cleanText = (text || '').trim();
-        return cleanAuthor ? `@${cleanAuthor}\n\n${cleanText}` : cleanText;
+        return formatCommentForClipboard(author, text);
     }
 
     /**
-     * Безнадійна безпечна запис у буфер обміну з фолбеком для усіх платформ
+     * Безпечний запис у буфер обміну з фолбеком для усіх платформ
      */
     public static async copyToClipboard(text: string): Promise<boolean> {
-        if (!text) return false;
-
-        try {
-            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(text);
-                return true;
-            }
-        } catch (err) {
-            console.warn('[SYH CommentService] Clipboard API error, falling back to execCommand:', err);
-        }
-
-        if (typeof document === 'undefined' || !document.body) {
-            return false;
-        }
-
-        try {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            textarea.style.pointerEvents = 'none';
-            document.body.appendChild(textarea);
-            textarea.select();
-            const success = document.execCommand('copy');
-            document.body.removeChild(textarea);
-            return success;
-        } catch (err) {
-            console.error('[SYH CommentService] Copy failed:', err);
-            return false;
-        }
-    }
-
-    /**
-     * Уніфіковане оновлення списку зібраних коментарів та еміт події
-     */
-    private static async updateCollectedListAndEmit(
-        sheetId: string,
-        updater: (list: CommentPayload[]) => CommentPayload[]
-    ): Promise<CommentPayload[]> {
-        const storageKey = getSheetCollectedStorageKey(sheetId);
-        const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
-        const list = result[storageKey] || [];
-        const updated = updater(list);
-
-        await SYH_STORAGE.setAsync({ [storageKey]: updated });
-        SYH_BUS.emit('SHEET_DATA_PROCESSED', {
-            sheetId,
-            totalQuestions: updated.filter(i => i.type === 'question').length,
-            totalPrayers: updated.filter(i => i.type === 'prayer').length
-        });
-        return updated;
+        return writeTextToClipboard(text);
     }
 
     /**
@@ -100,16 +63,7 @@ export class CommentService {
         sheetId: string,
         comment: CommentPayload
     ): Promise<CommentPayload[]> {
-        return CommentService.updateCollectedListAndEmit(sheetId, (list) => {
-            const index = list.findIndex(item => 
-                item.id === comment.id || 
-                (item.author === comment.author && item.text === comment.text && item.type === comment.type)
-            );
-
-            return index >= 0
-                ? list.map((item, idx) => idx === index ? comment : item)
-                : [comment, ...list];
-        });
+        return saveCollectedComment(sheetId, comment);
     }
 
     /**
@@ -121,12 +75,7 @@ export class CommentService {
         author?: string,
         text?: string
     ): Promise<CommentPayload[]> {
-        return CommentService.updateCollectedListAndEmit(sheetId, (list) => 
-            list.filter(item => !(
-                item.id === commentId ||
-                (author && text && item.author === author && item.text === text)
-            ))
-        );
+        return removeCollectedComment(sheetId, commentId, author, text);
     }
 
     /**
@@ -134,51 +83,21 @@ export class CommentService {
      * та скидання стану їхніх кнопок у YouTube / Studio.
      */
     public static async clearAllCollectedForSheet(sheetId: string): Promise<void> {
-        const storageKey = getSheetCollectedStorageKey(sheetId);
-        const result = await SYH_STORAGE.getAsync<Record<string, any>>([
-            storageKey,
-            STORAGE_KEYS.YT_BUTTON_STATES,
-            STORAGE_KEYS.STUDIO_BUTTON_STATE
-        ]);
-
-        const items: CommentPayload[] = result[storageKey] || [];
-        const commentIds = items.map(item => item.id);
-
-        const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
-        const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
-
-        commentIds.forEach(id => {
-            delete ytBtnStates[id];
-            delete studioBtnStates[id];
-        });
-
-        await SYH_STORAGE.setAsync({
-            [storageKey]: [],
-            [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
-            [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
-        });
-
-        SYH_BUS.emit('SHEET_DATA_PROCESSED', {
-            sheetId,
-            totalQuestions: 0,
-            totalPrayers: 0
-        });
+        return clearAllCollectedForSheet(sheetId);
     }
 
     /**
      * Встановлення стану чекбокса StreamYard
      */
     public static setStreamYardCheckboxState(textKey: string, isChecked: boolean, delayMs = 150): void {
-        if (!textKey) return;
-        SYH_STATE.updateState(textKey, isChecked, delayMs);
+        setStreamYardCheckboxState(textKey, isChecked, delayMs);
     }
 
     /**
      * Отримання стану чекбокса StreamYard
      */
     public static getStreamYardCheckboxState(textKey: string): boolean {
-        if (!textKey) return false;
-        return SYH_STATE.getState(textKey);
+        return getStreamYardCheckboxState(textKey);
     }
 
     /**
@@ -187,7 +106,7 @@ export class CommentService {
     public static subscribeToStateChanges(
         callback: (data: { key: string; value: boolean }) => void
     ): () => void {
-        return SYH_BUS.on('STATE_CHANGED', callback);
+        return subscribeToStateChanges(callback);
     }
 
     /**
@@ -195,18 +114,11 @@ export class CommentService {
      */
     public static async saveButtonState(
         storageKey: string,
-        buttonStates: Record<string, 'question' | 'prayer' | null>,
+        buttonStates: Record<string, ButtonStateValue>,
         commentKey: string,
-        state: 'question' | 'prayer' | null
-    ): Promise<Record<string, 'question' | 'prayer' | null>> {
-        if (state === null) {
-            delete buttonStates[commentKey];
-        } else {
-            buttonStates[commentKey] = state;
-        }
-        await SYH_STORAGE.setAsync({ [storageKey]: buttonStates });
-        SYH_BUS.emit('STATE_CHANGED', { key: commentKey, value: state !== null });
-        return buttonStates;
+        state: ButtonStateValue
+    ): Promise<Record<string, ButtonStateValue>> {
+        return saveButtonState(storageKey, buttonStates, commentKey, state);
     }
 
     /**
@@ -214,47 +126,24 @@ export class CommentService {
      */
     public static async saveCheckboxState(
         storageKey: string,
-        checkboxStates: Record<string, { checked: boolean; timestamp: number }>,
+        checkboxStates: Record<string, CheckboxStateEntry>,
         commentKey: string,
         isChecked: boolean
-    ): Promise<Record<string, { checked: boolean; timestamp: number }>> {
-        checkboxStates[commentKey] = {
-            checked: isChecked,
-            timestamp: Date.now()
-        };
-        await SYH_STORAGE.setAsync({ [storageKey]: checkboxStates });
-        SYH_BUS.emit('STATE_CHANGED', { key: commentKey, value: isChecked });
-        return checkboxStates;
+    ): Promise<Record<string, CheckboxStateEntry>> {
+        return saveCheckboxState(storageKey, checkboxStates, commentKey, isChecked);
     }
 
     /**
      * Уніфіковане збереження молитви/питання в базі STREAMYARD з урахуванням TTL
      */
     public static async savePrayerRecord(record: PrayerRecord): Promise<PrayerRecord[]> {
-        const list = await CommentService.loadPrayerList();
-        const deduped = list.filter(item => item.text !== record.text);
-        deduped.push(record);
-        return CommentService.savePrayerList(deduped);
+        return savePrayerRecord(record);
     }
 
     /**
      * Уніфіковане видалення молитви/питання з бази STREAMYARD з урахуванням TTL
      */
     public static async removePrayerRecord(text: string): Promise<PrayerRecord[]> {
-        const list = await CommentService.loadPrayerList();
-        const filtered = list.filter(item => item.text !== text);
-        return CommentService.savePrayerList(filtered);
-    }
-
-    private static async loadPrayerList(): Promise<PrayerRecord[]> {
-        const now = Date.now();
-        const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-        const list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
-        return RetentionService.filterFreshPrayers(list, now);
-    }
-
-    private static async savePrayerList(list: PrayerRecord[]): Promise<PrayerRecord[]> {
-        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.PRAYERS]: list });
-        return list;
+        return removePrayerRecord(text);
     }
 }

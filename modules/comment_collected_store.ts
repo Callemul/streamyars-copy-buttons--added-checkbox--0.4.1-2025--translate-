@@ -1,0 +1,105 @@
+/**
+ * StreamYard Helper — сховище зібраних коментарів по аркушах.
+ *
+ * Виокремлено з `comment_service.ts`. Єдине джерело правди для списку
+ * `syh:popup:collected:<sheetId>`: будь-яка зміна списку проходить через
+ * `updateCollectedList`, який атомарно перечитує сховище, застосовує
+ * оновлювач і одразу емітить `SHEET_DATA_PROCESSED` з перерахованими
+ * лічильниками. Це не дає лічильникам у попапі розʼїхатися зі сховищем.
+ */
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
+import { SYH_BUS } from './event_bus';
+import type { CommentPayload } from './comment_types';
+
+/**
+ * Дублем вважається збіг за `id` АБО повний збіг трійки автор+текст+тип.
+ * Друга умова ловить один і той самий коментар, зібраний із різних платформ,
+ * де `id` формується по-різному.
+ */
+function isSameComment(item: CommentPayload, candidate: CommentPayload): boolean {
+    return item.id === candidate.id ||
+        (item.author === candidate.author && item.text === candidate.text && item.type === candidate.type);
+}
+
+/** Читає список аркуша, застосовує оновлювач, зберігає та сповіщає підписників. */
+async function updateCollectedList(
+    sheetId: string,
+    updater: (list: CommentPayload[]) => CommentPayload[]
+): Promise<CommentPayload[]> {
+    const storageKey = getSheetCollectedStorageKey(sheetId);
+    const result = await SYH_STORAGE.getAsync<Record<string, CommentPayload[]>>([storageKey]);
+    const list = result[storageKey] || [];
+    const updated = updater(list);
+
+    await SYH_STORAGE.setAsync({ [storageKey]: updated });
+    emitSheetTotals(sheetId, updated);
+    return updated;
+}
+
+/** Єдине місце, де рахуються підсумки аркуша для шини подій. */
+function emitSheetTotals(sheetId: string, list: CommentPayload[]): void {
+    SYH_BUS.emit('SHEET_DATA_PROCESSED', {
+        sheetId,
+        totalQuestions: list.filter(i => i.type === 'question').length,
+        totalPrayers: list.filter(i => i.type === 'prayer').length
+    });
+}
+
+/** Зберігає коментар: оновлює дубль на місці або кладе новий на початок списку. */
+export async function saveCollectedComment(
+    sheetId: string,
+    comment: CommentPayload
+): Promise<CommentPayload[]> {
+    return updateCollectedList(sheetId, (list) => {
+        const index = list.findIndex(item => isSameComment(item, comment));
+
+        return index >= 0
+            ? list.map((item, idx) => idx === index ? comment : item)
+            : [comment, ...list];
+    });
+}
+
+/** Видаляє коментар за `id` або за парою автор+текст, якщо вони передані. */
+export async function removeCollectedComment(
+    sheetId: string,
+    commentId: string,
+    author?: string,
+    text?: string
+): Promise<CommentPayload[]> {
+    return updateCollectedList(sheetId, (list) =>
+        list.filter(item => !(
+            item.id === commentId ||
+            (author && text && item.author === author && item.text === text)
+        ))
+    );
+}
+
+/** Знімає стани кнопок YouTube/Studio для перелічених коментарів (мутує на місці). */
+function dropButtonStates(states: Record<string, unknown>, commentIds: string[]): Record<string, unknown> {
+    commentIds.forEach(id => { delete states[id]; });
+    return states;
+}
+
+/**
+ * Повне очищення аркуша: список обнуляється, а стани кнопок YT/Studio для його
+ * коментарів знімаються, щоб кнопки не лишилися візуально «зібраними».
+ */
+export async function clearAllCollectedForSheet(sheetId: string): Promise<void> {
+    const storageKey = getSheetCollectedStorageKey(sheetId);
+    const result = await SYH_STORAGE.getAsync<Record<string, any>>([
+        storageKey,
+        STORAGE_KEYS.YT_BUTTON_STATES,
+        STORAGE_KEYS.STUDIO_BUTTON_STATE
+    ]);
+
+    const items: CommentPayload[] = result[storageKey] || [];
+    const commentIds = items.map(item => item.id);
+
+    await SYH_STORAGE.setAsync({
+        [storageKey]: [],
+        [STORAGE_KEYS.YT_BUTTON_STATES]: dropButtonStates(result[STORAGE_KEYS.YT_BUTTON_STATES] || {}, commentIds),
+        [STORAGE_KEYS.STUDIO_BUTTON_STATE]: dropButtonStates(result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {}, commentIds)
+    });
+
+    emitSheetTotals(sheetId, []);
+}

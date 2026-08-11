@@ -54,9 +54,9 @@ export function addStarredTabControls(starredHeaderNode: Element): void {
     setTimeout(() => filterStarredComments(), 10);
 }
 
-export function bindStarredControls(): void {
-    const searchInput = document.querySelector<HTMLInputElement>('#syh-starred-search');
+let starredDocClickBound = false;
 
+export function bindStarredControls(): void {
     bindFilterSearchControls({
         searchInputSelector: '#syh-starred-search',
         clearBtnSelector: '#syh-clear-search-btn',
@@ -72,6 +72,9 @@ export function bindStarredControls(): void {
         onScroll: scrollToActiveComment
     });
 
+    if (starredDocClickBound) return;
+    starredDocClickBound = true;
+
     bindFilterDocClickHandler({
         searchInputSelector: '#syh-starred-search',
         clearBtnSelector: '#syh-clear-search-btn',
@@ -86,6 +89,7 @@ export function bindStarredControls(): void {
             SYH_UI_STATE.activeFilter = filterBtn.dataset.filter || 'all';
             filterStarredComments();
 
+            const searchInput = document.querySelector<HTMLInputElement>('#syh-starred-search');
             if (SYH_UI_STATE.searchQuery && searchInput) {
                 searchInput.classList.remove('syh-search-pulse');
                 void searchInput.offsetWidth;
