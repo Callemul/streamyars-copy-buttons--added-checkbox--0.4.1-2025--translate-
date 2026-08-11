@@ -110,11 +110,12 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     }
 
     public applyButtonState(buttons: PlatformButtons, state: ButtonStateType, sheetId: string | null): void {
-        const ui = this.getStudioUI(
-            buttons.questionBtn?.closest('ytcp-comment') ||
+        const refEl = buttons.questionBtn?.closest('ytcp-comment') ||
             buttons.copyBtn?.closest('ytcp-comment') ||
-            document.createElement('div')
-        );
+            buttons.questionBtn ||
+            buttons.copyBtn;
+        if (!refEl) return;
+        const ui = this.getStudioUI(refEl);
         if (!ui || !ui.questionBtn || !ui.prayerBtn) return;
         updateStudioButtonsUI(ui, sheetId as SheetId | null, state);
     }

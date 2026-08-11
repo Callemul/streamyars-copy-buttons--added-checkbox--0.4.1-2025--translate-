@@ -1,4 +1,6 @@
 // Shared DOM utilities for popup modules
+import { SYH_STORAGE } from '../modules/storage';
+
 export function $(id: string): HTMLElement | null {
     return document.getElementById(id);
 }
@@ -44,7 +46,7 @@ export function bindTabSwitcher(config: {
             this.setAttribute('aria-selected', 'true');
             const contentEl = document.getElementById(config.buildContentId(id));
             if (contentEl) contentEl.classList.add('active');
-            chrome.storage.local.set({ [config.storageKey]: id, [config.tgStorageKey]: id });
+            SYH_STORAGE.set({ [config.storageKey]: id, [config.tgStorageKey]: id });
         });
     });
 }

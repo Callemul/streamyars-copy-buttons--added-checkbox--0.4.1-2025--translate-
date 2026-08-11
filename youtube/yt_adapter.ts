@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from '../modules/storage';
 import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
-import { extractCommentId, extractCommentData, applyButtonVisualState, applyCheckboxStateFromCache } from './yt_ui';
+import { extractCommentId, extractCommentData, applyButtonVisualState } from './yt_ui';
 import { extractDomChannelInfo } from './yt_channel_gate';
 import {
     BaseCommentPlatformAdapter,
@@ -118,23 +118,5 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
 
     public markEventsBound(element: Element): void {
         element.setAttribute(YouTubeCommentAdapter.BOUND_ATTR, 'true');
-    }
-
-    public restoreButtonState(
-        element: Element,
-        commentId: string,
-        buttonStates: Record<string, ButtonStateType>
-    ): void {
-        const buttons = this.getButtons(element);
-        const state = buttonStates[commentId] || null;
-        this.applyButtonState(buttons, state, null);
-    }
-
-    public restoreCheckboxState(
-        element: Element,
-        commentId: string,
-        checkboxStates: Record<string, { checked: boolean; timestamp: number }>
-    ): void {
-        applyCheckboxStateFromCache(element, commentId, checkboxStates);
     }
 }
