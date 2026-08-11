@@ -12,6 +12,7 @@ import {
     bindFilterDocClickHandler
 } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';
+import { buildHeaderControlsHTML, buildSearchFilterContainerHTML, buildEmptyStateHTML } from './ui_banners_markup';
 
 export function addButtonsToBanner(bannerNode: Element): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
@@ -64,16 +65,7 @@ export function applySavedBannerLabels(bannerNode: Element, text: string): void 
 
 export function injectHeaderButtons(headerNode: Element): void {
     if (!headerNode.querySelector('.syh-banner-header-controls')) {
-        const controlsHTML = `
-            <div class="syh-banner-header-controls" style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
-                <button class="syh-button" data-action="create-from-text" title="Створити банери з тексту" aria-label="Створити банери з тексту" style="font-size: 13px; height: 26px;">📝</button>
-                <label class="syh-master-checkbox-label" title="Вибрати все / Зняти все" style="display: inline-flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" class="syh-master-checkbox" aria-label="Вибрати все або зняти все">
-                </label>
-                <button class="syh-button syh-delete-selected-banners" data-action="delete-selected-banners" title="Видалити вибрані" aria-label="Видалити вибрані банери" style="font-size: 13px; height: 26px;">🗑️</button>
-            </div>
-        `;
-        headerNode.insertAdjacentHTML('beforeend', controlsHTML);
+        headerNode.insertAdjacentHTML('beforeend', buildHeaderControlsHTML());
         updateMasterCheckboxState();
     }
 }
@@ -81,40 +73,10 @@ export function injectHeaderButtons(headerNode: Element): void {
 export function injectSearchAndFilterContainer(bannerList: Element): void {
     if (document.getElementById('syh-banner-search-container')) return;
 
-    const searchContainerHTML = `
-        <div id="syh-banner-search-container" style="padding: 10px 15px 5px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eee; background: #fff; width: 100%; box-sizing: border-box;">
-            <div class="syh-banner-search-wrapper">
-                <input type="text" id="syh-banner-search" value="${SYH_UI_STATE.bannerSearchQuery || ''}" placeholder="🔍 Пошук банерів..." aria-label="Пошук банерів" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
-                <button id="syh-clear-banner-search-btn" class="syh-clear-banner-search" style="display: ${SYH_UI_STATE.bannerSearchQuery ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук банерів">✕</button>
-                <button id="syh-scroll-to-active-banner-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до активного банера на екрані" aria-label="Повернутися до активного банера на екрані">🎯</button>
-            </div>
-            
-            <div role="tablist" aria-label="Фільтри категорій банерів" style="display: flex; gap: 4px; background: #eee; padding: 3px; border-radius: 6px; width: 100%; box-sizing: border-box;">
-                <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'all' ? 'true' : 'false'}" aria-label="Показати всі банери" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'all' ? 'active' : ''}" data-filter="all" id="syh-banner-filter-all">
-                    <span>⭐</span><span class="tab-text">Всі</span><span class="tab-count"></span>
-                </button>
-                <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'stream' ? 'true' : 'false'}" aria-label="Показати банери ефіру" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'stream' ? 'active' : ''}" data-filter="stream" id="syh-banner-filter-stream">
-                    <span>🎙️</span><span class="tab-text">Ефір</span><span class="tab-count"></span>
-                </button>
-                <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'audience' ? 'true' : 'false'}" aria-label="Показати банери глядачів" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'audience' ? 'active' : ''}" data-filter="audience" id="syh-banner-filter-audience">
-                    <span>❓</span><span class="tab-text">Глядачі</span><span class="tab-count"></span>
-                </button>
-                <button role="tab" aria-selected="${SYH_UI_STATE.bannerActiveFilter === 'prayer' ? 'true' : 'false'}" aria-label="Показати молитовні банери" class="syh-banner-filter-btn ${SYH_UI_STATE.bannerActiveFilter === 'prayer' ? 'active' : ''}" data-filter="prayer" id="syh-banner-filter-prayer">
-                    <span>🙏</span><span class="tab-text">Молитви</span><span class="tab-count"></span>
-                </button>
-            </div>
-        </div>
-    `;
-
-    bannerList.insertAdjacentHTML('beforebegin', searchContainerHTML);
+    bannerList.insertAdjacentHTML('beforebegin', buildSearchFilterContainerHTML());
 
     if (!document.getElementById('syh-banner-empty-state-msg')) {
-        bannerList.insertAdjacentHTML('afterend', `
-            <div id="syh-banner-empty-state-msg" class="syh-banner-empty-state">
-                <div id="syh-banner-empty-query"></div>
-                <div id="syh-banner-empty-suggestion" style="margin-top: 10px; font-size: 12px; color: #f39c12; font-weight: bold; display:none;"></div>
-            </div>
-        `);
+        bannerList.insertAdjacentHTML('afterend', buildEmptyStateHTML());
     }
 
     bindBannersFilterControls();
