@@ -8,7 +8,7 @@
 //
 // Тести працюють на реальному happy-dom, тому фіксують і розмітку, і побічні ефекти.
 
-import test, { describe, mock } from 'node:test';
+import test, { describe, mock, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { installChromeMock } from './setup/chrome_mock.ts';
@@ -16,15 +16,17 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock();
 
 const clipboardWrites = [];
-Object.defineProperty(global, 'navigator', {
-    value: {
-        clipboard: {
-            writeText: async text => { clipboardWrites.push(text); }
-        }
-    },
-    configurable: true,
-    writable: true
-});
+const { CommentService } = await import('../modules/comment_service.ts');
+
+// Маршрутизуємо копіювання через SSOT-сервіс (як у продакшні), щоб фіксувати
+// і запис у буфер, і булевий результат успіху/невдачі.
+let copyResult = true;
+CommentService.copyToClipboard = async (text) => {
+    clipboardWrites.push(text);
+    return copyResult;
+};
+
+beforeEach(() => { copyResult = true; });
 
 const UI = await import('../modules/video_copier_ui.ts');
 
@@ -69,6 +71,8 @@ describe('video_copier_ui — публічні константи', () => {
             copied: '✅ Скопійовано!',
             copyUrl: '🚀 Копіювати URL + Текст (Видео в хорошем качестве)',
             copyUrlDone: '✅ Успішно скопійовано!',
+            copyFailed: '⚠️ Не вдалося скопіювати',
+            copyUrlFailed: '⚠️ Не вдалося скопіювати URL',
             downloadAll: '📥 Завантажити всі свіжі відео (Video Only)',
             downloadRunning: '⏳ Запускаю завантаження... Не чіпайте мишку!',
             downloadDone: '✅ Всі завантаження ініційовано!'
@@ -469,5 +473,91 @@ describe('video_copier_ui — майстер-кнопка завантаженн
         assert.equal(btn.style.backgroundColor, '#28a745');
 
         global.alert = originalAlert;
+    });
+});
+
+// --- Відгук при невдачі буфера обміну (SSOT-маршрутизація) -----------------
+
+describe('video_copier_ui — відгук при невдачі буфера обміну', () => {
+    test('33. copyAndFlash при успіху кличе onCopied і повертає true', async () => {
+        const order = [];
+        const onCopied = mock.fn(() => order.push('copied'));
+        const onFailed = mock.fn(() => order.push('failed'));
+
+        const result = await copyAndFlash('payload', onCopied, onFailed);
+
+        assert.equal(result, true);
+        assert.equal(onCopied.mock.callCount(), 1);
+        assert.equal(onFailed.mock.callCount(), 0);
+        assert.deepEqual(order, ['copied']);
+        assert.deepEqual(clipboardWrites, ['payload']);
+    });
+
+    test('34. copyAndFlash при невдачі кличе onFailed (не onCopied) і повертає false', async () => {
+        copyResult = false;
+        const order = [];
+        const onCopied = mock.fn(() => order.push('copied'));
+        const onFailed = mock.fn(() => order.push('failed'));
+
+        const result = await copyAndFlash('payload', onCopied, onFailed);
+
+        assert.equal(result, false);
+        assert.equal(onCopied.mock.callCount(), 0);
+        assert.equal(onFailed.mock.callCount(), 1);
+        assert.deepEqual(order, ['failed']);
+    });
+
+    test('35. кнопка біля заголовка при невдачі показує LABELS.copyFailed', async () => {
+        const wrapperHtml = '<div class="TitleWrapper-abc"><h2>  Проповедь  </h2></div>';
+        resetDom(wrapperHtml);
+        injectTitleButton();
+
+        const btn = document.querySelector(`.${TITLE_BUTTON_CLASS}`);
+        copyResult = false;
+        btn.onclick({ preventDefault: () => {} });
+
+        await sleep(0);
+
+        assert.equal(btn.innerText, LABELS.copyFailed);
+    });
+
+    function cardHtml(dateText, title = 'ПРОПОВЕДЬ') {
+        return `
+            <a class="media-item-card" href="/abc123">
+                <span class="MediaTitle-x">${title}</span>
+                <div data-testid="library-media-subtitle">${dateText}</div>
+                <div class="MediaCardMenu-x"></div>
+            </a>
+        `;
+    }
+
+    function todayLabel() {
+        const now = new Date();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}, 10:00`;
+    }
+
+    test('37. кнопка «копіювати назву» у картці при невдачі показує ❌', async () => {
+        copyResult = false;
+        resetDom(cardHtml(todayLabel(), 'Субботняя школа'));
+        const card = document.querySelector('a.media-item-card');
+        const controls = buildCardControls(card);
+
+        controls.children[0].click();
+        await sleep(0);
+
+        assert.equal(controls.children[0].innerHTML, '❌');
+    });
+
+    test('38. кнопка «копіювати посилання» у картці при невдачі показує ❌', async () => {
+        copyResult = false;
+        resetDom(cardHtml(todayLabel()));
+        const card = document.querySelector('a.media-item-card');
+        const controls = buildCardControls(card);
+
+        controls.children[1].click();
+        await sleep(0);
+
+        assert.equal(controls.children[1].innerHTML, '❌');
     });
 });

@@ -14,6 +14,8 @@ export const LABELS = {
     copied: '✅ Скопійовано!',
     copyUrl: '🚀 Копіювати URL + Текст (Видео в хорошем качестве)',
     copyUrlDone: '✅ Успішно скопійовано!',
+    copyFailed: '⚠️ Не вдалося скопіювати',
+    copyUrlFailed: '⚠️ Не вдалося скопіювати URL',
     downloadAll: '📥 Завантажити всі свіжі відео (Video Only)',
     downloadRunning: '⏳ Запускаю завантаження... Не чіпайте мишку!',
     downloadDone: '✅ Всі завантаження ініційовано!'

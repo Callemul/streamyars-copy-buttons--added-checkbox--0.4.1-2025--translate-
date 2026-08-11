@@ -5,7 +5,6 @@ import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
 import { STUDIO_BUTTON_STATE_KEY, STUDIO_CHECKBOX_STATE_KEY } from './studio_comment_key';
 import { getAllSheetIds as getSheetIds } from '../../modules/sheets';
 import { getSheetCollectedStorageKey } from '../../modules/storage';
-import type { CommentPayload } from '../../modules/comment_service';
 import type { SheetHeaderStats } from './studio_header_counters';
 import { buildCollectedAggregation } from './studio_aggregator';
 import { type StudioModuleCaches } from './studio_init';

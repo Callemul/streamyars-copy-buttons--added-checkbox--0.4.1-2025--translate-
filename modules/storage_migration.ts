@@ -12,8 +12,7 @@ import {
     STORAGE_SCHEMA_VERSION,
     STORAGE_KEYS,
     getSheetCollectedStorageKey,
-    migrateKey,
-    type StorageAdapter
+    migrateKey
 } from './storage_keys';
 
 export { type StorageAdapter } from './storage_keys';

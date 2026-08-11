@@ -29,7 +29,11 @@ function stopCardNavigation(e: Event): void {
 
 function createCopyTitleButton(videoTitle: string): HTMLButtonElement {
     const btn = createSquareButton('📝', 'Копіювати назву', () => {
-        void copyAndFlash(videoTitle, () => tempIconChange(btn, '✅'));
+        void copyAndFlash(
+            videoTitle,
+            () => tempIconChange(btn, '✅'),
+            () => tempIconChange(btn, '❌')
+        );
     });
     return btn;
 }
@@ -40,7 +44,11 @@ async function copyVideoUrl(btn: HTMLElement, videoUrl: string | null): Promise<
         tempIconChange(btn, '❌');
         return;
     }
-    await copyAndFlash(formatVideoShareText(videoUrl), () => tempIconChange(btn, '✅'));
+    await copyAndFlash(
+        formatVideoShareText(videoUrl),
+        () => tempIconChange(btn, '✅'),
+        () => tempIconChange(btn, '❌')
+    );
 }
 
 function createCopyUrlButton(videoUrl: string | null): HTMLButtonElement {

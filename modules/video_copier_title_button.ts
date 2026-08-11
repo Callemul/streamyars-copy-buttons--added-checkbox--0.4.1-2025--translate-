@@ -18,7 +18,11 @@ function buildTitleButton(h2: HTMLElement): HTMLButtonElement {
 
     btnTitle.onclick = (e: MouseEvent) => {
         e.preventDefault();
-        void copyAndFlash(h2.innerText.trim(), () => tempLabelChange(btnTitle, LABELS.copied, LABELS.copyTitle));
+        void copyAndFlash(
+            h2.innerText.trim(),
+            () => tempLabelChange(btnTitle, LABELS.copied, LABELS.copyTitle),
+            () => tempLabelChange(btnTitle, LABELS.copyFailed, LABELS.copyTitle)
+        );
     };
 
     return btnTitle;

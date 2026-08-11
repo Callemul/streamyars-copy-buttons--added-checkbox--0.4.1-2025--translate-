@@ -6,6 +6,7 @@
  * Виокремлено з `video_copier_ui.ts` — це єдиний шар, який знає про таймери
  * повернення початкового вигляду кнопки.
  */
+import { CommentService } from './comment_service';
 import { UiFactory } from './ui_factory';
 import { SQUARE_BUTTON_STYLE } from './video_copier_theme';
 
@@ -36,10 +37,24 @@ export function tempLabelChange(
     setTimeout(() => { btn.innerText = restoreLabel; }, delayMs);
 }
 
-/** Пише текст у буфер і лише після успіху запускає візуальний відгук. */
-export async function copyAndFlash(text: string, onCopied: () => void): Promise<void> {
-    await navigator.clipboard.writeText(text);
-    onCopied();
+/**
+ * Пише текст у буфер через SSOT-адаптер `CommentService.copyToClipboard`
+ * і повертає результат, щоб виклик міг показати різний відгук на успіх і
+ * невдачу. Ніколи не кидає: винятки перехоплюються всередині сервісу, а
+ * результат — булевий прапорець успіху (з фолбеком `execCommand` за потреби).
+ */
+export async function copyAndFlash(
+    text: string,
+    onCopied: () => void,
+    onFailed?: () => void
+): Promise<boolean> {
+    const success = await CommentService.copyToClipboard(text);
+    if (success) {
+        onCopied();
+    } else {
+        onFailed?.();
+    }
+    return success;
 }
 
 /** Квадратна іконкова кнопка для панелі контролів у картці списку. */

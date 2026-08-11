@@ -24,7 +24,8 @@ async function copyShareUrl(btnUrl: HTMLElement, inputWrapper: Element): Promise
 
     await copyAndFlash(
         formatVideoShareText(videoUrl),
-        () => tempLabelChange(btnUrl, LABELS.copyUrlDone, LABELS.copyUrl)
+        () => tempLabelChange(btnUrl, LABELS.copyUrlDone, LABELS.copyUrl),
+        () => tempLabelChange(btnUrl, LABELS.copyUrlFailed, LABELS.copyUrl)
     );
 }
 
