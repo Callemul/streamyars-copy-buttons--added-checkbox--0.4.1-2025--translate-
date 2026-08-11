@@ -1,292 +1,36 @@
-import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from './storage';
-import { countQuestionsInText, parseAndFilterOldList, parseTelegramExportLineByLine, parseAnsweredIds } from './telegram_parser';
-import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers/index';
-import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
+/**
+ * StreamYard Helper — фасад стану аркуша (Single Source of Truth для попапу).
+ *
+ * Рефакторинг (Fallow health): цей файл був God-класом на 307 рядків
+ * (CC 52, cognitive 34), а `processSheetData` — функцією на 89 рядків.
+ * Тепер він лише зв'язує спеціалізовані модулі:
+ *   - `sheet_stats_calculator.ts` — чисті підрахунки (люди/питання/молитви);
+ *   - `sheet_repository.ts`       — читання/запис/очищення у chrome.storage;
+ *   - `sheet_processing.ts`       — конвеєр обробки даних аркуша.
+ *
+ * Реекспорти нижче навмисні: `popup_telegram.ts`, `popup_telegram_counters.ts`,
+ * `popup_telegram_renderers.ts` та тести історично імпортують цей контракт
+ * саме звідси. Поведінка збережена 1-в-1 (див. tests/sheet_state_api.test.js).
+ */
 
-export interface SheetCounterStats {
-    leftPeople: number;
-    leftQuestions: number;
-    leftPrayers: number;
-    rightPeople: number;
-    rightQuestions: number;
-    rightPrayers: number;
-    totalPeople: number;
-    totalQuestions: number;
-    totalPrayers: number;
-}
+import { SheetStatsCalculator } from './sheet_stats_calculator';
+import { SheetRepository } from './sheet_repository';
+import { processSheetData, type SheetProcessingInputs } from './sheet_processing';
+import type { SheetCounterStats } from './sheet_stats_calculator';
+import type { SheetStateData } from './sheet_repository';
+import type { ProcessedSheetResult } from './sheet_processing';
+import type { YTCollectedItem } from './types';
 
-export interface SheetStateData {
-    oldList: string;
-    answered: string;
-    newTelegram: string;
-    finalResultHtml: string;
-    statsHtml: string;
-    statsVisible: boolean;
-    deletedLogHtml: string;
-    deletedLogCount: number;
-    deletedLogDetailsVisible: boolean;
-    deletedLogDetailsOpen: boolean;
-    cleanedLogHtml: string;
-    cleanedLogCount: number;
-    cleanedLogDetailsVisible: boolean;
-    cleanedLogDetailsOpen: boolean;
-    dividerPos: number;
-    ytCollected: YTCollectedItem[];
-}
-
-export interface ProcessedSheetResult {
-    questions: TelegramQuestionItem[];
-    prayers: TelegramQuestionItem[];
-    stats: {
-        oldPeople: number;
-        oldQuestionsTotal: number;
-        newLeftPeople: number;
-        newLeftQuestionsTotal: number;
-        newLeftPrayersTotal: number;
-        newYTPeople: number;
-        newYTQuestionsTotal: number;
-        newYTPrayersTotal: number;
-        delPeople: number;
-        delQuestionsTotal: number;
-        totalPeople: number;
-        totalQuestions: number;
-        totalPrayers: number;
-    };
-    deletedLog: DeletedLogEntry[];
-    cleaningLog: CleaningLogEntry[];
-}
-
-import type { TelegramQuestionItem, GroupedNewItem } from './telegram_parser';
-
-export class SheetStatsCalculator {
-    public static countUniquePeople(items: { author: string }[]): number {
-        const namedAuthors = new Set<string>();
-        let anonymousCount = 0;
-
-        for (const item of items) {
-            const raw = (item.author || '').trim();
-            const norm = raw.replace(/^@+/, '').toLowerCase();
-            const isGenericAnon = !norm || norm === 'анонім' || norm === 'питання з чату' || norm === 'невідомий';
-
-            if (isGenericAnon) {
-                anonymousCount++;
-            } else {
-                namedAuthors.add(norm);
-            }
-        }
-
-        return namedAuthors.size + anonymousCount;
-    }
-
-    public static computeSheetCounters(telegramText: string, ytItems: YTCollectedItem[]): SheetCounterStats {
-        let leftPeople = 0;
-        let leftQuestions = 0;
-        let leftPrayers = 0;
-
-        if (telegramText && telegramText.trim()) {
-            if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
-                const parsed = parseAndFilterOldList(telegramText, []);
-                leftPeople = SheetStatsCalculator.countUniquePeople([...parsed.questions, ...parsed.prayers]);
-                parsed.questions.forEach((q) => leftQuestions += countQuestionsInText(q.text));
-                leftPrayers = parsed.prayers.length;
-            } else {
-                const items = parseTelegramExportLineByLine(telegramText);
-                leftPeople = SheetStatsCalculator.countUniquePeople(items);
-                items.forEach((q) => leftQuestions += countQuestionsInText(q.text));
-            }
-        }
-
-        const rightPeople = SheetStatsCalculator.countUniquePeople(ytItems);
-        let rightQuestions = 0;
-        let rightPrayers = 0;
-
-        ytItems.forEach(item => {
-            if (item.type === 'question') {
-                rightQuestions += countQuestionsInText(item.text);
-            } else if (item.type === 'prayer') {
-                rightPrayers += 1;
-            }
-        });
-
-        return {
-            leftPeople,
-            leftQuestions,
-            leftPrayers,
-            rightPeople,
-            rightQuestions,
-            rightPrayers,
-            totalPeople: leftPeople + rightPeople,
-            totalQuestions: leftQuestions + rightQuestions,
-            totalPrayers: leftPrayers + rightPrayers
-        };
-    }
-}
-
-export function countUniquePeople(items: { author: string }[]): number {
-    return SheetStatsCalculator.countUniquePeople(items);
-}
-
-export class SheetRepository {
-    private static getSheetStateKeys(sheetId: string): string[] {
-        const k = POPUP_SHEET_KEYS;
-        return [
-            k.oldList(sheetId),
-            k.answered(sheetId),
-            k.newTelegram(sheetId),
-            k.finalResultHtml(sheetId),
-            k.statsHtml(sheetId),
-            k.statsVisible(sheetId),
-            k.deletedLogHtml(sheetId),
-            k.deletedLogCount(sheetId),
-            k.deletedLogDetailsVisible(sheetId),
-            k.deletedLogDetailsOpen(sheetId),
-            k.cleanedLogHtml(sheetId),
-            k.cleanedLogCount(sheetId),
-            k.cleanedLogDetailsVisible(sheetId),
-            k.cleanedLogDetailsOpen(sheetId)
-        ];
-    }
-
-    public static async loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
-        const sheetKey = getSheetCollectedStorageKey(sheetId);
-        const keysToLoad = [
-            ...SheetRepository.getSheetStateKeys(sheetId),
-            POPUP_SHEET_KEYS.dividerPos(sheetId),
-            sheetKey
-        ];
-
-        const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToLoad);
-        const k = POPUP_SHEET_KEYS;
-        const ytCollected: YTCollectedItem[] = res[sheetKey] || [];
-
-        return {
-            oldList: res[k.oldList(sheetId)] || '',
-            answered: res[k.answered(sheetId)] || '',
-            newTelegram: res[k.newTelegram(sheetId)] || '',
-            finalResultHtml: res[k.finalResultHtml(sheetId)] || '',
-            statsHtml: res[k.statsHtml(sheetId)] || '',
-            statsVisible: !!res[k.statsVisible(sheetId)],
-            deletedLogHtml: res[k.deletedLogHtml(sheetId)] || '',
-            deletedLogCount: res[k.deletedLogCount(sheetId)] || 0,
-            deletedLogDetailsVisible: !!res[k.deletedLogDetailsVisible(sheetId)],
-            deletedLogDetailsOpen: !!res[k.deletedLogDetailsOpen(sheetId)],
-            cleanedLogHtml: res[k.cleanedLogHtml(sheetId)] || '',
-            cleanedLogCount: res[k.cleanedLogCount(sheetId)] || 0,
-            cleanedLogDetailsVisible: !!res[k.cleanedLogDetailsVisible(sheetId)],
-            cleanedLogDetailsOpen: !!res[k.cleanedLogDetailsOpen(sheetId)],
-            dividerPos: res[k.dividerPos(sheetId)] || 50,
-            ytCollected
-        };
-    }
-
-    public static async saveSheetState(sheetId: string, updates: Record<string, any>): Promise<void> {
-        const storageObj: Record<string, any> = {};
-        for (const [key, value] of Object.entries(updates)) {
-            const keyFn = (POPUP_SHEET_KEYS as Record<string, (id: string) => string>)[key];
-            if (keyFn) {
-                storageObj[keyFn(sheetId)] = value;
-            } else {
-                storageObj[`syh:popup:sheet:${sheetId}:${key}`] = value;
-            }
-        }
-        await SYH_STORAGE.setAsync(storageObj);
-    }
-
-    public static async clearSheetState(sheetId: string): Promise<void> {
-        const keysToRemove = SheetRepository.getSheetStateKeys(sheetId);
-        await SYH_STORAGE.removeAsync(keysToRemove);
-    }
-}
+// --- Публічний фасад (історичний контракт імпортерів) ----------------------
+export { SheetStatsCalculator, countUniquePeople } from './sheet_stats_calculator';
+export { SheetRepository } from './sheet_repository';
+export type { SheetCounterStats } from './sheet_stats_calculator';
+export type { SheetStateData } from './sheet_repository';
+export type { ProcessedSheetResult } from './sheet_processing';
 
 export class SheetStateService {
-    public static processSheetData(inputs: {
-        oldListText: string;
-        answeredInput: string;
-        telegramText: string;
-        ytItems: YTCollectedItem[];
-    }): ProcessedSheetResult {
-        const { oldListText, answeredInput, telegramText, ytItems } = inputs;
-        const answeredIds = parseAnsweredIds(answeredInput);
-
-        const cleaningLog: CleaningLogEntry[] = [];
-        const preservedData = parseAndFilterOldList(oldListText, answeredIds, cleaningLog);
-
-        let newQuestions: TelegramQuestionItem[];
-        let newPrayers: TelegramQuestionItem[] = [];
-
-        if (TELEGRAM_HEADER_MARKER_REGEX.test(telegramText)) {
-            const parsedNew = parseAndFilterOldList(telegramText, [], cleaningLog);
-            newQuestions = parsedNew.questions.map((q) => ({ ...q, source: 'new' as const }));
-            newPrayers = parsedNew.prayers.map((p) => ({ ...p, source: 'pray' as const }));
-        } else {
-            const parsedLineItems: GroupedNewItem[] = parseTelegramExportLineByLine(telegramText, cleaningLog);
-            newQuestions = parsedLineItems.map(item => ({ ...item, source: 'new' as const }));
-        }
-
-        const newYTQuestions: TelegramQuestionItem[] = [];
-        const newYTPrayers: TelegramQuestionItem[] = [];
-
-        ytItems.forEach((item: YTCollectedItem) => {
-            if (item.type === 'question') {
-                newYTQuestions.push({ author: item.author, text: item.text, source: 'yt' });
-            } else if (item.type === 'prayer') {
-                newYTPrayers.push({ author: item.author, text: item.text, source: 'pray' });
-            }
-        });
-
-        const combinedQuestions = [...preservedData.questions, ...newQuestions, ...newYTQuestions];
-        const combinedPrayers = [...preservedData.prayers, ...newPrayers, ...newYTPrayers];
-
-        const oldPeople = SheetStatsCalculator.countUniquePeople(preservedData.questions);
-        let oldQuestionsTotal = 0;
-        preservedData.questions.forEach((q) => oldQuestionsTotal += countQuestionsInText(q.text));
-
-        const newLeftPeople = SheetStatsCalculator.countUniquePeople([...newQuestions, ...newPrayers]);
-        let newLeftQuestionsTotal = 0;
-        newQuestions.forEach((q) => newLeftQuestionsTotal += countQuestionsInText(q.text));
-        const newLeftPrayersTotal = newPrayers.length;
-
-        const newYTPeople = SheetStatsCalculator.countUniquePeople(ytItems);
-        let newYTQuestionsTotal = 0;
-        newYTQuestions.forEach((q) => newYTQuestionsTotal += countQuestionsInText(q.text));
-        const newYTPrayersTotal = newYTPrayers.length;
-
-        let delPeople = 0;
-        let delQuestionsTotal = 0;
-        preservedData.deleted.forEach((d: DeletedLogEntry) => {
-            if (d.type === 'block') {
-                delPeople++;
-                delQuestionsTotal += d.count;
-            } else if (d.type === 'sub') {
-                delQuestionsTotal += d.count;
-            }
-        });
-
-        const totalPeople = oldPeople + newLeftPeople + newYTPeople;
-        const totalQuestions = oldQuestionsTotal + newLeftQuestionsTotal + newYTQuestionsTotal;
-        const totalPrayers = combinedPrayers.length;
-
-        return {
-            questions: combinedQuestions,
-            prayers: combinedPrayers,
-            stats: {
-                oldPeople,
-                oldQuestionsTotal,
-                newLeftPeople,
-                newLeftQuestionsTotal,
-                newLeftPrayersTotal,
-                newYTPeople,
-                newYTQuestionsTotal,
-                newYTPrayersTotal,
-                delPeople,
-                delQuestionsTotal,
-                totalPeople,
-                totalQuestions,
-                totalPrayers
-            },
-            deletedLog: preservedData.deleted,
-            cleaningLog
-        };
+    public static processSheetData(inputs: SheetProcessingInputs): ProcessedSheetResult {
+        return processSheetData(inputs);
     }
 
     public static loadSheetState(sheetId: string): Promise<Partial<SheetStateData>> {
