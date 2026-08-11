@@ -1,13 +1,39 @@
+/**
+ * StreamYard Helper — оркестратор статистики ефіру (`SYH_STATS_TRACKER`).
+ *
+ * Раніше — модуль на 239 рядків (cyclomatic 66 / cognitive 51 за звітом Fallow),
+ * де в одному об'єкті співіснували: спостерігач шапки, семплер ефіру, робота з
+ * фазами, читання бренда з localStorage і робота зі сховищем.
+ *
+ * Реалізацію розкладено по вузьких модулях:
+ *   - `./stats_header_observer` — MutationObserver шапки + перша ін'єкція кнопок
+ *   - `./stats_live_sampler`    — один тік трекінгу (LiveTag, таймер, глядачі)
+ *   - `./stats_phase_marker`    — markPhase / restoreButtonStates
+ *   - `./stats_brand_storage`   — читання бренда з localStorage
+ *   - `./stats_session`         — чисті хелпери сесії дня
+ *
+ * Тут лишилися лише стан (`intervalId`, `pendingRAF`, `observer`, бренди),
+ * життєвий цикл і делегування. Публічний контракт `SyhStatsTracker` не змінився.
+ */
+
 import { SYH_CONFIG } from './config';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
-import { SYH_UTILS } from './utils';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
 import { getOrCreateTodaySession, searchBrandNameInObject } from './stats_session';
-import { injectHeaderButtons, isHeaderControlsMounted } from './stats_header_controls';
+import { setupHeaderObserver } from './stats_header_observer';
+import { sampleLiveStats } from './stats_live_sampler';
+import { markPhase as markPhaseImpl, restoreButtonStates as restoreButtonStatesImpl } from './stats_phase_marker';
+import { readBrandFromLocalStorage } from './stats_brand_storage';
 
 // Реекспорт чистих хелперів для зворотної сумісності публічного API.
 export { getOrCreateTodaySession, searchBrandNameInObject };
+
+/** Запасний період семплювання, якщо конфіг не задав свій. */
+const FALLBACK_TRACKING_INTERVAL_MS = 60000;
+
+/** Бренд за замовчуванням, доки шапка не повідомила справжній. */
+const DEFAULT_BRAND = "DefaultShow";
 
 export interface SyhStatsTracker {
     intervalId: number | null;
@@ -34,7 +60,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     intervalId: null,
     pendingRAF: null,
     observer: null,
-    currentBrand: "DefaultShow",
+    currentBrand: DEFAULT_BRAND,
     lastKnownBrand: "",
 
     init: function(): void {
@@ -54,50 +80,11 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     },
 
     setupObservers: function(): void {
-        const self = this;
-        self.lastKnownBrand = "";
-
-        const injectControls = (): void => injectHeaderButtons(self);
-
-        setTimeout(injectControls, 1000);
-
-        if (self.observer) {
-            self.observer.disconnect();
-        }
-
-        self.observer = new MutationObserver(() => {
-            if (self.pendingRAF !== null) return;
-            self.pendingRAF = requestAnimationFrame(() => {
-                self.pendingRAF = null;
-                if (!isHeaderControlsMounted()) {
-                    injectControls();
-                }
-            });
-        });
-
-        const targetNode = document.querySelector('[data-testid="header-center"]')?.parentElement
-            || document.querySelector('header')
-            || document.body;
-
-        self.observer.observe(targetNode, { childList: true, subtree: true });
+        setupHeaderObserver(this);
     },
 
     restoreButtonStates: function(btnQ: HTMLElement, btnP: HTMLElement): void {
-        const today = SYH_UTILS.getTodayDateString();
-        const self = this;
-        
-        this.loadStatsDb((db) => {
-            if (db[self.currentBrand] && db[self.currentBrand][today]) {
-                if (db[self.currentBrand][today].phase_questions_start) {
-                    btnQ.innerText = '✅ Питання';
-                    btnQ.style.opacity = '0.7';
-                }
-                if (db[self.currentBrand][today].phase_prayers_start) {
-                    btnP.innerText = '✅ Молитви';
-                    btnP.style.opacity = '0.7';
-                }
-            }
-        });
+        restoreButtonStatesImpl(this, btnQ, btnP);
     },
 
     loadStatsDb: function(callback: (db: Record<string, any>) => void): void {
@@ -108,79 +95,17 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
     },
 
     markPhase: function(phase: 'questions' | 'prayers', btnElement: HTMLElement): void {
-        const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]') as HTMLElement | null;
-        if (!timerWrapper) {
-            alert("Ефір ще не розпочався (немає таймера)!");
-            return;
-        }
-        
-        const timerText = timerWrapper.innerText.replace(/\n/g, '').trim();
-        const today = SYH_UTILS.getTodayDateString();
-        const self = this;
-
-        this.loadStatsDb((db) => {
-            const session = getOrCreateTodaySession(db, self.currentBrand, today);
-
-            if (phase === 'questions') {
-                session.phase_questions_start = timerText;
-                btnElement.innerText = '✅ Питання';
-            } else if (phase === 'prayers') {
-                session.phase_prayers_start = timerText;
-                btnElement.innerText = '✅ Молитви';
-            }
-            btnElement.style.opacity = '0.7';
-
-            SYH_STORAGE.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
-        });
+        markPhaseImpl(this, phase, btnElement);
     },
 
     startTracking: function(): void {
         const self = this;
         if (this.intervalId !== null) return;
-        
-        this.intervalId = window.setInterval(() => {
-            if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) {
-                if (self.intervalId !== null) {
-                    clearInterval(self.intervalId);
-                    self.intervalId = null;
-                }
-                return;
-            }
 
-            const liveTag = document.querySelector('span[class*="Tags__LiveTag"]');
-            if (!liveTag) return; 
-
-            const brandNode = document.querySelector('.BrandSelect__BrandNameText-sc-16g9tfx-1') as HTMLElement | null;
-            if (brandNode) self.currentBrand = brandNode.innerText.trim();
-
-            const timerWrapper = document.querySelector('div[class*="Timer__TimerWrapper"]') as HTMLElement | null;
-            const timerText = timerWrapper ? timerWrapper.innerText.replace(/\n/g, '').trim() : "0:00";
-
-            const viewerEl = document.querySelector('p[class*="ViewerCount__StatText"]') as HTMLElement | null;
-            const viewerCount = viewerEl ? parseInt(viewerEl.innerText.trim(), 10) : 0;
-
-            if (isNaN(viewerCount)) return;
-
-            const today = SYH_UTILS.getTodayDateString();
-
-            self.loadStatsDb((db) => {
-                const session = getOrCreateTodaySession(db, self.currentBrand, today);
-                
-                if (session.initial_viewers === undefined && session.data.length === 0) {
-                    session.initial_viewers = viewerCount;
-                }
-
-                const lastEntry = session.data[session.data.length - 1];
-                if (lastEntry && lastEntry.time === timerText) return;
-
-                session.data.push({
-                    time: timerText,
-                    viewers: viewerCount
-                });
-
-                SYH_STORAGE.set({ [STORAGE_KEYS.STATS_CHARTS]: db });
-            });
-        }, SYH_CONFIG.TIMINGS.STATS_TRACKING_INTERVAL || 60000); 
+        this.intervalId = window.setInterval(
+            () => sampleLiveStats(self),
+            SYH_CONFIG.TIMINGS.STATS_TRACKING_INTERVAL || FALLBACK_TRACKING_INTERVAL_MS
+        );
     },
 
     destroy: function(): void {
@@ -206,33 +131,11 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         }
     },
 
-    // Рекурсивний сканер для автоматичного пошуку активного бренда в сховищі без кліку по вкладці
     getBrandFromLocalStorage: function(): string {
-        try {
-            const knownKeys = ['streamyard_brand', 'sy_active_brand', 'brand_state'];
-            for (const key of knownKeys) {
-                const val = localStorage.getItem(key);
-                if (!val) continue;
-                if (val.startsWith('{')) {
-                    try {
-                        const parsed = JSON.parse(val);
-                        if (parsed?.name && typeof parsed.name === 'string') return parsed.name;
-                    } catch {
-                        console.warn("[SYH StatsTracker] Corrupted JSON in localStorage key:");
-                    }
-                } else if (typeof val === 'string' && val.trim().length > 0) {
-                    return val.trim();
-                }
-            }
-        } catch (e) {
-            console.warn("[SYH] Помилка зчитування бренда з localStorage:", e);
-        }
-        return "";
+        return readBrandFromLocalStorage();
     },
 
     searchBrandNameInObject: function(obj: any): string | null {
         return searchBrandNameInObject(obj);
     }
 };
-
-// Clean ESM export

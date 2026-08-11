@@ -1,7 +1,46 @@
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { TG_HEADER_CLEANUP_REGEX } from './parsers/index';
-import { resolveSelector, resolveSelectorAll } from './config';
+/**
+ * StreamYard Helper — фасад загальних утиліт (`SYH_UTILS`).
+ *
+ * Раніше — монолітний об'єкт на 310 рядків (cyclomatic 84 / cognitive 51,
+ * fan_in 22 — найвища зв'язність у проєкті за звітом Fallow). Реалізацію
+ * розкладено по вузьких модулях:
+ *
+ *   - `./utils_text`         — normalizeText / transliterate / toFuzzy / розкладка / Telegram-заголовки
+ *   - `./utils_search`       — smartSearch
+ *   - `./utils_dom_wait`     — очікувачі станів DOM
+ *   - `./utils_notify`       — копіювання в буфер + банер-підтвердження
+ *   - `./utils_storage_ops`  — збереження категорії банера
+ *
+ * Тут лишилися ТІЛЬКИ контракт (`SyhUtils`), стан (`SELECTORS`, `_storage`)
+ * та делегування. Публічний API не змінився: 22 споживачі, які імпортують
+ * `SYH_UTILS` / `SyhUtils` саме звідси, продовжують працювати без правок.
+ *
+ * ⚠️ Пізнє зв'язування через `this` збережено навмисно: `smartSearch`,
+ * `transliterate` та `switchKeyboardLayout` ходять у `this.normalizeText`
+ * і решту методів об'єкта, тому підміна методу споживачем (як у тестах)
+ * і далі впливає на результат.
+ */
+
+import { SYH_STORAGE } from './storage';
 import type { CleaningLogEntry } from './types';
+
+import {
+    normalizeText as normalizeTextImpl,
+    transliterateRaw,
+    switchKeyboardLayoutRaw,
+    toFuzzy as toFuzzyImpl,
+    cleanTelegramHeaders as cleanTelegramHeadersImpl
+} from './utils_text';
+import { smartSearch as smartSearchImpl } from './utils_search';
+import {
+    waitForElement as waitForElementImpl,
+    waitForElementToDisappear as waitForElementToDisappearImpl,
+    waitForNewBanner as waitForNewBannerImpl,
+    clickElementByText as clickElementByTextImpl,
+    DEFAULT_BANNER_TEXT_SELECTOR
+} from './utils_dom_wait';
+import { copyAndShowBanner as copyAndShowBannerImpl } from './utils_notify';
+import { saveBannerCategory as saveBannerCategoryImpl } from './utils_storage_ops';
 
 export interface SyhUtils {
     SELECTORS: Record<string, string | string[]> | null;
@@ -22,6 +61,11 @@ export interface SyhUtils {
     cleanTelegramHeaders(text: string | null | undefined, cleaningLog?: CleaningLogEntry[]): string;
     isExtensionValid(): boolean;
 }
+
+/** Дефолтні таймаути очікувачів (винесені з сигнатур, щоб не «губитись» у делегуванні). */
+const DEFAULT_WAIT_TIMEOUT_MS = 3000;
+const DEFAULT_BANNER_TIMEOUT_MS = 5000;
+const DEFAULT_CLICK_TIMEOUT_MS = 2000;
 
 export const SYH_UTILS: SyhUtils = {
     SELECTORS: null,
@@ -47,263 +91,58 @@ export const SYH_UTILS: SyhUtils = {
     },
 
     copyAndShowBanner: function(textToCopy: string, bannerMessage?: string): void {
-        if (!textToCopy) { console.error("No text provided to copy."); return; }
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            document.querySelectorAll('.copy-success-banner').forEach(el => el.remove());
-            const banner = document.createElement('div');
-            banner.className = 'copy-success-banner';
-            banner.textContent = bannerMessage || 'Скопійовано!';
-            document.body.appendChild(banner);
-
-            requestAnimationFrame(() => banner.classList.add('visible'));
-            setTimeout(() => {
-                banner.classList.remove('visible');
-                setTimeout(() => banner.remove(), 300);
-            }, 2500);
-        }).catch(err => console.error('Copy failed: ', err));
+        copyAndShowBannerImpl(textToCopy, bannerMessage);
     },
 
-    waitForElement: function(selector: string | string[], timeout = 3000): Promise<Element> {
-        return new Promise((resolve, reject) => {
-            const interval = 100;
-            let elapsedTime = 0;
-            const timer = setInterval(() => {
-                const element = resolveSelector(selector);
-                if (element && (element as HTMLElement).offsetWidth > 0 && (element as HTMLElement).offsetHeight > 0) {
-                    clearInterval(timer);
-                    resolve(element);
-                    return;
-                }
-                elapsedTime += interval;
-                if (elapsedTime >= timeout) {
-                    clearInterval(timer);
-                    reject(new Error(`Element [${Array.isArray(selector) ? selector.join(', ') : selector}] not found or not visible within ${timeout}ms`));
-                }
-            }, interval);
-        });
+    waitForElement: function(selector: string | string[], timeout = DEFAULT_WAIT_TIMEOUT_MS): Promise<Element> {
+        return waitForElementImpl(selector, timeout);
     },
 
-    waitForElementToDisappear: function(selector: string, timeout = 3000): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const interval = 100;
-            let elapsedTime = 0;
-            const timer = setInterval(() => {
-                if (!document.querySelector(selector)) {
-                    clearInterval(timer);
-                    resolve();
-                }
-                elapsedTime += interval;
-                if (elapsedTime >= timeout) {
-                    clearInterval(timer);
-                    reject(new Error(`Element ${selector} did not disappear within ${timeout}ms`));
-                }
-            }, interval);
-        });
+    waitForElementToDisappear: function(selector: string, timeout = DEFAULT_WAIT_TIMEOUT_MS): Promise<void> {
+        return waitForElementToDisappearImpl(selector, timeout);
     },
 
-    waitForNewBanner: function(bannerText: string, timeout = 5000): Promise<Element> {
-        return new Promise((resolve, reject) => {
-            const interval = 100;
-            let elapsedTime = 0;
-            const timer = setInterval(() => {
-                const selector = this.SELECTORS?.bannerText || '[class*="Banner__BannerText"]';
-                const banners = resolveSelectorAll(selector);
-                for (const banner of banners) {
-                    if (banner.textContent?.trim() === bannerText.trim()) {
-                        clearInterval(timer);
-                        resolve(banner);
-                        return;
-                    }
-                }
-                
-                elapsedTime += interval;
-                if (elapsedTime >= timeout) {
-                    clearInterval(timer);
-                    reject(new Error(`New banner with text "${bannerText}" did not appear within ${timeout}ms`));
-                }
-            }, interval);
-        });
+    waitForNewBanner: function(bannerText: string, timeout = DEFAULT_BANNER_TIMEOUT_MS): Promise<Element> {
+        // Селектор читається на кожному тіку — див. коментар у `utils_dom_wait`.
+        const self = this;
+        return waitForNewBannerImpl(
+            bannerText,
+            timeout,
+            () => self.SELECTORS?.bannerText || DEFAULT_BANNER_TEXT_SELECTOR
+        );
     },
 
-    clickElementByText: function(text: string, timeout = 2000): Promise<void> {
-        return new Promise((resolve) => {
-            const interval = 100;
-            let elapsedTime = 0;
-            const timer = setInterval(() => {
-                const xpath = `//*[contains(text(), '${text}')]`;
-                const matchingElement = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue as HTMLElement | null;
-
-                if (matchingElement && (matchingElement as HTMLElement).offsetWidth > 0 && (matchingElement as HTMLElement).offsetHeight > 0) {
-                    matchingElement.click();
-                    clearInterval(timer);
-                    resolve();
-                    return;
-                }
-                
-                elapsedTime += interval;
-                if (elapsedTime >= timeout) {
-                    clearInterval(timer);
-                    console.warn(`SYH: Element with text "${text}" not found.`);
-                    resolve();
-                }
-            }, interval);
-        });
+    clickElementByText: function(text: string, timeout = DEFAULT_CLICK_TIMEOUT_MS): Promise<void> {
+        return clickElementByTextImpl(text, timeout);
     },
 
     smartSearch: function(query: string | null | undefined, targetText: string | null | undefined): boolean {
-        if (!query) return true;
-        if (!targetText) return false;
-
-        const rawTarget = targetText.toLowerCase();
-        const normTarget = this.normalizeText(rawTarget);
-        const transTarget = this.transliterate(rawTarget);
-        const layoutTarget = this.switchKeyboardLayout(rawTarget);
-        const fuzzyTarget = this.toFuzzy(rawTarget);
-        const fuzzyTransTarget = this.toFuzzy(transTarget);
-
-        const fullTarget = `${normTarget} ${transTarget} ${layoutTarget} ${fuzzyTarget} ${fuzzyTransTarget}`;
-        const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
-
-        return queryWords.every(word => {
-            const normWord = this.normalizeText(word);
-            if (fullTarget.includes(normWord)) return true;
-
-            const transWord = this.transliterate(word);
-            if (fullTarget.includes(transWord)) return true;
-
-            const layoutWord = this.switchKeyboardLayout(word);
-            if (fullTarget.includes(layoutWord)) return true;
-
-            const fuzzyWord = this.toFuzzy(word);
-            return !!fuzzyWord && fullTarget.includes(fuzzyWord);
-        });
+        return smartSearchImpl(query, targetText, this);
     },
 
     normalizeText: function(str: string | null | undefined): string {
-        if (!str) return "";
-        let normalized = str.toLowerCase().trim();
-        const replacementMap: Record<string, string> = {
-            'a': 'а', 'e': 'е', 'o': 'о', 'i': 'і', 'c': 'с', 'p': 'р', 'x': 'х', 'y': 'у', 't': 'т', 'h': 'н'
-        };
-        for (const char in replacementMap) {
-            normalized = normalized.split(char).join(replacementMap[char]);
-        }
-        return normalized;
+        return normalizeTextImpl(str);
     },
 
     transliterate: function(str: string | null | undefined): string {
         if (!str) return "";
-        const map: Record<string, string> = {
-            'shch':'шч','ch':'ч','sh':'ш','zh':'ж','ts':'ц','tz':'ц','cz':'ц','kh':'х','ph':'ф','th':'т',
-            'ya':'я','ia':'я','ja':'я','yu':'ю','iu':'ю','ju':'ю','ye':'є','ie':'є','je':'є','yo':'ё','jo':'йо',
-            'ai':'ай','ay':'ай','aj':'ай','ei':'ей','ey':'ей','ej':'ей','oi':'ой','oy':'ой','oj':'ой','ui':'уй','uy':'уй','uj':'уй',
-            'a':'а','b':'б','v':'в','g':'г','d':'д','e':'е','z':'з','i':'и','y':'й','k':'к','l':'л','m':'м','n':'н','o':'о','p':'п','r':'р','s':'с','t':'т','u':'у','f':'ф','h':'х',
-            'c':'ц','w':'в','x':'кс','q':'к','j':'дж'
-        };
-        let res = "";
-        let i = 0;
-        const s = str.toLowerCase();
-        while (i < s.length) {
-            if (i <= s.length - 4 && map[s.substring(i, i + 4)]) {
-                res += map[s.substring(i, i + 4)];
-                i += 4;
-            } else if (i <= s.length - 2 && map[s.substring(i, i + 2)]) {
-                res += map[s.substring(i, i + 2)];
-                i += 2;
-            } else if (map[s[i]]) {
-                res += map[s[i]];
-                i++;
-            } else {
-                res += s[i];
-                i++;
-            }
-        }
-        return this.normalizeText(res);
+        return this.normalizeText(transliterateRaw(str));
     },
 
     toFuzzy: function(str: string | null | undefined): string {
-        if (!str) return "";
-        let s = str.toLowerCase().trim();
-
-        const multiMap: [string, string][] = [
-            ['shch', 'щ'], ['ch', 'ч'], ['sh', 'ш'], ['zh', 'ж'],
-            ['ts', 'ц'], ['tz', 'ц'], ['cz', 'ц'],
-            ['kh', 'х'], ['ph', 'ф'], ['th', 'т'],
-            ['ya', 'я'], ['ia', 'я'], ['ja', 'я'],
-            ['yu', 'ю'], ['iu', 'ю'], ['ju', 'ю'],
-            ['ye', 'е'], ['ie', 'е'], ['je', 'е'],
-            ['yo', 'е'], ['jo', 'е'],
-            ['ai', 'аи'], ['ay', 'аи'], ['aj', 'аи'],
-            ['ei', 'еи'], ['ey', 'еи'], ['ej', 'еи'],
-            ['oi', 'ои'], ['oy', 'ои'], ['oj', 'ои'],
-            ['ui', 'уи'], ['uy', 'уи'], ['uj', 'уи'],
-            ['yi', 'и'], ['yy', 'и'], ['yj', 'и']
-        ];
-
-        for (const [pattern, replacement] of multiMap) {
-            s = s.split(pattern).join(replacement);
-        }
-
-        const singleMap: Record<string, string> = {
-            'a': 'а', 'b': 'б', 'v': 'в', 'w': 'в', 'g': 'г', 'd': 'д', 'e': 'е',
-            'z': 'з', 'i': 'и', 'y': 'и', 'j': 'и', 'k': 'к', 'l': 'л', 'm': 'м',
-            'n': 'н', 'o': 'о', 'p': 'п', 'r': 'р', 's': 'с', 't': 'т', 'u': 'у',
-            'f': 'ф', 'h': 'х', 'c': 'с', 'q': 'к', 'x': 'кс',
-            'й': 'и', 'і': 'и', 'ї': 'и', 'ы': 'и',
-            'є': 'е', 'ё': 'е', 'э': 'е',
-            'ь': '', 'ъ': '', '\'': ''
-        };
-
-        let res = "";
-        for (let i = 0; i < s.length; i++) {
-            const char = s[i];
-            res += singleMap[char] !== undefined ? singleMap[char] : char;
-        }
-
-        return res;
+        return toFuzzyImpl(str);
     },
 
     switchKeyboardLayout: function(str: string | null | undefined): string {
         if (!str) return "";
-        const layoutMap: Record<string, string> = {
-            'q':'й','w':'ц','e':'у','r':'к','t':'е','y':'н','u':'г','i':'ш','o':'щ','p':'з','[':'х',']':'ї',
-            'a':'ф','s':'і','d':'в','f':'а','g':'п','h':'р','j':'о','k':'л','l':'д',';':'ж','\'':'є',
-            'z':'я','x':'ч','c':'с','v':'м','b':'и','n':'т','m':'ь',',':'б','.':'ю'
-        };
-        let res = "";
-        const s = str.toLowerCase();
-        for (let i = 0; i < s.length; i++) {
-            res += layoutMap[s[i]] || s[i];
-        }
-        return this.normalizeText(res);
+        return this.normalizeText(switchKeyboardLayoutRaw(str));
     },
 
     saveBannerCategory: function(text: string, type: string): Promise<void> {
-        return new Promise(resolve => {
-            const storageAdapter = SYH_UTILS.storage;
-            storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
-                const db = result[STORAGE_KEYS.CATEGORIES] || {};
-                db[text] = type;
-                storageAdapter.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);
-            });
-        });
+        return saveBannerCategoryImpl(text, type, SYH_UTILS.storage);
     },
 
     cleanTelegramHeaders: function(text: string | null | undefined, cleaningLog?: CleaningLogEntry[]): string {
-        if (!text) return "";
-        const removedMatches: string[] = [];
-        const cleaned = text.replace(TG_HEADER_CLEANUP_REGEX, (match, offset) => {
-            removedMatches.push(match.trim());
-            return offset === 0 ? "" : "\n";
-        }).trim();
-
-        if (cleaningLog && removedMatches.length > 0) {
-            cleaningLog.push({
-                before: text.trim(),
-                after: cleaned,
-                removed: removedMatches.join(' | ')
-            });
-        }
-        return cleaned;
+        return cleanTelegramHeadersImpl(text, cleaningLog);
     }
 };

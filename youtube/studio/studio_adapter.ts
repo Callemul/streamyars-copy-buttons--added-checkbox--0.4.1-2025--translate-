@@ -3,10 +3,8 @@ import { STORAGE_KEYS } from '../../modules/storage';
 import { CommentService } from '../../modules/comment_service';
 import { SHEET_IDS, type SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
-import { getAuthorNameText, getCommentText } from './studio_selectors';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
-import { generateVideoKey, setStudioVideoSheetOverride } from './studio_video_map';
-import { generateCommentKey } from './studio_comment_key';
+import type { StudioCommentUIElements } from './studio_ui';
 import { resolveCategoryForVideo } from './studio_category_matcher';
 import {
     BaseCommentPlatformAdapter,
@@ -15,7 +13,6 @@ import {
     type PlatformButtons,
     type ButtonStateType
 } from '../../modules/comment_platform_adapter';
-import { resolveReplyVideoMetadata, toggleDropdown } from './studio_dom_helpers';
 import {
     getEffectiveButtonState,
     restoreButtonState,
@@ -24,54 +21,36 @@ import {
     isButtonOutOfSync,
     type StudioEventCaches
 } from './studio_state_helpers';
+import { getStudioCommentContext } from './studio_adapter_context';
+import { bindStudioSpecificEvents as bindStudioSpecificEventsImpl } from './studio_binding_events';
+
+/**
+ * StreamYard Helper — адаптер платформи YouTube Studio.
+ *
+ * Раніше — клас на 344 рядки (cyclomatic 83 / cognitive 50), у якому поряд із
+ * тонкими делегаціями до хелперів жили три шматки реальної inline-логіки:
+ *   - `getCommentContext` (читання DOM-контексту нитки);
+ *   - `retroactiveUpdateVideoComments` (оновлення категорії відео);
+ *   - `bindStudioSpecificEvents` (біндінг бейджа/випадайки).
+ *
+ * Реалізацію винесено у вузькі модулі:
+ *   - `./studio_adapter_context` — чистий `getStudioCommentContext`
+ *   - `./studio_retroactive`     — `retroactiveUpdateVideoComments`
+ *   - `./studio_binding_events`  — `bindStudioSpecificEvents`
+ *
+ * Тут лишилися лише стан, життєвий цикл і делегування. Публічний контракт
+ * (у т.ч. експорт `retroactiveUpdateVideoComments` і `StudioCommentUIElements`)
+ * не змінився.
+ */
 
 const STUDIO_BUTTON_STATES_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
 const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;
 
-export interface StudioCommentUIElements {
-    copyBtn: HTMLButtonElement;
-    questionBtn: HTMLButtonElement;
-    prayerBtn: HTMLButtonElement;
-    badgeEl: HTMLElement | null;
-    dropdownEl: HTMLElement | null;
-    checkboxEl: HTMLInputElement | null;
-    metaContainer: HTMLElement | null;
-}
-
-export function retroactiveUpdateVideoComments(
-    targetVideoKey: string,
-    channelKey: ChannelKey,
-    caches: StudioEventCaches
-) {
-    const threads = document.querySelectorAll<HTMLElement>('ytcp-comment');
-    threads.forEach((threadEl) => {
-        const adapter = new StudioCommentAdapter(channelKey, '', caches);
-        const ctx = adapter.getCommentContext(threadEl);
-        if (!ctx || ctx.videoId !== targetVideoKey) return;
-
-        const ui = injectStudioCommentUI(threadEl);
-        if (!ui) return;
-
-        const categoryResult = resolveCategoryForVideo(
-            ctx.videoTitle || '',
-            ctx.videoId,
-            channelKey,
-            caches.videoSheetMap
-        );
-        const commentKey = threadEl.dataset.syhCommentKey || generateCommentKey(ctx.videoTitle || '', ctx.author, ctx.text);
-
-        if (ui.badgeEl) {
-            updateStudioBadgeUI(ui.badgeEl, categoryResult.sheetId, categoryResult.source);
-        }
-        if (ui.questionBtn && ui.prayerBtn) {
-            updateStudioButtonsUI(ui, categoryResult.sheetId, caches.buttonStates[commentKey] || null);
-        }
-    });
-}
+export type { StudioCommentUIElements };
+export { retroactiveUpdateVideoComments } from './studio_retroactive';
 
 export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-studio-events-bound';
-    private static readonly BUTTON_BOUND_ATTR = 'data-syh-bound';
 
     private channelKey: ChannelKey;
     private channelLabel: string;
@@ -93,23 +72,7 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     }
 
     public getCommentContext(element: Element): CommentContext | null {
-        const threadEl = element as HTMLElement;
-        const author = getAuthorNameText(threadEl);
-        let text = getCommentText(threadEl);
-        if (!author) return null;
-        if (!text) text = '[comment]';
-
-        const { videoTitle, videoHref } = resolveReplyVideoMetadata(threadEl);
-        const videoKey = generateVideoKey(videoHref, videoTitle);
-        const commentKey = generateCommentKey(videoTitle, author, text);
-
-        return {
-            id: commentKey,
-            author,
-            text,
-            videoId: videoKey,
-            videoTitle: videoTitle
-        };
+        return getStudioCommentContext(element as HTMLElement);
     }
 
     public getButtons(element: Element): PlatformButtons {
@@ -277,53 +240,16 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
         _commentKey: string,
         caches: StudioEventCaches
     ): void {
-        const ui = this.getStudioUI(element);
-        if (!ui || !ui.badgeEl || !ui.dropdownEl || !ui.metaContainer) return;
-
-        if (ui.badgeEl.getAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR) !== 'true') {
-            ui.badgeEl.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const isVisible = ui.dropdownEl!.style.display === 'block';
-                toggleDropdown(ui.dropdownEl!, !isVisible, ui.metaContainer!);
-            });
-            ui.badgeEl.setAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR, 'true');
-        }
-
-        if (ui.dropdownEl.getAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR) !== 'true') {
-            ui.dropdownEl.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const itemEl = (e.target as HTMLElement).closest<HTMLElement>('.syh-studio-dropdown-item');
-                if (!itemEl) return;
-
-                const selectedVal = itemEl.dataset.sheetId;
-                const newSheetId: SheetId | null = selectedVal === 'auto_reset' ? null : (selectedVal as SheetId);
-
-                const ctx = this.getCommentContext(element);
-                if (!ctx || !ctx.videoId) return;
-
-                const autoCat = resolveCategoryForVideo(
-                    ctx.videoTitle || '',
-                    ctx.videoId,
-                    this.channelKey,
-                    {}
-                ).sheetId;
-
-                toggleDropdown(ui.dropdownEl!, false, ui.metaContainer!);
-
-                caches.videoSheetMap = await setStudioVideoSheetOverride(
-                    ctx.videoId,
-                    newSheetId,
-                    this.channelKey,
-                    this.channelLabel,
-                    ctx.videoTitle || '',
-                    autoCat
-                );
-
-                retroactiveUpdateVideoComments(ctx.videoId, this.channelKey, caches);
-            });
-            ui.dropdownEl.setAttribute(StudioCommentAdapter.BUTTON_BOUND_ATTR, 'true');
-        }
+        bindStudioSpecificEventsImpl(
+            {
+                getCommentContext: (el: Element) => this.getCommentContext(el),
+                channelKey: this.channelKey,
+                channelLabel: this.channelLabel
+            },
+            element,
+            _commentKey,
+            caches
+        );
     }
 
     public isCheckboxOutOfSync(element: HTMLElement, commentKey: string): boolean {
