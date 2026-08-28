@@ -54,6 +54,22 @@ describe('SYH_STORAGE — availability guard', () => {
             global.chrome = orig;
         }
     });
+
+    test('4b: throwing getter chrome.runtime.id дає false без винятку', () => {
+        const runtime = {};
+        Object.defineProperty(runtime, 'id', {
+            configurable: true,
+            get() { throw new Error('Extension context invalidated.'); }
+        });
+        Object.defineProperty(globalThis, 'chrome', {
+            value: { runtime, storage: { local: {} } },
+            configurable: true,
+            writable: true
+        });
+
+        assert.doesNotThrow(() => SYH_STORAGE.isChromeStorageAvailable());
+        assert.strictEqual(SYH_STORAGE.isChromeStorageAvailable(), false);
+    });
 });
 
 describe('SYH_STORAGE — get / set / remove (callback API)', () => {
@@ -267,6 +283,41 @@ describe('SYH_STORAGE — onChanged', () => {
             console.warn = originalWarn;
         }
         assert.strictEqual(warnings.length, 1);
+    });
+
+    test('23b: повертає ідемпотентний unsubscribe, що викликає removeListener', () => {
+        const removed = [];
+        global.chrome.storage.onChanged.addListener = () => {};
+        global.chrome.storage.onChanged.removeListener = (cb) => removed.push(cb);
+
+        const listener = () => {};
+        const unsubscribe = SYH_STORAGE.onChanged(listener);
+
+        assert.strictEqual(typeof unsubscribe, 'function');
+        unsubscribe();
+        assert.deepStrictEqual(removed, [listener]);
+
+        // Повторний виклик unsubscribe не робить нічого (ідемпотентність)
+        unsubscribe();
+        assert.strictEqual(removed.length, 1);
+    });
+
+    test('23c: безпечний unsubscribe при відсутності chrome.storage', () => {
+        delete global.chrome.storage;
+        let unsubscribe;
+        assert.doesNotThrow(() => {
+            unsubscribe = SYH_STORAGE.onChanged(() => {});
+        });
+        assert.strictEqual(typeof unsubscribe, 'function');
+        assert.doesNotThrow(() => unsubscribe());
+    });
+
+    test('23d: перехоплює виняток removeListener без падіння', () => {
+        global.chrome.storage.onChanged.addListener = () => {};
+        global.chrome.storage.onChanged.removeListener = () => { throw new Error('context invalidated'); };
+
+        const unsubscribe = SYH_STORAGE.onChanged(() => {});
+        assert.doesNotThrow(() => unsubscribe());
     });
 });
 

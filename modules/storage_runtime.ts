@@ -13,13 +13,13 @@
  */
 
 import type { StorageAdapter } from './storage_keys';
+import { isExtensionContextValid } from './messaging_context';
 
 export function isChromeStorageAvailable(): boolean {
+    if (!isExtensionContextValid()) return false;
+
     try {
-        return typeof chrome !== 'undefined' &&
-               !!chrome.runtime &&
-               !!chrome.runtime.id &&
-               !!chrome.storage &&
+        return !!chrome.storage &&
                !!chrome.storage.local;
     } catch {
         return false;
@@ -29,12 +29,27 @@ export function isChromeStorageAvailable(): boolean {
 export function storageOnChanged(
     this: StorageAdapter,
     callback: (changes: Record<string, any>, areaName: string) => void
-): void {
-    if (this.isChromeStorageAvailable() && chrome.storage.onChanged) {
+): () => void {
+    let active = false;
+
+    if (this.isChromeStorageAvailable() && chrome?.storage?.onChanged) {
         try {
             chrome.storage.onChanged.addListener(callback);
+            active = true;
         } catch (e: any) {
             console.warn('[SYH Storage] Failed to add onChanged listener:', e?.message || e);
         }
     }
+
+    return () => {
+        if (!active) return;
+        active = false;
+        if (typeof chrome !== 'undefined' && chrome?.storage?.onChanged?.removeListener) {
+            try {
+                chrome.storage.onChanged.removeListener(callback);
+            } catch (e: any) {
+                console.warn('[SYH Storage] Failed to remove onChanged listener:', e?.message || e);
+            }
+        }
+    };
 }

@@ -43,7 +43,7 @@ const {
     handleUnstarCommentMessage,
     isStarred,
     normalizeAuthorName,
-    normalizeText,
+    trimText,
     readCommentText,
     readPrayerAuthor,
     readPrayerText,
@@ -80,11 +80,11 @@ function makePrayerBlock({ author, text, starred = true }) {
 // --- Дрібні чисті хелпери ---------------------------------------------------
 
 describe('bootstrap_messages — нормалізація', () => {
-    test('normalizeText безпечно обробляє null/undefined', () => {
-        assert.equal(normalizeText('  привіт  '), 'привіт');
-        assert.equal(normalizeText(null), '');
-        assert.equal(normalizeText(undefined), '');
-        assert.equal(normalizeText(''), '');
+    test('trimText зберігає регістр і безпечно обробляє null/undefined', () => {
+        assert.equal(trimText('  ПрИвІт  '), 'ПрИвІт');
+        assert.equal(trimText(null), '');
+        assert.equal(trimText(undefined), '');
+        assert.equal(trimText(''), '');
     });
 
     test('normalizeAuthorName зрізає всі провідні @ і має фолбек', () => {

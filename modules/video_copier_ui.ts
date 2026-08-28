@@ -20,7 +20,7 @@ import { VIDEO_CARD_SELECTOR } from './video_copier_fresh';
 import { TITLE_WRAPPER_SELECTOR, injectTitleButton } from './video_copier_title_button';
 import { SHARE_MODAL_SELECTOR, injectModalButton } from './video_copier_share_modal';
 import { injectListButtons } from './video_copier_card_buttons';
-import { LIST_WRAP_SELECTOR, injectMasterDownloadButton } from './video_copier_master_button';
+import { LIBRARY_TITLE_SELECTOR, injectMasterDownloadButton } from './video_copier_master_button';
 
 export { LABELS } from './video_copier_theme';
 
@@ -62,12 +62,12 @@ export {
     processVideoCard
 } from './video_copier_card_buttons';
 
-export { LIST_WRAP_SELECTOR, MASTER_BUTTON_ID, injectMasterDownloadButton } from './video_copier_master_button';
+export { LIBRARY_TITLE_SELECTOR, MASTER_BUTTON_ID, injectMasterDownloadButton } from './video_copier_master_button';
 
 /** Перелік «селектор → ін'єктор» для реєстрації у централізованому DOM-спостерігачі. */
 export const VIDEO_COPIER_INJECTIONS: ReadonlyArray<{ selector: string; inject: () => void }> = [
     { selector: TITLE_WRAPPER_SELECTOR, inject: injectTitleButton },
     { selector: SHARE_MODAL_SELECTOR, inject: injectModalButton },
     { selector: VIDEO_CARD_SELECTOR, inject: injectListButtons },
-    { selector: LIST_WRAP_SELECTOR, inject: injectMasterDownloadButton }
+    { selector: LIBRARY_TITLE_SELECTOR, inject: injectMasterDownloadButton }
 ];

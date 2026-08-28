@@ -19,7 +19,7 @@ export interface StorageAdapter {
         keys: StorageKeyValues | StorageKeyValues[],
         updateFn: (current: T) => T | Promise<T>
     ): Promise<T>;
-    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): void;
+    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): () => void;
 }
 
 export const STORAGE_SCHEMA_VERSION = 2;

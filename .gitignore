@@ -37,7 +37,6 @@ coverage/
 
 # Agent / AI local workspace metadata
 .gemini/
-.codegraph/
 .codebase-memory/
 .codesearch.db*
 .codesearch/
@@ -72,6 +71,7 @@ vite.config.ts.timestamp-*
 # Fallow analysis reports
 fallow-targets.json
 fallow_*.json
+fallow_*.txt
 .fallow-*.json
 health_*.json
 health_report.json
@@ -81,6 +81,7 @@ build_final.txt
 build_output*.txt
 lint_output*.txt
 test_output*.txt
+tsc_*.txt
 
 # ==========================================
 # AI / Chat logs

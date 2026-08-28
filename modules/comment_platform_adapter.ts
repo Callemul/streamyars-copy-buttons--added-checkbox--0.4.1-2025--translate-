@@ -45,6 +45,7 @@ export interface CommentPlatformAdapter {
     afterAction?(action: ActionContext): Promise<void>;
     isEventsBound(element: Element): boolean;
     markEventsBound(element: Element): void;
+    unmarkEventsBound?(element: Element): void;
     buildCollectedItem(commentKey: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload;
 }
 

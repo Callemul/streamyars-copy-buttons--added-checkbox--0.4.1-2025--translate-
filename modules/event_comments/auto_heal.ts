@@ -17,24 +17,15 @@
 import type { SyhEventComments } from './types';
 import { resolveSelectorString } from '../config';
 import { SYH_DOM_OBSERVER } from '../dom_observer';
+import { isExtensionContextValid } from '../messaging_context';
 import { processCoverButtons } from './auto_heal_cover_buttons';
 import { processGhostComments } from './auto_heal_ghosts';
 
 /** Фолбек-селектор блоку коментаря, коли конфіг його не задає. */
 const FALLBACK_COMMENT_SELECTOR = '[class*="PlatformComment__Wrap"]';
 
-/**
- * Чи живий контекст розширення.
- *
- * Після перезавантаження/оновлення розширення `chrome.runtime.id` зникає, і
- * будь-яке звернення до API кидає «Extension context invalidated».
- */
-function isExtensionRuntime(): boolean {
-    return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
-}
-
 export function runAutoHeal(self: SyhEventComments): void {
-    if (!isExtensionRuntime()) {
+    if (!isExtensionContextValid()) {
         if (self.autoHealObserver) {
             self.autoHealObserver.disconnect();
         }

@@ -358,6 +358,30 @@ describe('SYH_STATS_TRACKER — семплер ефіру (тік інтерва
         assert.equal(SYH_STATS_TRACKER.intervalId, null, 'трекер має самознищити інтервал');
         globalThis.chrome = savedChrome;
     });
+
+    test('20b. throwing getter chrome.runtime.id не пробивається з тіку і зупиняє інтервал', () => {
+        const originalChrome = Object.getOwnPropertyDescriptor(globalThis, 'chrome');
+        const runtime = {};
+        Object.defineProperty(runtime, 'id', {
+            configurable: true,
+            get() { throw new Error('Extension context invalidated.'); }
+        });
+        Object.defineProperty(globalThis, 'chrome', {
+            value: { runtime },
+            configurable: true,
+            writable: true
+        });
+
+        try {
+            SYH_STATS_TRACKER.startTracking();
+            assert.doesNotThrow(() => capturedTick());
+            assert.equal(SYH_STATS_TRACKER.intervalId, null, 'трекер має самознищити інтервал');
+            assert.equal(mockStorageStore[STATS_KEY], undefined, 'після інвалідації storage не читається');
+        } finally {
+            if (originalChrome) Object.defineProperty(globalThis, 'chrome', originalChrome);
+            else delete globalThis.chrome;
+        }
+    });
 });
 
 describe('SYH_STATS_TRACKER — getBrandFromLocalStorage', () => {

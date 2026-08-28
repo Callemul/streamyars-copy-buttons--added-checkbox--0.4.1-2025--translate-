@@ -73,6 +73,22 @@ describe('messaging — isExtensionValid', () => {
 
         assert.equal(SYH_MESSAGING.isExtensionValid(), false, 'виняток має бути проковтнутий');
     });
+
+    test('5b. false, коли getter chrome.runtime.id кидає "Extension context invalidated"', () => {
+        const runtime = {};
+        Object.defineProperty(runtime, 'id', {
+            configurable: true,
+            get() { throw new Error('Extension context invalidated.'); }
+        });
+        Object.defineProperty(globalThis, 'chrome', {
+            value: { runtime },
+            configurable: true,
+            writable: true
+        });
+
+        assert.doesNotThrow(() => SYH_MESSAGING.isExtensionValid());
+        assert.equal(SYH_MESSAGING.isExtensionValid(), false);
+    });
 });
 
 // ---------------------------------------------------------------------------

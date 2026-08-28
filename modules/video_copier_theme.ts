@@ -77,7 +77,8 @@ export const SQUARE_BUTTON_STYLE = `
 `;
 
 export const MASTER_BUTTON_STYLE = `
-    display: block; width: 100%; padding: 15px; margin-bottom: 20px;
+    display: inline-flex; width: auto; padding: 10px 16px; margin: 0;
+    align-items: center; justify-content: center; white-space: nowrap;
     background-color: #005DF7; color: white; font-size: 16px; font-weight: bold;
     border: none; border-radius: 8px; cursor: pointer;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;

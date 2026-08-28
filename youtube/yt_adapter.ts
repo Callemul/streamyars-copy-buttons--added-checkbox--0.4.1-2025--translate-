@@ -3,6 +3,7 @@ import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
 import { extractCommentId, extractCommentData, applyButtonVisualState } from './yt_ui';
 import { extractDomChannelInfo } from './yt_channel_gate';
+import { getVideoId } from './yt_video_id';
 import {
     BaseCommentPlatformAdapter,
     type CommentContext,
@@ -12,16 +13,6 @@ import {
 
 const YT_BUTTON_STATES_KEY = STORAGE_KEYS.YT_BUTTON_STATES;
 const YT_CHECKBOX_STATE_KEY = STORAGE_KEYS.YT_CHECKBOX_STATE;
-
-function getVideoId(): string {
-    if (typeof window === 'undefined') return '';
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('v') || '';
-    } catch {
-        return '';
-    }
-}
 
 export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     private static readonly BOUND_ATTR = 'data-syh-yt-events-bound';

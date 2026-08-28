@@ -5,16 +5,7 @@ import { YouTubeCommentAdapter } from './yt_adapter';
 import type { YTCollectedItem } from '../modules/types';
 import type { CommentStateCaches } from '../modules/comment_platform_adapter';
 export type { YTCollectedItem };
-
-export function getVideoId(): string {
-    if (typeof window === 'undefined') return '';
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('v') || '';
-    } catch {
-        return '';
-    }
-}
+export { getVideoId } from './yt_video_id';
 
 export async function copyToClipboard(text: string): Promise<boolean> {
     return CommentService.copyToClipboard(text);

@@ -23,6 +23,7 @@
 
 import { SYH_STORAGE } from './storage';
 import type { CleaningLogEntry } from './types';
+import { isExtensionContextValid } from './messaging_context';
 
 import {
     normalizeText as normalizeTextImpl,
@@ -79,11 +80,7 @@ export const SYH_UTILS: SyhUtils = {
     },
 
     isExtensionValid: function(): boolean {
-        try {
-            return typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
-        } catch {
-            return false;
-        }
+        return isExtensionContextValid();
     },
 
     getTodayDateString: function(): string {

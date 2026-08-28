@@ -432,6 +432,36 @@ describe('AntiAfkService — MutationObserver і резервний таймер
         }
     });
 
+    test('19b. getter chrome.runtime.id, що кидає, штатно зупиняє сервіс', () => {
+        const spy = installIntervalSpy();
+        const originalChrome = Object.getOwnPropertyDescriptor(globalThis, 'chrome');
+        try {
+            const { root } = makeAfkTree();
+            const service = new AntiAfkService();
+            service.start({}, null, null, root);
+
+            const runtime = {};
+            Object.defineProperty(runtime, 'id', {
+                configurable: true,
+                get() { throw new Error('Extension context invalidated.'); }
+            });
+            Object.defineProperty(globalThis, 'chrome', {
+                value: { runtime },
+                configurable: true,
+                writable: true
+            });
+
+            const afkTimer = spy.byDelay(30000)[0];
+            assert.doesNotThrow(() => afkTimer.fn());
+            assert.ok(spy.intervals.every(i => i.cleared), 'усі таймери мають бути зупинені');
+            assert.ok(observers[observers.length - 1].disconnected);
+        } finally {
+            if (originalChrome) Object.defineProperty(globalThis, 'chrome', originalChrome);
+            else delete globalThis.chrome;
+            spy.restore();
+        }
+    });
+
     test('20. резервний таймер продовжує перевіряти, коли контекст живий', () => {
         const spy = installIntervalSpy();
         const originalChrome = globalThis.chrome;

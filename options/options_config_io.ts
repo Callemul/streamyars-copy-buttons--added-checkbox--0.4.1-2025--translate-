@@ -18,6 +18,7 @@ import { DEFAULT_OPTIONS } from './defaults';
 import { validateImportedConfig, extractImportedItems } from './validation';
 
 const EXPORT_APP_NAME = 'StreamYard Helper';
+/** Фолбек версії для тестового середовища без доступу до chrome.runtime.getManifest */
 const FALLBACK_VERSION = '1.0.0';
 
 /** `streamyard_helper_config_YYYY-MM-DD.json`. */
@@ -25,11 +26,21 @@ function buildExportFileName(): string {
     return `streamyard_helper_config_${new Date().toISOString().slice(0, 10)}.json`;
 }
 
+function resolveExportVersion(storageVersion: unknown): string {
+    if (typeof storageVersion === 'string' && storageVersion) {
+        return storageVersion;
+    }
+    if (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) {
+        return chrome.runtime.getManifest().version;
+    }
+    return FALLBACK_VERSION;
+}
+
 function buildExportPayload(allKeys: string[], result: Record<string, any>): Record<string, any> {
     const exportData: Record<string, any> = {
         app: EXPORT_APP_NAME,
         timestamp: new Date().toISOString(),
-        version: result[STORAGE_KEYS.VERSION] || FALLBACK_VERSION,
+        version: resolveExportVersion(result[STORAGE_KEYS.VERSION]),
         db: result[STORAGE_KEYS.DB] || {},
         syh_options: result[STORAGE_KEYS.OPTIONS] || DEFAULT_OPTIONS
     };

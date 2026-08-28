@@ -13,6 +13,7 @@
 
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { checkAndClickAntiAfk, simulateUserActivity, type I18nAdapterLike } from './anti_afk_detector';
+import { isExtensionContextValid } from './messaging_context';
 
 /** Період превентивної імітації активності (2.5 хв). */
 const ACTIVITY_SIMULATION_INTERVAL_MS = 150000;
@@ -40,15 +41,6 @@ function isAntiAfkEnabled(options?: AntiAfkOptions): boolean {
 function resolveAfkIntervalMs(options?: AntiAfkOptions): number {
     const intervalSec = options?.anti_afk_interval_sec || DEFAULT_AFK_INTERVAL_SEC;
     return Math.max(intervalSec * 1000, MIN_AFK_INTERVAL_MS);
-}
-
-/** Чи інвалідовано контекст розширення (розширення перезавантажили/вимкнули). */
-function isExtensionContextInvalidated(): boolean {
-    try {
-        return typeof chrome !== 'undefined' && !!chrome.runtime && !chrome.runtime.id;
-    } catch {
-        return true;
-    }
 }
 
 export class AntiAfkService {
@@ -161,7 +153,7 @@ export class AntiAfkService {
         intervalMs: number
     ): void {
         this.afkTimer = setInterval(() => {
-            if (isExtensionContextInvalidated()) {
+            if (!isExtensionContextValid()) {
                 this.stop();
                 return;
             }

@@ -10,8 +10,7 @@
   },
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "https://streamyard.com/*",
@@ -39,18 +38,8 @@
       "run_at": "document_idle"
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "Release_notes.md",
-        "Daily_tips.md",
-        "lib/chart.js"
-      ],
-      "matches": ["https://streamyard.com/*", "*://*.youtube.com/*", "https://studio.youtube.com/*"]
-    }
-  ],
   "action": {
-    "default_title": "StreamYard Helper v1.0.0",
+    "default_title": "StreamYard Helper",
     "default_popup": "popup/popup.html"
   },
   "options_ui": {

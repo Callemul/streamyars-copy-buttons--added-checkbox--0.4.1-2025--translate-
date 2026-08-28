@@ -34,7 +34,7 @@ installChromeMock({
     }
 });
 
-const { bindAutoHealScanner } = await import('../modules/event_comments/auto_heal.ts');
+const { bindAutoHealScanner, runAutoHeal } = await import('../modules/event_comments/auto_heal.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
 
 const TEST_SELECTORS = {
@@ -272,5 +272,34 @@ describe('event_comments auto_heal — UI оптимізація', () => {
 
         assert.equal(self.calls.updateCommentVisuals.length, 0);
         assert.equal(self.calls.filterStarredComments, 0);
+    });
+
+    test('10. throwing getter chrome.runtime.id fail-closed зупиняє observer без сканування', () => {
+        const originalChrome = Object.getOwnPropertyDescriptor(globalThis, 'chrome');
+        const runtime = {};
+        Object.defineProperty(runtime, 'id', {
+            configurable: true,
+            get() { throw new Error('Extension context invalidated.'); }
+        });
+        Object.defineProperty(globalThis, 'chrome', {
+            value: { runtime },
+            configurable: true,
+            writable: true
+        });
+
+        let disconnected = 0;
+        const self = createMockSelf({
+            autoHealObserver: { disconnect: () => { disconnected++; } }
+        });
+
+        try {
+            assert.doesNotThrow(() => runAutoHeal(self));
+            assert.equal(disconnected, 1);
+            assert.equal(self.calls.removeFromDatabase.length, 0);
+            assert.equal(self.calls.updateCommentVisuals.length, 0);
+        } finally {
+            if (originalChrome) Object.defineProperty(globalThis, 'chrome', originalChrome);
+            else delete globalThis.chrome;
+        }
     });
 });

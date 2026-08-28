@@ -129,4 +129,26 @@ describe('SYH_UTILS tests', () => {
         assert.strictEqual(savedDb['Что такое дар?'], 'stream');
         delete SYH_UTILS._storage;
     });
+
+    test('17. isExtensionValid делегує fail-closed семантику throwing runtime.id', () => {
+        const originalChrome = Object.getOwnPropertyDescriptor(globalThis, 'chrome');
+        const runtime = {};
+        Object.defineProperty(runtime, 'id', {
+            configurable: true,
+            get() { throw new Error('Extension context invalidated.'); }
+        });
+        Object.defineProperty(globalThis, 'chrome', {
+            value: { runtime },
+            configurable: true,
+            writable: true
+        });
+
+        try {
+            assert.doesNotThrow(() => SYH_UTILS.isExtensionValid());
+            assert.strictEqual(SYH_UTILS.isExtensionValid(), false);
+        } finally {
+            if (originalChrome) Object.defineProperty(globalThis, 'chrome', originalChrome);
+            else delete globalThis.chrome;
+        }
+    });
 });

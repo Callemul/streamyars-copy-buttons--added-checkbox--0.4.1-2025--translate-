@@ -410,7 +410,7 @@ describe('video_copier — публічний API фасаду', () => {
             'div[class*="TitleWrapper"]',
             'div[aria-label="embed-modal-content-share"]',
             'a.media-item-card',
-            'div[class*="ListWrap"]'
+            'h1[class*="LibraryTitleV2__Title"]'
         ]);
 
         register.mock.restore();

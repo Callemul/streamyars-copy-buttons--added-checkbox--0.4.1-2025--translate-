@@ -29,7 +29,7 @@ export interface SyhMessageContext {
     root?: ParentNode;
 }
 
-export function normalizeText(value?: string | null): string {
+export function trimText(value?: string | null): string {
     return String(value ?? '').trim();
 }
 
@@ -39,7 +39,7 @@ export function isStarred(element: Element | null | undefined): boolean {
 
 /** Прибирає провідні `@` та підставляє дефолтне ім'я для анонімів. */
 export function normalizeAuthorName(rawAuthor?: string | null): string {
-    const cleaned = normalizeText(rawAuthor).replace(/^@+/, '');
+    const cleaned = trimText(rawAuthor).replace(/^@+/, '');
     return cleaned || DEFAULT_PRAYER_AUTHOR;
 }
 
@@ -90,7 +90,7 @@ export function collectStarredPrayers(root: ParentNode, roomId: string, now: num
 
 export function readCommentText(block: Element, textSelector: SelectorValue): string {
     const node = block.querySelector(String(textSelector));
-    return normalizeText(node?.textContent);
+    return trimText(node?.textContent);
 }
 
 export function findCommentBlockByText(
@@ -136,7 +136,7 @@ export type SyhMessageHandler = (message: SyhRuntimeMessage, ctx: SyhMessageCont
 
 export const MESSAGE_HANDLERS: Readonly<Record<string, SyhMessageHandler>> = {
     unstar_comment: (message, ctx) => {
-        handleUnstarCommentMessage(normalizeText(message.text), ctx.selectors, ctx.root ?? document);
+        handleUnstarCommentMessage(trimText(message.text), ctx.selectors, ctx.root ?? document);
     },
     FETCH_PRAYERS: (_message, ctx) => handleFetchPrayersMessage(ctx.sendResponse, ctx.root ?? document)
 };

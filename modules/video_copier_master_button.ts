@@ -12,7 +12,7 @@ import { COLORS, LABELS, MASTER_BUTTON_STYLE } from './video_copier_theme';
 import { applyHoverColors } from './video_copier_ui_kit';
 
 export const MASTER_BUTTON_ID = 'syh-master-download-btn';
-export const LIST_WRAP_SELECTOR = 'div[class*="ListWrap"]';
+export const LIBRARY_TITLE_SELECTOR = 'h1[class*="LibraryTitleV2__Title"]';
 
 /** Скільки кнопка тримає стан «готово» перед поверненням у дефолт. */
 const DONE_STATE_HOLD_MS = 5000;
@@ -48,16 +48,29 @@ function buildMasterDownloadButton(): HTMLButtonElement {
     return btn;
 }
 
-/** Ідемпотентність тримається на унікальному `id` кнопки. */
-function insertMasterDownloadButton(listContainer: Element): void {
-    const parent = listContainer.parentNode;
-    if (!parent || document.getElementById(MASTER_BUTTON_ID)) return;
+function findLibraryTitle(): HTMLHeadingElement | null {
+    return Array.from(document.querySelectorAll<HTMLHeadingElement>(LIBRARY_TITLE_SELECTOR))
+        .find(title => title.textContent?.trim() === 'Library') ?? null;
+}
 
-    parent.insertBefore(buildMasterDownloadButton(), listContainer);
+/** Ідемпотентність тримається на унікальному `id` кнопки. */
+function insertMasterDownloadButton(libraryTitle: HTMLHeadingElement): void {
+    const titleWrap = libraryTitle.parentElement;
+    if (!titleWrap) return;
+
+    titleWrap.style.display = 'flex';
+    titleWrap.style.alignItems = 'center';
+    titleWrap.style.gap = '16px';
+
+    const button = document.getElementById(MASTER_BUTTON_ID) as HTMLButtonElement | null
+        ?? buildMasterDownloadButton();
+    if (libraryTitle.nextElementSibling !== button) {
+        libraryTitle.insertAdjacentElement('afterend', button);
+    }
 }
 
 export function injectMasterDownloadButton(): void {
-    const listContainer = document.querySelector(LIST_WRAP_SELECTOR);
-    if (!listContainer) return;
-    insertMasterDownloadButton(listContainer);
+    const libraryTitle = findLibraryTitle();
+    if (!libraryTitle) return;
+    insertMasterDownloadButton(libraryTitle);
 }

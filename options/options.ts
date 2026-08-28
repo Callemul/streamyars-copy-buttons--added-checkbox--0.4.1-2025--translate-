@@ -35,9 +35,17 @@ class OptionsController {
     private readonly toast = createToastController();
 
     constructor() {
+        this.initVersionBadge();
         initSectionNavigation();
         this.initEvents();
         this.loadSettings();
+    }
+
+    private initVersionBadge(): void {
+        const badge = document.getElementById('optionsVersionBadge');
+        if (!badge) return;
+        const version = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '1.0.0';
+        badge.textContent = `v${version} — Options & Preferences`;
     }
 
     private notify = (message: string): void => {

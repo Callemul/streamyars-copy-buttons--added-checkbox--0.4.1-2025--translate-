@@ -19,7 +19,6 @@ export default tseslint.config(
         ...globals.node,
         chrome: 'readonly',
         $: 'readonly',
-        jQuery: 'readonly',
         Chart: 'readonly',
       }
     },

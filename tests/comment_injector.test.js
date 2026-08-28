@@ -175,6 +175,34 @@ describe('comment_injector — bindCommentEvents (прив’язка слуха
         });
         assert.equal(sinkless.sink.size, 0);
     });
+
+    test('6b. unbindCommentEvents знімає позначку та викликає unmarkEventsBound', () => {
+        let unmarkCalled = false;
+        const h = createHarness({
+            unmarkEventsBound: () => { unmarkCalled = true; }
+        });
+        h.injector.unbindCommentEvents(h.element);
+        assert.strictEqual(unmarkCalled, true, 'unmarkEventsBound має бути викликано');
+    });
+
+    test('6c. повторний bind після unbind працює штатно і не дублює виклики', async () => {
+        let isBound = false;
+        const h = createHarness({
+            isEventsBound: () => isBound,
+            markEventsBound: () => { isBound = true; },
+            unmarkEventsBound: () => { isBound = false; }
+        });
+        // Перший bind уже стався у createHarness
+        assert.strictEqual(isBound, true);
+
+        // unbind
+        h.injector.unbindCommentEvents(h.element);
+        assert.strictEqual(isBound, false);
+
+        // Повторний bind
+        h.injector.bindCommentEvents(h.element, 'c1');
+        assert.strictEqual(isBound, true);
+    });
 });
 
 describe('comment_injector — handleAction: вибір sheetId', () => {

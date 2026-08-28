@@ -9,6 +9,9 @@ import type {
 /** Таймери «спалаху» кнопки копіювання, щоб скасовувати попередній перед новим. */
 const copyFlashTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
+/** Контролери скасування слухачів подій для запобігання витокам пам'яті та дублюванню. */
+const elementAbortControllers = new WeakMap<Element, AbortController>();
+
 export class CommentInjector {
     private adapter: CommentPlatformAdapter;
     private caches: CommentStateCaches;
@@ -23,28 +26,55 @@ export class CommentInjector {
 
     public bindCommentEvents(element: Element, _commentKey: string): void {
         if (this.adapter.isEventsBound(element)) return;
+
+        const prev = elementAbortControllers.get(element);
+        if (prev) {
+            prev.abort();
+            elementAbortControllers.delete(element);
+        }
+
         this.adapter.markEventsBound(element);
 
         const ctx = this.adapter.getCommentContext(element);
         if (!ctx) return;
 
+        const controller = new AbortController();
+        elementAbortControllers.set(element, controller);
+        const { signal } = controller;
+
         const buttons = this.adapter.getButtons(element);
 
-        this.bindEventListener(buttons.questionBtn, 'click', (e) => this.handleQuestionClick(e, buttons, element));
-        this.bindEventListener(buttons.prayerBtn, 'click', (e) => this.handlePrayerClick(e, buttons, element));
-        this.bindEventListener(buttons.copyBtn, 'click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element));
-        this.bindEventListener(buttons.checkboxEl, 'change', (e) => this.handleCheckboxChange(e, buttons, element));
+        this.bindEventListener(buttons.questionBtn, 'click', (e) => this.handleQuestionClick(e, buttons, element), signal);
+        this.bindEventListener(buttons.prayerBtn, 'click', (e) => this.handlePrayerClick(e, buttons, element), signal);
+        this.bindEventListener(buttons.copyBtn, 'click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element), signal);
+        this.bindEventListener(buttons.checkboxEl, 'change', (e) => this.handleCheckboxChange(e, buttons, element), signal);
         if (buttons.bodyEl && buttons.checkboxEl) {
-            buttons.bodyEl.addEventListener('contextmenu', (e) => this.handleContextMenu(e, buttons.bodyEl!, buttons.checkboxEl!));
+            this.bindEventListener(buttons.bodyEl, 'contextmenu', (e) => this.handleContextMenu(e as MouseEvent, buttons.bodyEl!, buttons.checkboxEl!), signal);
+        }
+    }
+
+    public unbindCommentEvents(element: Element): void {
+        const controller = elementAbortControllers.get(element);
+        if (controller) {
+            controller.abort();
+            elementAbortControllers.delete(element);
+        }
+        if (typeof this.adapter.unmarkEventsBound === 'function') {
+            this.adapter.unmarkEventsBound(element);
+        } else if (typeof (element as HTMLElement).removeAttribute === 'function') {
+            element.removeAttribute('data-syh-events-bound');
         }
     }
 
     private bindEventListener(
         target: Element | null,
         event: string,
-        handler: (e: Event) => void
+        handler: (e: Event) => void,
+        signal?: AbortSignal
     ): void {
-        if (target) target.addEventListener(event, handler);
+        if (target) {
+            target.addEventListener(event, handler, signal ? { signal } : undefined);
+        }
     }
 
     private async handleQuestionClick(

@@ -25,6 +25,7 @@ import { resolveObserverContainer, setupDomRegistration } from './bootstrap_dom'
 import { routeSyhMessage, type CommentSelectors } from './bootstrap_messages';
 
 export const INIT_FLAG = '__SYH_INITIALIZED__';
+/** Фолбек версії для тестових середовищ (напр. node:test), де відсутній chrome.runtime.getManifest */
 export const DEFAULT_VERSION = '1.0.0';
 
 export type GlobalScopeLike = Record<string, unknown>;

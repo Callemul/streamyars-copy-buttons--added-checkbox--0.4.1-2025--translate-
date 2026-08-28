@@ -15,6 +15,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
 import { getOrCreateTodaySession } from './stats_session';
+import { isExtensionContextValid } from './messaging_context';
 
 const LIVE_TAG_SELECTOR = 'span[class*="Tags__LiveTag"]';
 const BRAND_NODE_SELECTOR = '.BrandSelect__BrandNameText-sc-16g9tfx-1';
@@ -29,11 +30,6 @@ export interface StatsSamplerHost {
     intervalId: number | null;
     currentBrand: string;
     loadStatsDb(callback: (db: Record<string, any>) => void): void;
-}
-
-/** Чи контекст розширення ще живий (інакше далі працювати немає сенсу). */
-function isExtensionContextInvalidated(): boolean {
-    return typeof chrome !== 'undefined' && !!chrome.runtime && !chrome.runtime.id;
 }
 
 /** Знімок ефіру з DOM: підпис таймера і кількість глядачів. */
@@ -80,7 +76,7 @@ function appendSamplePoint(
  * і додає точку в статистику дня.
  */
 export function sampleLiveStats(host: StatsSamplerHost): void {
-    if (isExtensionContextInvalidated()) {
+    if (!isExtensionContextValid()) {
         if (host.intervalId !== null) {
             clearInterval(host.intervalId);
             host.intervalId = null;

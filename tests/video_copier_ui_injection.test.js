@@ -42,7 +42,7 @@ const {
     SHARE_TEXT_PREFIX,
     TITLE_WRAPPER_SELECTOR,
     SHARE_MODAL_SELECTOR,
-    LIST_WRAP_SELECTOR,
+    LIBRARY_TITLE_SELECTOR,
     VIDEO_COPIER_INJECTIONS,
     applyHoverColors,
     buildCardControls,
@@ -96,7 +96,7 @@ describe('video_copier_ui — публічні константи', () => {
             'div[class*="TitleWrapper"]',
             'div[aria-label="embed-modal-content-share"]',
             'a.media-item-card',
-            'div[class*="ListWrap"]'
+            'h1[class*="LibraryTitleV2__Title"]'
         ]);
         VIDEO_COPIER_INJECTIONS.forEach(entry => assert.equal(typeof entry.inject, 'function'));
     });
@@ -413,21 +413,25 @@ describe('video_copier_ui — кнопки в картці списку', () => 
 // --- Майстер-кнопка масового завантаження -----------------------------------
 
 describe('video_copier_ui — майстер-кнопка завантаження', () => {
-    const listHtml = '<div class="wrap"><div class="ListWrap-x"></div></div>';
+    const libraryHtml = '<div class="LibraryTitleV2__TitleWrap-x"><h1 class="LibraryTitleV2__Title-x">Library</h1></div>';
 
-    test('28. injectMasterDownloadButton вставляє кнопку перед контейнером списку', () => {
-        resetDom(listHtml);
+    test('28. injectMasterDownloadButton вставляє кнопку одразу після заголовка Library', () => {
+        resetDom(libraryHtml);
 
         injectMasterDownloadButton();
 
         const btn = document.getElementById(MASTER_BUTTON_ID);
+        const title = document.querySelector(LIBRARY_TITLE_SELECTOR);
         assert.ok(btn);
         assert.equal(btn.innerText, LABELS.downloadAll);
-        assert.equal(btn.nextElementSibling, document.querySelector(LIST_WRAP_SELECTOR));
+        assert.equal(title.nextElementSibling, btn);
+        assert.equal(title.parentElement.style.display, 'flex');
+        assert.equal(title.parentElement.style.alignItems, 'center');
+        assert.equal(title.parentElement.style.gap, '16px');
     });
 
     test('29. injectMasterDownloadButton ідемпотентний', () => {
-        resetDom(listHtml);
+        resetDom(libraryHtml);
 
         injectMasterDownloadButton();
         injectMasterDownloadButton();
@@ -435,14 +439,14 @@ describe('video_copier_ui — майстер-кнопка завантаженн
         assert.equal(document.querySelectorAll(`#${MASTER_BUTTON_ID}`).length, 1);
     });
 
-    test('30. без контейнера списку — тихий no-op', () => {
-        resetDom('<div></div>');
+    test('30. без точного заголовка Library — тихий no-op', () => {
+        resetDom('<h1 class="LibraryTitleV2__Title-x">Other</h1>');
         assert.doesNotThrow(() => injectMasterDownloadButton());
         assert.equal(document.getElementById(MASTER_BUTTON_ID), null);
     });
 
     test('31. hover перефарбовує майстер-кнопку у фірмові кольори', () => {
-        resetDom(listHtml);
+        resetDom(libraryHtml);
         injectMasterDownloadButton();
         const btn = document.getElementById(MASTER_BUTTON_ID);
 
@@ -453,7 +457,7 @@ describe('video_copier_ui — майстер-кнопка завантаженн
     });
 
     test('32. клік переводить кнопку у стан «виконується» і блокує її', async () => {
-        resetDom(listHtml);
+        resetDom(libraryHtml);
         injectMasterDownloadButton();
         const btn = document.getElementById(MASTER_BUTTON_ID);
 

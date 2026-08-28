@@ -24,6 +24,25 @@ const {
     restoreButtonState,
     restoreCheckboxState
 } = await import('../youtube/yt_ui.ts');
+const { getVideoId } = await import('../youtube/yt_video_id.ts');
+const { getVideoId: getVideoIdFromEvents } = await import('../youtube/yt_events.ts');
+
+function withMockWindow(mockWindow, callback) {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    assert.ok(originalDescriptor, 'happy-dom має надавати globalThis.window');
+
+    Object.defineProperty(globalThis, 'window', {
+        value: mockWindow,
+        configurable: true,
+        writable: true
+    });
+
+    try {
+        callback();
+    } finally {
+        Object.defineProperty(globalThis, 'window', originalDescriptor);
+    }
+}
 
 // --- Мінімальний DOM для YouTube-коментаря --------------------------------
 // Структура віддзеркалює YT_SELECTORS: #header-author, #body, #content-text,
@@ -75,6 +94,42 @@ function makeComment(overrides = {}) {
 
     return node;
 }
+
+describe('getVideoId', () => {
+    test('повертає параметр v та зберігає export через yt_events', () => {
+        assert.equal(getVideoIdFromEvents, getVideoId);
+        withMockWindow({ location: { search: '?feature=share&v=video-123' } }, () => {
+            assert.equal(getVideoId(), 'video-123');
+            assert.equal(getVideoIdFromEvents(), 'video-123');
+        });
+    });
+
+    test('повертає порожній рядок без параметра v або window', () => {
+        withMockWindow({ location: { search: '?feature=share' } }, () => {
+            assert.equal(getVideoId(), '');
+        });
+        withMockWindow(undefined, () => {
+            assert.equal(getVideoId(), '');
+        });
+    });
+
+    test('повертає порожній рядок для відсутнього або throwing location', () => {
+        withMockWindow({}, () => {
+            assert.equal(getVideoId(), '');
+        });
+
+        const throwingWindow = {};
+        Object.defineProperty(throwingWindow, 'location', {
+            configurable: true,
+            get() {
+                throw new Error('location unavailable');
+            }
+        });
+        withMockWindow(throwingWindow, () => {
+            assert.equal(getVideoId(), '');
+        });
+    });
+});
 
 describe('extractCommentId', () => {
     test('1. пріоритет — параметр lc= у посиланні', () => {
