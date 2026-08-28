@@ -48,42 +48,49 @@ export async function setStudioVideoSheetOverride(
         return getStudioVideoSheetMap();
     }
 
-    const res = await SYH_STORAGE.getAsync<Record<string, any>>([VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY]);
-    const map: Record<string, VideoSheetMapEntry> = res[VIDEO_MAP_STORAGE_KEY] || {};
-    const log: StudioOverrideLogEntry[] = res[MANUAL_OVERRIDE_LOG_KEY] || [];
+    let resultMap: Record<string, VideoSheetMapEntry> = {};
 
-    if (sheetId === null) {
-        delete map[videoKey];
-    } else {
-        map[videoKey] = {
-            sheetId,
-            source: 'manual',
-            channelKey,
-            videoTitle,
-            updatedAt: Date.now()
-        };
+    await SYH_STORAGE.updateAsync<Record<string, any>>(
+        [VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY],
+        (res) => {
+            const map: Record<string, VideoSheetMapEntry> = { ...(res[VIDEO_MAP_STORAGE_KEY] || {}) };
+            const log: StudioOverrideLogEntry[] = [...(res[MANUAL_OVERRIDE_LOG_KEY] || [])];
 
-        const logEntry: StudioOverrideLogEntry = {
-            timestamp: new Date().toISOString(),
-            channelKey,
-            channelLabel: channelLabel || channelKey,
-            videoTitle,
-            autoDetectedSheet,
-            assignedSheet: sheetId
-        };
+            if (sheetId === null) {
+                delete map[videoKey];
+            } else {
+                map[videoKey] = {
+                    sheetId,
+                    source: 'manual',
+                    channelKey,
+                    videoTitle,
+                    updatedAt: Date.now()
+                };
 
-        log.push(logEntry);
-        if (log.length > 500) {
-            log.splice(0, log.length - 500);
+                const logEntry: StudioOverrideLogEntry = {
+                    timestamp: new Date().toISOString(),
+                    channelKey,
+                    channelLabel: channelLabel || channelKey,
+                    videoTitle,
+                    autoDetectedSheet,
+                    assignedSheet: sheetId
+                };
+
+                log.push(logEntry);
+                if (log.length > 500) {
+                    log.splice(0, log.length - 500);
+                }
+            }
+
+            resultMap = map;
+            return {
+                [VIDEO_MAP_STORAGE_KEY]: map,
+                [MANUAL_OVERRIDE_LOG_KEY]: log
+            };
         }
-    }
+    );
 
-    await SYH_STORAGE.setAsync({
-        [VIDEO_MAP_STORAGE_KEY]: map,
-        [MANUAL_OVERRIDE_LOG_KEY]: log
-    });
-
-    return map;
+    return resultMap;
 }
 
 // Pure ESM module export

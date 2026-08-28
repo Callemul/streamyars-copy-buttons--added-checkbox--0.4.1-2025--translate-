@@ -48,12 +48,22 @@ describe('Studio SPA Handler tests', () => {
         assert.strictEqual(global.window.setInterval.mock.callCount(), 1);
     });
 
-    test('stop clears poll interval', () => {
+    test('stop clears poll interval and removes event listeners', () => {
         const callback = mock.fn();
         const handler = new StudioSPAHandler(callback);
         handler.start();
         handler.stop();
         assert.strictEqual(global.window.clearInterval.mock.callCount(), 1);
+        assert.strictEqual(global.window.removeEventListener.mock.callCount(), 2);
+    });
+
+    test('start is idempotent and does not register duplicate listeners', () => {
+        const callback = mock.fn();
+        const handler = new StudioSPAHandler(callback);
+        handler.start();
+        handler.start();
+        assert.strictEqual(global.window.addEventListener.mock.callCount(), 2);
+        assert.strictEqual(global.window.setInterval.mock.callCount(), 1);
     });
 
     test('checkPathChange calls callback when path changes', () => {

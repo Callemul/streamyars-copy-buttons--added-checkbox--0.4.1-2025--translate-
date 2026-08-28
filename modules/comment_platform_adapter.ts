@@ -62,6 +62,10 @@ export abstract class BaseCommentPlatformAdapter implements CommentPlatformAdapt
     abstract isEventsBound(element: Element): boolean;
     abstract markEventsBound(element: Element): void;
 
+    public unmarkEventsBound(_element: Element): void {
+        // Base implementation: subclasses can override
+    }
+
     public getButtonState(_context: CommentContext, commentKey: string, caches: CommentStateCaches): ButtonStateType {
         return caches.buttonStates[commentKey] || null;
     }

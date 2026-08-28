@@ -46,6 +46,8 @@ export class StudioStorageController {
         }
     };
 
+    private collectedKeySet: Set<string> = new Set();
+
     constructor() {
         this.setupCollectedKeysHandlers();
     }
@@ -54,8 +56,12 @@ export class StudioStorageController {
         const sheetIds = getSheetIds();
         sheetIds.forEach((sId) => {
             const key = getSheetCollectedStorageKey(sId);
+            this.collectedKeySet.add(key);
             this.changeHandlers[key] = (ctrl, _newValue) => {
-                ctrl.loadStorageData().then(() => ctrl.scheduleProcessComments(true));
+                ctrl.loadStorageData().then(() => {
+                    ctrl.updateHeaderCounters();
+                    ctrl.scheduleProcessComments(true);
+                });
             };
         });
     }
@@ -79,14 +85,28 @@ export class StudioStorageController {
 
         const { collectedItems, sheetStatsMap } = buildCollectedAggregation(res, sheetIds);
         this.caches.collectedItems = collectedItems;
-        this.sheetStatsMap = sheetStatsMap;
+        for (const k of Object.keys(this.sheetStatsMap)) {
+            delete this.sheetStatsMap[k];
+        }
+        Object.assign(this.sheetStatsMap, sheetStatsMap);
     }
 
     public handleStorageChange(changes: Record<string, any>): void {
+        let hasCollectedChange = false;
         for (const [key, handler] of Object.entries(this.changeHandlers)) {
             if (changes[key]) {
-                handler(this, changes[key].newValue);
+                if (this.collectedKeySet.has(key)) {
+                    hasCollectedChange = true;
+                } else {
+                    handler(this, changes[key].newValue);
+                }
             }
+        }
+        if (hasCollectedChange) {
+            this.loadStorageData().then(() => {
+                this.updateHeaderCounters();
+                this.scheduleProcessComments(true);
+            });
         }
     }
 

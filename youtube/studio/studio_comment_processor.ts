@@ -4,6 +4,7 @@ import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getSortedCommentThreads } from './studio_thread_sorter';
 import { StudioHeaderUpdater } from './studio_header_updater';
 import { createContextMenuHandler } from './studio_context_menu';
+import { CommentInjector } from '../../modules/comment_injector';
 
 export class StudioCommentProcessor {
     private enabled: boolean = true;
@@ -130,8 +131,11 @@ export class StudioCommentProcessor {
     }
 
     private cleanupInjectedUI(): void {
-        document.querySelectorAll('.syh-studio-btn, .syh-studio-video-meta, .syh-header-counters-wrapper').forEach((el) => el.remove());
+        document.querySelectorAll('.syh-studio-btn, .syh-studio-video-meta, .syh-studio-badge-wrapper, .syh-studio-checkbox-wrapper, .syh-header-counters-wrapper').forEach((el) => el.remove());
         document.querySelectorAll('.syh-studio-comment-checked').forEach((el) => el.classList.remove('syh-studio-comment-checked'));
+        document.querySelectorAll('[data-syh-studio-events-bound]').forEach((el) => {
+            CommentInjector.dispose(el, 'data-syh-studio-events-bound');
+        });
     }
 
     public scheduleProcessComments(forceUpdate: boolean = false): void {

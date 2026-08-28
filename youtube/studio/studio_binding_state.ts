@@ -6,7 +6,7 @@
 //
 // Виділено з youtube/studio/studio_events.ts (CRAP 30–90 на функцію).
 
-import type { CommentInjector } from '../../modules/comment_injector';
+import { CommentInjector } from '../../modules/comment_injector';
 import type { PlatformButtons } from '../../modules/comment_platform_adapter';
 import type { StudioCommentAdapter } from './studio_adapter';
 import type { StudioEventCaches } from './state_resolvers';
@@ -41,7 +41,7 @@ export function cleanupRecycledStudioElement(
 ): void {
     if (!isRecycledStudioElement(threadEl, previousCommentKey, currentCommentKey)) return;
 
-    threadEl.removeAttribute('data-syh-studio-events-bound');
+    CommentInjector.dispose(threadEl, 'data-syh-studio-events-bound');
     threadEl.removeAttribute('data-syh-bound');
     delete (threadEl as SyhObservedElement)._syhBound;
 

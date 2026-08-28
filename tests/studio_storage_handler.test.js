@@ -168,4 +168,16 @@ describe('studio_storage_handler — StudioStorageController (характери
         assert.strictEqual(stateChange.mock.calls.length, 0);
         assert.strictEqual(schedule.mock.calls.length, 0);
     });
+
+    test('13. handleStorageChange коалесцить кілька collected-ключів в один loadStorageData', async () => {
+        const ctrl = new StudioStorageController();
+        const load = mock.fn(async () => {});
+        ctrl.loadStorageData = load;
+
+        ctrl.handleStorageChange({
+            [getSheetCollectedStorageKey(SHEET_IDS.VP_SS)]: { newValue: [] },
+            [getSheetCollectedStorageKey(SHEET_IDS.OPARIN)]: { newValue: [] }
+        });
+        assert.strictEqual(load.mock.calls.length, 1);
+    });
 });

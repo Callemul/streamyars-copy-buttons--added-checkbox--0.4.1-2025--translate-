@@ -53,12 +53,19 @@ export class CommentInjector {
         }
     }
 
-    public unbindCommentEvents(element: Element): void {
+    public static dispose(element: Element, boundAttr?: string): void {
         const controller = elementAbortControllers.get(element);
         if (controller) {
             controller.abort();
             elementAbortControllers.delete(element);
         }
+        if (boundAttr && typeof (element as HTMLElement).removeAttribute === 'function') {
+            element.removeAttribute(boundAttr);
+        }
+    }
+
+    public unbindCommentEvents(element: Element): void {
+        CommentInjector.dispose(element);
         if (typeof this.adapter.unmarkEventsBound === 'function') {
             this.adapter.unmarkEventsBound(element);
         } else if (typeof (element as HTMLElement).removeAttribute === 'function') {

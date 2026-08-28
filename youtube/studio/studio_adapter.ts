@@ -185,6 +185,10 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
         element.setAttribute(StudioCommentAdapter.BOUND_ATTR, 'true');
     }
 
+    public unmarkEventsBound(element: Element): void {
+        element.removeAttribute(StudioCommentAdapter.BOUND_ATTR);
+    }
+
     public async beforeAction(
         type: 'question' | 'prayer',
         _context: CommentContext,

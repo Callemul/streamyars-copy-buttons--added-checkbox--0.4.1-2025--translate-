@@ -110,4 +110,8 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
     public markEventsBound(element: Element): void {
         element.setAttribute(YouTubeCommentAdapter.BOUND_ATTR, 'true');
     }
+
+    public unmarkEventsBound(element: Element): void {
+        element.removeAttribute(YouTubeCommentAdapter.BOUND_ATTR);
+    }
 }

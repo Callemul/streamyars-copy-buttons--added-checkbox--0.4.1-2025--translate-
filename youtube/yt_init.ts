@@ -16,6 +16,7 @@ import { processAllYTComments, startObserver } from './yt_comment_processor';
 import { stopCommentObserver } from './yt_observer';
 import { YT_COLLECTED_SHEET_ID, stateCache } from './yt_state';
 import { applyYtInitState, buildYtInitStorageKeys, resolveYtInitState } from './yt_bootstrap_rules';
+import { CommentInjector } from '../modules/comment_injector';
 
 const DEFAULT_TRIGGER_WORDS = ['вопрос'];
 
@@ -59,4 +60,8 @@ function initializeCommentAssistant(): void {
 export function cleanupYouTubeUI(): void {
     stopCommentObserver();
     document.querySelectorAll('.syh-yt-buttons').forEach(el => el.remove());
+    document.querySelectorAll('.syh-yt-comment-checked').forEach(el => el.classList.remove('syh-yt-comment-checked'));
+    document.querySelectorAll('[data-syh-yt-events-bound]').forEach(el => {
+        CommentInjector.dispose(el, 'data-syh-yt-events-bound');
+    });
 }

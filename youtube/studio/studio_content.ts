@@ -6,11 +6,12 @@ import { StudioCommentProcessor } from './studio_comment_processor';
 
 import type { ISyhPlugin } from '../../modules/plugin_registry';
 
-class StudioModuleController {
+export class StudioModuleController {
     private storageController: StudioStorageController;
     private spaHandler: StudioSPAHandler;
     private commentProcessor: StudioCommentProcessor;
     private isInitialized: boolean = false;
+    private unsubscribeStorage: (() => void) | null = null;
 
     constructor() {
         this.storageController = new StudioStorageController();
@@ -28,7 +29,12 @@ class StudioModuleController {
     }
 
     public async init(): Promise<void> {
+        if (this.isInitialized) return;
+        this.isInitialized = true;
+
         console.log('[SYH Studio] Initializing Studio Module...');
+
+        await this.storageController.loadStorageData();
 
         const channelInfo = await initializeStudioModule(
             this.storageController.caches,
@@ -36,7 +42,7 @@ class StudioModuleController {
         );
         this.storageController.channelInfo = channelInfo;
 
-        SYH_STORAGE.onChanged(createStorageChangeHandler(this.storageController));
+        this.unsubscribeStorage = SYH_STORAGE.onChanged(createStorageChangeHandler(this.storageController));
         this.spaHandler.start();
         this.handleStateChange();
     }
@@ -61,6 +67,11 @@ class StudioModuleController {
     }
 
     public destroy(): void {
+        this.isInitialized = false;
+        if (this.unsubscribeStorage) {
+            this.unsubscribeStorage();
+            this.unsubscribeStorage = null;
+        }
         this.spaHandler.stop();
         this.commentProcessor.destroy();
     }
