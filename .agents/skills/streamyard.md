@@ -37,4 +37,21 @@ console.log({
   toolbar: !!document.querySelector('.studio-toolbar'),
   myBtn: !!document.querySelector('#syh-streamyard-copyBtn')
 });
-```
+```
+
+---
+
+## 4. Патерни модальних вікон StreamYard
+
+- **Безпечне монтування**: Монтувати оверлей через fallback:
+  ```ts
+  const target = document.body || document.documentElement;
+  target?.appendChild?.(overlay);
+  ```
+  Це захищає код у тестах з мінімальними моками DOM.
+- **Двоколонковий UI розбору**:
+  - Ліва колонка: `<textarea>` + чіпси швидких шаблонів заголовків (`+ ❓`, `+ 🙏`, `+ 📺`) + копіювання діагностичного логу.
+  - Права колонка: реактивний Live Preview (150ms debounce) із блоковими перемикачами категорій (`[ 🟣 Ефір | 🟠 Глядачі | 🔵 Молитва ]`).
+- **Життєвий цикл сесії**: Зберігати драфт у `sessionStorage` (`syh_banner_modal_draft`) для збереження даних протягом сесії і автоматичного очищення при закритті вкладки.
+- **Делегування запуску**: При кліку «Створити» модалка миттєво закривається, а створення виконується через єдину точку входу `bannerCreator.executeCustomBanners(banners, hasStandardFormat)`.
+
