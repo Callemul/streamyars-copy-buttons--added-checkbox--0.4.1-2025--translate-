@@ -249,4 +249,67 @@ describe('banner_modal — SyhBannerModal DOM Lifecycle', () => {
 
         modal.close();
     });
+
+    test('14. Клік по шаблону-чіпсу додає шаблон на позицію курсора', () => {
+        const modal = new SyhBannerModal(mockCreator);
+        modal.open();
+
+        const textarea = document.querySelector('.syh-modal-textarea');
+        const chip = document.querySelector('.syh-template-chip');
+        assert.ok(chip);
+
+        chip?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        assert.ok(textarea.value.includes('ВОПРОСЫ'));
+
+        modal.close();
+    });
+
+    test('15. handleSubmit використовує fallback на processAndCreateBanners коли executeCustomBanners відсутній', () => {
+        const fallbackCreator = {
+            PARSERS: createMockParsers(),
+            UTILS: createMockUtils(),
+            processAndCreateBanners: mock.fn(async () => {})
+        };
+
+        const modal = new SyhBannerModal(fallbackCreator);
+        modal.open();
+
+        const textarea = document.querySelector('.syh-modal-textarea');
+        textarea.value = `1. Фолбек-питання`;
+        modal.triggerParse();
+
+        const submitBtn = document.querySelector('.syh-btn-submit');
+        submitBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        assert.strictEqual(fallbackCreator.processAndCreateBanners.mock.callCount(), 1);
+        modal.close();
+    });
+
+    test('16. handleSubmit є no-op якщо allBanners порожній', () => {
+        const modal = new SyhBannerModal(mockCreator);
+        modal.open();
+
+        // Викликаємо handleSubmit при порожньому списку банерів
+        modal['handleSubmit']();
+
+        assert.strictEqual(mockCreator.executeCustomBanners.mock.callCount(), 0);
+        assert.ok(document.querySelector('.syh-banner-modal-overlay'), 'Модалка лишається відкритою');
+
+        modal.close();
+    });
+
+    test('17. handleCreateBannersAction коректно викликає openBannerCreationModal або ігнорує null', async () => {
+        const { handleCreateBannersAction } = await import('../modules/event_banners/category.ts');
+
+        // null перевірка - не падає
+        assert.doesNotThrow(() => handleCreateBannersAction(null));
+        assert.doesNotThrow(() => handleCreateBannersAction(undefined));
+
+        // з валідним творцем - відкриває модалку
+        handleCreateBannersAction(mockCreator);
+        assert.ok(document.querySelector('.syh-banner-modal-overlay'));
+
+        const closeBtn = document.querySelector('.syh-banner-modal-close');
+        closeBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
 });

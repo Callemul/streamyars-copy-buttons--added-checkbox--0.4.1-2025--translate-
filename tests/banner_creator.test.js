@@ -262,3 +262,77 @@ test('SYH_BANNER_CREATOR - clickCancelButton handles missing cancel button', () 
 
     assert.doesNotThrow(() => SYH_BANNER_CREATOR.clickCancelButton(form));
 });
+
+test('SYH_BANNER_CREATOR - executeCustomBanners shows warning and exits for empty list', async () => {
+    let warningTitle = '';
+    const creator = Object.create(SYH_BANNER_CREATOR);
+    creator.UTILS = {
+        copyAndShowBanner: (msg, title) => {
+            warningTitle = title;
+        }
+    };
+
+    await creator.executeCustomBanners([]);
+    assert.strictEqual(warningTitle, '⚠️ Питання не знайдені');
+});
+
+test('SYH_BANNER_CREATOR - executeCustomBanners creates separator when hasStandardFormat is true', async () => {
+    const createdSingle = [];
+    let filterBannersCalled = false;
+    let finishToast = '';
+
+    const creator = Object.create(SYH_BANNER_CREATOR);
+    creator.log = () => {};
+    creator.ensureCleanStart = async () => {};
+    creator.finalCleanup = async () => {};
+    creator.createSingleBanner = async (text) => {
+        createdSingle.push(text);
+    };
+    creator.UTILS = {
+        saveBannerCategory: async () => {},
+        copyAndShowBanner: (msg, title) => {
+            finishToast = title;
+        }
+    };
+    creator.UI = {
+        filterBanners: () => {
+            filterBannersCalled = true;
+        }
+    };
+
+    const banners = [
+        { text: 'Q1', category: 'stream', isStandard: true }
+    ];
+
+    await creator.executeCustomBanners(banners, true);
+
+    assert.ok(createdSingle.includes('Q1'), 'Створено Q1');
+    assert.ok(createdSingle.includes('----Питання глядачів----'), 'Додано розділювач');
+    assert.strictEqual(filterBannersCalled, true, 'Викликано filterBanners');
+    assert.strictEqual(finishToast, '🎉 Створення завершено!');
+});
+
+test('SYH_BANNER_CREATOR - executeCustomBanners skips separator when hasStandardFormat is false', async () => {
+    const createdSingle = [];
+
+    const creator = Object.create(SYH_BANNER_CREATOR);
+    creator.log = () => {};
+    creator.ensureCleanStart = async () => {};
+    creator.finalCleanup = async () => {};
+    creator.createSingleBanner = async (text) => {
+        createdSingle.push(text);
+    };
+    creator.UTILS = {
+        saveBannerCategory: async () => {},
+        copyAndShowBanner: () => {}
+    };
+
+    const banners = [
+        { text: 'Emoji 1', category: 'prayer', isStandard: false }
+    ];
+
+    await creator.executeCustomBanners(banners, false);
+
+    assert.ok(createdSingle.includes('Emoji 1'));
+    assert.strictEqual(createdSingle.includes('----Питання глядачів----'), false, 'Розділювач не створюється для не-стандартного формату');
+});
