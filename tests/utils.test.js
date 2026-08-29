@@ -151,4 +151,22 @@ describe('SYH_UTILS tests', () => {
             else delete globalThis.chrome;
         }
     });
+
+    test('18. smartSearch - пошук імен з закінченням на -ia латиницею (Lidia -> лидия, лиди, лідія)', () => {
+        const target = '@LidiaSplayeva-vw9xr';
+        assert.strictEqual(SYH_UTILS.smartSearch('лид', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('лиди', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('лидия', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('лідія', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('лидя', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('lidia', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('lidi', target), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('Лидия Сплаева', target), true);
+
+        // Інші поширені імена на -ia
+        assert.strictEqual(SYH_UTILS.smartSearch('мария', '@MariaIvanova'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('мари', '@MariaIvanova'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('софия', '@Sofia'), true);
+        assert.strictEqual(SYH_UTILS.smartSearch('вікторія', '@Victoria'), true);
+    });
 });
