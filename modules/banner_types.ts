@@ -17,6 +17,7 @@ export interface SyhBannerCreator {
     init(config?: SyhConfig, utils?: SyhUtils, parsers?: SyhParsers): void;
     log(msg: string): void;
     processAndCreateBanners(rawText: string): Promise<void>;
+    executeCustomBanners(bannersToCreate: BannerItem[], hasStandardFormat?: boolean): Promise<void>;
     clickCancelButton(form: Element): void;
     ensureCleanStart(): Promise<void>;
     finalCleanup(): Promise<void>;

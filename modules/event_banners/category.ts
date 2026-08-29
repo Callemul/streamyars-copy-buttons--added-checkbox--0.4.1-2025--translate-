@@ -1,13 +1,11 @@
 import type { SyhUi, SyhUtils } from './types';
 import type { SelectorValue } from '../config';
 import { resolveBannerContext } from './helpers';
+import { openBannerCreationModal } from '../banner_modal';
 
 export function handleCreateBannersAction(bannerCreator: any): void {
-    const text = prompt("Вставте список питань для створення банерів:", "");
-    if (text && bannerCreator) {
-        Promise.resolve(bannerCreator.processAndCreateBanners(text)).catch((error: unknown) => {
-            console.error('[SYH] processAndCreateBanners failed', error);
-        });
+    if (bannerCreator) {
+        openBannerCreationModal(bannerCreator);
     }
 }
 

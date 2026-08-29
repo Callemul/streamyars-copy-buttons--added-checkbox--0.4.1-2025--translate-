@@ -5,6 +5,10 @@ import { test, describe, mock } from 'node:test';
 global.window = global;
 global.prompt = mock.fn(() => 'test text');
 global.document = {
+    body: {
+        appendChild: mock.fn(),
+        removeChild: mock.fn()
+    },
     addEventListener: mock.fn(),
     removeEventListener: mock.fn(),
     querySelectorAll: mock.fn(() => []),
@@ -14,7 +18,9 @@ global.document = {
         setAttribute: mock.fn(),
         getAttribute: mock.fn(),
         style: {},
-        classList: { add: mock.fn(), remove: mock.fn(), contains: mock.fn() }
+        classList: { add: mock.fn(), remove: mock.fn(), contains: mock.fn() },
+        querySelector: mock.fn(),
+        querySelectorAll: mock.fn(() => [])
     }))
 };
 

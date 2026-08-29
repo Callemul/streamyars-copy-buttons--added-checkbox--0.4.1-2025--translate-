@@ -296,4 +296,54 @@ describe('banner_parser — parseRawTextToBanners', () => {
 
         assert.deepStrictEqual(logger.messages, ['Формат: Стандартний 1.', 'Формат: Емодзі 1\uFE0F\u20E3']);
     });
+
+    test('33. регресія: список уроку Суботньої Школи (Вк, привет! Вопросы по субботней школе...) йде в "stream"', async () => {
+        const { SYH_PARSERS } = await import('../modules/parsers/index.ts');
+        const { SYH_UTILS } = await import('../modules/utils.ts');
+
+        const input = `Вк, привет! Вопросы по субботней школе. 1. Как на Ваш взгляд предыдущий урок связан с темой сегодняшнего урока? 2. Что сегодня на ваш взгляд не хватает нам и нашей общине, чтобы быть письмом Христовым?
+3. Почему проповедь Евангелия практически всегда сопровождается гонениями? Когда нет на церковь гонений о чем это может говорить? 
+4. Кто и почему были главными гонителями Павла и апостольской церкви? Кто и как сегодня преследует верующих? 
+5. Что значит иметь христоцентричность в жизни и служении? 
+6. Что значит жить святой жизнью? Какие главные на ваш взгляд черты святости?`;
+
+        const result = parseRawTextToBanners(input, SYH_PARSERS, SYH_UTILS);
+        assert.strictEqual(result.bannersToCreate.length, 6);
+        assert.ok(result.bannersToCreate.every(b => b.category === 'stream'), 'Усі питання мають категорію stream (ефір)');
+        assert.strictEqual(result.hasStandardFormat, true);
+    });
+
+    test('34. регресія: комбінований список ВОПРОСЫ СШ + МОЛИТВЕННЫЕ СШ дає audience і prayer', async () => {
+        const { SYH_PARSERS } = await import('../modules/parsers/index.ts');
+        const { SYH_UTILS } = await import('../modules/utils.ts');
+
+        const input = `❓❓❓ВОПРОСЫ СШ
+1️⃣
+@ЛюдмилаМихайловнаНосова
+Езек34,23-24Хіба пр.Езек.жив до царювання Давида?
+2️⃣
+@korysnotut 
+Здраствуте, к меня есть такой вопрос к Алексею Опарину
+3️⃣
+@ЛюбовЛіщук
+Що таке святиня Господня.дякую
+
+🙏🙏🙏МОЛИТВЕННЫЕ СШ
+1️⃣
+@ДанієлДьолог
+Помоліться за сина Івана
+2️⃣
+@RustamaKvas
+Помолитесь за сына Вадима`;
+
+        const result = parseRawTextToBanners(input, SYH_PARSERS, SYH_UTILS);
+        assert.strictEqual(result.bannersToCreate.length, 5);
+
+        const audienceItems = result.bannersToCreate.filter(b => b.category === 'audience');
+        const prayerItems = result.bannersToCreate.filter(b => b.category === 'prayer');
+
+        assert.strictEqual(audienceItems.length, 3, '3 питання глядачів з категорією audience');
+        assert.strictEqual(prayerItems.length, 2, '2 молитви з категорією prayer');
+    });
 });
+

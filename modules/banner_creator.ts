@@ -47,7 +47,13 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
         }
 
         const { bannersToCreate, hasStandardFormat } = parsedResult;
+        await this.executeCustomBanners(bannersToCreate, hasStandardFormat);
+    },
 
+    executeCustomBanners: async function(
+        bannersToCreate: import('./banner_types').BannerItem[],
+        hasStandardFormat?: boolean
+    ): Promise<void> {
         if (bannersToCreate.length === 0) {
             this.UTILS.copyAndShowBanner("Перевірте вхідний текст та спробуйте ще раз.", "⚠️ Питання не знайдені");
             return;
@@ -57,7 +63,8 @@ export const SYH_BANNER_CREATOR: SyhBannerCreator = {
 
         const createdCount = await executeBannerCreationLoop(this, bannersToCreate);
 
-        if (hasStandardFormat) {
+        const shouldAddSeparator = hasStandardFormat ?? bannersToCreate.some(b => b.isStandard);
+        if (shouldAddSeparator) {
             this.log("Додаю розділювач...");
             await delay(300);
             try {
