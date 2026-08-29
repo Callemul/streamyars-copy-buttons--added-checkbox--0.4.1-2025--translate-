@@ -419,6 +419,33 @@ describe('ui_comments — filterCommentListItems (характеризація)'
         assert.strictEqual(res.visibleCount, 1);
     });
 
+    test('19b. регресія Starred: пошук "лидия" / "лиди" / "лідія" знаходить автора @LidiaSplayeva-vw9xr', () => {
+        const lidiaLi = makeCommentLi({ author: '@LidiaSplayeva-vw9xr', text: 'Дякую за ефір!' });
+        const otherLi = makeCommentLi({ author: '@someone_else', text: 'Інший коментар' });
+        const list = makeStarredList([lidiaLi, otherLi]);
+
+        // Повний запит "лидия"
+        let res = filterCommentListItems(list, SELECTORS, [], 'all', 'лидия', []);
+        assert.strictEqual(res.visibleCount, 1, 'Пошук "лидия" показує коментар Лідії');
+        assert.strictEqual(lidiaLi.style.display, '', 'Рядок Лідії видимий');
+        assert.strictEqual(otherLi.style.display, 'none', 'Інший рядок прихований');
+
+        // Префікс "лиди" (під час вводу)
+        res = filterCommentListItems(list, SELECTORS, [], 'all', 'лиди', []);
+        assert.strictEqual(res.visibleCount, 1, 'Пошук "лиди" показує коментар Лідії');
+        assert.strictEqual(lidiaLi.style.display, '', 'Рядок Лідії видимий при вказанні префіксу');
+
+        // Український варіант "лідія"
+        res = filterCommentListItems(list, SELECTORS, [], 'all', 'лідія', []);
+        assert.strictEqual(res.visibleCount, 1, 'Пошук "лідія" показує коментар Лідії');
+        assert.strictEqual(lidiaLi.style.display, '', 'Рядок Лідії видимий для українського написання');
+
+        // Латиниця "Lidia"
+        res = filterCommentListItems(list, SELECTORS, [], 'all', 'Lidia', []);
+        assert.strictEqual(res.visibleCount, 1, 'Пошук "Lidia" показує коментар Лідії');
+        assert.strictEqual(lidiaLi.style.display, '', 'Рядок Лідії видимий для латиниці');
+    });
+
     test('20. порядок береться з sortedTexts; КВІРК: order 0 ніколи не записується явно', () => {
         const li1 = makeCommentLi({ author: 'A', text: 'другий' });
         const li2 = makeCommentLi({ author: 'B', text: 'перший' });
