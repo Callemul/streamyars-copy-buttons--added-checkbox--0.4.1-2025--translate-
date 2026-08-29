@@ -16,6 +16,7 @@ import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
 import { getOrCreateTodaySession } from './stats_session';
 import { isExtensionContextValid } from './messaging_context';
+import { detectActiveBannerText, checkAutoStartPrayersPhase } from './stats_auto_phase';
 
 const LIVE_TAG_SELECTOR = 'span[class*="Tags__LiveTag"]';
 const BRAND_NODE_SELECTOR = '.BrandSelect__BrandNameText-sc-16g9tfx-1';
@@ -97,4 +98,9 @@ export function sampleLiveStats(host: StatsSamplerHost): void {
     host.loadStatsDb((db) => {
         appendSamplePoint(db, host.currentBrand, today, timerText, viewerCount);
     });
+
+    const activeText = detectActiveBannerText();
+    if (activeText) {
+        checkAutoStartPrayersPhase(host, activeText);
+    }
 }

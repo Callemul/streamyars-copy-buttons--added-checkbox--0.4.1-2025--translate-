@@ -2,6 +2,7 @@
 import { SABBATH_SCHOOL_KEYWORDS_REGEX } from '../channel_config';
 import { SYH_CONFIG } from '../config';
 import { truncateWithLimit } from './truncation';
+import { QUESTION_AUTHOR_SUFFIX_REGEX } from './regex';
 
 const DEFAULT_MAX_LENGTH = 195;
 
@@ -14,7 +15,7 @@ function findStartIndex(lines: string[]): number {
 }
 
 function cleanLine(line: string): string {
-    return line.replace(/\s*\([^)]+\)$/, '').trim();
+    return line.replace(QUESTION_AUTHOR_SUFFIX_REGEX, '').trim();
 }
 
 function processQuestionLines(lines: string[], maxLen: number): string[] {

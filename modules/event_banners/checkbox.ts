@@ -2,6 +2,8 @@ import type { SyhUi } from './types';
 import type { SelectorValue } from '../config';
 import { CommentService } from '../comment_service';
 import { resolveBannerContext } from './helpers';
+import { SYH_STATS_TRACKER } from '../stats_tracker';
+import { checkAutoStartQuestionsPhase } from '../stats_auto_phase';
 
 export function handleSingleBannerCheckboxChange(
     checkbox: HTMLInputElement,
@@ -11,6 +13,12 @@ export function handleSingleBannerCheckboxChange(
     const { bannerText: textKey } = resolveBannerContext(checkbox, selectors);
     CommentService.setStreamYardCheckboxState(textKey, checkbox.checked);
     if (ui) ui.updateMasterCheckboxState();
+
+    if (checkbox.checked) {
+        const bannerBlockSelector = (selectors?.bannerBlock as string) || '';
+        const bannerBlocks = Array.from(document.querySelectorAll(bannerBlockSelector));
+        checkAutoStartQuestionsPhase(SYH_STATS_TRACKER, bannerBlocks, ui?.bannerCategoriesCache);
+    }
 }
 
 export function handleMasterCheckboxChange(

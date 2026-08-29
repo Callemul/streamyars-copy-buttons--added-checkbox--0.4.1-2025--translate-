@@ -18,7 +18,7 @@
 import { calcStats, parseTimeToSeconds, computePhaseStats } from './stats_math';
 import { prepareChartData, buildChart, drawNoDataPlaceholder } from './stats_chart_data';
 import { renderSummaryMarkdown, renderSummaryHtml } from './stats_report_templates';
-import { downloadSessionCsv, downloadPresentation } from './stats_downloads';
+import { downloadSessionCsv, downloadPresentation, downloadSlidePng } from './stats_downloads';
 import { openStatsModal, loadStatsChartData } from './stats_modal';
 import type {
     StreamChartSession,
@@ -56,6 +56,7 @@ export interface SyhStatsExporter {
     getSummaryData(dataObj: StreamChartSession | null): PhaseStatsReport | null;
     calculatePhaseStats(dataObj: StreamChartSession): PhaseStatsReport;
     exportPresentation(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
+    exportSlidePng(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): Promise<void>;
     formatSummaryMarkdown(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
     formatSummaryHTML(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
 }
@@ -173,5 +174,11 @@ export const SYH_STATS_EXPORTER: SyhStatsExporter = {
         const report = this.getReportStats(dataObj);
         if (!report) return;
         downloadPresentation(report, dateStr, currentBrand);
+    },
+
+    exportSlidePng: async function(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): Promise<void> {
+        const report = this.getReportStats(dataObj);
+        if (!report) return;
+        await downloadSlidePng(report, dateStr, currentBrand);
     }
 };

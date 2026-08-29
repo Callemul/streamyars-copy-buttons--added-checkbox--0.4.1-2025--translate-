@@ -241,6 +241,17 @@ test('parseSabbathSchoolUnnumberedQuestions - cleans parentheses from end', () =
     assert.ok(!result[1].includes('(John)'));
 });
 
+test('parseSabbathSchoolUnnumberedQuestions - cleans unclosed parentheses and authors from end', () => {
+    const input = `Памятный стих
+В чем опасность сопротивления Святому Духу? ( Опарин , Молчанов`;
+    const result = SYH_PARSERS.parseSabbathSchoolUnnumberedQuestions(input);
+    assert.equal(result.length, 2);
+    assert.equal(result[1], 'В чем опасность сопротивления Святому Духу?');
+    assert.ok(!result[1].includes('Опарин'));
+    assert.ok(!result[1].includes('Молчанов'));
+});
+
+
 // --- Tests for cleanAuthorName ---
 
 test('cleanAuthorName - removes @ prefix', () => {

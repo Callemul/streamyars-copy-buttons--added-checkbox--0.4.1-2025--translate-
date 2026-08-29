@@ -22,7 +22,7 @@ function removeExistingBanners(): void {
     document.querySelectorAll(`.${BANNER_CLASS}`).forEach(el => el.remove());
 }
 
-function showBanner(message: string): void {
+export function showBanner(message: string): void {
     removeExistingBanners();
 
     const banner = document.createElement('div');

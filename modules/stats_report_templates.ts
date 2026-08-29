@@ -30,11 +30,11 @@ export function renderSummaryMarkdown(
 - **Мінімум:** ${o.min}
 
 ## 📑 Розподіл по блоках (Фази)
-| Фаза | Середній онлайн | Пік у фазі | Медіана |
-| --- | --- | --- | --- |
-| ${PHASE_LABELS[0]} | ${s1.avg} | ${s1.max} | ${s1.median} |
-| ${PHASE_LABELS[1]} | ${s2.avg} | ${s2.max} | ${s2.median} |
-| ${PHASE_LABELS[2]} | ${s3.avg} | ${s3.max} | ${s3.median} |`;
+| Фаза | Середній онлайн | Пік у фазі | Медіана | Мінімум |
+| --- | --- | --- | --- | --- |
+| ${PHASE_LABELS[0]} | ${s1.avg} | ${s1.max} | ${s1.median} | ${s1.min} |
+| ${PHASE_LABELS[1]} | ${s2.avg} | ${s2.max} | ${s2.median} | ${s2.min} |
+| ${PHASE_LABELS[2]} | ${s3.avg} | ${s3.max} | ${s3.median} | ${s3.min} |`;
 }
 
 /** HTML-звіт для кнопки «📋 HTML». */
@@ -52,6 +52,7 @@ export function renderSummaryHtml(
         <td>${phase.avg}</td>
         <td>${phase.max}</td>
         <td>${phase.median}</td>
+        <td>${phase.min}</td>
       </tr>`).join('\n');
 
     return `<div class="syh-summary-report">
@@ -75,6 +76,7 @@ export function renderSummaryHtml(
         <th>Середній онлайн</th>
         <th>Пік у фазі</th>
         <th>Медіана</th>
+        <th>Мінімум</th>
       </tr>
     </thead>
     <tbody>
@@ -99,8 +101,8 @@ const PRESENTATION_STYLES = `
         .accent { color: #005DF7; font-weight: bold; }
     `;
 
-/** Підписи фаз у презентації — історично відрізняються від PHASE_LABELS. */
-const PRESENTATION_PHASE_LABELS = ['📖 Субботняя школа', '❓ Питання', '🙏 Молитви'] as const;
+/** Підписи фаз у презентації. */
+const PRESENTATION_PHASE_LABELS = ['📖 Суботня школа', '❓ Питання', '🙏 Молитви'] as const;
 
 /** Слайд 1: загальні показники ефіру. */
 function renderOverviewSlide(report: PhaseStatsReport, dateStr: string, currentBrand: string): string {
@@ -128,6 +130,7 @@ function renderPhasesSlide(report: PhaseStatsReport): string {
                 <td class="accent">${phase.avg ?? '-'}</td>
                 <td>${phase.max ?? '-'}</td>
                 <td>${phase.median ?? '-'}</td>
+                <td>${phase.min ?? '-'}</td>
             </tr>`).join('\n');
 
     return `    <div class="slide">
@@ -138,6 +141,7 @@ function renderPhasesSlide(report: PhaseStatsReport): string {
                 <th>Середній онлайн</th>
                 <th>Пік у фазі</th>
                 <th>Медіана</th>
+                <th>Мінімум</th>
             </tr>
 ${rows}
         </table>

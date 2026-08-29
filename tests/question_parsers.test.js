@@ -154,28 +154,33 @@ Another line
         });
 
         test('handles empty lines gracefully', () => {
-            const input = `1. Question 1
-
-2. Question 2`;
+            const input = `1. Question 1\n\n2. Question 2`;
             const result = parseStandardNumberedQuestions(input);
             assert.strictEqual(result.length, 2);
+        });
+
+        test('removes unclosed author suffix in parentheses from end', () => {
+            const input = `1. В чем опасность сопротивления Святому Духу? ( Опарин , Молчанов`;
+            const result = parseStandardNumberedQuestions(input);
+            assert.strictEqual(result.length, 1);
+            assert.strictEqual(result[0], 'В чем опасность сопротивления Святому Духу?');
         });
     });
 
     describe('parseSabbathSchoolUnnumberedQuestions', () => {
-        test('returns empty array for empty string', () => {
+        test('returns empty array for empty input', () => {
             assert.deepStrictEqual(parseSabbathSchoolUnnumberedQuestions(''), []);
+            assert.deepStrictEqual(parseSabbathSchoolUnnumberedQuestions(null), []);
+            assert.deepStrictEqual(parseSabbathSchoolUnnumberedQuestions(undefined), []);
         });
 
-        test('returns empty array when no Sabbath School keywords found', () => {
-            const input = `Random text
-No keywords here`;
-            const result = parseSabbathSchoolUnnumberedQuestions(input);
-            assert.deepStrictEqual(result, []);
+        test('returns empty array when no Sabbath School keyword found', () => {
+            const input = `Header Line\nSome random question 1\nSome random question 2`;
+            assert.deepStrictEqual(parseSabbathSchoolUnnumberedQuestions(input), []);
         });
 
-        test('parses questions after Sabbath School keyword (includes keyword line)', () => {
-            const input = `Header text
+        test('parses unnumbered questions starting from keyword line', () => {
+            const input = `Lesson 5
 Памятный текст
 Question 1
 Question 2
@@ -197,6 +202,14 @@ Question (Author Name)`;
             assert.strictEqual(result.length, 2);
             assert.ok(result[0].includes('Памятный'));
             assert.strictEqual(result[1], 'Question');
+        });
+
+        test('removes unclosed author suffix in parentheses from end', () => {
+            const input = `Памятный текст
+В чем опасность сопротивления Святому Духу? ( Опарин , Молчанов`;
+            const result = parseSabbathSchoolUnnumberedQuestions(input);
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[1], 'В чем опасность сопротивления Святому Духу?');
         });
 
         test('truncates long questions', () => {

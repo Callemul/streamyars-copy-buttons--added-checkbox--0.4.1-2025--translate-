@@ -8,7 +8,7 @@
 
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
-import type { StreamChartSession } from './stats_types';
+import type { StreamChartSession, PhaseStatsReport } from './stats_types';
 
 /**
  * Мінімальний контракт фасада, потрібний модальному вікну.
@@ -24,6 +24,8 @@ export interface StatsModalHost {
     renderChart(todayData?: StreamChartSession | null, pastData?: StreamChartSession | null): Promise<void> | void;
     exportCSV(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
     exportPresentation(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): void;
+    exportSlidePng?(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): Promise<void> | void;
+    getReportStats?(dataObj: StreamChartSession | null): PhaseStatsReport | null;
     formatSummaryMarkdown(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
     formatSummaryHTML(dataObj: StreamChartSession | null, dateStr: string, currentBrand: string): string;
 }
@@ -47,6 +49,7 @@ export function buildStatsModalMarkup(currentBrand: string): string {
                             <option value="none">--- Ні ---</option>
                         </select>
                         <button id="syh-dl-csv-btn" aria-label="Завантажити аналітику у форматі CSV" class="syh-chart-btn-csv">CSV</button>
+                        <button id="syh-dl-slide-btn" aria-label="Завантажити слайд аналітики у PNG" class="syh-chart-btn-slide">🖼️ Слайд (PNG)</button>
                         <button id="syh-dl-pres-btn" aria-label="Завантажити презентацію аналітики в HTML" class="syh-chart-btn-pres">📄 Презентація (HTML)</button>
                         <button id="syh-copy-md-btn" aria-label="Копіювати звіт у форматі Markdown" class="syh-chart-btn-copy">📋 MD</button>
                         <button id="syh-copy-html-btn" aria-label="Копіювати звіт у форматі HTML" class="syh-chart-btn-copy">📋 HTML</button>
@@ -55,6 +58,8 @@ export function buildStatsModalMarkup(currentBrand: string): string {
                     <div class="syh-chart-canvas-wrapper">
                         <canvas id="syhChartCanvas"></canvas>
                     </div>
+
+                    <div id="syh-stats-summary-container" class="syh-stats-summary-container"></div>
                 </div>
             </div>
         `;
@@ -112,7 +117,60 @@ async function readBrandSessions(currentBrand: string): Promise<Record<string, S
     return db[currentBrand] || {};
 }
 
-/** Наповнює список порівняння всіма датами бренду, крім сьогоднішньої. */
+/** Відмальовує HTML-таблицю фаз для модального вікна. */
+export function renderModalSummaryTable(report: PhaseStatsReport | null): string {
+    if (!report) {
+        return '<div class="syh-stats-no-data">Немає розширених даних за цю дату</div>';
+    }
+
+    const phases = [
+        { name: '📖 Суботня школа', data: report.st1, isTotal: false },
+        { name: '❓ Питання', data: report.st2, isTotal: false },
+        { name: '🙏 Молитви', data: report.st3, isTotal: false },
+        { name: '🌐 Загалом за ефір', data: report.overall, isTotal: true }
+    ];
+
+    const rows = phases.map(p => `
+        <tr class="${p.isTotal ? 'syh-stats-total-row' : ''}">
+            <td><strong>${p.name}</strong></td>
+            <td>${p.data.min}</td>
+            <td class="syh-stats-val-max">${p.data.max}</td>
+            <td>${p.data.median}</td>
+            <td class="syh-stats-val-avg">${p.data.avg}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="syh-stats-table-wrapper">
+            <table class="syh-stats-table">
+                <thead>
+                    <tr>
+                        <th>Блок (Фаза)</th>
+                        <th>Мінімум</th>
+                        <th>Максимум (Пік)</th>
+                        <th>Медіана</th>
+                        <th>Середнє</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+/** Оновлює вміст контейнера зведеної таблиці у модальному вікні. */
+function updateModalSummary(host: StatsModalHost, dataObj?: StreamChartSession | null): void {
+    const summaryContainer = document.getElementById('syh-stats-summary-container');
+    if (!summaryContainer) return;
+    if (typeof host.getReportStats === 'function') {
+        const report = host.getReportStats(dataObj ?? null);
+        summaryContainer.innerHTML = renderModalSummaryTable(report);
+    }
+}
+
+/** Заповнює селект порівняння датами й вішає слухач зміни вибору. */
 function populateCompareSelect(
     select: HTMLSelectElement,
     brandData: Record<string, StreamChartSession>,
@@ -132,6 +190,7 @@ function populateCompareSelect(
         const pastDate = (e.target as HTMLSelectElement).value;
         const pastData = pastDate !== 'none' ? brandData[pastDate] : null;
         host.renderChart(brandData[today], pastData);
+        updateModalSummary(host, pastData || brandData[today]);
     };
 }
 
@@ -143,7 +202,7 @@ function bindButton(id: string, handler: () => void): void {
     }
 }
 
-/** Прив'язує кнопки CSV / презентації / копіювання MD і HTML до даних за сьогодні. */
+/** Прив'язує кнопки CSV / слайда / презентації / копіювання MD і HTML до даних за сьогодні. */
 function bindExportButtons(
     host: StatsModalHost,
     todayData: StreamChartSession | undefined,
@@ -151,6 +210,7 @@ function bindExportButtons(
     currentBrand: string
 ): void {
     bindButton('syh-dl-csv-btn', () => host.exportCSV(todayData ?? null, today, currentBrand));
+    bindButton('syh-dl-slide-btn', () => host.exportSlidePng?.(todayData ?? null, today, currentBrand));
     bindButton('syh-dl-pres-btn', () => host.exportPresentation(todayData ?? null, today, currentBrand));
 
     bindButton('syh-copy-md-btn', () => {
@@ -179,6 +239,7 @@ export async function loadStatsChartData(host: StatsModalHost, currentBrand: str
     }
 
     host.renderChart(brandData[today], null);
+    updateModalSummary(host, brandData[today]);
 
     bindExportButtons(host, brandData[today], today, currentBrand);
 }

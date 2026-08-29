@@ -84,8 +84,8 @@ describe('SYH_STATS_EXPORTER Tests', () => {
             assert.ok(md.includes('**Дата:** 2026-08-06'));
             assert.ok(md.includes('**Глядачів на старті:** 80'));
             assert.ok(md.includes('- **Пік онлайн:** 200'));
-            assert.ok(md.includes('| 📖 Суботня школа | 100 | 100 | 100 |'));
-            assert.ok(md.includes('| ❓ Питання | 200 | 200 | 200 |'));
+            assert.ok(md.includes('| 📖 Суботня школа | 100 | 100 | 100 | 100 |'));
+            assert.ok(md.includes('| ❓ Питання | 200 | 200 | 200 | 200 |'));
         });
     });
 

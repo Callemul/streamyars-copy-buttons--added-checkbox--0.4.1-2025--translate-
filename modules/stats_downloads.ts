@@ -7,6 +7,7 @@
 
 import type { StreamChartSession, PhaseStatsReport } from './stats_types';
 import { renderPresentationHtml } from './stats_report_templates';
+import { generateSlideBlob } from './stats_slide_generator';
 
 /** Скільки чекати перед відкликанням тимчасового blob-URL. */
 const OBJECT_URL_REVOKE_DELAY = 1000;
@@ -51,6 +52,23 @@ export function downloadPresentation(
     const link = document.createElement('a');
     link.href = url;
     link.download = `Presentation_${currentBrand}_${dateStr}.html`;
+    clickTemporaryLink(link, false);
+
+    setTimeout(() => URL.revokeObjectURL(url), OBJECT_URL_REVOKE_DELAY);
+}
+
+/** Зберігає графічний слайд аналітики у форматі PNG (1920x1080). */
+export async function downloadSlidePng(
+    report: PhaseStatsReport,
+    dateStr: string,
+    currentBrand: string
+): Promise<void> {
+    const blob = await generateSlideBlob(report, dateStr, currentBrand);
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Slide_Stats_${currentBrand}_${dateStr}.png`;
     clickTemporaryLink(link, false);
 
     setTimeout(() => URL.revokeObjectURL(url), OBJECT_URL_REVOKE_DELAY);

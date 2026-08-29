@@ -3,6 +3,8 @@ import { isAllowedBannerAction } from './mouse_handlers';
 import { handleCreateBannersAction } from './category';
 import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
+import { SYH_STATS_TRACKER } from '../stats_tracker';
+import { detectActiveBannerText, checkAutoStartPrayersPhase } from '../stats_auto_phase';
 
 interface ButtonActionHandler {
     canHandle: (action: string | undefined, type: string | undefined) => boolean;
@@ -31,11 +33,22 @@ const actionHandlers: ButtonActionHandler[] = [
 export function handleBannerMouseUp(e: MouseEvent, self: SyhEventBanners): void {
     const target = e.target as Element | null;
     const button = target?.closest('.syh-button') as HTMLElement | null;
-    if (!button) return;
+    const buttonNum = e.button;
+
+    if (!button) {
+        if (buttonNum === 0 && target?.closest('[class*="Banner__LiWrap"], [class*="Banner__Wrap"]')) {
+            setTimeout(() => {
+                const activeText = detectActiveBannerText();
+                if (activeText) {
+                    checkAutoStartPrayersPhase(SYH_STATS_TRACKER, activeText);
+                }
+            }, 150);
+        }
+        return;
+    }
 
     const action = button.dataset.action;
     const type = button.dataset.type;
-    const buttonNum = e.button;
 
     if (!isAllowedBannerAction(action, type) || buttonNum !== 0) return;
 

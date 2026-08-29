@@ -1,4 +1,5 @@
 import { SPEAKER_SUFFIX_CLEANUP_REGEX } from './channel_config';
+import { QUESTION_AUTHOR_SUFFIX_REGEX } from './parsers/regex';
 import type { SyhBannerCreator } from './banner_types';
 import type { BannerItem } from './banner_types';
 
@@ -13,7 +14,10 @@ export async function executeBannerCreationLoop(
             const pauseTime = index === 0 ? 600 : 250;
             await new Promise(r => setTimeout(r, pauseTime));
 
-            const cleanQuestion = item.text.replace(SPEAKER_SUFFIX_CLEANUP_REGEX, "").trim();
+            const cleanQuestion = item.text
+                .replace(QUESTION_AUTHOR_SUFFIX_REGEX, "")
+                .replace(SPEAKER_SUFFIX_CLEANUP_REGEX, "")
+                .trim();
             await creator.createSingleBanner(cleanQuestion);
 
             if (creator.UTILS && typeof creator.UTILS.saveBannerCategory === 'function') {

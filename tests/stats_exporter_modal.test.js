@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { installChromeMock } from './setup/chrome_mock.ts';
 import { SYH_STATS_EXPORTER } from '../modules/stats_exporter.ts';
+import { renderModalSummaryTable } from '../modules/stats_modal.ts';
 import { STORAGE_KEYS } from '../modules/storage.ts';
 import { SYH_UTILS } from '../modules/utils.ts';
 
@@ -83,10 +84,12 @@ describe('SYH_STATS_EXPORTER — модальне вікно (showModal)', () =>
             'syh-close-chart',
             'syh-compare-select',
             'syh-dl-csv-btn',
+            'syh-dl-slide-btn',
             'syh-dl-pres-btn',
             'syh-copy-md-btn',
             'syh-copy-html-btn',
-            'syhChartCanvas'
+            'syhChartCanvas',
+            'syh-stats-summary-container'
         ]) {
             assert.ok(document.getElementById(id), `елемент #${id} має існувати`);
         }
@@ -616,5 +619,71 @@ describe('SYH_STATS_EXPORTER — getReportStats / getSummaryData', () => {
         });
 
         assert.equal(stats.initialViewers, 42);
+    });
+});
+
+describe('SYH_STATS_EXPORTER — exportSlidePng & renderModalSummaryTable', () => {
+    beforeEach(() => { document.body.innerHTML = ''; });
+    afterEach(() => { document.body.innerHTML = ''; });
+
+    test('33. renderModalSummaryTable коректно генерує розмітку з 4 метриками для всіх блоків', () => {
+        const session = makeSession();
+        const report = SYH_STATS_EXPORTER.getReportStats(session);
+        const html = renderModalSummaryTable(report);
+
+        assert.ok(html.includes('📖 Суботня школа'));
+        assert.ok(html.includes('❓ Питання'));
+        assert.ok(html.includes('🙏 Молитви'));
+        assert.ok(html.includes('🌐 Загалом за ефір'));
+        assert.ok(html.includes('Мінімум'));
+        assert.ok(html.includes('Максимум (Пік)'));
+        assert.ok(html.includes('Медіана'));
+        assert.ok(html.includes('Середнє'));
+    });
+
+    test('34. renderModalSummaryTable повертає повідомлення-заглушку при null', () => {
+        const html = renderModalSummaryTable(null);
+        assert.ok(html.includes('Немає розширених даних за цю дату'));
+    });
+
+    test('35. exportSlidePng формує файл з розширенням .png і правильним ім’ям', async () => {
+        const anchors = captureAnchors();
+        const originalCreate = URL.createObjectURL;
+        const originalRevoke = URL.revokeObjectURL;
+        let createdBlob = null;
+        URL.createObjectURL = (b) => { createdBlob = b; return 'blob:mock-png-url'; };
+        URL.revokeObjectURL = () => {};
+
+        try {
+            await SYH_STATS_EXPORTER.exportSlidePng(makeSession(), '2026-08-10', 'Brand');
+        } finally {
+            anchors.restore();
+            URL.createObjectURL = originalCreate;
+            URL.revokeObjectURL = originalRevoke;
+        }
+
+        const link = anchors.created[0]?.el;
+        assert.ok(link, 'посилання для скачування слайда має бути створено');
+        assert.equal(link.download, 'Slide_Stats_Brand_2026-08-10.png');
+        assert.equal(link.href, 'blob:mock-png-url');
+        assert.ok(createdBlob, 'має бути сформовано Blob для зображення');
+    });
+
+    test('36. клік по syh-dl-slide-btn викликає exportSlidePng', async () => {
+        seedCharts('Brand', { [TODAY]: makeSession() });
+
+        let called = false;
+        const originalExport = SYH_STATS_EXPORTER.exportSlidePng;
+        SYH_STATS_EXPORTER.exportSlidePng = async () => { called = true; };
+
+        try {
+            SYH_STATS_EXPORTER.showModal('Brand');
+            await SYH_STATS_EXPORTER.loadChartData('Brand');
+            document.getElementById('syh-dl-slide-btn').onclick();
+        } finally {
+            SYH_STATS_EXPORTER.exportSlidePng = originalExport;
+        }
+
+        assert.equal(called, true, 'кнопка має викликати exportSlidePng');
     });
 });

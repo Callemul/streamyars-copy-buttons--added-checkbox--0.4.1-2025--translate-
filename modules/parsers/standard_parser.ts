@@ -1,6 +1,7 @@
 // modules/parsers/standard_parser.ts
 import { SYH_CONFIG } from '../config';
 import { truncateWithLimit } from './truncation';
+import { QUESTION_AUTHOR_SUFFIX_REGEX } from './regex';
 
 const DEFAULT_MAX_LENGTH = 195;
 
@@ -11,7 +12,7 @@ function getMaxLength(): number {
 function formatNumberedLine(line: string): string {
     return line
         .replace(/^\d+[.)]?\s*/, '')
-        .replace(/\s*\([^)]+\)$/, '')
+        .replace(QUESTION_AUTHOR_SUFFIX_REGEX, '')
         .trim();
 }
 
