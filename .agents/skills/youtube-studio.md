@@ -46,3 +46,12 @@
 console.log('iron-list:', !!document.querySelector('iron-list'));
 console.log('Nodes count:', document.querySelector('iron-list')?.shadowRoot?.querySelectorAll('slot > *').length);
 ```
+
+---
+
+## 5. DOM-особливості інбоксу Studio (`/comments/inbox`) та тестові фікстури
+
+- **Відсутність `href` в інбоксі**: У загальному інбоксі коментарів елемент `<a id="body">` мініатюри відео рендериться в Polymer з `attrHref === null` та `propHref === ""`.
+- **Єдиний якір відео — `#video-title`**: Визначення категорії та зіставлення відео в інбоксі спирається виключно на текстовий вміст `#video-title`.
+- **Реалістичність тестових моків**: Заборонено підставляти фіктивні посилання (`/watch?v=...`) у тестові об'єкти коментарів Studio за замовчуванням. Тестові фікстури повинні відтворювати реальний DOM (порожній `href` при наявності `#video-title`).
+
