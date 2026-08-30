@@ -8,6 +8,7 @@
 
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
+import { escapeHtml } from './escape_html';
 import type { StreamChartSession, PhaseStatsReport } from './stats_types';
 
 /**
@@ -39,7 +40,7 @@ export function buildStatsModalMarkup(currentBrand: string): string {
                 <div class="syh-chart-modal-container">
                     
                     <div class="syh-chart-modal-header">
-                        <h2 class="syh-chart-modal-title">📈 Аналітика: <span class="syh-chart-brand-name">${currentBrand}</span></h2>
+                        <h2 class="syh-chart-modal-title">📈 Аналітика: <span class="syh-chart-brand-name">${escapeHtml(currentBrand)}</span></h2>
                         <button id="syh-close-chart" title="Закрити" aria-label="Закрити вікно аналітики" class="syh-chart-modal-close">&times;</button>
                     </div>
 

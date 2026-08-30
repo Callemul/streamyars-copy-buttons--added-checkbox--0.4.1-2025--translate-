@@ -1,4 +1,5 @@
 import { TriggerManager } from './trigger_manager';
+import { escapeHtml } from '../escape_html';
 
 interface TriggerMatch {
     start: number;
@@ -19,13 +20,7 @@ export class TriggerHighlighter {
     }
 
     public escapeHTML(str: string): string {
-        if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        return escapeHtml(str);
     }
 
     public highlightTriggers(text: string): { highlightedText: string; matchedWords: string[]; matchedCategories: string[] } {
@@ -88,10 +83,10 @@ export class TriggerHighlighter {
         let cursor = 0;
 
         for (const match of acceptedMatches) {
-            highlightedText += this.escapeHTML(text.slice(cursor, match.start));
+            highlightedText += escapeHtml(text.slice(cursor, match.start));
 
             const markClasses = `syh-trigger-highlight ${match.categoryClass}`.trim();
-            highlightedText += `<mark class="${markClasses}" data-syh-trigger="${this.escapeHTML(match.lowerWord)}">${this.escapeHTML(match.targetWord)}</mark>`;
+            highlightedText += `<mark class="${markClasses}" data-syh-trigger="${escapeHtml(match.lowerWord)}">${escapeHtml(match.targetWord)}</mark>`;
             cursor = match.end;
 
             if (!matchedWords.includes(match.lowerWord)) {
@@ -102,7 +97,7 @@ export class TriggerHighlighter {
             }
         }
 
-        highlightedText += this.escapeHTML(text.slice(cursor));
+        highlightedText += escapeHtml(text.slice(cursor));
         return { highlightedText, matchedWords, matchedCategories };
     }
 

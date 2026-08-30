@@ -43,6 +43,7 @@ export function cleanupRecycledStudioElement(
 
     CommentInjector.dispose(threadEl, 'data-syh-studio-events-bound');
     threadEl.removeAttribute('data-syh-bound');
+    threadEl.querySelectorAll?.('[data-syh-bound]')?.forEach(el => el.removeAttribute('data-syh-bound'));
     delete (threadEl as SyhObservedElement)._syhBound;
 
     const textNode = threadEl.querySelector(STUDIO_TEXT_NODE_SELECTOR);

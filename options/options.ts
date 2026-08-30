@@ -87,6 +87,10 @@ export { validateImportedConfig, DEFAULT_OPTIONS, type OptionsState, populateFor
 
 if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
     document.addEventListener('DOMContentLoaded', () => {
-        new OptionsController();
+        try {
+            new OptionsController();
+        } catch (err) {
+            console.error('[SYH Options] Init error:', err);
+        }
     });
 }

@@ -10,5 +10,9 @@ import { claimInitLock, getExtensionVersion, initSyhApp } from './modules/bootst
 
     console.log(`StreamYard Helper v${getExtensionVersion()} [Anti-AFK & Modular Architecture] Loaded!`);
 
-    initSyhApp();
+    try {
+        initSyhApp();
+    } catch (err) {
+        console.error('[SYH] Critical init error:', err);
+    }
 })();

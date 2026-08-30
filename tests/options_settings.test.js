@@ -14,8 +14,8 @@ installChromeMock();
  * Завдяки цьому тести не залежать від того, як саме поділено код усередині,
  * і після винесення читання форми в окремий модуль лишаються зеленими.
  *
- * Навмисно зафіксовані «дивацтва» чинної реалізації:
- *   - відсутній чекбокс у DOM дає `undefined` (а не значення за замовчуванням);
+ * Навмисно зафіксовані особливості чинної реалізації:
+ *   - відсутній чекбокс у DOM приводиться до булевого `false` (W-10, T-9);
  *   - нечислове значення інтервалу/обрізання більше НЕ дає `NaN` — повертається
  *     `0`, щоб уникнути запису `NaN` у storage (див. виправлений аудит про
  *     NaN у налаштуваннях);
@@ -191,13 +191,13 @@ describe('options — saveSettings (характеризація CRAP-хотсп
         assert.ok(!Number.isNaN(opts.text_truncation_length));
     });
 
-    test('6. КВІРК: відсутній у DOM чекбокс дає undefined, а не значення за замовчуванням', () => {
+    test('6. відсутній у DOM чекбокс дає false (boolean coercion), а не undefined', () => {
         bootOptionsPage(FORM_HTML.replace('<input id="optAutoHealEnabled" type="checkbox">', ''));
         clickSave();
 
         const opts = savedOptions();
         assert.ok('auto_heal_enabled' in opts);
-        assert.strictEqual(opts.auto_heal_enabled, undefined);
+        assert.strictEqual(opts.auto_heal_enabled, false);
     });
 
     test('7. db зберігає назви і НЕ втрачає сторонні поля', () => {

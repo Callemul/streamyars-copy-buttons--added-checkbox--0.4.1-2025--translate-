@@ -75,11 +75,10 @@ function readSelectValue(id: string, fallback: string): string {
 /**
  * Стан чекбокса.
  *
- * КВІРК 1-в-1: для відсутнього у DOM елемента повертає `undefined`, попри
- * задекларований тип `boolean`. Саме це значення потрапляє в storage.
+ * Повертає булеве значення (true/false, навіть якщо елемент відсутній у DOM).
  */
 function readCheckbox(id: string): boolean {
-    return (document.getElementById(id) as HTMLInputElement)?.checked;
+    return Boolean((document.getElementById(id) as HTMLInputElement)?.checked);
 }
 
 /**

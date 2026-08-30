@@ -1,27 +1,10 @@
 // youtube/yt_events.ts
-import { CommentService } from '../modules/comment_service';
 import { CommentInjector } from '../modules/comment_injector';
 import { YouTubeCommentAdapter } from './yt_adapter';
 import type { YTCollectedItem } from '../modules/types';
 import type { CommentStateCaches } from '../modules/comment_platform_adapter';
 export type { YTCollectedItem };
 export { getVideoId } from './yt_video_id';
-
-export async function copyToClipboard(text: string): Promise<boolean> {
-    return CommentService.copyToClipboard(text);
-}
-
-export async function saveCollectedItem(
-    item: YTCollectedItem,
-    collectedList: YTCollectedItem[],
-    sheetId: string = 'vp_ss'
-): Promise<YTCollectedItem[]> {
-    try {
-        return (await CommentService.saveCollectedComment(sheetId, item)) as YTCollectedItem[];
-    } catch {
-        return collectedList;
-    }
-}
 
 export interface YTCaches extends CommentStateCaches {
     collectedList: YTCollectedItem[];

@@ -9,13 +9,17 @@ console.log('[SYH] YouTube content script initializing...');
 SYH_STORAGE.onChanged(handleStorageChange);
 
 // Реагування на SPA-навігацію в YouTube
-window.addEventListener('yt-navigate-finish', initializeYouTubeModule);
+window.addEventListener('yt-navigate-finish', () => {
+    initializeYouTubeModule().catch((err) => console.error('[SYH YT] Init error:', err));
+});
 
 // Запуск після завантаження DOM
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeYouTubeModule);
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeYouTubeModule().catch((err) => console.error('[SYH YT] Init error:', err));
+    });
 } else {
-    initializeYouTubeModule();
+    initializeYouTubeModule().catch((err) => console.error('[SYH YT] Init error:', err));
 }
 
 export { initializeYouTubeModule, handleStorageChange };

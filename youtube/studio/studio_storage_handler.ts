@@ -61,7 +61,7 @@ export class StudioStorageController {
                 ctrl.loadStorageData().then(() => {
                     ctrl.updateHeaderCounters();
                     ctrl.scheduleProcessComments(true);
-                });
+                }).catch(err => console.error('[SYH Studio] Storage sync failed:', err));
             };
         });
     }
@@ -106,7 +106,7 @@ export class StudioStorageController {
             this.loadStorageData().then(() => {
                 this.updateHeaderCounters();
                 this.scheduleProcessComments(true);
-            });
+            }).catch(err => console.error('[SYH Studio] Storage sync failed:', err));
         }
     }
 

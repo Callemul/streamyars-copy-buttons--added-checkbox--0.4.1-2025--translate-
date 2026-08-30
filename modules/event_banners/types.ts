@@ -19,6 +19,7 @@ export interface SyhEventBanners {
     init(config?: SyhConfig, state?: SyhState, utils?: SyhUtils, ui?: SyhUi, bannerCreator?: SyhBannerCreator): void;
     bindEvents(): void;
     bindBannersFilterControls(): void;
+    destroy(): void;
 }
 
 export interface BannerDeleteCounts {

@@ -6,6 +6,7 @@
  * `insertAdjacentHTML`; залежать лише від незмінного на момент вставки `SYH_UI_STATE`.
  */
 
+import { escapeAttr } from './escape_html';
 import { SYH_UI_STATE } from './ui_state';
 
 /** Керуючі кнопки в шапці списку банерів (створити/вибрати все/видалити). */
@@ -29,7 +30,7 @@ export function buildSearchFilterContainerHTML(): string {
     return `
         <div id="syh-banner-search-container" style="padding: 10px 15px 5px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eee; background: #fff; width: 100%; box-sizing: border-box;">
             <div class="syh-banner-search-wrapper">
-                <input type="text" id="syh-banner-search" value="${query}" placeholder="🔍 Пошук банерів..." aria-label="Пошук банерів" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
+                <input type="text" id="syh-banner-search" value="${escapeAttr(query)}" placeholder="🔍 Пошук банерів..." aria-label="Пошук банерів" style="flex: 1; padding: 6px 28px 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; transition: 0.2s;">
                 <button id="syh-clear-banner-search-btn" class="syh-clear-banner-search" style="display: ${query ? 'flex' : 'none'};" title="Очистити пошук" aria-label="Очистити пошук банерів">✕</button>
                 <button id="syh-scroll-to-active-banner-btn" class="syh-button" style="padding: 0; height: 29px; width: 29px; display: flex; align-items: center; justify-content: center; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; cursor: pointer; font-size: 14px; flex-shrink: 0;" title="Повернутися до активного банера на екрані" aria-label="Повернутися до активного банера на екрані">🎯</button>
             </div>

@@ -43,7 +43,7 @@ function pollUntil(timeout: number, attempt: () => boolean, onTimeout: () => voi
 }
 
 /** Чи елемент реально займає місце на сторінці. */
-function isVisible(element: Element | null): boolean {
+function isVisible(element: Element | null): element is HTMLElement {
     if (!element) return false;
     const el = element as HTMLElement;
     return el.offsetWidth > 0 && el.offsetHeight > 0;
@@ -61,7 +61,7 @@ export function waitForElement(selector: string | string[], timeout: number): Pr
             () => {
                 const element = resolveSelector(selector);
                 if (!isVisible(element)) return false;
-                resolve(element!);
+                resolve(element);
                 return true;
             },
             () => reject(new Error(
@@ -135,7 +135,9 @@ export function clickElementByText(text: string, timeout: number): Promise<void>
                 ).singleNodeValue as HTMLElement | null;
 
                 if (!isVisible(matchingElement)) return false;
-                matchingElement!.click();
+                if (matchingElement) {
+                    matchingElement.click();
+                }
                 resolve();
                 return true;
             },

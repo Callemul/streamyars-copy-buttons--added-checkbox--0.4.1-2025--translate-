@@ -79,9 +79,11 @@ export class StudioModuleController {
 
 const studioController = new StudioModuleController();
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => studioController.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        studioController.init().catch((err) => console.error('[SYH Studio] Init error:', err));
+    });
 } else {
-    studioController.init();
+    studioController.init().catch((err) => console.error('[SYH Studio] Init error:', err));
 }
 
 export const SYH_STUDIO_PLUGIN: ISyhPlugin = {
@@ -90,7 +92,7 @@ export const SYH_STUDIO_PLUGIN: ISyhPlugin = {
     enabled: true,
     isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('studio.youtube.com'),
     init: () => {
-        studioController.init();
+        studioController.init().catch((err) => console.error('[SYH Studio] Init error:', err));
     },
     destroy: () => {
         studioController.destroy();

@@ -12,34 +12,42 @@ import { SYH_STORAGE } from '../modules/storage';
 const SHEET_IDS = getAllSheetIds();
 
 function initPopup() {
-    renderSheetTemplates();
-    initPopupTelegramListeners();
-    initPopupPrayersListeners();
+    try {
+        renderSheetTemplates();
+        initPopupTelegramListeners();
+        initPopupPrayersListeners();
 
-    const keysToLoad = buildPopupKeysToLoad(SHEET_IDS);
-    let storageLoaded = false;
+        const keysToLoad = buildPopupKeysToLoad(SHEET_IDS);
+        let storageLoaded = false;
 
-    SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
-        restoreDbState(result);
-        SHEET_IDS.forEach(sId => restoreSingleSheetState(sId, result));
-        restoreActiveTabUI(result);
-        restoreActiveSubtabUI(result);
-        restoreTextareaSizesUI(result);
-        restoreTranslitStateUI(result);
-        renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
-        restoreScrollPositionsUI(result);
+        SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
+            try {
+                restoreDbState(result);
+                SHEET_IDS.forEach(sId => restoreSingleSheetState(sId, result));
+                restoreActiveTabUI(result);
+                restoreActiveSubtabUI(result);
+                restoreTextareaSizesUI(result);
+                restoreTranslitStateUI(result);
+                renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
+                restoreScrollPositionsUI(result);
 
-        storageLoaded = true;
-        setTimeout(() => setupResizeObserver(() => storageLoaded), 300);
-        initStep3Resizers();
-    });
+                storageLoaded = true;
+                setTimeout(() => setupResizeObserver(() => storageLoaded), 300);
+                initStep3Resizers();
+            } catch (err) {
+                console.error('[SYH Popup] Init error:', err);
+            }
+        });
 
-    setupPopupTabListeners();
-    setupSheetInputListeners();
-    setupTranslitListeners();
-    setupTitleAndOptionsListeners();
-    setupScrollListeners();
-    setupStep3ResizerEvents();
+        setupPopupTabListeners();
+        setupSheetInputListeners();
+        setupTranslitListeners();
+        setupTitleAndOptionsListeners();
+        setupScrollListeners();
+        setupStep3ResizerEvents();
+    } catch (err) {
+        console.error('[SYH Popup] Init error:', err);
+    }
 }
 
 if (document.readyState === 'loading') {

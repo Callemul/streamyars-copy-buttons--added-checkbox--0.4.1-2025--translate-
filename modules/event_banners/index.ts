@@ -27,6 +27,10 @@ export {
 } from './deps';
 
 let eventsBound = false;
+let _contextHandler: ((e: MouseEvent) => void) | null = null;
+let _mousedownHandler: ((e: MouseEvent) => void) | null = null;
+let _mouseupHandler: ((e: MouseEvent) => void) | null = null;
+let _changeHandler: ((e: Event) => void) | null = null;
 
 export const SYH_EVENT_BANNERS_PLUGIN: ISyhPlugin = {
     id: 'syh_event_banners',
@@ -36,6 +40,9 @@ export const SYH_EVENT_BANNERS_PLUGIN: ISyhPlugin = {
     init: () => {
         SYH_EVENT_BANNERS.init();
         SYH_EVENT_BANNERS.bindEvents();
+    },
+    destroy: () => {
+        SYH_EVENT_BANNERS.destroy();
     }
 };
 
@@ -71,13 +78,28 @@ export const SYH_EVENT_BANNERS: SyhEventBanners = {
 
         const self = this;
 
-        document.addEventListener('contextmenu', (e: MouseEvent) => handleBannerContextMenu(e, self.SELECTORS), true);
-        document.addEventListener('mousedown', handleBannerMouseDown);
-        document.addEventListener('mouseup', (e: MouseEvent) => handleBannerMouseUp(e, self));
-        document.addEventListener('change', (e: Event) => handleBannerChange(e, self.SELECTORS, self.UI));
+        _contextHandler = (e: MouseEvent) => handleBannerContextMenu(e, self.SELECTORS);
+        _mousedownHandler = handleBannerMouseDown;
+        _mouseupHandler = (e: MouseEvent) => handleBannerMouseUp(e, self);
+        _changeHandler = (e: Event) => handleBannerChange(e, self.SELECTORS, self.UI);
+
+        document.addEventListener('contextmenu', _contextHandler, true);
+        document.addEventListener('mousedown', _mousedownHandler);
+        document.addEventListener('mouseup', _mouseupHandler);
+        document.addEventListener('change', _changeHandler);
     },
 
     bindBannersFilterControls: function(): void {
         bindBannersFilterControls();
+    },
+
+    destroy: function(): void {
+        if (!eventsBound) return;
+        if (_contextHandler) document.removeEventListener('contextmenu', _contextHandler, true);
+        if (_mousedownHandler) document.removeEventListener('mousedown', _mousedownHandler);
+        if (_mouseupHandler) document.removeEventListener('mouseup', _mouseupHandler);
+        if (_changeHandler) document.removeEventListener('change', _changeHandler);
+        _contextHandler = _mousedownHandler = _mouseupHandler = _changeHandler = null;
+        eventsBound = false;
     }
 };

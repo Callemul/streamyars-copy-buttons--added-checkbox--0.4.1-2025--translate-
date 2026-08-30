@@ -37,20 +37,24 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onInstalle
   chrome.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails) => {
     console.log(`[Service Worker] StreamYard Helper installed/updated: ${details.reason}`);
 
-    if (details.reason === 'install' || details.reason === 'update') {
-      await migrateStorageIfNeeded();
-      await RetentionService.runGlobalCleanup();
-      await updateExtensionBadge();
-    }
-
-    if (details.reason === 'install') {
-      // Ініціалізація дефолтних налаштувань у сховищі при першому встановленні
-      if (chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({
-          [STORAGE_KEYS.INSTALLED_AT]: new Date().toISOString(),
-          [STORAGE_KEYS.VERSION]: chrome.runtime.getManifest().version
-        });
+    try {
+      if (details.reason === 'install' || details.reason === 'update') {
+        await migrateStorageIfNeeded();
+        await RetentionService.runGlobalCleanup();
+        await updateExtensionBadge();
       }
+
+      if (details.reason === 'install') {
+        // Ініціалізація дефолтних налаштувань у сховищі при першому встановленні
+        if (chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({
+            [STORAGE_KEYS.INSTALLED_AT]: new Date().toISOString(),
+            [STORAGE_KEYS.VERSION]: chrome.runtime.getManifest().version
+          });
+        }
+      }
+    } catch (err) {
+      console.error('[Service Worker] onInstalled error:', err);
     }
   });
 }

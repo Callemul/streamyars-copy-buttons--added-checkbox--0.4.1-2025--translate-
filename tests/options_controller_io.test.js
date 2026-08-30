@@ -197,19 +197,26 @@ describe('options — інфраструктура сторінки (харак�
 
     describe('експорт конфігурації', () => {
         test('5. експорт формує JSON-Blob і показує тост', () => {
-            installStore({
-                [STORAGE_KEYS.DB]: { newTitleSS: 'СШ' },
-                [STORAGE_KEYS.OPTIONS]: { ui_locale: 'uk' },
-                [STORAGE_KEYS.VERSION]: '9.9.9'
-            });
-            bootOptionsPage();
+            mock.timers.enable({ apis: ['setTimeout'] });
+            try {
+                installStore({
+                    [STORAGE_KEYS.DB]: { newTitleSS: 'СШ' },
+                    [STORAGE_KEYS.OPTIONS]: { ui_locale: 'uk' },
+                    [STORAGE_KEYS.VERSION]: '9.9.9'
+                });
+                bootOptionsPage();
 
-            clickById('exportConfigBtn');
+                clickById('exportConfigBtn');
 
-            assert.equal(downloads.length, 1);
-            assert.ok(downloads[0].blobSize > 0);
-            assert.deepEqual(revokedUrls, ['blob:mock-url']);
-            assert.equal($id('toastNotification').textContent, '📥 Налаштування та стан успішно експортовано');
+                assert.equal(downloads.length, 1);
+                assert.ok(downloads[0].blobSize > 0);
+                assert.deepEqual(revokedUrls, [], 'URL не повинен відкликатися синхронно');
+                mock.timers.tick(1000);
+                assert.deepEqual(revokedUrls, ['blob:mock-url']);
+                assert.equal($id('toastNotification').textContent, '📥 Налаштування та стан успішно експортовано');
+            } finally {
+                mock.timers.reset();
+            }
         });
 
         test('6. ім\'я файлу містить дату у форматі YYYY-MM-DD', () => {
