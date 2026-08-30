@@ -191,7 +191,11 @@ const createMockThread = (overrides = {}) => {
                 return { textContent: overrides.videoTitle || 'Test Video Title' };
             }
             if (s.includes('video-thumbnail a') || s.includes('a#body') || s.includes('a.ytcp-comment-video-thumbnail')) {
-                return { href: overrides.videoHref || '/watch?v=test123', getAttribute: (a) => a === 'href' ? overrides.videoHref || '/watch?v=test123' : null };
+                if (overrides.videoHref) {
+                    return { href: overrides.videoHref, getAttribute: (a) => a === 'href' ? overrides.videoHref : null };
+                }
+                // Відповідає реальному YouTube Studio: a#body присутній в DOM, але не має href
+                return { href: '', getAttribute: () => null };
             }
             if (s.includes('btn-question')) return fakeQuestionBtn;
             if (s.includes('btn-prayer')) return fakePrayerBtn;

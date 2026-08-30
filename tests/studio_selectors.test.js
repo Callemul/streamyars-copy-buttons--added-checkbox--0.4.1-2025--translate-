@@ -364,3 +364,55 @@ describe('studio_selectors — getCommentText (склеювання тексту
         assert.equal(getCommentText(fakeThread), 'без дітей');
     });
 });
+
+describe('studio_selectors — Sequential Fallback Priority (YT-D3)', () => {
+    test('40. порядок селекторів у масиві має справжній пріоритет над порядком у DOM', async () => {
+        // У DOM вузол з класом 'generic' стоїть РАНІШЕ, ніж вузол з класом 'specific'
+        document.body.innerHTML = `
+            <div id="container">
+              <div class="generic" id="first-in-dom">Generic</div>
+              <div class="specific" id="second-in-dom">Specific</div>
+            </div>`;
+        const container = q('#container');
+
+        // Імпортуємо queryOne
+        const { queryOne } = await import('../youtube/studio/studio_selector_queries.ts');
+
+        // Якщо specific першим у масиві -> повертається specific, хоча він пізніше в DOM!
+        const result = queryOne(container, ['.specific', '.generic']);
+        assert.equal(result?.id, 'second-in-dom', 'Повинен перемагати перший селектор у масиві');
+
+        // Якщо generic першим -> повертається generic
+        const reverseResult = queryOne(container, ['.generic', '.specific']);
+        assert.equal(reverseResult?.id, 'first-in-dom');
+    });
+
+    test('41. getToolbarElement віддає ytcp-comment-action-buttons #toolbar перевагу перед generic #toolbar', () => {
+        document.body.innerHTML = `
+            <ytcp-comment class="c">
+              <div id="toolbar" class="unrelated-toolbar">Unrelated</div>
+              <ytcp-comment-action-buttons>
+                <div id="toolbar" class="correct-toolbar">Action Toolbar</div>
+              </ytcp-comment-action-buttons>
+            </ytcp-comment>`;
+        const comment = q('.c');
+        const toolbar = getToolbarElement(comment);
+        assert.ok(toolbar);
+        assert.ok(toolbar.classList.contains('correct-toolbar'), 'Має вибратися action-buttons toolbar');
+    });
+
+    test('42. getAuthorNameText віддає перевагу .author-text навіть якщо #name стоїть раніше в DOM', () => {
+        document.body.innerHTML = `
+            <ytcp-comment class="c">
+              <div id="metadata">
+                <div id="name">
+                  <span class="unrelated">Зайвий текст</span>
+                  <span class="author-text">Справжній Автор</span>
+                </div>
+              </div>
+            </ytcp-comment>`;
+        const comment = q('.c');
+        assert.equal(getAuthorNameText(comment), 'Справжній Автор');
+    });
+});
+

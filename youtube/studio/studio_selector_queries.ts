@@ -2,33 +2,58 @@
 //
 // ПРИЗНАЧЕННЯ: низькорівневі примітиви DOM-запитів для селекторів Studio.
 //
-// Винесено з `studio_selectors.ts`, де кожен геттер повторював один і той самий
-// патерн `resolveSelectorString(...)` + `querySelector(...)`, а `getVideoTitleText`
-// і `getVideoLinkHref` дублювали ще й гілку «успадкування від батьківського треду»
-// (саме вона давала `getVideoLinkHref` cognitive=16 у звіті Fallow).
-//
-// Поведінка збережена 1-в-1: масив селекторів так само склеюється в CSS-групу.
+// Реалізує послідовний fallback (YT-D3): перший селектор у масиві має справжній пріоритет.
+// Запобігає ситуаціям, коли менш специфічний або батьківський вузол перехоплює результат
+// через порядок у DOM-дереві при використанні групування через кому.
 
-import { resolveSelectorString, type SelectorValue } from '../../modules/config';
+import { type SelectorValue } from '../../modules/config';
 import { PARENT_THREAD_SELECTOR } from './studio_selector_constants';
 
 /** Корінь пошуку: документ або будь-який елемент-контейнер. */
 export type StudioQueryRoot = Document | HTMLElement;
 
-/** `querySelector` за `SelectorValue` (масив трактується як CSS-група). */
+/**
+ * `querySelector` за `SelectorValue`.
+ * Якщо передано масив селекторів, перебирає їх по черзі за пріоритетом (Sequential Fallback).
+ */
 export function queryOne<T extends HTMLElement = HTMLElement>(
     root: StudioQueryRoot,
     selectorValue: SelectorValue
 ): T | null {
-    return root.querySelector<T>(resolveSelectorString(selectorValue));
+    if (Array.isArray(selectorValue)) {
+        for (const selector of selectorValue) {
+            const el = root.querySelector<T>(selector);
+            if (el) return el;
+        }
+        return null;
+    }
+    return root.querySelector<T>(selectorValue);
 }
 
-/** `querySelectorAll` за `SelectorValue`, завжди повертає масив (може бути порожнім). */
+/**
+ * `querySelectorAll` за `SelectorValue`.
+ * Зберігає порядок пріоритетів селекторів та усуває дублікати.
+ */
 export function queryAll<T extends HTMLElement = HTMLElement>(
     root: StudioQueryRoot,
     selectorValue: SelectorValue
 ): T[] {
-    return Array.from(root.querySelectorAll<T>(resolveSelectorString(selectorValue)));
+    if (Array.isArray(selectorValue)) {
+        const seen = new Set<T>();
+        const results: T[] = [];
+        for (const selector of selectorValue) {
+            const elements = root.querySelectorAll<T>(selector);
+            for (let i = 0; i < elements.length; i++) {
+                const el = elements[i];
+                if (!seen.has(el)) {
+                    seen.add(el);
+                    results.push(el);
+                }
+            }
+        }
+        return results;
+    }
+    return Array.from(root.querySelectorAll<T>(selectorValue));
 }
 
 /** Обрізаний `textContent` першого збігу або порожній рядок. */
@@ -40,12 +65,6 @@ export function readTrimmedText(root: StudioQueryRoot, selectorValue: SelectorVa
 /**
  * REPLY INHERITANCE: читає значення в межах самого коментаря, а якщо результат
  * порожній (`''` / `null`) — перечитує його з батьківського треду.
- *
- * ⚠️ Фолбек зав'язаний на ЗНАЧЕННЯ, а не на наявність елемента: порожній
- * `#video-title` теж вмикає пошук у батька. Це історична поведінка.
- *
- * `typeof thread.closest !== 'function'` — захисна гілка для не-DOM-заглушок
- * (у тестах у геттери інколи передають прості об'єкти з одним `querySelector`).
  */
 export function readWithThreadFallback<V>(
     thread: HTMLElement,

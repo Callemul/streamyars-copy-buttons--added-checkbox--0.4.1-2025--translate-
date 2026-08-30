@@ -2,13 +2,15 @@ import { STORAGE_KEYS } from '../modules/storage';
 import { SHEET_IDS } from '../modules/sheets';
 import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
 import { extractCommentId, extractCommentData, applyButtonVisualState } from './yt_ui';
+import { generateLegacyCommentId } from './yt_comment_identity';
 import { extractDomChannelInfo } from './yt_channel_gate';
 import { getVideoId } from './yt_video_id';
 import {
     BaseCommentPlatformAdapter,
     type CommentContext,
     type PlatformButtons,
-    type ButtonStateType
+    type ButtonStateType,
+    type CommentStateCaches
 } from '../modules/comment_platform_adapter';
 
 const YT_BUTTON_STATES_KEY = STORAGE_KEYS.YT_BUTTON_STATES;
@@ -83,6 +85,37 @@ export class YouTubeCommentAdapter extends BaseCommentPlatformAdapter {
 
     public getCheckboxStatesKey(): string {
         return YT_CHECKBOX_STATE_KEY;
+    }
+
+    public override getButtonState(context: CommentContext, commentKey: string, caches: CommentStateCaches): ButtonStateType {
+        let state = caches.buttonStates[commentKey] || null;
+        if (!state && context) {
+            const legacyKey = generateLegacyCommentId(context.author, context.text);
+            const legacyState = caches.buttonStates[legacyKey] || null;
+            if (legacyState) {
+                // Безшовна зворотна сумісність (YT-E1): кешуємо у v2 без видалення старого ключа
+                caches.buttonStates[commentKey] = legacyState;
+                state = legacyState;
+            }
+        }
+        return state;
+    }
+
+    public override getCheckboxState(context: CommentContext, commentKey: string, caches: CommentStateCaches): boolean {
+        let checked = caches.checkboxStates[commentKey]?.checked || false;
+        if (!checked && context) {
+            const legacyKey = generateLegacyCommentId(context.author, context.text);
+            const legacyEntry = caches.checkboxStates[legacyKey];
+            if (legacyEntry?.checked) {
+                // Безшовна зворотна сумісність (YT-E1): кешуємо у v2 без видалення старого ключа
+                caches.checkboxStates[commentKey] = {
+                    checked: true,
+                    timestamp: legacyEntry.timestamp || Date.now()
+                };
+                checked = true;
+            }
+        }
+        return checked;
     }
 
     public applyButtonState(buttons: PlatformButtons, state: ButtonStateType, _sheetId: string | null): void {

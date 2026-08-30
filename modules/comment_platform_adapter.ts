@@ -38,6 +38,7 @@ export interface CommentPlatformAdapter {
     getCheckboxStatesKey(): string;
     applyButtonState(buttons: PlatformButtons, state: ButtonStateType, sheetId: string | null): void;
     getButtonState?(context: CommentContext, commentKey: string, caches: CommentStateCaches): ButtonStateType;
+    getCheckboxState?(context: CommentContext, commentKey: string, caches: CommentStateCaches): boolean;
     applyCheckboxState(buttons: PlatformButtons, isChecked: boolean): void;
     markChecked(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
     unmarkChecked?(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
@@ -68,6 +69,10 @@ export abstract class BaseCommentPlatformAdapter implements CommentPlatformAdapt
 
     public getButtonState(_context: CommentContext, commentKey: string, caches: CommentStateCaches): ButtonStateType {
         return caches.buttonStates[commentKey] || null;
+    }
+
+    public getCheckboxState(_context: CommentContext, commentKey: string, caches: CommentStateCaches): boolean {
+        return caches.checkboxStates[commentKey]?.checked || false;
     }
 
     public async markChecked(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void> {

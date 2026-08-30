@@ -1,19 +1,21 @@
 // youtube/yt_comment_identity.ts
 //
-// Ідентифікація коментаря YouTube: стабільний ID та пара «автор + текст».
+// Ідентифікація коментаря YouTube: стабільний ID та пара «автор + текст» (Comment Identity v2).
 //
-// Виділено з `youtube/yt_ui.ts` (207 LOC, cognitive 32) у рамках декомпозиції
-// за звітом Fallow: `extractCommentId` мала CC 13 / cognitive 13 — найгірший
-// показник у всьому піддереві `youtube/`. Ланцюжок фолбеків тепер описаний
-// декларативно (`ID_STRATEGIES`), кожна стратегія — окрема чиста функція.
+// Принцип пріоритетів:
+// 1. Найнадійніше: permalink з параметром lc= у посиланні на коментар.
+// 2. Власний id DOM-вузла.
+// 3. Атрибути data-cid / id.
+// 4. Fallback v2: детермінований хеш «videoId + автор + повний текст» (yt_v2_...).
+//    Запобігає колізіям однакових перших 20 символів та колізіям між різними відео.
 //
-// Поведінка збережена 1-в-1 (див. tests/yt_ui_api.test.js).
+// Також експортує generateLegacyCommentId та extractLegacyCommentId для зворотної сумісності (YT-E1).
 
 import { YT_SELECTORS } from './yt_selectors';
 import { resolveSelector } from '../modules/config';
 
 /** Стратегія отримання ID: повертає рядок або `''`, якщо не спрацювала. */
-type CommentIdStrategy = (commentNode: Element) => string;
+type CommentIdStrategy = (commentNode: Element, videoId?: string) => string;
 
 /** 1. Найнадійніше: параметр `lc=` у посиланні на коментар. */
 function idFromPermalink(commentNode: Element): string {
@@ -37,7 +39,7 @@ function idFromDataAttributes(commentNode: Element): string {
 }
 
 /** Простий рядковий хеш (djb2-подібний) для стабільності між перезавантаженнями. */
-function hashString(str: string): number {
+export function hashString(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = ((hash << 5) - hash) + str.charCodeAt(i);
@@ -46,32 +48,56 @@ function hashString(str: string): number {
     return Math.abs(hash);
 }
 
-/** 4. Останній фолбек: хеш «автор + перші 20 символів тексту». */
-function idFromAuthorAndText(commentNode: Element): string {
+/** 4. Останній фолбек v2: хеш «videoId + автор + повний текст». */
+function idFromAuthorAndTextV2(commentNode: Element, videoId?: string): string {
     const authorEl = resolveSelector(YT_SELECTORS.commentAuthor, commentNode);
     const textEl = resolveSelector(YT_SELECTORS.commentText, commentNode);
     const author = authorEl?.textContent?.trim() || 'unknown';
-    const textSnippet = textEl?.textContent?.trim().slice(0, 20) || 'empty';
+    const originalText = textEl?.getAttribute('data-syh-original-text');
+    const text = (originalText !== null && originalText !== undefined)
+        ? originalText.trim()
+        : (textEl?.textContent?.trim() || 'empty');
 
-    return `yt_${hashString(`${author}_${textSnippet}`)}`;
+    const vId = (videoId || (typeof window !== 'undefined' ? new URLSearchParams(window.location?.search || '').get('v') : '')) || '';
+    return `yt_v2_${hashString(`${vId}_${author}_${text}`)}`;
 }
 
-/** Порядок фолбеків збережено з оригінальної реалізації. */
+/** Legacy v1 генерація ID: хеш «автор + перші 20 символів тексту». */
+export function generateLegacyCommentId(author: string, text: string): string {
+    const textSnippet = (text || '').trim().slice(0, 20) || 'empty';
+    return `yt_${hashString(`${(author || 'unknown').trim()}_${textSnippet}`)}`;
+}
+
+/** Отримує legacy v1 ID для елемента коментаря (для зворотної міграції). */
+export function extractLegacyCommentId(commentNode: Element): string {
+    if (!commentNode) return '';
+    const authorEl = resolveSelector(YT_SELECTORS.commentAuthor, commentNode);
+    const textEl = resolveSelector(YT_SELECTORS.commentText, commentNode);
+    const author = authorEl?.textContent?.trim() || 'unknown';
+    const originalText = textEl?.getAttribute('data-syh-original-text');
+    const text = (originalText !== null && originalText !== undefined)
+        ? originalText.trim()
+        : (textEl?.textContent?.trim() || 'empty');
+
+    return generateLegacyCommentId(author, text);
+}
+
+/** Порядок фолбеків: permalink -> nodeId -> dataAttributes -> author+text v2 */
 const ID_STRATEGIES: ReadonlyArray<CommentIdStrategy> = [
     idFromPermalink,
     idFromNodeId,
     idFromDataAttributes,
-    idFromAuthorAndText
+    idFromAuthorAndTextV2
 ];
 
 /**
- * Витягує ID коментаря з URL посилання (параметр lc=) або з DOM
+ * Витягує ID коментаря з URL посилання (параметр lc=), з DOM або через v2 fallback
  */
-export function extractCommentId(commentNode: Element): string {
+export function extractCommentId(commentNode: Element, videoId?: string): string {
     if (!commentNode) return '';
 
     for (const strategy of ID_STRATEGIES) {
-        const id = strategy(commentNode);
+        const id = strategy(commentNode, videoId);
         if (id) return id;
     }
 
