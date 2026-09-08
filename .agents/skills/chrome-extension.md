@@ -14,4 +14,18 @@
 
 - **Permissions**: Використовуй найвужчі дозволи (`activeTab`). Запитуй домени точково.
 - **Messaging**: Використовуй `chrome.runtime.sendMessage` / `chrome.runtime.onMessage.addListener`. Якщо відповідь асинхронна — повертай `true` з listener.
-- **CSP**: Використання `eval()` та inline-скриптів суворо заборонено.
+- **CSP**: Використання `eval()` та inline-скриптів суворо заборонено.
+
+---
+
+## 3. Реєстри, яких треба триматися
+
+| Що | Реєстр |
+|---|---|
+| Дозволи, content scripts, домени | `manifest.json` |
+| Ключі `chrome.storage` | `modules/storage_keys.ts` (`STORAGE_KEYS`, `POPUP_SHEET_KEYS`) |
+| Налаштування розширення | `options/defaults.ts` (`OptionsState`, `DEFAULT_OPTIONS`) |
+| Маршрути повідомлень | `background/message_router.ts` |
+
+Повна таблиця реєстрів — `docs/ARCHITECTURE.md` §4.
+Сценарії «як додати опцію / платформу» — `docs/HOWTO_ADD.md`.

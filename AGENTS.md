@@ -1,101 +1,115 @@
 @RTK.md
 
-# AGENTS.md — Єдиний протокол та Маршрутизатор ШІ
+# AGENTS.md — протокол роботи над проєктом
 
-## 💬 1. Правила комунікації та діагностики
-
-- 🛑 **СУВОРЕ ТАБУ НА ДОДУМУВАННЯ:** Якщо завдання двозначне або є сумніви — **ЗУПИНИСЯ і запитай уточнення**. Не роби правки "наосліп".
-- 🩺 **ДЕБАГ ТІЛЬКИ ЧЕРЕЗ DevTools (F12):** При збоях UI/DOM заборонено змінювати код без даних. Згенеруй та надай користувачу точковий JS-скрипт для консолі DevTools, попроси лог і спирайся виключно на факти.
-- 🔬 **DEEP RESEARCH:** Якщо специфікація сайту/технології невідома на 100% — спочатку сформулюй промт для Deep Research.
+> Карта проєкту — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+> Як додати кнопку / поле / опцію / платформу — [docs/HOWTO_ADD.md](docs/HOWTO_ADD.md).
+> Тематичні технічні правила — [docs/rules/](docs/rules/) (індекс у §5).
 
 ---
 
-## ⚡ 2. Протокол Аудиту та Звітів
+## 💬 1. Комунікація та діагностика
 
-- **Тригер "Аудит" / "Code Review":**
+- 🛑 **СУВОРЕ ТАБУ НА ДОДУМУВАННЯ:** якщо завдання двозначне або є сумніви — **ЗУПИНИСЯ і запитай уточнення**. Не роби правки «наосліп».
+- 🩺 **ДЕБАГ ТІЛЬКИ ЧЕРЕЗ DevTools (F12):** при збоях UI/DOM заборонено змінювати код без даних. Згенеруй точковий JS-скрипт для консолі, попроси лог і спирайся виключно на факти.
+- 🔬 **DEEP RESEARCH:** якщо специфікація сайту/технології невідома на 100% — спершу сформулюй промт для Deep Research.
+
+---
+
+## 🎯 2. Головне правило: SSOT через реєстри
+
+**Перед тим як створювати UI-елемент, поле, ключ чи обчислення — знайди його реєстр**
+у таблиці [ARCHITECTURE.md §4](docs/ARCHITECTURE.md#4-реєстри-проєкту-ssot-точки).
+
+1. Реєстр є → додай **один запис** у нього.
+2. Реєстру немає → **створи реєстр**, а не другу копію поруч.
+3. Скопіювати наявний блок і поправити — **заборонено**.
+
+Ознака, що ти йдеш неправильно: доводиться робити ту саму правку вдруге в іншому файлі.
+
+Заборонено локально обчислювати, дублювати чи маніпулювати станом елементів застосунку
+(кнопки, чекбокси, зібрані коментарі, парсинг Telegram/коментарів, визначення каналів,
+лічильники статистики) всередині разових UI-обробників або невідповідних модулів.
+Усі операції йдуть **виключно** через сервіси та адаптери: `CommentService`,
+`SheetStateService`, `SYH_STORAGE`, `adapter.getButtonState`, `adapter.getCheckboxState`,
+`getStudioChannelInfo`.
+
+Дія над коментарем має бути на **всіх трьох поверхнях** (StreamYard / YouTube / Studio)
+або свідомо позначена в реєстрі як відсутня на конкретній (`null` замість оверайду).
+
+---
+
+## 📐 3. Команди і workflow
+
+- **Команди:** `npm run dev` · `npm run build` · `npm test` · `npm run lint` · `npm run typecheck`
+- **Перед комітом — одна команда:** `npm run verify` (typecheck → lint → test → build).
+- **Workflow RPI:** Research → Plan → Implement → Verify (`npm run verify`).
+- **Codebase Search Directive:** для дослідження структури й логіки віддавай перевагу
+  `codebase-memory` (`search_code`, `search_graph`, `get_architecture`); якщо даних
+  недостатньо — звичайні файлові інструменти.
+- ⚡ **RTK Token Saving:** довгі команди в терміналі запускай через `rtk`
+  (`rtk test npm run test`, `rtk tsc npx tsc --noEmit`), якщо PreToolUse hook не робить це прозоро.
+
+---
+
+## ⚡ 4. Протокол аудиту та звітів
+
+- **Тригер «Аудит» / «Code Review»:**
   1. 🛑 Без масивних буферів коду (лише точковий аналіз потрібних файлів).
   2. 🛑 Без огляду старих аудитів (аналіз з чистого аркуша).
-  3. Збережи звіт у: `docs/audits/active/YYYY-MM-DD_<MODEL_NAME>_AUDIT.md`.
-  4. ❓ Після збереження запитай: *"Створити список задач (`YYYY-MM-DD_<MODEL_NAME>_TASKS.md`)?"*. Створюй `TASKS.md` ТІЛЬКИ після підтвердження.
-
-- **Папки:** Active: `docs/audits/active/` | Archive: `docs/audits/archive/YYYY-MM-DD_vX.X/`
-- 🛑 **Заборонено** створювати неіменовані `AUDIT.md` у корені!
-
----
-
-## 📐 3. Загальні правила та Команди
-
-- **Codebase Search Directive:** Prefer `codebase-memory` tools (`search_code`, `search_graph`, `get_architecture`) for exploring codebase structure and logic. Fall back to standard file tools if codebase-memory returns insufficient data.
-- **Команди:** `npm run dev` | `npm run build` | `npm run test` | `npm run lint` | `npm run typecheck`
-- **Workflow RPI:** Research (`codebase-memory`) → Plan → Implement → Verify (`npm run test && npm run lint`).
-- 🩺 **Happy DOM Mocking Rule**: Проєкт використовує `happy-dom` (`tests/setup/happy-dom.ts`) для глобального DOM-середовища в тестах. Через це властивості `window`, `location`, `document` та `localStorage` мають рид-онлі геттери на `global`/`globalThis`. Заборонено їх перезаписувати прямим присвоєнням (наприклад, `global.localStorage = ...`), оскільки це викличе `TypeError`. Завжди використовуйте `Object.defineProperty(global, 'property', { value: ..., configurable: true, writable: true })`.
-- ⚡ **RTK Token Saving**: Для економії 90%+ контекстних токенів у терміналі рекомендується запускати довгі команди через `rtk` (наприклад, `rtk test npm run test` або `rtk tsc npx tsc --noEmit`), якщо автоматичний PreToolUse hook не перехоплює їх прозоро.
-- 🛑 **ПРАВИЛО SINGLE SOURCE OF TRUTH (ГЛОБАЛЬНО ДЛЯ ВСЬОГО ДОДАТКУ):** Заборонено локально обчислювати, дублювати чи маніпулювати станом будь-яких елементів додатка (кнопки, чекбокси, зібрані коментарі, парсинг Telegram/коментарів, визначення каналів, лічильники статистики) всередині разових UI-обробників або невідповідних модулів. Усі обчислення стану та операції зобов'язані йти ВИКЛЮЧНО через відповідні сервіси та адаптери (`CommentService`, `SheetStateService`, `SYH_STORAGE`, `adapter.getButtonState`, `adapter.getCheckboxState`, `getStudioChannelInfo`). Будь-які зміни логіки підлягають обов'язковій перевірці `npm run test && npm run build`.
-- **Manifest V3:** TypeScript / Vite. `host_permissions` обмежені конкретними доменами. DOM event listeners у попапі — strictly всередині `DOMContentLoaded`.
-- 🩺 **TypeScript Strict Null Checks у замиканнях**: Коли поля класу/об'єкта (`this.someEl`) використовуються всередині ітераторів чи колбеків (`forEach`, `map`, `addEventListener`), обов'язково кешуйте їх у локальну змінну перед замиканням (`const el = this.someEl; if (!el) return;`), щоб запобігти помилці `TS2531: Object is possibly 'null'`.
-- 📐 **Пріоритет категорій у парсері банерів**: Порядок перевірки заголовків завжди: `prayer` (МОЛИТВ, ПРОХАН, 🙏) → `stream` (СУББОТ, СУБОТ, УРОК) → `audience` (ВОПРОС, ПИТАН, ???, ❓). Ключі суботи/уроку мають обов'язковий вищий пріоритет над словом «ВОПРОС».
-- 🔍 **SmartSearch та транслітерація імен (consonant + ia)**:
-  - Таблиця `TRANSLITERATION_MAP` та функція `transliterateRaw` зобов'язані підтримувати 3-символьні послідовності (пріоритет: 4 → 3 → 2 → 1).
-  - Іменні закінчення `приголосна + ia` (`dia`, `ria`, `lia`, `nia`, `sia`, `fia`, `via`, `tia`, `ct` тощо) мають строго транслюватися як `-ия`/`-кт`, а не зливатися у 2-символьне `ia → я`. Це критично для посимвольного пошуку під час вводу (наприклад, префікс `лиди` для автора `@LidiaSplayeva`).
-  - Усі кириличні варіанти закінчень (`ия`, `ія`, `иа`, `іа`) повинні симетрично схлопуватися у `toFuzzy` для повної еквівалентності українського, російського та латинського написань.
-- ✂️ **Очищення суфіксів авторів у питаннях (Author Suffix Cleanup)**:
-  - Патерн очищення авторів у кінці питань (`QUESTION_AUTHOR_SUFFIX_REGEX` у `modules/parsers/regex.ts`) зобов'язаний підтримувати як закриті дужки `(Автор)`, так і незакриті `( Автор 1 , Автор 2` (через необов'язкову закриваючу дужку `\)?` перед `$`).
-  - Внутрішні смислові дужки всередині тексту питання (`(Тора)`, `(Рим. 8:28)`) мають обов'язково зберігатися.
-  - Очищення здійснюється виключно на етапі парсингу (`cleanLine` у `modules/parsers/sabbath_parser.ts`, `formatNumberedLine` у `modules/parsers/standard_parser.ts`) як SSOT, щоб прев'ю у модальному вікні та фінальні банери одразу містили чистий текст.
-- 🧪 **Синтаксис та запуск одиничних тестів**:
-  - Файли у `tests/*.test.js` виконуються нативним раннером Node.js без компіляції TS у тестах. Заборонено писати конструкції TypeScript (`as unknown as ...`, `type`, інтерфейси) усередині `.js`-тестів.
-  - Одиничні тести слід запускати з повним набором лоадерів: `node --experimental-strip-types --import ./tests/ts_loader.js --import ./tests/setup/happy-dom.ts --test "tests/<ім'я>.test.js"`.
-- 🛑 **Незмінність набору глобальних слухачів у `event_banners`**:
-  - `SYH_EVENT_BANNERS.bindEvents()` зобов'язаний реєструвати РІВНО 4 делеговані слухачі на `document` (`contextmenu`, `mousedown`, `mouseup`, `change`).
-  - Заборонено додавати нові слухачі (наприклад, `click`) безпосередньо до `document`. Будь-яка реакція на взаємодію з банерами (включно з виявленням показу банерів на трансляції) має інтегруватися у наявний `handleBannerMouseUp` або точкові обробники елементів.
-- 📊 **Симетрія 4 статистичних метрик ефіру (Min, Max, Median, Avg)**:
-  - Усі форми відображення аналітики ефіру (Markdown, HTML-звіт, HTML-презентація, Full HD PNG слайд 1920x1080 та зведена таблиця модального вікна `#syh-chart-modal`) зобов'язані симетрично виводити повний набір із 4 показників: **Мінімум**, **Максимум (Пік)**, **Медіана**, **Середнє** для кожного з блоків (Суботня школа, Питання, Молитви) та загального підсумку.
-- ⚡ **Автоматичний запуск фаз ефіру (SSOT & Safety Guards)**:
-  - Жодна фаза не запускається без активного таймера ефіру (`Timer__TimerWrapper`).
-  - Фаза коментарів (`phase_questions_start`) активується при відмічанні всіх чекбоксів банерів уроку/етеру (`stream`).
-  - Фаза молитов (`phase_prayers_start`) активується при показі активного банера (`svg.lucide-eye-off`), текст якого містить слова `молитвенн*` та `просьб*` через неточний (`fuzzyIncludes`) пошук.
-- 🏷️ **Збереження локацій авторів у молитвах (Prayer Author Location Suffix)**:
-  - У попапі та молитовних списках суворо **заборонено відсікати назви міст чи локацій** (наприклад, `Марія • Львів` → `Марія`). Локації є критично важливими для розрізнення людей. Чистка має обмежуватися виключно технічними/небажаними символами (`@` тощо).
-- 🛡️ **Zero Data Loss & Ідемпотентність міграцій (Comment Identity v2)**:
-  - Будь-яка зміна генерації ключів чи схем збереження стану зобов'язана підтримувати читання legacy-ключів. Старі ключі в сховищі **не видаляються**; стан автоматично кешується/копіюється у нову схему при першому зверненні, забезпечуючи безпечний відкат (rollback safe) та ідемпотентність.
-- 🎯 **Справжній пріоритет селекторів (Sequential Fallback)**:
-  - Заборонено використовувати CSS-групування через кому (`querySelector(selectors.join(','))`), коли один селектор у масиві може бути DOM-батьком іншого (наприклад, `#metadata #name` vs `.author-text`). Слід використовувати послідовний перебір (`queryOne`), щоб перший селектор у масиві завжди мав справжній пріоритет над порядком у DOM-дереві.
+  3. Збережи звіт у `docs/audits/active/YYYY-MM-DD_<MODEL_NAME>_AUDIT.md`.
+  4. ❓ Після збереження запитай: *«Створити список задач (`YYYY-MM-DD_<MODEL_NAME>_TASKS.md`)?»*.
+     Створюй `TASKS.md` **тільки** після підтвердження.
+- **Папки:** активні — `docs/audits/active/`, архів — `docs/audits/archive/YYYY-MM-DD_vX.X/`.
+- 🛑 **Заборонено** створювати неіменовані `AUDIT.md` у корені.
 
 ---
 
-## 🧩 4. Модульна маршрутизація Скілів (Lazy-Loading)
+## 📚 5. Технічні правила (читай за темою задачі)
 
-> ⚠️ **ДИРЕКТИВА ДЛЯ AI:** Зчитуй нижчевказані скіли за допомогою інструменту читання файлів **ТІЛЬКИ** при виконанні відповідного типу задач!
+| Тема | Файл |
+|---|---|
+| Тести: happy-dom, запуск одиничного тесту | [docs/rules/testing.md](docs/rules/testing.md) |
+| Сховище: zero data loss, міграції, ключі, локації авторів | [docs/rules/storage.md](docs/rules/storage.md) |
+| DOM і селектори: sequential fallback, strict null, MV3 | [docs/rules/dom-selectors.md](docs/rules/dom-selectors.md) |
+| Парсери банерів: пріоритет категорій, суфікси авторів | [docs/rules/parsers.md](docs/rules/parsers.md) |
+| SmartSearch і транслітерація імен | [docs/rules/search-translit.md](docs/rules/search-translit.md) |
+| Події банерів і 4 метрики аналітики, авто-фази | [docs/rules/events-analytics.md](docs/rules/events-analytics.md) |
 
-- ⚙️ **Архітектура Extension / Manifest V3 / Vite / Service Workers:**
-  - Зчитай `.agents/skills/chrome-extension.md` при роботі з `manifest.json`, background worker, build-скриптами чи messaging.
-- 🟡 **Модуль StreamYard (`modules/` | `app.streamyard.com`):**
-  - Зчитай `.agents/skills/streamyard.md` при розробці/дебагу UI чи ін'єкцій StreamYard.
-- 🔴 **Модуль YouTube Studio (`youtube/` та `youtube/studio/` | `studio.youtube.com`):**
-  - Зчитай `.agents/skills/youtube-studio.md` при розробці/дебагу YouTube Studio (Polymer, `<iron-list>`, рециклінг).
+Нове довготривале правило додається **окремим файлом у `docs/rules/`** і рядком у цій
+таблиці — не рядком у кінці `AGENTS.md`.
 
 ---
 
-## 🤖 5. Вибір моделей і субагентів
+## 🧩 6. Модульна маршрутизація скілів (lazy-loading)
 
-- Перед призначенням моделі, reasoning effort або паралельної write-роботи використовуй `docs/CODEX_MODEL_SELECTION_GUIDE.md`.
-- Якщо task card явно задає модель і reasoning — вони мають пріоритет над загальним default.
+> ⚠️ **ДИРЕКТИВА ДЛЯ AI:** зчитуй скіли **тільки** при виконанні відповідного типу задач.
+
+- ⚙️ **Extension / Manifest V3 / Vite / Service Worker** → `.agents/skills/chrome-extension.md`
+- 🟡 **StreamYard** (`modules/`, `app.streamyard.com`) → `.agents/skills/streamyard.md`
+- 🔴 **YouTube Studio** (`youtube/studio/`, Polymer, `<iron-list>`) → `.agents/skills/youtube-studio.md`
+
+---
+
+## 🤖 7. Вибір моделей і субагентів
+
+- Перед призначенням моделі, reasoning effort або паралельної write-роботи використовуй
+  `docs/CODEX_MODEL_SELECTION_GUIDE.md`.
+- Якщо task card явно задає модель і reasoning — вони мають пріоритет над default.
 - Для паралельних змін обов'язкові неперетинний file ownership і виконання залежних задач хвилями.
 
 ---
 
-## 🚨 ТОЧНА СХЕМА ПАРАМЕТРІВ MCP-ІНСТРУМЕНТІВ
+## 🚨 8. Точна схема параметрів MCP-інструментів
 
-1. ДЛЯ `codebase-memory`:
-   - `search_code`: ОБОВ'ЯЗКОВИЙ параметр назвати `pattern` (НЕ `query`).
+1. `codebase-memory`:
+   - `search_code`: обов'язковий параметр називається `pattern` (**не** `query`).
      Приклад: `call_mcp_tool("codebase-memory", "search_code", {"pattern": "cleanAuthorName"})`
 
-2. ДЛЯ `code-extractor`:
-   - `get_symbols_tool`: ОБОВ'ЯЗКОВИЙ параметр назвати `path_or_url` (НЕ `file_path`).
+2. `code-extractor`:
+   - `get_symbols_tool`: обов'язковий параметр `path_or_url` (**не** `file_path`).
      Приклад: `call_mcp_tool("code-extractor", "get_symbols_tool", {"path_or_url": "modules/comment_assistant/processor.ts"})`
-   - `get_lines_tool`: ОБОВ'ЯЗКОВІ параметри `path_or_url`, `start_line`, `end_line`.
-     Запитуй точечно по 15–30 рядків, щоб вивід не згортався у файл output.txt!
-     Приклад: `call_mcp_tool("code-extractor", "get_lines_tool", {"path_or_url": "modules/comment_assistant/processor.ts", "start_line": 1, "end_line": 30})`
+   - `get_lines_tool`: обов'язкові `path_or_url`, `start_line`, `end_line`.
+     Запитуй точково по 15–30 рядків, щоб вивід не згортався у файл.
 
-3. ЗАБОРОНА УСИХ `view_file` ДЛЯ ФАЙЛІВ > 50 РЯДКІВ:
-   - Використовуй тільки `get_lines_tool` з параметром `path_or_url`.
+3. **Заборона `view_file` для файлів > 50 рядків** — тільки `get_lines_tool` з `path_or_url`.

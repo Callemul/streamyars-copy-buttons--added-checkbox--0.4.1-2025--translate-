@@ -10,7 +10,8 @@
     "test:studio": "node --experimental-strip-types --import ./tests/ts_loader.js --import ./tests/setup/happy-dom.ts --test \"tests/studio_*.test.js\"",
     "test:coverage": "node --experimental-strip-types --import ./tests/ts_loader.js --import ./tests/setup/happy-dom.ts --test --experimental-test-coverage \"tests/*.test.js\"",
     "lint": "eslint --no-error-on-unmatched-pattern --no-warn-ignored \"modules/**/*.ts\" main.ts \"popup/**/*.ts\" \"options/**/*.ts\" \"youtube/**/*.ts\" \"background/**/*.ts\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.28",

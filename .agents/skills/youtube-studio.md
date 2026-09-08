@@ -55,3 +55,19 @@ console.log('Nodes count:', document.querySelector('iron-list')?.shadowRoot?.que
 - **Єдиний якір відео — `#video-title`**: Визначення категорії та зіставлення відео в інбоксі спирається виключно на текстовий вміст `#video-title`.
 - **Реалістичність тестових моків**: Заборонено підставляти фіктивні посилання (`/watch?v=...`) у тестові об'єкти коментарів Studio за замовчуванням. Тестові фікстури повинні відтворювати реальний DOM (порожній `href` при наявності `#video-title`).
 
+
+
+---
+
+## Реєстри, яких треба триматися
+
+| Що | Реєстр | Правило |
+|---|---|---|
+| Селектори Studio | `youtube/studio/studio_selectors.ts` | Селектори в скілі — довідкові; джерело істини — реєстр. Для масивів селекторів — послідовний перебір, не групування через кому (`docs/rules/dom-selectors.md`) |
+| Селектори YouTube (перегляд) | `youtube/yt_selectors.ts` | |
+| Кнопки коментаря | `modules/comment_actions.ts` | Studio-оверайди (`studio-copy`, `syh-studio-btn-*`) живуть у реєстрі, не в `studio_ui.ts` |
+| Контракт платформи | `modules/comment_platform_adapter.ts` → `youtube/studio/studio_adapter.ts` | Логіка дії (`comment_action_runner.ts`) не дублюється в Studio |
+| Аркуші / категорії каналів | `modules/sheets.ts`, `youtube/studio/studio_category_*.ts` | |
+| Ключі стану кнопок і чекбоксів | `modules/storage_keys.ts` через `getButtonStatesKey()` / `getCheckboxStatesKey()` | Legacy-ключі читаються далі (`docs/rules/storage.md`) |
+
+Повна таблиця реєстрів — `docs/ARCHITECTURE.md` §4. Сценарії змін — `docs/HOWTO_ADD.md`.

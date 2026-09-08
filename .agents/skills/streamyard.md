@@ -1,6 +1,6 @@
 # SKILL: StreamYard Integration & Technical Overview
 
-> **Контекст:** Використовувати виключно під час розробки та дебагінгу модуля StreamYard (`modules/streamyard/`, `app.streamyard.com`).
+> **Контекст:** Використовувати виключно під час розробки та дебагінгу модуля StreamYard (`modules/`, `app.streamyard.com`).
 
 ---
 
@@ -57,4 +57,24 @@ console.log({
   - Права колонка: реактивний Live Preview (150ms debounce) із блоковими перемикачами категорій (`[ 🟣 Ефір | 🟠 Глядачі | 🔵 Молитва ]`).
 - **Життєвий цикл сесії**: Зберігати драфт у `sessionStorage` (`syh_banner_modal_draft`) для збереження даних протягом сесії і автоматичного очищення при закритті вкладки.
 - **Делегування запуску**: При кліку «Створити» модалка миттєво закривається, а створення виконується через єдину точку входу `bannerCreator.executeCustomBanners(banners, hasStandardFormat)`.
-
+
+
+---
+
+## 5. Реєстри, яких треба триматися
+
+| Що | Реєстр | Правило |
+|---|---|---|
+| Селектори StreamYard | `modules/config.ts` → `SYH_CONFIG.SELECTORS` | Селектори в цьому скілі — довідкові. **Джерело істини — `config.ts`**; захардкоджувати їх у коді заборонено, звертайся через `queryBySelectorValue` / `closestBySelectorValue` |
+| Кнопки коментаря (склад, іконки, `data-action`) | `modules/comment_actions.ts` | Нова кнопка = один запис у реєстрі; вона з'явиться і на YouTube, і в Studio |
+| Вигляд кнопки/чекбокса | `modules/ui_factory.ts` | `document.createElement('button')` вручну не створюємо |
+| Аркуші (канали/програми) | `modules/sheets.ts` | |
+| Ключі сховища | `modules/storage_keys.ts` | Рядкові літерали заборонені |
+| Плагіни StreamYard | `modules/plugin_registry.ts` | |
+
+> ⚠️ StreamYard поки не має `CommentPlatformAdapter` — кліки обробляє
+> `modules/event_comments/*`. Імена дій там уже резолвляться через реєстр
+> (`resolveActionId('streamyard', ...)`), повна міграція — задача T7 в
+> `docs/audits/active/2026-09-08_CLAUDE_OPUS_5_TASKS.md`.
+
+Повна таблиця реєстрів — `docs/ARCHITECTURE.md` §4. Сценарії змін — `docs/HOWTO_ADD.md`.

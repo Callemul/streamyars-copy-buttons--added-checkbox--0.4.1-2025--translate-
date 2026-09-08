@@ -72,3 +72,20 @@ npm run typecheck
 - **`youtube/studio/`** — Спеціалізовані адаптери, ін'єкції та спостерігачі для творчої студії YouTube (`studio.youtube.com`).
 - **`background/`** — Фоновий сервіс-воркер (`service-worker.ts`) Manifest V3 для координації вкладок, обробки повідомлень та фонових задач.
 - **`tests/`** — Автоматизовані тести (компонентні та модульні тести для парсерів, сервісів збереження, селекторів та аналітики).
+
+### Повна перевірка перед комітом
+```bash
+npm run verify
+```
+Послідовно виконує `typecheck` → `lint` → `test` → `build`.
+
+## Документація
+
+| Документ | Про що |
+|---|---|
+| [docs/README.md](docs/README.md) | навігація по всій документації |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | шари, точки входу, таблиця реєстрів (SSOT) |
+| [docs/HOWTO_ADD.md](docs/HOWTO_ADD.md) | як додати кнопку, поле аркуша, опцію чи нову платформу |
+| [AGENTS.md](AGENTS.md) | протокол роботи для ШІ-агентів |
+| [Release_notes.md](Release_notes.md) | історія версій |
+| [Daily_tips.md](Daily_tips.md) | поради для користувачів розширення |
