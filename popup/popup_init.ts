@@ -7,7 +7,7 @@ import { setupResizeObserver, initStep3Resizers, setupStep3ResizerEvents } from 
 import { setupScrollListeners } from './popup_scroll';
 import { STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, type StorageReadResult } from '../modules/storage';
 
 const SHEET_IDS = getAllSheetIds();
 
@@ -40,7 +40,7 @@ function initPopup() {
     let storageLoaded = false;
 
     try {
-        SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
+        SYH_STORAGE.get(keysToLoad, function (result: StorageReadResult) {
             try {
                 restoreDbState(result);
             } catch (e) {

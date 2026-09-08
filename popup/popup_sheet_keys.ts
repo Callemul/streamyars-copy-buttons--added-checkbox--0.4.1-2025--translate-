@@ -7,6 +7,8 @@
 // цей `??`-фолбек дублювався в кожному відновлювачі; тепер він живе в одному
 // місці, а відновлювачі просто читають поле.
 
+import type { StorageReadResult } from '../modules/storage';
+
 /** Канонічний ключ будується з ідентифікатора аркуша. */
 export type SheetKeyBuilder = (sheetId: string) => string;
 
@@ -18,7 +20,7 @@ export type SheetKeyBuilder = (sheetId: string) => string;
  * `false`, `0` та `''` вважаються наявними значеннями і НЕ падають на легасі.
  */
 export function readSheetValue(
-    result: Record<string, any>,
+    result: StorageReadResult,
     sheetId: string,
     canonicalKey: SheetKeyBuilder,
     legacyPrefix: string
@@ -28,7 +30,7 @@ export function readSheetValue(
 
 /** Те саме, але прив'язка береться з реєстру полів (`popup_sheet_fields.ts`). */
 export function readSheetBinding(
-    result: Record<string, any>,
+    result: StorageReadResult,
     sheetId: string,
     binding: { key: SheetKeyBuilder; legacyPrefix: string }
 ): any {

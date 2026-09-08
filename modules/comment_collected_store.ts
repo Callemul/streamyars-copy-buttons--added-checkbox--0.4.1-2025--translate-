@@ -9,7 +9,7 @@
  */
 import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
 import { SYH_BUS } from './event_bus';
-import type { CommentPayload } from './comment_types';
+import type { CommentPayload, ButtonStateValue } from './comment_types';
 
 /**
  * Дублем вважається збіг за `id` АБО повний збіг трійки автор+текст+тип.
@@ -59,8 +59,11 @@ export async function saveCollectedComment(
     });
 }
 
+/** Стани кнопок коментарів так, як їх описує схема сховища. */
+type ButtonStateMap = Record<string, ButtonStateValue>;
+
 /** Знімає стани кнопок YouTube/Studio для перелічених коментарів (мутує на місці). */
-function dropButtonStates(states: Record<string, unknown>, commentIds: string[]): Record<string, unknown> {
+function dropButtonStates(states: ButtonStateMap, commentIds: string[]): ButtonStateMap {
     commentIds.forEach(id => { delete states[id]; });
     return states;
 }
@@ -76,7 +79,9 @@ export async function removeCollectedComment(
     text?: string
 ): Promise<CommentPayload[]> {
     const storageKey = getSheetCollectedStorageKey(sheetId);
-    const result = await SYH_STORAGE.getAsync<Record<string, any>>([
+    // Без явного параметра типу: діє схема сховища (T17), тож стани кнопок
+    // приходять типізованими, а не як `any`.
+    const result = await SYH_STORAGE.getAsync([
         storageKey,
         STORAGE_KEYS.YT_BUTTON_STATES,
         STORAGE_KEYS.STUDIO_BUTTON_STATE
@@ -98,8 +103,10 @@ export async function removeCollectedComment(
     });
 
     const commentIds = Array.from(idsToRemove);
-    const ytBtnStates = dropButtonStates(result[STORAGE_KEYS.YT_BUTTON_STATES] || {}, commentIds);
-    const studioBtnStates = dropButtonStates(result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {}, commentIds);
+    const ytBtnStates: ButtonStateMap = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+    const studioBtnStates: ButtonStateMap = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
+    dropButtonStates(ytBtnStates, commentIds);
+    dropButtonStates(studioBtnStates, commentIds);
 
     await SYH_STORAGE.setAsync({
         [storageKey]: updated,
@@ -117,7 +124,7 @@ export async function removeCollectedComment(
  */
 export async function clearAllCollectedForSheet(sheetId: string): Promise<void> {
     const storageKey = getSheetCollectedStorageKey(sheetId);
-    const result = await SYH_STORAGE.getAsync<Record<string, any>>([
+    const result = await SYH_STORAGE.getAsync([
         storageKey,
         STORAGE_KEYS.YT_BUTTON_STATES,
         STORAGE_KEYS.STUDIO_BUTTON_STATE
@@ -126,10 +133,13 @@ export async function clearAllCollectedForSheet(sheetId: string): Promise<void> 
     const items: CommentPayload[] = result[storageKey] || [];
     const commentIds = items.map(item => item.id);
 
+    const ytBtnStates: ButtonStateMap = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
+    const studioBtnStates: ButtonStateMap = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
+
     await SYH_STORAGE.setAsync({
         [storageKey]: [],
-        [STORAGE_KEYS.YT_BUTTON_STATES]: dropButtonStates(result[STORAGE_KEYS.YT_BUTTON_STATES] || {}, commentIds),
-        [STORAGE_KEYS.STUDIO_BUTTON_STATE]: dropButtonStates(result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {}, commentIds)
+        [STORAGE_KEYS.YT_BUTTON_STATES]: dropButtonStates(ytBtnStates, commentIds),
+        [STORAGE_KEYS.STUDIO_BUTTON_STATE]: dropButtonStates(studioBtnStates, commentIds)
     });
 
     emitSheetTotals(sheetId, []);

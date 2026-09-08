@@ -6,7 +6,7 @@
 // у спільному `popup_dom_utils.restoreActiveTabState` (раніше ця логіка була
 // продубльована тут двічі — для вкладок і для підвкладок).
 
-import { STORAGE_KEYS } from '../modules/storage';
+import { STORAGE_KEYS, type StorageReadResult } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { db } from './popup_storage';
 import { restoreActiveTabState } from './popup_dom_utils';
@@ -24,7 +24,7 @@ const SCROLL_TARGET_IDS = buildScrollTargetIds(SHEET_IDS);
 /** Затримка перед відновленням скролу: дає розмітці домалюватися. */
 const SCROLL_RESTORE_DELAY_MS = 100;
 
-export function restoreDbState(result: Record<string, any>): void {
+export function restoreDbState(result: StorageReadResult): void {
     if (result[STORAGE_KEYS.DB]) {
         Object.assign(db, result[STORAGE_KEYS.DB]);
         applyInputValue('sschoolName', db.newTitleSS as string | undefined);
@@ -32,7 +32,7 @@ export function restoreDbState(result: Record<string, any>): void {
     }
 }
 
-export function restoreActiveTabUI(result: Record<string, any>): void {
+export function restoreActiveTabUI(result: StorageReadResult): void {
     const activeTabVal = readStoredValue<string>(result, STORAGE_KEYS.POPUP_ACTIVE_TAB, 'tg_active_tab');
     if (!activeTabVal) return;
 
@@ -44,7 +44,7 @@ export function restoreActiveTabUI(result: Record<string, any>): void {
     });
 }
 
-export function restoreActiveSubtabUI(result: Record<string, any>): void {
+export function restoreActiveSubtabUI(result: StorageReadResult): void {
     const activeSubtabVal = readStoredValue<string>(result, STORAGE_KEYS.POPUP_ACTIVE_SUBTAB, 'tg_active_subtab');
     if (!activeSubtabVal || !SHEET_IDS.includes(activeSubtabVal)) return;
 
@@ -57,7 +57,7 @@ export function restoreActiveSubtabUI(result: Record<string, any>): void {
     });
 }
 
-export function restoreTextareaSizesUI(result: Record<string, any>): void {
+export function restoreTextareaSizesUI(result: StorageReadResult): void {
     const textareaSizes = readStoredValue<Record<string, StoredElementSize>>(
         result, STORAGE_KEYS.POPUP_TEXTAREA_SIZES, 'tg_textarea_sizes'
     );
@@ -66,7 +66,7 @@ export function restoreTextareaSizesUI(result: Record<string, any>): void {
     applyStoredElementSizes(textareaSizes);
 }
 
-export function restoreTranslitStateUI(result: Record<string, any>): void {
+export function restoreTranslitStateUI(result: StorageReadResult): void {
     applyInputValue(
         'textArea1_oldText',
         readStoredValue<string>(result, STORAGE_KEYS.POPUP_TRANSLIT_OLD, 'tg_translit_old')
@@ -77,7 +77,7 @@ export function restoreTranslitStateUI(result: Record<string, any>): void {
     );
 }
 
-export function restoreScrollPositionsUI(result: Record<string, any>): void {
+export function restoreScrollPositionsUI(result: StorageReadResult): void {
     const scrolls = readStoredValue<Record<string, number>>(
         result, STORAGE_KEYS.POPUP_SCROLL_POSITIONS, 'tg_scroll_positions'
     );

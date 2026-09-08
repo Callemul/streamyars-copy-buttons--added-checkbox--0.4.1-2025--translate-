@@ -5,25 +5,53 @@
  * усуває зациклення навантаження (ключі/міграції не залежать від адаптера).
  */
 
-import type { PrayerItem, YTCollectedItem } from './types';
+import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry } from './types';
+import type { ButtonStateValue, CheckboxStateEntry } from './comment_types';
 
+/**
+ * Контракт адаптера сховища.
+ *
+ * Дефолтні типи читання/запису — `StorageSchema`, а не `Record<string, any>`
+ * (T17, крок 1). Схема існувала й раніше, але не використовувалась ЖОДНИМ
+ * місцем: дані користувача жили в API без будь-якої перевірки типів.
+ * Тепер відомі ключі типізовані, а `result[STORAGE_KEYS.PRAYERS]` має тип
+ * `PrayerItem[] | undefined` замість `any`.
+ */
 export interface StorageAdapter {
     isChromeStorageAvailable(): boolean;
-    get<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
-    set(items: Record<string, any>, cb?: () => void): void;
+    get<T = StorageReadResult>(keys: StorageKeyValues | StorageKeyValues[], cb: (result: T) => void): void;
+    set(items: StorageWriteItems, cb?: () => void): void;
     remove(keys: StorageKeyValues | StorageKeyValues[], cb?: () => void): void;
-    getAsync<T = Record<string, any>>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
-    setAsync(items: Record<string, any>): Promise<void>;
+    getAsync<T = StorageReadResult>(keys: StorageKeyValues | StorageKeyValues[]): Promise<T>;
+    setAsync(items: StorageWriteItems): Promise<void>;
     removeAsync(keys: StorageKeyValues | StorageKeyValues[]): Promise<void>;
-    updateAsync<T = Record<string, any>>(
+    updateAsync<T = StorageReadResult>(
         keys: StorageKeyValues | StorageKeyValues[],
         updateFn: (current: T) => T | Promise<T>
     ): Promise<T>;
-    onChanged(callback: (changes: Record<string, { oldValue?: any; newValue?: any }>, areaName: string) => void): () => void;
+    onChanged(callback: (changes: StorageChanges, areaName: string) => void): () => void;
 }
+
+/** Зміни, які chrome віддає в `onChanged`: ключ → пара «було / стало». */
+export type StorageChanges = Record<string, { oldValue?: any; newValue?: any }>;
+
+/** Результат читання зі сховища. Відомі ключі типізовані схемою. */
+export type StorageReadResult = StorageSchema;
+
+/** Набір значень на запис. Та сама схема — писати можна лише те, що описане. */
+export type StorageWriteItems = StorageSchema;
 
 export const STORAGE_SCHEMA_VERSION = 2;
 
+/**
+ * Опції в сховищі.
+ *
+ * ДУБЛЮЄ `OptionsState` (виводиться з реєстру `options/option_fields.ts`).
+ * Дублювання свідоме: правило напрямку залежностей забороняє `modules/`
+ * імпортувати з `options/` (ARCHITECTURE §2, Presentation → Infrastructure,
+ * не навпаки). Щоб копія не розійшлась мовчки, її склад звіряється з реєстром
+ * тестом `tests/storage_schema.test.js`.
+ */
 export interface StoredOptions {
     newTitleSS?: string;
     newTitlePreach?: string;
@@ -37,6 +65,22 @@ export interface StoredOptions {
     compact_secondary_tabs_default?: boolean;
 }
 
+/**
+ * Схема сховища: ключ → форма значення (T17).
+ *
+ * ЧОМУ ТУТ ЩЕ Є `[key: string]: any`. Частина ключів будується в рантаймі і
+ * статично не перелічується:
+ *   • стан аркушів попапу — `syh:popup:sheet:<sheetId>:<field>` (аркуші
+ *     додаються користувачем, див. `modules/sheets.ts`);
+ *   • зібрані коментарі аркуша — `syh:popup:collected:<sheetId>`;
+ *   • історичні форми всіх цих ключів — `tg_<field>__<sheetId>`, які МАЮТЬ
+ *     читатися далі (docs/rules/storage.md, zero data loss).
+ * Прибрати catch-all можна лише разом із шаблонними літеральними типами для
+ * цих родин ключів — це наступний крок T17, і він уже не «тільки типи».
+ *
+ * Поки catch-all лишається, схема все одно дає користь: відомий ключ має
+ * відомий тип, а `STORAGE_KEYS.PRAYERS` більше не `any`.
+ */
 export interface StorageSchema {
     [STORAGE_KEYS.OPTIONS]?: StoredOptions;
     [STORAGE_KEYS.DB]?: Record<string, any>;
@@ -46,10 +90,13 @@ export interface StorageSchema {
     [STORAGE_KEYS.YT_COLLECTED]?: YTCollectedItem[];
     [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
     [STORAGE_KEYS.COLLAPSED_TABS]?: string[];
-    [STORAGE_KEYS.STUDIO_BUTTON_STATE]?: Record<string, string>;
-    [STORAGE_KEYS.STUDIO_CHECKBOX_STATE]?: Record<string, boolean>;
+    [STORAGE_KEYS.STUDIO_BUTTON_STATE]?: Record<string, ButtonStateValue>;
+    [STORAGE_KEYS.STUDIO_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
     [STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP]?: Record<string, string>;
-    [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]?: Record<string, any>;
+    // Журнал ручних корекцій — МАСИВ записів, а не мапа: схема тут була
+    // просто неправильною (`Record<string, any>`), і ніхто цього не бачив,
+    // бо `StorageSchema` не використовувалась жодним місцем коду.
+    [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]?: StudioOverrideLogEntry[];
     [STORAGE_KEYS.POPUP_ACTIVE_TAB]?: string;
     [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]?: string;
     [STORAGE_KEYS.POPUP_SCROLL_POSITIONS]?: Record<string, number>;
@@ -57,6 +104,11 @@ export interface StorageSchema {
     [STORAGE_KEYS.INSTALLED_AT]?: number;
     [STORAGE_KEYS.VERSION]?: string;
     [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: Record<string, any> };
+    [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, ButtonStateValue>;
+    [STORAGE_KEYS.YT_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
+    [STORAGE_KEYS.STATS_CHARTS]?: unknown;
+    [STORAGE_KEYS.POPUP_TRANSLIT_OLD]?: string;
+    [STORAGE_KEYS.POPUP_TRANSLIT_NEW]?: string;
     [key: string]: any;
 }
 
@@ -198,8 +250,8 @@ export function migrateKey(oldKey: string): string {
 
 export type StorageKeyValues = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS] | string;
 
-export function migrateItemKeys(items: Record<string, any>): Record<string, any> {
-    const migratedItems: Record<string, any> = {};
+export function migrateItemKeys(items: StorageWriteItems): StorageWriteItems {
+    const migratedItems: StorageWriteItems = {};
     for (const [k, v] of Object.entries(items)) {
         migratedItems[migrateKey(k)] = v;
     }
@@ -223,8 +275,8 @@ export function prepareQueryKeys(keys: StorageKeyValues | StorageKeyValues[]): {
     return { origKeys, queryKeys: Array.from(keySet) };
 }
 
-export function processGetResult<T>(origKeys: string[], rawResult: Record<string, any>): T {
-    const out: Record<string, any> = { ...rawResult };
+export function processGetResult<T>(origKeys: string[], rawResult: StorageReadResult): T {
+    const out: StorageReadResult = { ...rawResult };
     if (rawResult) {
         origKeys.forEach(k => {
             const m = migrateKey(k);

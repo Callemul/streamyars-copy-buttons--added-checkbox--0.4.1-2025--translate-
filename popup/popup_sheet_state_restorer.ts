@@ -20,8 +20,9 @@ import {
     restoreSheetDividerPos
 } from './popup_sheet_field_restorer';
 import { restoreSheetDeletedLog, restoreSheetCleanedLog } from './popup_sheet_log_restorer';
+import type { StorageReadResult } from '../modules/storage';
 
-export function restoreSingleSheetState(sId: string, result: Record<string, any>): void {
+export function restoreSingleSheetState(sId: string, result: StorageReadResult): void {
     restoreSheetValueFields(sId, result);
     restoreSheetStats(sId, result);
     restoreSheetDeletedLog(sId, result);

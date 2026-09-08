@@ -16,6 +16,7 @@
 import { $, setElementText } from './popup_dom_utils';
 import { updateOldInputStats, updateNewInputStats, ensureStatsBarRows } from './popup_telegram';
 import { readSheetBinding } from './popup_sheet_keys';
+import type { StorageReadResult } from '../modules/storage';
 import {
     persistedValueFields,
     getSheetStateBinding,
@@ -39,7 +40,7 @@ const AFTER_RESTORE: Readonly<Record<string, (sheetId: string) => void>> = {
 function restoreValueField(
     field: SheetFieldDescriptor & { value: SheetStateBinding },
     sheetId: string,
-    result: Record<string, any>
+    result: StorageReadResult
 ): void {
     const val = readSheetBinding(result, sheetId, field.value);
     if (!val) return;
@@ -58,7 +59,7 @@ function restoreValueField(
 }
 
 /** Усі поля, значення яких зберігається напряму — одним проходом по реєстру. */
-export function restoreSheetValueFields(sheetId: string, result: Record<string, any>): void {
+export function restoreSheetValueFields(sheetId: string, result: StorageReadResult): void {
     persistedValueFields().forEach(field => restoreValueField(field, sheetId, result));
 }
 
@@ -67,7 +68,7 @@ export function restoreSheetValueFields(sheetId: string, result: Record<string, 
  * лише коли панель була видима — тому обидва її ключі оголошені в реєстрі як
  * `state`, а не `value`.
  */
-export function restoreSheetStats(sheetId: string, result: Record<string, any>): void {
+export function restoreSheetStats(sheetId: string, result: StorageReadResult): void {
     const statsVisible = readSheetBinding(result, sheetId, getSheetStateBinding('statsVisible'));
     if (!statsVisible) return;
 
@@ -88,7 +89,7 @@ export function restoreSheetStats(sheetId: string, result: Record<string, any>):
  * канонічною, тож другий доданок `??` мертвий. Лишено як є (див. коментар
  * до `DIVIDER_POS` у реєстрі).
  */
-export function restoreSheetDividerPos(sheetId: string, result: Record<string, any>): void {
+export function restoreSheetDividerPos(sheetId: string, result: StorageReadResult): void {
     const divPos = readSheetBinding(result, sheetId, getSheetStateBinding('dividerPos'));
     if (!divPos) return;
 

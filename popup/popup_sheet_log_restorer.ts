@@ -22,6 +22,7 @@
 import { $, setTextContent, setElementText } from './popup_dom_utils';
 import { readSheetBinding } from './popup_sheet_keys';
 import { getSheetStateBinding, type SheetStateBinding } from './popup_sheet_fields';
+import type { StorageReadResult } from '../modules/storage';
 
 /** Обчислює кількість записів журналу, коли її не збережено явно. */
 type LogCountResolver = (sheetId: string, html: string | undefined) => number;
@@ -93,7 +94,7 @@ function applyLogDetailsState(targetDetailsId: string, sheetId: string, isOpen: 
 }
 
 /** Гілка «журнал видимий»: html → лічильник → стан `<details>`. */
-function restoreVisibleLog(sheetId: string, result: Record<string, any>, config: LogRestoreConfig): void {
+function restoreVisibleLog(sheetId: string, result: StorageReadResult, config: LogRestoreConfig): void {
     const html = readSheetBinding(result, sheetId, config.html);
     if (html) setElementText(`${config.targetHtmlId}${sheetId}`, html);
 
@@ -104,7 +105,7 @@ function restoreVisibleLog(sheetId: string, result: Record<string, any>, config:
     applyLogDetailsState(config.targetDetailsId, sheetId, isOpen);
 }
 
-function restoreSheetLog(sheetId: string, result: Record<string, any>, config: LogRestoreConfig): void {
+function restoreSheetLog(sheetId: string, result: StorageReadResult, config: LogRestoreConfig): void {
     const isVisible = Boolean(readSheetBinding(result, sheetId, config.visible));
 
     if (isVisible) {
@@ -149,10 +150,10 @@ const CLEANED_LOG_CONFIG: LogRestoreConfig = {
     countFromDom: countCleanedRows
 };
 
-export function restoreSheetDeletedLog(sheetId: string, result: Record<string, any>): void {
+export function restoreSheetDeletedLog(sheetId: string, result: StorageReadResult): void {
     restoreSheetLog(sheetId, result, DELETED_LOG_CONFIG);
 }
 
-export function restoreSheetCleanedLog(sheetId: string, result: Record<string, any>): void {
+export function restoreSheetCleanedLog(sheetId: string, result: StorageReadResult): void {
     restoreSheetLog(sheetId, result, CLEANED_LOG_CONFIG);
 }
