@@ -6,6 +6,7 @@
 // (cyclomatic 10 / cognitive 16) — єдина продакшн-знахідка складності у
 // проєкті. Реалізацію розділено за відповідальностями:
 //   - `popup_sheet_keys.ts`          — читання значення з фолбеком на легасі-ключ;
+//   - `popup_sheet_fields.ts`         — РЕЄСТР полів аркуша (T8);
 //   - `popup_sheet_field_restorer.ts` — прості поля, статистика, роздільник;
 //   - `popup_sheet_log_restorer.ts`   — журнали «видалені» та «очищені».
 //
@@ -14,20 +15,14 @@
 
 import { loadYTCollected } from './popup_telegram';
 import {
-    restoreSheetOldList,
-    restoreSheetAnswered,
-    restoreSheetNewTelegram,
-    restoreSheetFinalHtml,
+    restoreSheetValueFields,
     restoreSheetStats,
     restoreSheetDividerPos
 } from './popup_sheet_field_restorer';
 import { restoreSheetDeletedLog, restoreSheetCleanedLog } from './popup_sheet_log_restorer';
 
 export function restoreSingleSheetState(sId: string, result: Record<string, any>): void {
-    restoreSheetOldList(sId, result);
-    restoreSheetAnswered(sId, result);
-    restoreSheetNewTelegram(sId, result);
-    restoreSheetFinalHtml(sId, result);
+    restoreSheetValueFields(sId, result);
     restoreSheetStats(sId, result);
     restoreSheetDeletedLog(sId, result);
     restoreSheetCleanedLog(sId, result);

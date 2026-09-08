@@ -25,3 +25,12 @@ export function readSheetValue(
 ): any {
     return result[canonicalKey(sheetId)] ?? result[`${legacyPrefix}${sheetId}`];
 }
+
+/** Те саме, але прив'язка береться з реєстру полів (`popup_sheet_fields.ts`). */
+export function readSheetBinding(
+    result: Record<string, any>,
+    sheetId: string,
+    binding: { key: SheetKeyBuilder; legacyPrefix: string }
+): any {
+    return readSheetValue(result, sheetId, binding.key, binding.legacyPrefix);
+}

@@ -5,8 +5,13 @@
 //
 // Виділено з popup/popup_listeners.ts, де вся ця логіка була одним
 // 98-рядковим колбеком SHEET_IDS.forEach (CRAP 56).
+//
+// Після T8 збереження полів генерується з реєстру `popup_sheet_fields.ts`:
+// раніше кожне поле мало власну `bind<Field>Input()` з окремо вписаним
+// легасі-ключем, і саме тут найлегше було забути новододане поле — воно
+// відновлювалось, але не зберігалось.
 
-import { SYH_STORAGE, POPUP_SHEET_KEYS } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage';
 import { SheetStateService } from '../modules/sheet_state_service';
 import { $, bindDebouncedInput } from './popup_dom_utils';
 import {
@@ -17,25 +22,32 @@ import {
     clearAllYTCollected
 } from './popup_telegram';
 import { clearSheetState } from './popup_sheet_clear';
+import {
+    persistedValueFields,
+    getSheetStateBinding,
+    sheetFieldId,
+    sheetStateKeys,
+    type SheetFieldDescriptor,
+    type SheetStateBinding
+} from './popup_sheet_fields';
 
 export type SheetTimers = Map<string, ReturnType<typeof setTimeout>>;
 
-export interface SheetBindingTimers {
-    oldList: SheetTimers;
-    newTelegram: SheetTimers;
-    answeredIds: SheetTimers;
-    finalResult: SheetTimers;
-}
+/**
+ * Мапи таймерів debounce — по одній на поле, що зберігається.
+ *
+ * Ключ — префікс id поля з реєстру (`oldList`, `answeredIds`, `newTelegram`,
+ * `finalResultDiv`). До T8 це був інтерфейс із чотирма іменованими полями, і
+ * нове поле аркуша вимагало ще й нового рядка тут.
+ */
+export type SheetBindingTimers = Record<string, SheetTimers>;
 
 export const SHEET_INPUT_DEBOUNCE_MS = 300;
 
 export function createSheetBindingTimers(): SheetBindingTimers {
-    return {
-        oldList: new Map(),
-        newTelegram: new Map(),
-        answeredIds: new Map(),
-        finalResult: new Map()
-    };
+    const timers: SheetBindingTimers = {};
+    persistedValueFields().forEach(field => { timers[field.idPrefix] = new Map(); });
+    return timers;
 }
 
 /**
@@ -52,45 +64,71 @@ export function persistSheetValue(canonicalKey: string, legacyKey: string, value
     SYH_STORAGE.set({ [canonicalKey]: value, [legacyKey]: value });
 }
 
-function bindOldListInput(sId: string, timers: SheetTimers): void {
-    bindDebouncedInput($(`oldList__${sId}`), sId, timers, SHEET_INPUT_DEBOUNCE_MS, (val) => {
-        persistSheetValue(POPUP_SHEET_KEYS.oldList(sId), `tg_oldList__${sId}`, val);
-        updateOldInputStats(sId);
+/** Зберігає значення поля за його прив'язкою з реєстру. */
+function persistBinding(binding: SheetStateBinding, sId: string, value: unknown): void {
+    const [canonicalKey, legacyKey] = sheetStateKeys(binding, sId);
+    persistSheetValue(canonicalKey, legacyKey, value);
+}
+
+/**
+ * Побічні ефекти після збереження, за префіксом id поля.
+ *
+ * Тримаються тут, а не в реєстрі: реєстр — чиста таблиця даних і не має знати
+ * про `popup_telegram`. Поле без побічного ефекту рядка тут не потребує.
+ */
+const AFTER_PERSIST: Readonly<Record<string, (sId: string) => void>> = {
+    oldList: (sId) => updateOldInputStats(sId),
+    newTelegram: (sId) => { updateNewInputStats(sId); clearFinalResult(sId); },
+    answeredIds: (sId) => { updateCombinedCounters(sId); clearFinalResult(sId); }
+};
+
+/** `<textarea>` / `<input>`: debounce по `input`, значення з `.value`. */
+function bindValueInput(
+    field: SheetFieldDescriptor & { value: SheetStateBinding },
+    sId: string,
+    timers: SheetTimers
+): void {
+    bindDebouncedInput($(sheetFieldId(field, sId)), sId, timers, SHEET_INPUT_DEBOUNCE_MS, (val) => {
+        persistBinding(field.value, sId, val);
+        AFTER_PERSIST[field.idPrefix]?.(sId);
     });
 }
 
-function bindNewTelegramInput(sId: string, timers: SheetTimers): void {
-    bindDebouncedInput($(`newTelegram__${sId}`), sId, timers, SHEET_INPUT_DEBOUNCE_MS, (val) => {
-        persistSheetValue(POPUP_SHEET_KEYS.newTelegram(sId), `tg_newTelegram__${sId}`, val);
-        updateNewInputStats(sId);
-        clearFinalResult(sId);
-    });
-}
-
-function bindAnsweredIdsInput(sId: string, timers: SheetTimers): void {
-    bindDebouncedInput($(`answeredIds__${sId}`), sId, timers, SHEET_INPUT_DEBOUNCE_MS, (val) => {
-        persistSheetValue(POPUP_SHEET_KEYS.answered(sId), `tg_answered__${sId}`, val);
-        updateCombinedCounters(sId);
-        clearFinalResult(sId);
-    });
-}
-
-/** contenteditable-блок фінального результату: зберігає innerHTML з debounce. */
-export function bindFinalResultPersistence(sId: string, timers: SheetTimers): void {
-    const finalResultEl = $(`finalResultDiv__${sId}`);
-    if (!finalResultEl) return;
+/**
+ * `contenteditable`-блок: власний debounce по `input` і `blur`, значення —
+ * `innerHTML`. Окремий механізм, бо в contenteditable немає `.value`.
+ */
+function bindHtmlInput(
+    field: SheetFieldDescriptor & { value: SheetStateBinding },
+    sId: string,
+    timers: SheetTimers
+): void {
+    const el = $(sheetFieldId(field, sId));
+    if (!el) return;
 
     const handler = function (this: HTMLElement): void {
         const html = this.innerHTML;
         const existing = timers.get(sId);
         if (existing) clearTimeout(existing);
         timers.set(sId, setTimeout(() => {
-            persistSheetValue(POPUP_SHEET_KEYS.finalResultHtml(sId), `tg_finalResultHtml__${sId}`, html);
+            persistBinding(field.value, sId, html);
+            AFTER_PERSIST[field.idPrefix]?.(sId);
         }, SHEET_INPUT_DEBOUNCE_MS));
     };
 
-    finalResultEl.addEventListener('input', handler);
-    finalResultEl.addEventListener('blur', handler);
+    el.addEventListener('input', handler);
+    el.addEventListener('blur', handler);
+}
+
+/** Прив'язує збереження всіх полів аркуша — циклом по реєстру. */
+export function bindSheetValueFields(sId: string, timers: SheetBindingTimers): void {
+    persistedValueFields().forEach(field => {
+        const fieldTimers = timers[field.idPrefix];
+        if (!fieldTimers) return;
+
+        if (field.kind === 'html') bindHtmlInput(field, sId, fieldTimers);
+        else bindValueInput(field, sId, fieldTimers);
+    });
 }
 
 /** Запам'ятовує розгорнутий/згорнутий стан <details> для логів аркуша. */
@@ -98,12 +136,10 @@ export function bindSheetDetailsToggle(kind: 'deleted' | 'cleaned', sId: string)
     const detailsEl = $(`${kind}LogDetails__${sId}`) as HTMLDetailsElement | null;
     if (!detailsEl) return;
 
-    const canonicalKey = kind === 'deleted'
-        ? POPUP_SHEET_KEYS.deletedLogDetailsOpen(sId)
-        : POPUP_SHEET_KEYS.cleanedLogDetailsOpen(sId);
+    const binding = getSheetStateBinding(`${kind}LogDetailsOpen`);
 
     detailsEl.addEventListener('toggle', function (this: HTMLDetailsElement) {
-        persistSheetValue(canonicalKey, `tg_${kind}LogDetailsOpen__${sId}`, this.open);
+        persistBinding(binding, sId, this.open);
     });
 }
 
@@ -119,10 +155,7 @@ export function bindSheetActionButtons(sId: string): void {
 
 /** Єдина точка входу: підключає всі слухачі одного аркуша. */
 export function bindSheetListeners(sId: string, timers: SheetBindingTimers): void {
-    bindOldListInput(sId, timers.oldList);
-    bindNewTelegramInput(sId, timers.newTelegram);
-    bindAnsweredIdsInput(sId, timers.answeredIds);
-    bindFinalResultPersistence(sId, timers.finalResult);
+    bindSheetValueFields(sId, timers);
     bindSheetDetailsToggle('deleted', sId);
     bindSheetDetailsToggle('cleaned', sId);
     bindSheetActionButtons(sId);

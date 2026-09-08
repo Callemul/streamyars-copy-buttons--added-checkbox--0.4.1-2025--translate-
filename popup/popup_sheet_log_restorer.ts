@@ -19,24 +19,23 @@
 //   - кількість рядків рахується з DOM уже ПІСЛЯ підстановки html;
 //   - невидимий журнал очищає лічильник у порожній рядок.
 
-import { POPUP_SHEET_KEYS } from '../modules/storage';
 import { $, setTextContent, setElementText } from './popup_dom_utils';
-import { readSheetValue, type SheetKeyBuilder } from './popup_sheet_keys';
+import { readSheetBinding } from './popup_sheet_keys';
+import { getSheetStateBinding, type SheetStateBinding } from './popup_sheet_fields';
 
 /** Обчислює кількість записів журналу, коли її не збережено явно. */
 type LogCountResolver = (sheetId: string, html: string | undefined) => number;
 
 interface LogRestoreConfig {
-    /** Канонічні ключі storage. */
-    visibleKey: SheetKeyBuilder;
-    htmlKey: SheetKeyBuilder;
-    countKey: SheetKeyBuilder;
-    openKey: SheetKeyBuilder;
-    /** Історичні префікси ключів (`tg_...__<sheetId>`). */
-    legacyVisibleKey: string;
-    legacyHtmlKey: string;
-    legacyCountKey: string;
-    legacyOpenKey: string;
+    /**
+     * Прив'язки до сховища — з реєстру полів (`popup_sheet_fields.ts`, T8).
+     * Кожна вже несе і канонічний ключ, і історичний префікс, тож легасі-форма
+     * ключа журналу описана в проєкті рівно один раз.
+     */
+    visible: SheetStateBinding;
+    html: SheetStateBinding;
+    count: SheetStateBinding;
+    open: SheetStateBinding;
     /** Префікси id елементів DOM. */
     targetHtmlId: string;
     targetCountId: string;
@@ -95,18 +94,18 @@ function applyLogDetailsState(targetDetailsId: string, sheetId: string, isOpen: 
 
 /** Гілка «журнал видимий»: html → лічильник → стан `<details>`. */
 function restoreVisibleLog(sheetId: string, result: Record<string, any>, config: LogRestoreConfig): void {
-    const html = readSheetValue(result, sheetId, config.htmlKey, config.legacyHtmlKey);
+    const html = readSheetBinding(result, sheetId, config.html);
     if (html) setElementText(`${config.targetHtmlId}${sheetId}`, html);
 
-    const rawCount = readSheetValue(result, sheetId, config.countKey, config.legacyCountKey);
+    const rawCount = readSheetBinding(result, sheetId, config.count);
     applyLogCount(config.targetCountId, sheetId, resolveLogCount(sheetId, html, rawCount, config.countFromDom));
 
-    const isOpen = Boolean(readSheetValue(result, sheetId, config.openKey, config.legacyOpenKey));
+    const isOpen = Boolean(readSheetBinding(result, sheetId, config.open));
     applyLogDetailsState(config.targetDetailsId, sheetId, isOpen);
 }
 
 function restoreSheetLog(sheetId: string, result: Record<string, any>, config: LogRestoreConfig): void {
-    const isVisible = Boolean(readSheetValue(result, sheetId, config.visibleKey, config.legacyVisibleKey));
+    const isVisible = Boolean(readSheetBinding(result, sheetId, config.visible));
 
     if (isVisible) {
         restoreVisibleLog(sheetId, result, config);
@@ -129,14 +128,10 @@ function countCleanedRows(sheetId: string, cleanHtml: string | undefined): numbe
 }
 
 const DELETED_LOG_CONFIG: LogRestoreConfig = {
-    visibleKey: POPUP_SHEET_KEYS.deletedLogDetailsVisible,
-    htmlKey: POPUP_SHEET_KEYS.deletedLogHtml,
-    countKey: POPUP_SHEET_KEYS.deletedLogCount,
-    openKey: POPUP_SHEET_KEYS.deletedLogDetailsOpen,
-    legacyVisibleKey: 'tg_deletedLogDetailsVisible__',
-    legacyHtmlKey: 'tg_deletedLogHtml__',
-    legacyCountKey: 'tg_deletedLogCount__',
-    legacyOpenKey: 'tg_deletedLogDetailsOpen__',
+    visible: getSheetStateBinding('deletedLogDetailsVisible'),
+    html: getSheetStateBinding('deletedLogHtml'),
+    count: getSheetStateBinding('deletedLogCount'),
+    open: getSheetStateBinding('deletedLogDetailsOpen'),
     targetHtmlId: 'deletedLog__',
     targetCountId: 'deletedLogCount__',
     targetDetailsId: 'deletedLogDetails__',
@@ -144,14 +139,10 @@ const DELETED_LOG_CONFIG: LogRestoreConfig = {
 };
 
 const CLEANED_LOG_CONFIG: LogRestoreConfig = {
-    visibleKey: POPUP_SHEET_KEYS.cleanedLogDetailsVisible,
-    htmlKey: POPUP_SHEET_KEYS.cleanedLogHtml,
-    countKey: POPUP_SHEET_KEYS.cleanedLogCount,
-    openKey: POPUP_SHEET_KEYS.cleanedLogDetailsOpen,
-    legacyVisibleKey: 'tg_cleanedLogDetailsVisible__',
-    legacyHtmlKey: 'tg_cleanedLogHtml__',
-    legacyCountKey: 'tg_cleanedLogCount__',
-    legacyOpenKey: 'tg_cleanedLogDetailsOpen__',
+    visible: getSheetStateBinding('cleanedLogDetailsVisible'),
+    html: getSheetStateBinding('cleanedLogHtml'),
+    count: getSheetStateBinding('cleanedLogCount'),
+    open: getSheetStateBinding('cleanedLogDetailsOpen'),
     targetHtmlId: 'cleanedLog__',
     targetCountId: 'cleanedLogCount__',
     targetDetailsId: 'cleanedLogDetails__',

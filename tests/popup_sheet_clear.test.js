@@ -87,6 +87,7 @@ const {
     SHEET_INPUT_DEBOUNCE_MS
 } = await import('../popup/popup_sheet_bindings.ts');
 
+const { persistedValueFields } = await import('../popup/popup_sheet_fields.ts');
 const { POPUP_SHEET_KEYS, migrateKey } = await import('../modules/storage.ts');
 
 const SID = 'vp_ss';
@@ -300,9 +301,16 @@ describe('popup_sheet_bindings — прив\'язка слухачів арку�
         assert.equal(confirmCalls[0], CLEAR_SHEET_CONFIRM_MESSAGE);
     });
 
-    test('14. createSheetBindingTimers дає ізольовані мапи таймерів', () => {
+    // Після T8 мапи таймерів генеруються з реєстру полів, а не перелічені
+    // руками, тому ключі — це префікси id полів (`finalResultDiv`, а не
+    // `finalResult`). Перевіряємо саме зв'язок з реєстром: інакше тест
+    // фіксував би список, який знову довелося б правити руками.
+    test('14. createSheetBindingTimers дає ізольовані мапи таймерів — по одній на поле з реєстру', () => {
         const timers = createSheetBindingTimers();
-        assert.deepEqual(Object.keys(timers).sort(), ['answeredIds', 'finalResult', 'newTelegram', 'oldList']);
+        const expected = persistedValueFields().map(f => f.idPrefix);
+
+        assert.deepEqual(Object.keys(timers).sort(), [...expected].sort());
+        assert.deepEqual(expected.sort(), ['answeredIds', 'finalResultDiv', 'newTelegram', 'oldList']);
         Object.values(timers).forEach(m => assert.ok(m instanceof Map));
 
         timers.oldList.set(SID, 1);

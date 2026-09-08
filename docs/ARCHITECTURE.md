@@ -129,13 +129,14 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
 | Селектори YouTube | `youtube/yt_selectors.ts` | `yt_*` |
 | Селектори Studio | `youtube/studio/studio_selectors.ts` | `studio_*` |
 | Вигляд кнопок і чекбоксів | `modules/ui_factory.ts` (`UiFactory`) | усі панелі |
+| Поля аркуша попапу (гачок, id, вид, ключі сховища) | `popup/popup_sheet_fields.ts` (`SHEET_FIELDS`) | `popup_sheet_renderer.ts`, `popup_sheet_field_restorer.ts`, `popup_sheet_log_restorer.ts`, `popup_sheet_bindings.ts` |
 | Налаштування | `options/defaults.ts` (`OptionsState`, `DEFAULT_OPTIONS`) | `options/form.ts`, споживачі опцій |
 | Події між модулями | `modules/event_bus.ts` (`SYH_BUS`, 16 типів) | плагіни, статистика, банери |
 | Плагіни StreamYard | `modules/plugin_registry.ts` (`SYH_PLUGINS`) | `bootstrap_app.ts` |
 | Ліміти й таймінги | `modules/config.ts` (`SYH_CONFIG.TIMINGS`, `LIMITS`) | anti-AFK, auto-heal, спалахи кнопок |
 
-Ще не зведені в реєстр (відомий борг, задачі T8–T9):
-поля аркуша попапу (6 місць на одне поле) і опції сторінки налаштувань (5–7 місць).
+Ще не зведені в реєстр (відомий борг, задача T9):
+опції сторінки налаштувань (5–7 місць на одну опцію).
 
 ---
 
