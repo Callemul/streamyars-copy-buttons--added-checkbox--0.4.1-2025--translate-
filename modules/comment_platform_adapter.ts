@@ -32,7 +32,7 @@ export interface PlatformButtons {
      * Нова дія в реєстрі підхоплюється без правок цього інтерфейсу.
      */
     actionButtons?: Partial<Record<CommentActionId, HTMLElement | null>>;
-    /** @deprecated Історичні іменовані слоти; лишаються, доки StreamYard не перейде на адаптер (T7). */
+    /** @deprecated Історичні іменовані слоти адаптерів YouTube і Studio; новий код віддає `actionButtons`. */
     questionBtn: HTMLElement | null;
     /** @deprecated Див. `actionButtons`. */
     prayerBtn: HTMLElement | null;
@@ -43,8 +43,8 @@ export interface PlatformButtons {
 }
 
 /**
- * Сумісність зі старими адаптерами: поки вони віддають іменовані слоти,
- * а не мапу `actionButtons`. Прибрати разом із `@deprecated`-полями (T7).
+ * Сумісність із адаптерами, які ще віддають іменовані слоти, а не мапу
+ * `actionButtons` (YouTube і Studio). StreamYard уже на мапі.
  */
 const LEGACY_BUTTON_SLOTS: Readonly<Record<CommentActionId, keyof PlatformButtons>> = {
     copy: 'copyBtn',
@@ -106,7 +106,7 @@ export interface CommentPlatformAdapter {
      * (`comment_action_runner`: toggle on / untoggle + збережені коментарі аркуша).
      * StreamYard має власну семантику — банер копіювання, база молитов,
      * `data-syh-just-added`, різні іконки за кнопкою миші — і реалізує її тут,
-     * замість паралельного конвеєра `modules/event_comments/*` (T7).
+     * замість паралельного конвеєра, який був у StreamYard до T7.
      */
     runAction?(invocation: ActionInvocation): Promise<void> | void;
     /**

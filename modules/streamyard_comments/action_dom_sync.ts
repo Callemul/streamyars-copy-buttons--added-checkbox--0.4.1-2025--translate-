@@ -1,4 +1,4 @@
-// modules/event_comments/action_dom_sync.ts
+// modules/streamyard_comments/action_dom_sync.ts
 //
 // ПРИЗНАЧЕННЯ: одна відповідальність — синхронізація DOM-стану картки коментаря
 // після успішного копіювання: чекбокси та кнопка «зірка» платформи.

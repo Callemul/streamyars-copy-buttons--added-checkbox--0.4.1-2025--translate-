@@ -1,4 +1,4 @@
-// Характеристичні тести публічного API handlers.ts (modules/event_comments/handlers).
+// Характеристичні тести публічного API handlers.ts (modules/streamyard_comments/handlers).
 //
 // Тести проходять через bind-функції: створюють DOM-елементи, реєструють
 // обробники через bind*, розпилюють події та перевіряють side-effects.
@@ -38,7 +38,7 @@ const {
     bindMiddleClickHandler,
     bindContextMenuHandlers,
     bindSyhButtonMouseHandlers,
-} = await import('../modules/event_comments/handlers');
+} = await import('../modules/streamyard_comments/handlers');
 
 const { SYH_STATE } = await import('../modules/state.ts');
 
@@ -53,7 +53,7 @@ const TEST_SELECTORS = {
 /** Трекер для cleanup event listeners між тестами */
 let currentSelf = null;
 
-/** Створює мінімальний mock SyhEventComments для тестів */
+/** Створює мінімальний mock SyhStreamYardComments для тестів */
 function createMockSelf(overrides = {}) {
     const calls = {
         removeFromDatabase: [],
@@ -125,7 +125,7 @@ afterEach(() => {
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments handlers — bindStarButtonClickHandler', () => {
+describe('streamyard_comments handlers — bindStarButtonClickHandler', () => {
     test('1. клік по не-star елементу → жодної дії', () => {
         document.body.innerHTML = `
             <div class="other-content">
@@ -221,7 +221,7 @@ describe('event_comments handlers — bindStarButtonClickHandler', () => {
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments handlers — bindMiddleClickHandler', () => {
+describe('streamyard_comments handlers — bindMiddleClickHandler', () => {
     test('6. лівий клік (button 0) → жодної дії', () => {
         document.body.innerHTML = `
             <div class="test-comment-block">
@@ -279,7 +279,7 @@ describe('event_comments handlers — bindMiddleClickHandler', () => {
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments handlers — bindContextMenuHandlers', () => {
+describe('streamyard_comments handlers — bindContextMenuHandlers', () => {
     test('9. правий клік по не-action кнопці → жодної дії', () => {
         document.body.innerHTML = `
             <div class="test-comment-block"></div>
@@ -335,7 +335,7 @@ describe('event_comments handlers — bindContextMenuHandlers', () => {
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments handlers — bindSyhButtonMouseHandlers', () => {
+describe('streamyard_comments handlers — bindSyhButtonMouseHandlers', () => {
     test('12. середній клік по syh-button[data-type="comment"] → preventDefault', () => {
         document.body.innerHTML = `
             <div class="test-comment-block">

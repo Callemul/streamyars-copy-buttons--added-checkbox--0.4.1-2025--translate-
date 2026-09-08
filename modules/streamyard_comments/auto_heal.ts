@@ -1,4 +1,4 @@
-// modules/event_comments/auto_heal.ts
+// modules/streamyard_comments/auto_heal.ts
 //
 // Auto-Heal: періодичне вирівнювання нашого стану з тим, що реально показує
 // StreamYard. Складається з двох незалежних проходів, які тепер живуть окремо:
@@ -7,14 +7,14 @@
 //
 // Тут лишився лише життєвий цикл сканера: guard на живий runtime розширення,
 // реєстрація в `SYH_DOM_OBSERVER` та батчинг проходів через один кадр
-// анімації (`tests/event_comments_auto_heal.test.js`,
-//  `tests/event_comments_auto_heal_scanner.test.js`).
+// анімації (`tests/streamyard_comments_auto_heal.test.js`,
+//  `tests/streamyard_comments_auto_heal_scanner.test.js`).
 //
 // `runAutoHeal` лишається синхронним (його викликають і з rAF-колбека, і
 // напряму з `bindAutoHealScanner`), тож асинхронний прохід «привиди»
 // запускається без очікування, але з обов'язковим `.catch()`.
 
-import type { SyhEventComments } from './types';
+import type { SyhStreamYardComments } from './types';
 import { resolveSelectorString } from '../config';
 import { SYH_DOM_OBSERVER } from '../dom_observer';
 import { isExtensionContextValid } from '../messaging_context';
@@ -24,7 +24,7 @@ import { processGhostComments } from './auto_heal_ghosts';
 /** Фолбек-селектор блоку коментаря, коли конфіг його не задає. */
 const FALLBACK_COMMENT_SELECTOR = '[class*="PlatformComment__Wrap"]';
 
-export function runAutoHeal(self: SyhEventComments): void {
+export function runAutoHeal(self: SyhStreamYardComments): void {
     if (!isExtensionContextValid()) {
         if (self.autoHealObserver) {
             self.autoHealObserver.disconnect();
@@ -48,7 +48,7 @@ export function runAutoHeal(self: SyhEventComments): void {
  * Згортає серію мутацій DOM в один прохід за кадр.
  * На прихованій вкладці кадрів немає — робота просто пропускається.
  */
-function createFrameBatchedTrigger(self: SyhEventComments): () => void {
+function createFrameBatchedTrigger(self: SyhStreamYardComments): () => void {
     let rafScheduled = false;
 
     return () => {
@@ -63,7 +63,7 @@ function createFrameBatchedTrigger(self: SyhEventComments): () => void {
     };
 }
 
-export function bindAutoHealScanner(self: SyhEventComments): void {
+export function bindAutoHealScanner(self: SyhStreamYardComments): void {
     if (self.unregisterAutoHeal) {
         self.unregisterAutoHeal();
         self.unregisterAutoHeal = null;

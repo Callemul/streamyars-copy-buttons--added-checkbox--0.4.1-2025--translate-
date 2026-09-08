@@ -1,4 +1,4 @@
-// modules/event_comments/auto_heal_ghosts.ts
+// modules/streamyard_comments/auto_heal_ghosts.ts
 //
 // Прохід «привиди»: у нашій базі лишився коментар, з якого користувач уже зняв
 // зірку в StreamYard. Такий запис треба прибрати і скинути візуальні мітки.
@@ -17,7 +17,7 @@
 //     видалити запис, який ще не встиг отримати зірку;
 //   - пропуск блоків без тексту коментаря.
 
-import type { SyhEventComments } from './types';
+import type { SyhStreamYardComments } from './types';
 import { queryBySelectorValue } from '../config';
 
 const SYH_COMMENT_SELECTOR = '[data-syh-type="prayer"], [data-syh-type="question"]';
@@ -34,7 +34,7 @@ interface GhostComment {
  * Чи є блок «привидом»: наш власний коментар, у якого зірка знята,
  * і який не позначений як щойно доданий.
  */
-function isGhostComment(self: SyhEventComments, commentBlock: Element): boolean {
+function isGhostComment(self: SyhStreamYardComments, commentBlock: Element): boolean {
     const starBtn = queryBySelectorValue(self.SELECTORS?.starButton, commentBlock);
     if (!starBtn || starBtn.getAttribute('aria-selected') !== UNSTARRED_ARIA_VALUE) return false;
 
@@ -42,7 +42,7 @@ function isGhostComment(self: SyhEventComments, commentBlock: Element): boolean 
 }
 
 /** Збирає всіх привидів за один синхронний обхід DOM. */
-function collectGhostComments(self: SyhEventComments): GhostComment[] {
+function collectGhostComments(self: SyhStreamYardComments): GhostComment[] {
     const ghosts: GhostComment[] = [];
 
     document.querySelectorAll(SYH_COMMENT_SELECTOR).forEach((commentBlock: Element) => {
@@ -61,7 +61,7 @@ function collectGhostComments(self: SyhEventComments): GhostComment[] {
  * Прибирає записи з бази і гасить кожне відхилення окремо:
  * один збій storage не має зривати обробку решти привидів.
  */
-async function removeGhostsFromDatabase(self: SyhEventComments, ghosts: GhostComment[]): Promise<void> {
+async function removeGhostsFromDatabase(self: SyhStreamYardComments, ghosts: GhostComment[]): Promise<void> {
     await Promise.allSettled(
         ghosts.map(async ({ text }) => {
             try {
@@ -74,12 +74,12 @@ async function removeGhostsFromDatabase(self: SyhEventComments, ghosts: GhostCom
 }
 
 /** Скидає підсвічування блоку; перефільтрування винесене на рівень проходу. */
-function resetCommentVisuals(self: SyhEventComments, commentBlock: Element): void {
+function resetCommentVisuals(self: SyhStreamYardComments, commentBlock: Element): void {
     self.UI?.updateCommentVisuals(commentBlock, 'none');
 }
 
 /** Одне перефільтрування на весь прохід — замість таймера на кожен привид. */
-function refilterOnce(self: SyhEventComments): void {
+function refilterOnce(self: SyhStreamYardComments): void {
     const ui = self.UI;
     if (!ui) return;
 
@@ -88,7 +88,7 @@ function refilterOnce(self: SyhEventComments): void {
     }
 }
 
-export async function processGhostComments(self: SyhEventComments): Promise<void> {
+export async function processGhostComments(self: SyhStreamYardComments): Promise<void> {
     const ghosts = collectGhostComments(self);
     if (ghosts.length === 0) return;
 

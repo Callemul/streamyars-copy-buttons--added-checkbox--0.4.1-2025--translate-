@@ -1,8 +1,8 @@
-import type { SyhEventComments } from '../types';
+import type { SyhStreamYardComments } from '../types';
 
 export function getValidatedTarget(
     e: Event,
-    self: SyhEventComments,
+    self: SyhStreamYardComments,
     selectorKey: string
 ): Element | null {
     const target = e.target as Element | null;

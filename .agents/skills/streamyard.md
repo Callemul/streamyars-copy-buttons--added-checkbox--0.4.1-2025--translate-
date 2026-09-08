@@ -25,9 +25,10 @@
   }
   ```
 - **Пайплайн ін'єкції (DOM Observer)**: Замість локальних обсерверів використовується єдиний глобальний `DomObserverService` (`modules/dom_observer.ts`), який слухає `document.body` і сповіщає про появу селекторів (наприклад, `commentBlock` чи `bannerBlock`).
-- **Делегування подій**: Жодні `click`-слухачі не вішаються на самі кнопки під час ін'єкції. Всі події обробляються через глобальне делегування на `document` (`mousedown`, `mouseup`, `contextmenu`, `change`), що реалізовано в `modules/event_comments/index.ts` та `modules/event_banners/index.ts`.
+- **Події кнопок коментаря**: слухачі вішаються на самі кнопки — це робить `CommentInjector` (`modules/streamyard_comment_binding.ts`) одразу після вставки панелі. Подія береться з реєстру: StreamYard слухає `mouseup`, бо для 🙏 має значення кнопка миші. Обробляє клік `StreamYardCommentAdapter.runAction` (`modules/streamyard_adapter.ts`). Стійкість до перемальовувань дає маркер `data-syh-events-bound` на контейнері кнопок: зникла панель — зникла й позначка.
+- **Делегування на `document`** лишилось для того, що не належить окремій картці: Auto-Heal, зірка, коліщатко, ПКМ по кнопках платформи (`modules/streamyard_comments/index.ts`) і банери (`modules/event_banners/index.ts`).
 - **Idempotency**: Завжди перевіряй наявність власного контейнера (напр. `.syh-custom-buttons-comment` або `.syh-custom-buttons`) перед ін'єкцією, оскільки React-дерево StreamYard постійно перемальовується.
-- **Clipboard API**: Копіювання (`navigator.clipboard.writeText`) та інші дії відбуваються всередині делегованих глобальних обробників (`mouseup`, `contextmenu`).
+- **Clipboard API**: копіювання йде через `SYH_UTILS.copyAndShowBanner` усередині `StreamYardCommentAdapter.runAction`, а не з UI-обробника напряму.
 
 ---
 
@@ -72,9 +73,9 @@ console.log({
 | Ключі сховища | `modules/storage_keys.ts` | Рядкові літерали заборонені |
 | Плагіни StreamYard | `modules/plugin_registry.ts` | |
 
-> ⚠️ StreamYard поки не має `CommentPlatformAdapter` — кліки обробляє
-> `modules/event_comments/*`. Імена дій там уже резолвляться через реєстр
-> (`resolveActionId('streamyard', ...)`), повна міграція — задача T7 в
-> `docs/audits/active/2026-09-08_CLAUDE_OPUS_5_TASKS.md`.
+> StreamYard має `CommentPlatformAdapter` — `modules/streamyard_adapter.ts` (T7).
+> Усі три поверхні працюють однаково: реєстр дій → панель → `CommentInjector` →
+> адаптер. Особливості StreamYard (ЛКМ/коліщатко/ПКМ по 🙏, банер копіювання,
+> база молитов, `data-syh-just-added`) — усередині адаптера, не в UI-обробниках.
 
 Повна таблиця реєстрів — `docs/ARCHITECTURE.md` §4. Сценарії змін — `docs/HOWTO_ADD.md`.

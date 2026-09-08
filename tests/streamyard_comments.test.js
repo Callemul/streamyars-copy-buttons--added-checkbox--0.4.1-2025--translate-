@@ -22,9 +22,9 @@ installChromeMock({
     }
 });
 
-const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_EVENT_COMMENTS } = await import('../modules/event_comments.ts');
+const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_STREAMYARD_COMMENTS } = await import('../modules/streamyard_comments.ts');
 
-describe('SYH_EVENT_COMMENTS Helper Tests', () => {
+describe('SYH_STREAMYARD_COMMENTS Helper Tests', () => {
     beforeEach(() => {
         mockStorageStore = {};
         if (typeof globalThis.window.location === 'undefined') {
@@ -81,15 +81,15 @@ describe('SYH_EVENT_COMMENTS Helper Tests', () => {
     });
 
     test('saveToDatabase and removeFromDatabase manage prayer records in storage', async () => {
-        SYH_EVENT_COMMENTS.init();
-        await SYH_EVENT_COMMENTS.saveToDatabase('John', 'Need prayer for health', 'prayer', '🙏🙏🙏');
+        SYH_STREAMYARD_COMMENTS.init();
+        await SYH_STREAMYARD_COMMENTS.saveToDatabase('John', 'Need prayer for health', 'prayer', '🙏🙏🙏');
         const stored = mockStorageStore['syh:popup:prayers'];
         assert.ok(Array.isArray(stored));
         assert.strictEqual(stored.length, 1);
         assert.strictEqual(stored[0].author, 'John');
         assert.strictEqual(stored[0].text, 'Need prayer for health');
 
-        await SYH_EVENT_COMMENTS.removeFromDatabase('Need prayer for health');
+        await SYH_STREAMYARD_COMMENTS.removeFromDatabase('Need prayer for health');
         const storedAfter = mockStorageStore['syh:popup:prayers'];
         assert.strictEqual(storedAfter.length, 0);
     });
@@ -108,12 +108,12 @@ describe('SYH_EVENT_COMMENTS Helper Tests', () => {
             }
         };
 
-        SYH_EVENT_COMMENTS.init();
-        SYH_EVENT_COMMENTS.bindEvents();
-        assert.ok(SYH_EVENT_COMMENTS.isBound);
+        SYH_STREAMYARD_COMMENTS.init();
+        SYH_STREAMYARD_COMMENTS.bindEvents();
+        assert.ok(SYH_STREAMYARD_COMMENTS.isBound);
         assert.ok(listeners.length > 0);
 
-        SYH_EVENT_COMMENTS.destroy();
-        assert.strictEqual(SYH_EVENT_COMMENTS.isBound, false);
+        SYH_STREAMYARD_COMMENTS.destroy();
+        assert.strictEqual(SYH_STREAMYARD_COMMENTS.isBound, false);
     });
 });

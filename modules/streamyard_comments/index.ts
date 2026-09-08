@@ -1,31 +1,47 @@
+// modules/streamyard_comments/index.ts
+//
+// ЗАГАЛЬНОСТОРІНКОВІ ОБРОБНИКИ КОМЕНТАРІВ STREAMYARD.
+//
+// Після T7 дії над коментарем (копіювати / питання / молитва) тут не живуть:
+// їх веде `modules/streamyard_adapter.ts` через `CommentInjector`, як на
+// YouTube і Studio. У цьому плагіні лишилось те, що прив'язати до окремої
+// картки неможливо або неправильно:
+//
+//   • Auto-Heal — періодичне вирівнювання нашого стану з тим, що показує
+//     StreamYard (приховані коментарі, записи без зірки);
+//   • зірка платформи — зняття зірки прибирає запис із бази;
+//   • коліщатко по картці — знімає зірку;
+//   • ПКМ по кнопках платформи — перемикає наш чекбокс;
+//   • гасіння автоскролу середньої кнопки над нашими кнопками.
+
 import { SYH_CONFIG, type SyhConfig } from '../config';
 import { SYH_STATE, type SyhState } from '../state';
 import { SYH_UTILS, type SyhUtils } from '../utils';
 import { SYH_UI, type SyhUi } from '../ui';
 import type { ISyhPlugin } from '../plugin_registry';
 
-import type { SyhEventComments } from './types';
+import type { SyhStreamYardComments } from './types';
 import { bindAutoHealScanner } from './auto_heal';
 import { bindStarButtonClickHandler, bindMiddleClickHandler, bindContextMenuHandlers, bindSyhButtonMouseHandlers } from './handlers';
-import { saveToDatabase, removeFromDatabase } from './database';
-import { formatCopyPayload, getPrayerIcon, stripLeadingAt } from './formatters';
-import { applyCommentActionState } from './actions';
+import { saveToDatabase, removeFromDatabase } from './prayer_database';
+import { formatCopyPayload, getPrayerIcon, stripLeadingAt } from './format';
+import { applyCommentActionState } from './action_effects';
 
 export { getPrayerIcon, stripLeadingAt, formatCopyPayload };
 export { applyCommentActionState };
 
-export const SYH_EVENT_COMMENTS_PLUGIN: ISyhPlugin = {
-    id: 'syh_event_comments',
+export const SYH_STREAMYARD_COMMENTS_PLUGIN: ISyhPlugin = {
+    id: 'syh_streamyard_comments',
     name: 'StreamYard Comments Handler',
     enabled: true,
     isSupported: (url = typeof window !== 'undefined' ? window.location.href : '') => url.includes('streamyard.com'),
     init: () => {
-        SYH_EVENT_COMMENTS.init();
-        SYH_EVENT_COMMENTS.bindEvents();
+        SYH_STREAMYARD_COMMENTS.init();
+        SYH_STREAMYARD_COMMENTS.bindEvents();
     }
 };
 
-export const SYH_EVENT_COMMENTS: SyhEventComments = {
+export const SYH_STREAMYARD_COMMENTS: SyhStreamYardComments = {
     SELECTORS: null,
     STATE: null,
     UTILS: null,

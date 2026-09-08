@@ -1,4 +1,4 @@
-// modules/event_comments/auto_heal_cover_buttons.ts
+// modules/streamyard_comments/auto_heal_cover_buttons.ts
 //
 // Прохід «cover buttons»: StreamYard ховає коментар власною кнопкою
 // `[data-testid="show-comment-button"]`. Якщо коментар прихований платформою,
@@ -8,7 +8,7 @@
 // щільність у проєкті). Поведінка збережена 1-в-1: стан пишеться ТІЛЬКИ через
 // `CommentService`, як того вимагає правило Single Source of Truth.
 
-import type { SyhEventComments } from './types';
+import type { SyhStreamYardComments } from './types';
 import { closestBySelectorValue, queryBySelectorValue } from '../config';
 import { CommentService } from '../comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../comment_assistant/index';
@@ -28,7 +28,7 @@ function isHideButton(btn: Element): boolean {
  * КВІРК 1-в-1: якщо текст коментаря не знайдено, чекбокс усе одно лишається
  * позначеним, але у сховище нічого не пишеться.
  */
-function markCommentAsCovered(self: SyhEventComments, commentBlock: Element): void {
+function markCommentAsCovered(self: SyhStreamYardComments, commentBlock: Element): void {
     const checkbox = commentBlock.querySelector<HTMLInputElement>(COMMENT_CHECKBOX_SELECTOR);
     if (!checkbox || checkbox.checked) return;
 
@@ -42,7 +42,7 @@ function markCommentAsCovered(self: SyhEventComments, commentBlock: Element): vo
     SYH_COMMENT_ASSISTANT.processComment(commentBlock);
 }
 
-export function processCoverButtons(self: SyhEventComments): void {
+export function processCoverButtons(self: SyhStreamYardComments): void {
     document.querySelectorAll(COVER_BUTTON_SELECTOR).forEach((btn: Element) => {
         if (!isHideButton(btn)) return;
 

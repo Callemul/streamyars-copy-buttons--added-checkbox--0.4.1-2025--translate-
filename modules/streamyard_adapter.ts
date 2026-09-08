@@ -3,9 +3,11 @@
 // АДАПТЕР ПОВЕРХНІ STREAMYARD (T7 аудиту 2026-09-08).
 //
 // До цього файлу StreamYard був єдиною поверхнею без адаптера: його кліки
-// обробляв паралельний конвеєр `modules/event_comments/*` із власним
-// document-level делегуванням. Через це в проєкті жили дві різні архітектури
-// для однієї задачі, а «додати дію» означало правку в обох.
+// обробляв паралельний конвеєр `modules/event_comments/*` (19 файлів) із
+// власним document-level делегуванням. Через це в проєкті жили дві різні
+// архітектури для однієї задачі, а «додати дію» означало правку в обох.
+// Залишок того конвеєра — сканування сторінки (Auto-Heal, зірка, коліщатко,
+// контекстне меню) — живе тепер у `modules/streamyard_comments/`.
 //
 // Тепер поверхня описана так само, як YouTube і Studio: `CommentInjector`
 // навішує слухачі за реєстром `modules/comment_actions.ts`, а все, чим
@@ -47,11 +49,11 @@ import {
     type PlatformButtons
 } from './comment_platform_adapter';
 
-import type { CommentEffectHost } from './event_comments/types';
-import { formatCopyPayload } from './event_comments/formatters';
-import { stripLeadingAt } from './event_comments/utils';
-import { applyCommentActionState } from './event_comments/actions';
-import { saveToDatabase, removeFromDatabase } from './event_comments/database';
+import type { CommentEffectHost } from './streamyard_comments/types';
+import { formatCopyPayload } from './streamyard_comments/format';
+import { stripLeadingAt } from './streamyard_comments/utils';
+import { applyCommentActionState } from './streamyard_comments/action_effects';
+import { saveToDatabase, removeFromDatabase } from './streamyard_comments/prayer_database';
 
 /** Контейнер кнопок SYH усередині картки коментаря. */
 const BUTTONS_CONTAINER_SELECTOR = '.syh-custom-buttons-comment';
@@ -93,7 +95,7 @@ export class StreamYardCommentAdapter extends BaseCommentPlatformAdapter {
 
     /**
      * Об'єкт, який очікують ефекти дії (`applyCommentActionState` і сусіди).
-     * Це той самий набір полів, що раніше давав фасад `SYH_EVENT_COMMENTS`.
+     * Це той самий набір полів, що раніше давав фасад `SYH_STREAMYARD_COMMENTS`.
      */
     private getEffectHost(): CommentEffectHost {
         const ui = this.getUi();
@@ -131,7 +133,8 @@ export class StreamYardCommentAdapter extends BaseCommentPlatformAdapter {
      * без правок цього файлу.
      *
      * `bodyEl` навмисно `null`: на StreamYard ПКМ по картці нічого не перемикає
-     * (це робить лише ПКМ по кнопках платформи, див. `handlers/context_menu.ts`),
+     * (це робить лише ПКМ по кнопках платформи, див.
+     * `streamyard_comments/handlers/context_menu.ts`),
      * тож контекстне меню картки лишається браузерним.
      */
     public getButtons(element: Element): PlatformButtons {

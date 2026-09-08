@@ -2,7 +2,7 @@
 
 > **Джерело:** `docs/audits/active/2026-09-08_CLAUDE_OPUS_5_AUDIT.md`
 > **Конвенція:** пріоритет = (як часто це б'є по роботі) × (скільки місць доводиться правити руками).
-> **Статус:** 12/20 виконано (T1-T6, T11-T16), T7 частково. Оновлено 2026-09-08.
+> **Статус:** 13/20 виконано (T1-T7, T11-T16). Оновлено 2026-09-08.
 > **Базова лінія:** `npm test` → 2098/2098 ✅ · `tsc --noEmit` → 0 ✅ · `npm run lint` → 0/0 ✅ · `vite build` → ✅ 4.18 с · гілка `v0.5.3` @ `def2c69`
 > **Модельна політика:** за `docs/CODEX_MODEL_SELECTION_GUIDE.md`; `Sol` = `gpt-5.6-sol`, `Terra` = `gpt-5.6-terra`, `Luna` = `gpt-5.6-luna`.
 
@@ -35,7 +35,7 @@
 
 ### Порядок і залежності
 
-> **Ланцюг ядра:** **T1 → T2 → (T3 ‖ T4 ‖ T5) → T6 → T7.** T3/T4/T5 можна вести паралельно — вони не перетинаються по файлах. T7 запускати лише коли T1–T6 зелені.
+> **Ланцюг ядра (виконано):** **T1 → T2 → (T3 ‖ T4 ‖ T5) → T6 → T7.** T3/T4/T5 можна вести паралельно — вони не перетинаються по файлах. T7 запускати лише коли T1–T6 зелені.
 > **Документація після коду:** **T11 і T12 писати ПІСЛЯ T6**, інакше вони зафіксують архітектуру, якої вже не буде.
 > **Незалежні:** T8, T9, T14, T15, T16 — можна брати будь-коли.
 > **T10 заблокована** рішенням користувача (див. задачу).
@@ -53,7 +53,7 @@
 | **T4** ✅ | Панель Studio описує ті самі 3 кнопки третім набором імен (`studio-*`) | `youtube/studio/studio_ui.ts:32-52` | Те саме з реєстру; імена дій уніфікувати з реєстром, префікс класів `syh-studio-btn-*` лишити як платформний оверайд. Перевірити, що `applyButtonState` у `studio_adapter.ts` читає новий контракт. | `tests/studio_ui*.test.js`, `tests/studio_binding*.test.js` зелені. |
 | **T5** ✅ | Панель StreamYard описує ті самі дії четвертим набором імен (`copy-author-comment`) | `modules/ui_comments.ts:23-38` | Будувати панель із реєстру. Історичні `data-action` лишити як alias-мапу в реєстрі, щоб не зламати `event_comments/button_handlers.ts` і `handlers/context_menu.ts` до виконання T7. | `tests/ui_comments*.test.js`, `tests/event_comments*.test.js` зелені; ЛКМ/коліщатко/ПКМ на 🙏 дають ті самі три різні результати. |
 | **T6** ✅ | Літерал `'question' \| 'prayer'` вписаний 28 разів у 16 файлах | 16 файлів (перелік — у розділі «Кількісне підтвердження» аудиту) | Замінити інлайнові union'и на імпорт типу з реєстру. Перед заміною переконатись, що в кожному місці семантика та сама (а не, скажімо, лише підмножина для збережених елементів). | `npm run typecheck` 0, `npm test` 0 fail, `grep -c "'question' | 'prayer'"` → лише реєстр. |
-| **T7** 🟡 | StreamYard не переведено на Adapter Pattern — паралельний конвеєр на 19 файлів | `modules/event_comments/*` → новий `modules/streamyard_adapter.ts` | Реалізувати `CommentPlatformAdapter` для StreamYard і перевести обробку на `CommentInjector`. Згорнути `event_comments/*`, зберігши особливості: ПКМ/коліщатко для 🙏, `data-syh-just-added`, auto-heal. Виконувати окремою хвилею, з поетапними комітами. | Повний `npm test` + ручна перевірка StreamYard за `docs/manual testing/`. Порівняти поведінку до/після по чеклісту з 3 типів кліку. |
+| **T7** ✅ | StreamYard не переведено на Adapter Pattern — паралельний конвеєр на 19 файлів | `modules/event_comments/*` → новий `modules/streamyard_adapter.ts` | Реалізувати `CommentPlatformAdapter` для StreamYard і перевести обробку на `CommentInjector`. Згорнути `event_comments/*`, зберігши особливості: ПКМ/коліщатко для 🙏, `data-syh-just-added`, auto-heal. Виконувати окремою хвилею, з поетапними комітами. | Повний `npm test` + ручна перевірка StreamYard за `docs/manual testing/`. Порівняти поведінку до/після по чеклісту з 3 типів кліку. |
 
 ---
 
@@ -103,7 +103,31 @@
 | **T2, T6** — диспетчер за реєстром, `PlatformButtons.actionButtons`, 28 інлайнових union'ів прибрано | `779c6a6` |
 | **T7 (частина)** — `formatCopyPayload` і контекстне меню StreamYard резолвлять дію через реєстр | `bb1981f` |
 
-**Що лишилось у T7:** повна міграція StreamYard на `CommentPlatformAdapter` і згортання `modules/event_comments/*` (19 файлів). Потребує ручної перевірки в браузері: ЛКМ / коліщатко / ПКМ по 🙏, `data-syh-just-added`, auto-heal.
+**T7 виконано (хвиля 5), 2026-09-08.** StreamYard переведено на `CommentPlatformAdapter`
+чотирма етапними комітами:
+
+| Етап | Що зроблено |
+|---|---|
+| 1 | Реєстр отримав `events` (StreamYard слухає `mouseup`), контракт адаптера — опційні `runAction` і `onCheckboxToggled`; `CommentInjector` навішує слухачі за подіями з реєстру |
+| 2 | `modules/streamyard_adapter.ts` — третій адаптер; у реєстр додано `mouseButtons` (🙏 приймає всі три кнопки миші); 16 характеризаційних тестів |
+| 3 | `modules/streamyard_comment_binding.ts` + `bootstrap_dom`: кліки йдуть через `CommentInjector`; видалено делеговані `mouseup`/`change` (`button_handlers.ts`, `handlers/checkbox.ts`); 5 наскрізних тестів |
+| 4 | `modules/event_comments/` → `modules/streamyard_comments/` (лишились Auto-Heal, зірка, коліщатко, ПКМ по кнопках платформи); оновлено ARCHITECTURE, HOWTO_ADD і скіл StreamYard |
+
+**Рішення, яке варто знати:** StreamYard не переводився на `comment_action_runner`.
+Його семантика інша — немає перемикання повторним натисканням, немає аркушів,
+копіювання йде банером, запис лягає в базу молитов/питань. Тому поверхня
+перехоплює дію хуком `runAction`, а не імітує чужий конвеєр. Дві відмінності,
+які раніше були зашиті в обробниках (подія `mouseup` і кнопки миші для 🙏),
+переїхали в реєстр.
+
+**Видалено `tests/button_handlers.test.js`** (41 тест): файл цілком складався з
+локальних копій `formatCopyPayload` / `applyCommentActionState` / `handleSyhButtonMouseUp`
+і жодного разу не імпортував продакшн-код — тобто перевіряв власні копії, а не модуль,
+який тепер видалено. Реальне покриття тієї ж поведінки — `tests/streamyard_adapter.test.js`
+(21 тест проти продакшн-коду).
+
+**Потребує ручної перевірки в браузері** (автотести happy-dom цього не ловлять):
+ЛКМ / коліщатко / ПКМ по 🙏 на StreamYard, `data-syh-just-added`, Auto-Heal.
 
 **Хвиля 3 (документація і вказівки агентам), 2026-09-08:** `docs/ARCHITECTURE.md` (шари + таблиця реєстрів), `docs/HOWTO_ADD.md` (4 сценарії + чекліст), `AGENTS.md` — 11 технічних правил винесено в `docs/rules/*.md` (жодне не втрачено), обсяг файлу 15 098 → 7 920 байт (−48%), три скіли отримали розділ «Реєстри», `npm run verify`, `docs/README.md` як навігація.
 

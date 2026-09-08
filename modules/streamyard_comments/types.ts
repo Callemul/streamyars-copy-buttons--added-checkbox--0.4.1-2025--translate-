@@ -43,7 +43,7 @@ export interface AutoHealObserver {
 
 /**
  * Мінімум, потрібний ефектам «перемалювати картку коментаря».
- * Вужчий за `SyhEventComments`, тому ті самі функції викликає і
+ * Вужчий за `SyhStreamYardComments`, тому ті самі функції викликає і
  * `StreamYardCommentAdapter`, який не є фасадом плагіна (T7).
  */
 export interface CommentVisualHost {
@@ -61,7 +61,7 @@ export interface CommentEffectHost extends CommentVisualHost {
     removeFromDatabase(text: string): Promise<void>;
 }
 
-export interface SyhEventComments extends CommentEffectHost {
+export interface SyhStreamYardComments extends CommentEffectHost {
     SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;
     UTILS: SyhUtils | null;
@@ -81,13 +81,14 @@ export interface SyhEventComments extends CommentEffectHost {
     destroy(): void;
 
     // Реекспорт standalone-біндерів із `./auto_heal` та `./handlers`.
+    // Дій над коментарем серед них уже немає — див. `streamyard_adapter.ts`.
     // Це не методи: фасад віддає ті самі функції без обгортки, тому вони
     // приймають екземпляр явним аргументом (`bindStarButtonClickHandler(self)`).
-    bindAutoHealScanner: (self: SyhEventComments) => void;
-    bindStarButtonClickHandler: (self: SyhEventComments) => void;
-    bindMiddleClickHandler: (self: SyhEventComments) => void;
-    bindContextMenuHandlers: (self: SyhEventComments) => void;
-    bindSyhButtonMouseHandlers: (self: SyhEventComments) => void;
+    bindAutoHealScanner: (self: SyhStreamYardComments) => void;
+    bindStarButtonClickHandler: (self: SyhStreamYardComments) => void;
+    bindMiddleClickHandler: (self: SyhStreamYardComments) => void;
+    bindContextMenuHandlers: (self: SyhStreamYardComments) => void;
+    bindSyhButtonMouseHandlers: (self: SyhStreamYardComments) => void;
 
     saveToDatabase(author: string, text: string, type: string, icon: string): Promise<void>;
     removeFromDatabase(text: string): Promise<void>;

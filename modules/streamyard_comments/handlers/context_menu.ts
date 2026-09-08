@@ -1,4 +1,4 @@
-import type { SyhEventComments } from '../types';
+import type { SyhStreamYardComments } from '../types';
 import { closestBySelectorValue, queryBySelectorValue } from '../../config';
 import { CommentService } from '../../comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../../comment_assistant/index';
@@ -16,7 +16,7 @@ const BUTTON_SELECTORS = [
     '[class*="DesktopMoreButton"]'
 ].join(',');
 
-export function handleContextMenuClick(e: MouseEvent, self: SyhEventComments): void {
+export function handleContextMenuClick(e: MouseEvent, self: SyhStreamYardComments): void {
     const target = getValidatedTarget(e, self, 'commentBlock');
     if (!target) return;
 
@@ -47,7 +47,7 @@ export function handleCopyPrayerContext(e: MouseEvent): void {
     }
 }
 
-export function bindContextMenuHandlers(self: SyhEventComments): void {
+export function bindContextMenuHandlers(self: SyhStreamYardComments): void {
     self._contextHandler = (e: MouseEvent) => handleContextMenuClick(e, self);
     document.addEventListener('contextmenu', self._contextHandler, true);
 

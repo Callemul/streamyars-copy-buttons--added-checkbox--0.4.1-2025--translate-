@@ -1,4 +1,4 @@
-// modules/event_comments/action_marking.ts
+// modules/streamyard_comments/action_marking.ts
 //
 // ПРИЗНАЧЕННЯ: одна відповідальність — «відмітити коментар» за типом дії:
 // запис у БД, перемальовування візуалу та сповіщення шини про молитву.

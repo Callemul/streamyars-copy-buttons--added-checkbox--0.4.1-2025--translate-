@@ -1,8 +1,8 @@
-// Характеризаційні тести для `modules/event_comments/auto_heal.ts` —
+// Характеризаційні тести для `modules/streamyard_comments/auto_heal.ts` —
 // refactoring target зі звіту Fallow 3.14: `priority 26.0`,
 // `complexity_density 0.40` (найвища щільність у проєкті), MI 80.8, fan-in 3.
 //
-// `tests/event_comments_auto_heal.test.js` покриває side-effects самого
+// `tests/streamyard_comments_auto_heal.test.js` покриває side-effects самого
 // сканування (чекбокси cover-кнопок і видалення «привидів»). Цей набір
 // закриває ЖИТТЄВИЙ ЦИКЛ сканера, який досі не був покритий і тому не давав
 // безпечно розділити файл:
@@ -41,7 +41,7 @@ installChromeMock({
     }
 });
 
-const { runAutoHeal, bindAutoHealScanner } = await import('../modules/event_comments/auto_heal.ts');
+const { runAutoHeal, bindAutoHealScanner } = await import('../modules/streamyard_comments/auto_heal.ts');
 const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
 
@@ -123,7 +123,7 @@ const ghostHtml = (text) => `
  */
 const flushGhostPass = () => new Promise(resolve => setTimeout(resolve, 0));
 
-describe('event_comments auto_heal — життєвий цикл сканера (характеризація)', () => {
+describe('streamyard_comments auto_heal — життєвий цикл сканера (характеризація)', () => {
     beforeEach(() => {
         mockStorageStore = {};
         SYH_STATE.itemStates = {};

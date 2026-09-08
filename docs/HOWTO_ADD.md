@@ -32,7 +32,7 @@ YouTube і YouTube Studio.
     icon: '💚',
     title: 'Додати до подяк',
     platforms: {
-        streamyard: { domAction: 'copy-thanks', type: 'comment' },
+        streamyard: { domAction: 'copy-thanks', type: 'comment', events: ['mouseup'] },
         youtube:    { domAction: 'add-thanks', icon: 'Додати до подяк', className: 'syh-yt-btn syh-yt-btn-thanks' },
         studio:     { domAction: 'studio-thanks', className: 'syh-studio-btn syh-studio-btn-thanks' }
     }
@@ -40,6 +40,8 @@ YouTube і YouTube Studio.
 ```
 
 Додай id у `PLATFORM_ACTION_ORDER` для кожної поверхні, де кнопка має бути видима.
+StreamYard слухає `mouseup` (`events`), бо там від кнопки миші може залежати результат;
+якщо дія має реагувати не лише на ЛКМ — додай `mouseButtons: [0, 1, 2]`.
 Поверхня, якій дія не потрібна, отримує `null` замість оверайду — це свідома,
 задокументована відсутність, а не забудькуватість.
 
@@ -54,7 +56,8 @@ YouTube і YouTube Studio.
 | Віддати елемент кнопки | `getButtons()` в `youtube/yt_adapter.ts`, `youtube/studio/studio_adapter.ts` — краще через `actionButtons: { thanks: el }`, а не новим іменованим полем |
 | Намалювати активний стан | `applyButtonState()` у тих самих адаптерах |
 | CSS | `youtube/youtube_styles.css`, `youtube/studio/studio_styles.css`, `styles.css` |
-| Обробка на StreamYard | `modules/event_comments/formatters.ts` — гілка за канонічним id (до виконання T7) |
+| Віддати елемент кнопки і намалювати стан на StreamYard | `modules/streamyard_adapter.ts` (кнопки добираються з реєстру автоматично) |
+| Форматування тексту для StreamYard | `modules/streamyard_comments/format.ts` — гілка за канонічним id |
 
 ### Крок 3 — якщо дія зберігає новий тип запису
 
@@ -117,6 +120,8 @@ npm run verify
 
 1. Селектори — окремий файл-реєстр (`twitch/twitch_selectors.ts`), за зразком `yt_selectors.ts`.
 2. `CommentPlatformAdapter` — `twitch/twitch_adapter.ts` на базі `BaseCommentPlatformAdapter`.
+   Якщо семантика дії на поверхні інша (як у StreamYard — банер замість аркушів), це
+   `runAction` / `onCheckboxToggled` в адаптері, а не другий конвеєр поруч.
 3. Панель — з реєстру дій: додай `twitch` у `CommentPlatformId`, оверайди в кожну дію
    та порядок у `PLATFORM_ACTION_ORDER`.
 4. Entry point + запис у `manifest.json` (`content_scripts`, `host_permissions`).

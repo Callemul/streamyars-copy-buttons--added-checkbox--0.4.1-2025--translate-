@@ -10,7 +10,7 @@ import { SYH_UTILS } from './utils';
 import { SYH_UI } from './ui';
 import { SYH_PARSERS } from './parsers';
 import { SYH_BANNER_CREATOR } from './banner_creator';
-import { SYH_EVENT_COMMENTS_PLUGIN } from './event_comments';
+import { SYH_STREAMYARD_COMMENTS_PLUGIN } from './streamyard_comments';
 import { SYH_EVENT_BANNERS_PLUGIN } from './event_banners';
 import { SYH_VIDEO_COPIER_PLUGIN } from './video_copier';
 import { SYH_STATS_TRACKER } from './stats_tracker';
@@ -108,7 +108,7 @@ export function initCoreModules(): void {
 }
 
 export const SYH_PLUGIN_LIST: readonly ISyhPlugin[] = [
-    SYH_EVENT_COMMENTS_PLUGIN,
+    SYH_STREAMYARD_COMMENTS_PLUGIN,
     SYH_EVENT_BANNERS_PLUGIN,
     SYH_ANTI_AFK_PLUGIN,
     SYH_VIDEO_COPIER_PLUGIN

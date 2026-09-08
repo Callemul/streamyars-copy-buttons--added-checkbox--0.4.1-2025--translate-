@@ -1,6 +1,6 @@
-// tests/event_comments_actions.test.js
+// tests/streamyard_comments_actions.test.js
 //
-// Характеристичні тести публічного API `modules/event_comments/actions.ts`.
+// Характеристичні тести публічного API `modules/streamyard_comments/action_effects.ts`.
 //
 // Навіщо: `applyCommentActionState` — найскладніша за когнітивною складністю
 // функція продакшн-коду за звітом Fallow (cyclomatic 12 / cognitive 15, severity
@@ -15,7 +15,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { applyCommentActionState } = await import('../modules/event_comments/actions.ts');
+const { applyCommentActionState } = await import('../modules/streamyard_comments/action_effects.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
 
@@ -51,7 +51,7 @@ function createCommentBlock({ checkboxes = 0, typedCheckbox = false, starAriaSel
     return block;
 }
 
-/** Мінімальний `SyhEventComments`-подібний носій залежностей із записом викликів. */
+/** Мінімальний `SyhStreamYardComments`-подібний носій залежностей із записом викликів. */
 function createSelf(overrides = {}) {
     const calls = {
         saveToDatabase: [],
@@ -117,7 +117,7 @@ const COPY_PAYLOAD = {
 
 const EMPTY_PAYLOAD = { header: '', textToCopy: '', actionType: null };
 
-describe('event_comments/actions — applyCommentActionState: гілка збереження за actionType', () => {
+describe('streamyard_comments/action_effects — applyCommentActionState: гілка збереження за actionType', () => {
     let bus;
     let state;
 
@@ -203,7 +203,7 @@ describe('event_comments/actions — applyCommentActionState: гілка збе�
     });
 });
 
-describe('event_comments/actions — applyCommentActionState: гілка копіювання', () => {
+describe('streamyard_comments/action_effects — applyCommentActionState: гілка копіювання', () => {
     let bus;
     let state;
 
@@ -279,7 +279,7 @@ describe('event_comments/actions — applyCommentActionState: гілка коп�
     });
 });
 
-describe('event_comments/actions — applyCommentActionState: DOM-побічні ефекти', () => {
+describe('streamyard_comments/action_effects — applyCommentActionState: DOM-побічні ефекти', () => {
     let bus;
     let state;
 

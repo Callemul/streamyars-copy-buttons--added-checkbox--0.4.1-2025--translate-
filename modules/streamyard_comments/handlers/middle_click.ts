@@ -1,8 +1,8 @@
-import type { SyhEventComments } from '../types';
+import type { SyhStreamYardComments } from '../types';
 import { closestBySelectorValue, queryBySelectorValue } from '../../config';
 import { getValidatedTarget } from './helpers';
 
-export function handleMiddleClick(e: MouseEvent, self: SyhEventComments): void {
+export function handleMiddleClick(e: MouseEvent, self: SyhStreamYardComments): void {
     if (e.button !== 1) return;
 
     const target = getValidatedTarget(e, self, 'commentBlock');
@@ -22,7 +22,7 @@ export function handleMiddleClick(e: MouseEvent, self: SyhEventComments): void {
     }
 }
 
-export function bindMiddleClickHandler(self: SyhEventComments): void {
+export function bindMiddleClickHandler(self: SyhStreamYardComments): void {
     self._middleClickHandler = (e: MouseEvent) => handleMiddleClick(e, self);
     document.addEventListener('mousedown', self._middleClickHandler, true);
 }

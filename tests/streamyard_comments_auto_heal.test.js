@@ -1,4 +1,4 @@
-// Характеристичні тести для auto_heal.ts (modules/event_comments/auto_heal).
+// Характеристичні тести для auto_heal.ts (modules/streamyard_comments/auto_heal).
 //
 // Тести створюють DOM-елементи, викликають bindAutoHealScanner (який
 // викликає runAutoHeal у кінці), та перевіряють side-effects:
@@ -34,7 +34,7 @@ installChromeMock({
     }
 });
 
-const { bindAutoHealScanner, runAutoHeal } = await import('../modules/event_comments/auto_heal.ts');
+const { bindAutoHealScanner, runAutoHeal } = await import('../modules/streamyard_comments/auto_heal.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
 
 const TEST_SELECTORS = {
@@ -127,7 +127,7 @@ afterEach(() => {
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments auto_heal — bindAutoHealScanner cover button marking', () => {
+describe('streamyard_comments auto_heal — bindAutoHealScanner cover button marking', () => {
     test('1. cover button з "Hide" текстом → чекбокс встановлюється в checked', () => {
         document.body.innerHTML = `
             <div class="test-comment-block">
@@ -191,7 +191,7 @@ describe('event_comments auto_heal — bindAutoHealScanner cover button marking'
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments auto_heal — bindAutoHealScanner ghost removal', () => {
+describe('streamyard_comments auto_heal — bindAutoHealScanner ghost removal', () => {
     test('5. коментар без зірки (aria-selected=false) → видалення з БД + оновлення візуалу', async () => {
         document.body.innerHTML = `
             <div class="test-comment-block" data-syh-type="prayer">
@@ -255,7 +255,7 @@ describe('event_comments auto_heal — bindAutoHealScanner ghost removal', () =>
 
 // ---------------------------------------------------------------------------
 
-describe('event_comments auto_heal — UI оптимізація', () => {
+describe('streamyard_comments auto_heal — UI оптимізація', () => {
     test('9. без UI → видалення з БД, але без оновлення візуалу', async () => {
         document.body.innerHTML = `
             <div class="test-comment-block" data-syh-type="prayer">

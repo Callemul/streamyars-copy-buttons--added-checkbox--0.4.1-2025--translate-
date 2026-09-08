@@ -1,8 +1,8 @@
-import type { SyhEventComments } from '../types';
+import type { SyhStreamYardComments } from '../types';
 import { closestBySelectorValue, queryBySelectorValue } from '../../config';
 import { getValidatedTarget } from './helpers';
 
-export function handleStarButtonClick(e: MouseEvent, self: SyhEventComments): void {
+export function handleStarButtonClick(e: MouseEvent, self: SyhStreamYardComments): void {
     const target = getValidatedTarget(e, self, 'starButton');
     if (!target) return;
 
@@ -17,7 +17,7 @@ export function handleStarButtonClick(e: MouseEvent, self: SyhEventComments): vo
     unstarComment(commentBlock, self);
 }
 
-function unstarComment(commentBlock: Element, self: SyhEventComments): void {
+function unstarComment(commentBlock: Element, self: SyhStreamYardComments): void {
     const text = queryBySelectorValue(self.SELECTORS?.commentText, commentBlock)?.textContent;
     if (text) {
         self.removeFromDatabase(text);
@@ -39,13 +39,13 @@ function hideCommentLi(commentBlock: Element): void {
     }
 }
 
-function scheduleFilterRefresh(ui: NonNullable<SyhEventComments['UI']>): void {
+function scheduleFilterRefresh(ui: NonNullable<SyhStreamYardComments['UI']>): void {
     if (typeof ui.filterStarredComments === 'function') {
         setTimeout(() => ui.filterStarredComments(), 50);
     }
 }
 
-export function bindStarButtonClickHandler(self: SyhEventComments): void {
+export function bindStarButtonClickHandler(self: SyhStreamYardComments): void {
     self._clickHandler = (e: MouseEvent) => handleStarButtonClick(e, self);
     document.addEventListener('click', self._clickHandler, true);
 }

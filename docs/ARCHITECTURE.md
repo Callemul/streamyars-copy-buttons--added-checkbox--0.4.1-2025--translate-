@@ -1,6 +1,6 @@
 # Архітектура StreamYard Helper
 
-> Актуально на 2026-09-08 (після хвилі 1 аудиту `docs/audits/active/2026-09-08_CLAUDE_OPUS_5_AUDIT.md`).
+> Актуально на 2026-09-08 (після хвиль 1–4 аудиту `docs/audits/active/2026-09-08_CLAUDE_OPUS_5_AUDIT.md`).
 > Практичні кроки «як додати кнопку / поле / опцію» — у [HOWTO_ADD.md](HOWTO_ADD.md).
 
 ---
@@ -39,6 +39,7 @@ Chrome Manifest V3, три content script'и + service worker + два UI-док
 │  background/service-worker.ts → message_router.ts                     │
 │  youtube/studio/studio_content.ts (StudioModuleController)            │
 │  modules/comment_injector.ts + comment_action_runner.ts               │
+│  modules/streamyard_comment_binding.ts (StreamYard)                   │
 ├───────────────────────────────────────────────────────────────────────┤
 │ DOMAIN — чисті функції, без DOM і без chrome.*                        │
 │  modules/comment_actions.ts (реєстр дій) · modules/parsers/*          │
@@ -66,8 +67,9 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
         ┌── реєстр дій (modules/comment_actions.ts) ──┐
         │  copy · question · prayer                    │
         │  id · stateType · icon · title · оверайди    │
+        │  events · mouseButtons (події та кнопки миші)│
         └──────────────┬───────────────────────────────┘
-                       │ будує кнопки            │ дає stateType
+                       │ будує кнопки            │ дає stateType і події
         ┌──────────────▼──────────────┐          │
         │ панелі поверхонь            │          │
         │ ui_comments.ts (StreamYard) │          │
@@ -80,21 +82,36 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
         │ по реєстру, диспетчеризує за id дії           │
         └──────────────┬────────────────────────────────┘
                        │
-        ┌──────────────▼─────────────┐   ┌────────────────────────────┐
-        │ CommentPlatformAdapter     │──▶│ comment_action_runner.ts   │
-        │ yt_adapter · studio_adapter│   │ toggle on / untoggle       │
-        └────────────────────────────┘   └───────────┬────────────────┘
-                                                     ▼
-                                          CommentService → SYH_STORAGE
+        ┌──────────────▼─────────────────┐   ┌────────────────────────────┐
+        │ CommentPlatformAdapter         │──▶│ comment_action_runner.ts   │
+        │ yt_adapter · studio_adapter    │   │ toggle on / untoggle       │
+        └──────────────┬─────────────────┘   └───────────┬────────────────┘
+                       │ runAction (StreamYard)          │
+        ┌──────────────▼─────────────────┐               ▼
+        │ streamyard_adapter.ts          │    CommentService → SYH_STORAGE
+        │ банер · база молитов · мітка   │
+        └────────────────────────────────┘
 ```
 
 **Що робить адаптер:** дістає контекст коментаря (`getCommentContext`), віддає кнопки
 (`getButtons`), каже, в який аркуш зберігати (`getSheetId` / `beforeAction`), і малює стан
 (`applyButtonState`, `applyCheckboxState`).
 
-> ⚠️ **Виняток, який ще не згорнуто:** StreamYard поки не має адаптера — його кліки
-> обробляє паралельний конвеєр `modules/event_comments/*` (19 файлів). Імена дій там
-> уже резолвляться через реєстр, але сама міграція — задача **T7**.
+**Дві точки, де поверхня може перехопити конвеєр** (обидві опційні, ними користується
+лише StreamYard):
+
+| Хук адаптера | Навіщо |
+|---|---|
+| `runAction` | поверхня виконує дію сама. StreamYard не «перемикає» кнопку повторним натисканням і не пише в аркуші: він показує банер копіювання, зберігає запис у базі молитов/питань і ставить `data-syh-just-added` |
+| `onCheckboxToggled` | поверхня сама зберігає стан чекбокса. StreamYard тримає його за ТЕКСТОМ коментаря в оперативному `SYH_STATE`, а не за ключем коментаря у `chrome.storage` |
+
+Ще дві відмінності поверхні описані **в реєстрі**, а не в коді інжектора:
+`events` (StreamYard слухає `mouseup`, бо для 🙏 має значення кнопка миші) і
+`mouseButtons` (🙏 приймає всі три кнопки: 🙏🙏🙏 / 🙏❤️🙏 / ❤️❤️❤️).
+
+Загальносторінкові речі StreamYard, які не належать окремій картці, лишились у
+`modules/streamyard_comments/`: Auto-Heal, зірка платформи, коліщатко по картці,
+ПКМ по кнопках платформи.
 
 ---
 
@@ -105,7 +122,7 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
 
 | Що описується | Реєстр | Хто з нього читає |
 |---|---|---|
-| Дії над коментарем (кнопки, стан, іконки, `data-action`) | `modules/comment_actions.ts` | `ui_comments.ts`, `yt_comment_panel.ts`, `studio_ui.ts`, `comment_injector.ts`, `event_comments/formatters.ts` |
+| Дії над коментарем (кнопки, стан, іконки, `data-action`, події, кнопки миші) | `modules/comment_actions.ts` | `ui_comments.ts`, `yt_comment_panel.ts`, `studio_ui.ts`, `comment_injector.ts`, `streamyard_adapter.ts` |
 | Аркуші (канали/програми) | `modules/sheets.ts` (`DynamicSheetRegistry`) | попап, `studio_ui.ts`, сховище |
 | Ключі сховища | `modules/storage_keys.ts` (`STORAGE_KEYS`, `POPUP_SHEET_KEYS`) | усе, що пише в `chrome.storage` |
 | Селектори StreamYard | `modules/config.ts` (`SYH_CONFIG.SELECTORS`) | `ui_*`, `event_*`, `comment_assistant` |
@@ -154,6 +171,7 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
 | DOM попапу | `popup/` |
 | Специфіка платформи YouTube | `youtube/` |
 | Специфіка Studio | `youtube/studio/` |
+| Специфіка StreamYard-коментаря | `modules/streamyard_adapter.ts` |
 | Робота зі сховищем | `modules/*_store.ts` через `CommentService` |
 | Ключ сховища | `modules/storage_keys.ts` |
 | Довготривале правило для агентів | `docs/rules/*.md` (і посилання з `AGENTS.md`) |
