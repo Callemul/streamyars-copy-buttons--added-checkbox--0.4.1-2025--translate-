@@ -3,6 +3,11 @@ import { closestBySelectorValue, queryBySelectorValue } from '../../config';
 import { CommentService } from '../../comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../../comment_assistant/index';
 import { getValidatedTarget } from './helpers';
+import { getCommentAction } from '../../comment_actions';
+
+/** Селектор кнопки молитви — з реєстру дій, а не зашитим рядком. */
+const PRAYER_BUTTON_SELECTOR =
+    `.syh-button[data-action="${getCommentAction('prayer')?.platforms.streamyard?.domAction ?? 'copy-prayer'}"]`;
 
 const BUTTON_SELECTORS = [
     '[data-testid="show-comment-button"]',
@@ -37,7 +42,7 @@ export function handleContextMenuClick(e: MouseEvent, self: SyhEventComments): v
 
 export function handleCopyPrayerContext(e: MouseEvent): void {
     const target = e.target as Element | null;
-    if (target?.closest('.syh-button[data-action="copy-prayer"]')) {
+    if (target?.closest(PRAYER_BUTTON_SELECTOR)) {
         e.preventDefault();
     }
 }
