@@ -1,9 +1,9 @@
-import type { SyhEventComments } from './types';
+import type { CommentVisualHost } from './types';
 import type { PrayerItem } from '../types';
 import { CommentService } from '../comment_service';
 
 export async function saveToDatabase(
-    self: SyhEventComments,
+    self: CommentVisualHost,
     author: string,
     text: string,
     type: string,
@@ -25,7 +25,7 @@ export async function saveToDatabase(
 }
 
 export async function removeFromDatabase(
-    self: SyhEventComments,
+    self: CommentVisualHost,
     text: string
 ): Promise<void> {
     if (self.UI && self.UI.prayersCache) {

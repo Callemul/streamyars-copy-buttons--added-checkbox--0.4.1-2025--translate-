@@ -20,7 +20,9 @@ import {
     buildActionButtonConfig,
     buildPlatformButtonConfigs,
     getActionEvents,
-    DEFAULT_ACTION_EVENTS
+    DEFAULT_ACTION_EVENTS,
+    acceptsMouseButton,
+    DEFAULT_ACTION_MOUSE_BUTTONS
 } from '../modules/comment_actions.ts';
 
 describe('comment_actions — цілісність реєстру', () => {
@@ -172,5 +174,25 @@ describe('comment_actions — події кнопок за поверхнями 
 
     test('18. невідома дія отримує подію за замовчуванням, а не порожній список', () => {
         assert.deepEqual(getActionEvents('streamyard', 'unknown-action'), ['click']);
+    });
+});
+
+describe('comment_actions — кнопки миші (T7)', () => {
+    test('19. лише 🙏 на StreamYard приймає коліщатко і ПКМ', () => {
+        for (const mouseButton of [0, 1, 2]) {
+            assert.equal(acceptsMouseButton('streamyard', 'prayer', mouseButton), true);
+        }
+        for (const id of ['copy', 'question']) {
+            assert.equal(acceptsMouseButton('streamyard', id, 0), true);
+            assert.equal(acceptsMouseButton('streamyard', id, 1), false);
+            assert.equal(acceptsMouseButton('streamyard', id, 2), false);
+        }
+    });
+
+    test('20. за замовчуванням дія приймає лише ЛКМ', () => {
+        assert.deepEqual([...DEFAULT_ACTION_MOUSE_BUTTONS], [0]);
+        assert.equal(acceptsMouseButton('youtube', 'prayer', 1), false);
+        assert.equal(acceptsMouseButton('studio', 'prayer', 2), false);
+        assert.equal(acceptsMouseButton('streamyard', 'unknown-action', 0), true);
     });
 });

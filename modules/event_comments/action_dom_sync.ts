@@ -7,7 +7,7 @@
 // незалежних DOM-ефектів усередині функції з cognitive 15 (severity critical).
 // Поведінка збережена 1-в-1, включно з порядком ефектів.
 
-import type { SyhEventComments } from './types';
+import type { CommentEffectHost } from './types';
 import { SYH_CONFIG, queryBySelectorValue } from '../config';
 import { CommentService } from '../comment_service';
 import { getCheckboxTextKey } from '../ui_checkbox_restorer';
@@ -34,7 +34,7 @@ function checkPrimaryCommentCheckbox(commentBlock: Element, commentText: string)
 }
 
 /** Догортає решту чекбоксів картки у стан «відмічено» та оновлює стан через CommentService. */
-function checkRemainingCheckboxes(self: SyhEventComments, commentBlock: Element): void {
+function checkRemainingCheckboxes(self: CommentEffectHost, commentBlock: Element): void {
     const selectors = self.SELECTORS || SYH_CONFIG.SELECTORS;
     commentBlock
         .querySelectorAll<HTMLInputElement>(ANY_CHECKBOX_SELECTOR)
@@ -55,7 +55,7 @@ function checkRemainingCheckboxes(self: SyhEventComments, commentBlock: Element)
  * `aria-selected === 'false'` — саме той строгий предикат, що був в оригіналі:
  * відсутній атрибут (null) кліку НЕ викликає.
  */
-function activateStarButton(self: SyhEventComments, commentBlock: Element): void {
+function activateStarButton(self: CommentEffectHost, commentBlock: Element): void {
     const starBtnNode = queryBySelectorValue<HTMLElement>(self.SELECTORS?.starButton, commentBlock);
     if (starBtnNode && starBtnNode.getAttribute('aria-selected') === 'false') {
         starBtnNode.click();
@@ -67,7 +67,7 @@ function activateStarButton(self: SyhEventComments, commentBlock: Element): void
  * Порядок фіксований і збігається з оригіналом: головний чекбокс → решта чекбоксів → зірка.
  */
 export function syncCommentCardState(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     commentBlock: Element,
     commentText: string
 ): void {

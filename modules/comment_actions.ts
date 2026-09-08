@@ -61,6 +61,15 @@ export interface CommentActionPlatformOverride {
      * заради якої існує реєстр: `CommentInjector` більше не має знати про неї.
      */
     events?: readonly string[];
+    /**
+     * Кнопки миші, які дія приймає (`0` — ЛКМ, `1` — коліщатко, `2` — ПКМ).
+     * За замовчуванням — тільки ЛКМ.
+     *
+     * Значуще лише для поверхонь, що слухають `mouseup`: на StreamYard від
+     * кнопки миші залежить іконка молитви (🙏🙏🙏 / 🙏❤️🙏 / ❤️❤️❤️), тому
+     * правило живе поряд із підписом, який його документує.
+     */
+    mouseButtons?: readonly number[];
 }
 
 export interface CommentActionDefinition {
@@ -72,6 +81,12 @@ export interface CommentActionDefinition {
     /** `null` означає, що дія на цій поверхні свідомо відсутня. */
     platforms: Readonly<Record<CommentPlatformId, CommentActionPlatformOverride | null>>;
 }
+
+/** Кнопки миші, які дія приймає за замовчуванням: лише ЛКМ. */
+export const DEFAULT_ACTION_MOUSE_BUTTONS: readonly number[] = [0];
+
+/** Усі три кнопки миші — StreamYard-молитва розрізняє їх за іконкою. */
+const ALL_MOUSE_BUTTONS: readonly number[] = [0, 1, 2];
 
 /** Події, на які реагують кнопки коментаря за замовчуванням. */
 export const DEFAULT_ACTION_EVENTS: readonly string[] = ['click'];
@@ -144,7 +159,8 @@ export const COMMENT_ACTIONS: ReadonlyArray<CommentActionDefinition> = [
                 domAction: 'copy-prayer',
                 title: 'ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️',
                 type: 'comment',
-                events: STREAMYARD_ACTION_EVENTS
+                events: STREAMYARD_ACTION_EVENTS,
+                mouseButtons: ALL_MOUSE_BUTTONS
             },
             youtube: {
                 domAction: 'add-prayer',
@@ -243,4 +259,19 @@ export function buildPlatformButtonConfigs(platform: CommentPlatformId): ButtonC
 export function getActionEvents(platform: CommentPlatformId, id: CommentActionId): readonly string[] {
     const events = ACTIONS_BY_ID.get(id)?.platforms[platform]?.events;
     return events && events.length > 0 ? events : DEFAULT_ACTION_EVENTS;
+}
+
+/**
+ * Чи реагує дія на цю кнопку миші.
+ * Дія без явного списку приймає лише ЛКМ — саме так поводились усі кнопки
+ * StreamYard, крім 🙏, ще до появи реєстру.
+ */
+export function acceptsMouseButton(
+    platform: CommentPlatformId,
+    id: CommentActionId,
+    mouseButton: number
+): boolean {
+    const allowed = ACTIONS_BY_ID.get(id)?.platforms[platform]?.mouseButtons
+        ?? DEFAULT_ACTION_MOUSE_BUTTONS;
+    return allowed.includes(mouseButton);
 }

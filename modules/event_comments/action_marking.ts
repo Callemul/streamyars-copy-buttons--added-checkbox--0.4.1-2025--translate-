@@ -8,7 +8,7 @@
 // (cyclomatic 12 / cognitive 15, severity critical). Поведінка збережена 1-в-1:
 // той самий порядок викликів і ті самі умови.
 
-import type { SyhEventComments, CopyPayload } from './types';
+import type { CommentEffectHost, CopyPayload } from './types';
 import { SYH_BUS } from '../event_bus';
 
 /** Іконка, якою позначається збережене питання. */
@@ -19,7 +19,7 @@ const QUESTION_ICON = '❓';
  * Виділено окремо, щоб гілки question/prayer читались симетрично.
  */
 function markAsQuestion(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     author: string,
     commentText: string,
     commentBlock: Element
@@ -33,7 +33,7 @@ function markAsQuestion(
  * Викликається лише коли `prayerIcon` реально є (див. `markCommentByActionType`).
  */
 function markAsPrayer(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     prayerIcon: string,
     author: string,
     commentText: string,
@@ -53,7 +53,7 @@ function markAsPrayer(
  * - `copy` / `null` — не робить нічого.
  */
 export function markCommentByActionType(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     payload: CopyPayload,
     author: string,
     commentText: string,

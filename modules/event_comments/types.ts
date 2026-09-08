@@ -41,7 +41,27 @@ export interface AutoHealObserver {
     disconnect(): void;
 }
 
-export interface SyhEventComments {
+/**
+ * Мінімум, потрібний ефектам «перемалювати картку коментаря».
+ * Вужчий за `SyhEventComments`, тому ті самі функції викликає і
+ * `StreamYardCommentAdapter`, який не є фасадом плагіна (T7).
+ */
+export interface CommentVisualHost {
+    UI: SyhUi | null;
+}
+
+/**
+ * Мінімум, потрібний повному набору ефектів дії над коментарем:
+ * запис у базу, візуали, банер копіювання, синхронізація чекбоксів.
+ */
+export interface CommentEffectHost extends CommentVisualHost {
+    SELECTORS: Record<string, SelectorValue> | null;
+    UTILS: SyhUtils | null;
+    saveToDatabase(author: string, text: string, type: string, icon: string): Promise<void>;
+    removeFromDatabase(text: string): Promise<void>;
+}
+
+export interface SyhEventComments extends CommentEffectHost {
     SELECTORS: Record<string, SelectorValue> | null;
     STATE: SyhState | null;
     UTILS: SyhUtils | null;

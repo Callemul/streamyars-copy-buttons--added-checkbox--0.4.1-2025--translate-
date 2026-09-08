@@ -1,4 +1,4 @@
-import type { SyhEventComments, CopyPayload, CopyablePayload } from './types';
+import type { CommentEffectHost, CopyPayload, CopyablePayload } from './types';
 import { SYH_BUS } from '../event_bus';
 import { markCommentByActionType } from './action_marking';
 import { syncCommentCardState } from './action_dom_sync';
@@ -20,7 +20,7 @@ function hasTextToCopy(payload: CopyPayload): payload is CopyablePayload {
  * `UTILS` може бути `null` до `init()`, тому банер — опційний ефект.
  */
 function announceCopiedComment(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     payload: CopyablePayload,
     author: string,
     commentText: string
@@ -44,7 +44,7 @@ function announceCopiedComment(
  * порядок ефектів і всі умови збережено 1-в-1.
  */
 export function applyCommentActionState(
-    self: SyhEventComments,
+    self: CommentEffectHost,
     payload: CopyPayload,
     author: string,
     commentText: string,
