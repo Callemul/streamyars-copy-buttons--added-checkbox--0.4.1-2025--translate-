@@ -1145,3 +1145,34 @@ details[id^="cleanedLogDetails"] summary:hover {
     font-size: 12px;
     border: none !important;
 }
+
+/* Банер сповіщень (Toast / Banner) */
+.copy-success-banner {
+    position: fixed !important;
+    top: 16px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background-color: #28a745 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: var(--radius-sm, 8px) !important;
+    z-index: 2147483647 !important;
+    font-size: 13.5px !important;
+    font-family: inherit !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    white-space: pre-wrap;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.copy-success-banner.visible {
+    opacity: 1;
+}
+
+.copy-success-banner.error {
+    background-color: #dc3545 !important;
+}
+

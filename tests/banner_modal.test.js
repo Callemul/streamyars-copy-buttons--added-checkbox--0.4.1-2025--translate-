@@ -2,11 +2,11 @@ import { test, describe, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-    parseTextToSections,
     SyhBannerModal,
     openBannerCreationModal,
-    SESSION_DRAFT_KEY
 } from '../modules/banner_modal.ts';
+import { parseTextToSections } from '../modules/banner_modal_parser.ts';
+import { SESSION_DRAFT_KEY } from '../modules/banner_modal_draft.ts';
 
 function createMockParsers() {
     return {

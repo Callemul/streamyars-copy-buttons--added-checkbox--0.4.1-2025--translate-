@@ -8,8 +8,9 @@
 // Поведінка збережена 1-в-1, включно з порядком ефектів.
 
 import type { SyhEventComments } from './types';
-import { queryBySelectorValue } from '../config';
+import { SYH_CONFIG, queryBySelectorValue } from '../config';
 import { CommentService } from '../comment_service';
+import { getCheckboxTextKey } from '../ui_checkbox_restorer';
 
 /** Чекбокс SYH, привʼязаний саме до коментаря (а не до банера). */
 const COMMENT_CHECKBOX_SELECTOR = '.syh-checkbox[data-type="comment"]';
@@ -32,11 +33,20 @@ function checkPrimaryCommentCheckbox(commentBlock: Element, commentText: string)
     CommentService.setStreamYardCheckboxState(commentText, true);
 }
 
-/** Догортає решту чекбоксів картки у стан «відмічено» без подій. */
-function checkRemainingCheckboxes(commentBlock: Element): void {
+/** Догортає решту чекбоксів картки у стан «відмічено» та оновлює стан через CommentService. */
+function checkRemainingCheckboxes(self: SyhEventComments, commentBlock: Element): void {
+    const selectors = self.SELECTORS || SYH_CONFIG.SELECTORS;
     commentBlock
         .querySelectorAll<HTMLInputElement>(ANY_CHECKBOX_SELECTOR)
-        .forEach(cb => { cb.checked = true; });
+        .forEach(cb => {
+            cb.checked = true;
+            const textKey = selectors && typeof cb.closest === 'function'
+                ? getCheckboxTextKey(cb, selectors)
+                : '';
+            if (textKey) {
+                CommentService.setStreamYardCheckboxState(textKey, true);
+            }
+        });
 }
 
 /**
@@ -62,6 +72,6 @@ export function syncCommentCardState(
     commentText: string
 ): void {
     checkPrimaryCommentCheckbox(commentBlock, commentText);
-    checkRemainingCheckboxes(commentBlock);
+    checkRemainingCheckboxes(self, commentBlock);
     activateStarButton(self, commentBlock);
 }

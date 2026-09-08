@@ -21,6 +21,7 @@ export interface CommentPayload {
 
 /** Запис молитви/питання у базі StreamYard (із TTL за `timestamp`). */
 export interface PrayerRecord {
+    id?: string;
     author: string;
     text: string;
     type: string;

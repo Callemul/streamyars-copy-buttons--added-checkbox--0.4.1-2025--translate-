@@ -13,6 +13,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { $, bindTabSwitcher, bindDebouncedInput } from './popup_dom_utils';
+import { showBanner } from '../modules/utils_notify';
 import { db, saveDataToStorage } from './popup_state_restorer';
 import { bindSheetListeners, createSheetBindingTimers } from './popup_sheet_bindings';
 
@@ -64,7 +65,7 @@ export function setupTranslitListeners(): void {
         'translitOld',
         translitTimers,
         TRANSLIT_DEBOUNCE_MS,
-        (val) => { SYH_STORAGE.set({ 'tg_translit_old': val }); }
+        (val) => { SYH_STORAGE.set({ [STORAGE_KEYS.POPUP_TRANSLIT_OLD]: val }); }
     );
 
     bindDebouncedInput(
@@ -72,7 +73,7 @@ export function setupTranslitListeners(): void {
         'translitNew',
         translitTimers,
         TRANSLIT_DEBOUNCE_MS,
-        (val) => { SYH_STORAGE.set({ 'tg_translit_new': val }); }
+        (val) => { SYH_STORAGE.set({ [STORAGE_KEYS.POPUP_TRANSLIT_NEW]: val }); }
     );
 }
 
@@ -91,7 +92,7 @@ function readInputValue(id: string): string {
 export function saveTitleFromInput(inputId: string, dbField: 'newTitleSS' | 'newTitlePreach'): void {
     db[dbField] = readInputValue(inputId);
     saveDataToStorage();
-    alert("Збережено!");
+    showBanner("Збережено!");
 }
 
 export function openExtensionOptionsPage(): void {

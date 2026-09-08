@@ -5,13 +5,12 @@
 //
 // Виділено з `popup/popup_telegram.ts` (hotspot №1 за Fallow).
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
 import type { YTCollectedItem } from '../modules/types';
 import { $ } from './popup_dom_utils';
 import {
-    getSheetCollectedKey,
     setCollectedItemsForSheet,
     cancelActiveBatch,
     registerActiveBatch
@@ -46,7 +45,7 @@ function createYTCollectedCard(item: YTCollectedItem, sheetId: string): HTMLElem
     delBtn.setAttribute('title', 'Видалити');
     delBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        deleteYTCollectedItem(item.id, sheetId);
+        deleteYTCollectedItem(item.id, sheetId, item.author, item.text);
     });
 
     header.appendChild(author);
@@ -72,7 +71,7 @@ function renderEmptyCollectedState(list: HTMLElement): void {
 }
 
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
-    const sheetKey = getSheetCollectedKey(sheetId);
+    const sheetKey = getSheetCollectedStorageKey(sheetId);
 
     SYH_STORAGE.get([sheetKey], function (result: Record<string, any>) {
         const items: YTCollectedItem[] = result[sheetKey] || [];
@@ -98,32 +97,18 @@ export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     });
 }
 
-export function deleteYTCollectedItem(commentId: string, sheetId: string = 'vp_ss'): void {
-    const sheetKey = getSheetCollectedKey(sheetId);
-
-    SYH_STORAGE.get([sheetKey, STORAGE_KEYS.YT_BUTTON_STATES, STORAGE_KEYS.STUDIO_BUTTON_STATE], function (result: Record<string, any>) {
-        let sheetItems: YTCollectedItem[] = result[sheetKey] || [];
-        sheetItems = sheetItems.filter(item => item.id !== commentId);
-
-        const ytBtnStates = result[STORAGE_KEYS.YT_BUTTON_STATES] || {};
-        const studioBtnStates = result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {};
-
-        if (ytBtnStates[commentId]) {
-            delete ytBtnStates[commentId];
-        }
-        if (studioBtnStates[commentId]) {
-            delete studioBtnStates[commentId];
-        }
-
-        SYH_STORAGE.set({
-            [sheetKey]: sheetItems,
-            [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
-            [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
-        }, function () {
+export function deleteYTCollectedItem(
+    commentId: string,
+    sheetId: string = 'vp_ss',
+    author?: string,
+    text?: string
+): Promise<void> {
+    return CommentService.removeCollectedComment(sheetId, commentId, author, text)
+        .then(() => {
             loadYTCollected(sheetId);
             clearFinalResult(sheetId);
-        });
-    });
+        })
+        .catch(e => console.error('[SYH] Delete collected item failed:', e));
 }
 
 export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
@@ -131,6 +116,6 @@ export function clearAllYTCollected(sheetId: string = 'vp_ss'): void {
         CommentService.clearAllCollectedForSheet(sheetId).then(() => {
             loadYTCollected(sheetId);
             clearFinalResult(sheetId);
-        });
+        }).catch(e => console.error('[SYH] Clear failed:', e));
     }
 }

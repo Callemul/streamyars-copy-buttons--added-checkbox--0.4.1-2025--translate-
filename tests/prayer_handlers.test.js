@@ -476,7 +476,8 @@ describe('prayer_handlers', () => {
             assert.equal(list.length, 4);
             assert.ok(list.some(p => p.text === 'New prayer'));
             assert.equal(btn.textContent, 'Підтягнути');
-            assert.equal(alertMessages.length, 1);
+            const banner = document.querySelector('.copy-success-banner');
+            assert.ok(banner);
         });
 
         test('fetch button reports a failure for a non-list payload', async () => {
@@ -489,7 +490,9 @@ describe('prayer_handlers', () => {
 
             assert.equal(btn.textContent, 'Підтягнути');
             assert.equal(readStored().length, 3);
-            assert.equal(alertMessages.length, 1);
+            const banner = document.querySelector('.copy-success-banner');
+            assert.ok(banner);
+            assert.ok(banner.classList.contains('error'));
         });
 
         test('fetch button restores its label when messaging throws', async () => {

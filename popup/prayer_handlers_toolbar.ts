@@ -1,13 +1,15 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
 import { CommentService } from '../modules/comment_service';
-import { renderPrayers } from './prayer_render';
+import { showBanner } from '../modules/utils_notify';
+import { savePrayersAndRender } from './prayer_render';
 import { $ } from './prayer_utils'
 import {
     CLEAR_PRAYERS_CONFIRM_MESSAGE,
     COPY_LABEL_RESET_DELAY_MS,
     FETCH_PENDING_LABEL,
     FETCH_PRAYERS_FAILED_MESSAGE,
+    PRAYER_ENTRY_TYPE,
     buildFetchSummaryMessage,
     copyResultLabel,
     isPrayerListPayload,
@@ -20,14 +22,6 @@ import {
 import type { PrayerItem } from '../modules/types';
 
 type ToolbarClickHandler = (this: HTMLElement, ev: MouseEvent) => void | Promise<void>;
-
-/** Записує список у сховище і перемальовує його; `after` виконується вже після рендера. */
-function savePrayersAndRender(list: PrayerItem[], after: () => void): void {
-    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
-        renderPrayers(list);
-        after();
-    });
-}
 
 async function handleCopyPrayersClick(this: HTMLElement): Promise<void> {
     const text = readRawPrayerText($('prayersResultDiv'));
@@ -44,22 +38,40 @@ function handleClearPrayersClick(): void {
     if (!confirm(CLEAR_PRAYERS_CONFIRM_MESSAGE)) return;
 
     SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
-        const list = removePrayerEntries(readStoredPrayers(result, STORAGE_KEYS.PRAYERS));
+        const stored = readStoredPrayers(result, STORAGE_KEYS.PRAYERS);
+        const prayersToRemove = stored.filter(item => item.type === PRAYER_ENTRY_TYPE);
+        prayersToRemove.forEach(p => {
+            void CommentService.removePrayerRecord(p.text);
+        });
+        const list = removePrayerEntries(stored);
         savePrayersAndRender(list, () => {});
     });
 }
 
 /** Зливає підтягнуті молитви зі збереженими, зберігає результат і звітує користувачу. */
-function storeFetchedPrayers(fetched: PrayerItem[], btn: HTMLElement, originalText: string): void {
-    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(res: Record<string, any>) {
-        const { list, addedCount } = mergeFetchedPrayers(
-            readStoredPrayers(res, STORAGE_KEYS.PRAYERS),
-            fetched
-        );
+async function storeFetchedPrayers(fetched: PrayerItem[], btn: HTMLElement, originalText: string): Promise<void> {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], async function(res: Record<string, any>) {
+        const stored = readStoredPrayers(res, STORAGE_KEYS.PRAYERS);
+        const { list, addedCount } = mergeFetchedPrayers(stored, fetched);
+
+        // SSOT: Зберігаємо нові молитви через CommentService.savePrayerRecord
+        for (const item of fetched) {
+            if (!stored.some(existing => existing.text === item.text)) {
+                await CommentService.savePrayerRecord({
+                    id: item.id,
+                    author: item.author,
+                    text: item.text,
+                    type: item.type || 'prayer',
+                    icon: item.icon || '🙏🙏🙏',
+                    roomId: item.roomId || '',
+                    timestamp: item.timestamp || Date.now()
+                });
+            }
+        }
 
         savePrayersAndRender(list, () => {
             btn.textContent = originalText;
-            alert(buildFetchSummaryMessage(addedCount));
+            showBanner(buildFetchSummaryMessage(addedCount));
         });
     });
 }
@@ -73,11 +85,11 @@ async function handleFetchPrayersClick(this: HTMLElement): Promise<void> {
 
         if (!isPrayerListPayload(fetched)) {
             this.textContent = originalText;
-            alert(FETCH_PRAYERS_FAILED_MESSAGE);
+            showBanner(FETCH_PRAYERS_FAILED_MESSAGE, 'error');
             return;
         }
 
-        storeFetchedPrayers(fetched, this, originalText);
+        await storeFetchedPrayers(fetched, this, originalText);
     } catch (err) {
         console.error("[SYH] Fetch prayers error:", err);
         this.textContent = originalText;

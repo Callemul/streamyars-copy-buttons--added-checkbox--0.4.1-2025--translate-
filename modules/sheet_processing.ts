@@ -96,7 +96,7 @@ function splitYoutubeItems(ytItems: YTCollectedItem[]): SourceItems {
 }
 
 /** Підсумки журналу вилученого: блок = людина + її питання, sub = лише питання. */
-function countDeletedEntries(deleted: DeletedLogEntry[]): { delPeople: number; delQuestionsTotal: number } {
+export function countDeletedEntries(deleted: DeletedLogEntry[]): { delPeople: number; delQuestionsTotal: number } {
     let delPeople = 0;
     let delQuestionsTotal = 0;
 

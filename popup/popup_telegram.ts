@@ -18,12 +18,13 @@ console.log("[SYH Debug] popup_telegram.ts top-level code executed");
 
 import { SYH_STORAGE } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
-import { collectTelegramSheetStateFromDOM } from '../modules/telegram_parser';
-import type { TelegramSheetDOMState } from '../modules/telegram_parser';
+import { collectTelegramSheetStateFromDOM } from './telegram_sheet_dom';
+import type { TelegramSheetDOMState } from './telegram_sheet_dom';
 import { SheetStateService } from '../modules/sheet_state_service';
 import type { ProcessedSheetResult } from '../modules/sheet_state_service';
 import type { YTCollectedItem } from '../modules/types';
 import { CommentService } from '../modules/comment_service';
+import { showBanner } from '../modules/utils_notify';
 import { $ } from './popup_dom_utils';
 import { getCollectedItemsForSheet } from './popup_telegram_state';
 import {
@@ -162,7 +163,7 @@ function bindProcessButton(sId: string): void {
         try {
             processTelegramData(sId);
         } catch (e: any) {
-            alert("❌ Помилка:\n" + e.message);
+            showBanner("❌ Помилка:\n" + e.message, 'error');
             console.error(e);
         }
     });

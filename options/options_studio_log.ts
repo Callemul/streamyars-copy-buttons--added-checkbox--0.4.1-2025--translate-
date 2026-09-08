@@ -46,7 +46,7 @@ export function copyStudioLog(notify: (message: string) => void): void {
         if (success) {
             notify('📋 Лог корекцій YouTube Studio скопійовано!');
         } else {
-            alert('Не вдалося скопіювати лог в буфер обміну');
+            notify('Не вдалося скопіювати лог в буфер обміну');
         }
     });
 }

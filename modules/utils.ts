@@ -40,7 +40,7 @@ import {
     clickElementByText as clickElementByTextImpl,
     DEFAULT_BANNER_TEXT_SELECTOR
 } from './utils_dom_wait';
-import { copyAndShowBanner as copyAndShowBannerImpl, showBanner as showBannerImpl } from './utils_notify';
+import { copyAndShowBanner as copyAndShowBannerImpl, showBanner as showBannerImpl, type BannerVariant } from './utils_notify';
 import { saveBannerCategory as saveBannerCategoryImpl } from './utils_storage_ops';
 
 export interface SyhUtils {
@@ -48,7 +48,7 @@ export interface SyhUtils {
     readonly storage: any;
     init(config: { SELECTORS: Record<string, string | string[]> }): void;
     getTodayDateString(): string;
-    showBanner(bannerMessage: string): void;
+    showBanner(bannerMessage: string, variantOrError?: BannerVariant | boolean): void;
     copyAndShowBanner(textToCopy: string, bannerMessage?: string): void;
     waitForElement(selector: string | string[], timeout?: number): Promise<Element>;
     waitForElementToDisappear(selector: string, timeout?: number): Promise<void>;
@@ -88,8 +88,8 @@ export const SYH_UTILS: SyhUtils = {
         return new Date().toLocaleDateString('sv-SE');
     },
 
-    showBanner: function(bannerMessage: string): void {
-        showBannerImpl(bannerMessage);
+    showBanner: function(bannerMessage: string, variantOrError?: BannerVariant | boolean): void {
+        showBannerImpl(bannerMessage, variantOrError);
     },
 
     copyAndShowBanner: function(textToCopy: string, bannerMessage?: string): void {

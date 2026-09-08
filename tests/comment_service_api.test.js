@@ -251,6 +251,20 @@ describe('CommentService — сховище зібраних коментарі�
         assert.equal(list.length, 1);
     });
 
+    test('16b. removeCollectedComment очищає стани кнопок YT/Studio для видаленого коментаря', async () => {
+        mockStorageStore = {};
+        await CommentService.saveCollectedComment('vp_ss', makeComment({ id: 'a' }));
+        await CommentService.saveCollectedComment('vp_ss', makeComment({ id: 'b', text: 'B' }));
+
+        mockStorageStore[STORAGE_KEYS.YT_BUTTON_STATES] = { a: 'question', b: 'prayer' };
+        mockStorageStore[STORAGE_KEYS.STUDIO_BUTTON_STATE] = { a: 'prayer', b: 'question' };
+
+        await CommentService.removeCollectedComment('vp_ss', 'a');
+
+        assert.deepEqual(mockStorageStore[STORAGE_KEYS.YT_BUTTON_STATES], { b: 'prayer' });
+        assert.deepEqual(mockStorageStore[STORAGE_KEYS.STUDIO_BUTTON_STATE], { b: 'question' });
+    });
+
     test('17. clearAllCollectedForSheet чистить лист і зриває стани кнопок YT/Studio', async () => {
         mockStorageStore = {};
         await CommentService.saveCollectedComment('vp_ss', makeComment({ id: 'a' }));

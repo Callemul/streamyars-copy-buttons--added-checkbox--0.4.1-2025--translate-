@@ -317,7 +317,7 @@ describe('popup_telegram — YT-зібрані коментарі', () => {
         assert.deepEqual(updateRightColumnStats('no_such_sheet'), { people: 0, questions: 0, prayers: 0 });
     });
 
-    test('26. кнопка ✕ на картці видаляє елемент зі storage і прибирає стани кнопок', () => {
+    test('26. кнопка ✕ на картці видаляє елемент зі storage і прибирає стани кнопок', async () => {
         storageStore[collectedKey(SHEET)] = [
             { id: 'c1', author: 'A', text: 'Q1?', type: 'question' },
             { id: 'c2', author: 'B', text: 'Q2?', type: 'question' }
@@ -327,26 +327,27 @@ describe('popup_telegram — YT-зібрані коментарі', () => {
 
         loadYTCollected(SHEET);
         $id(`ytCollectedList__${SHEET}`).querySelector('[data-id="c1"] .yt-item-del-btn').click();
+        await new Promise(resolve => setTimeout(resolve, 0));
 
         assert.deepEqual(storageStore[collectedKey(SHEET)].map(i => i.id), ['c2']);
         assert.deepEqual(Object.keys(storageStore['syh:yt:button_states']), ['c2']);
         assert.deepEqual(Object.keys(storageStore['syh:studio:button_state']), []);
     });
 
-    test('27. deleteYTCollectedItem для неіснуючого id лишає список без змін', () => {
+    test('27. deleteYTCollectedItem для неіснуючого id лишає список без змін', async () => {
         storageStore[collectedKey(SHEET)] = [{ id: 'c1', author: 'A', text: 'Q?', type: 'question' }];
 
-        deleteYTCollectedItem('missing', SHEET);
+        await deleteYTCollectedItem('missing', SHEET);
 
         assert.equal(storageStore[collectedKey(SHEET)].length, 1);
     });
 
-    test('28. видалення перемальовує список і чистить фінальний результат', () => {
+    test('28. видалення перемальовує список і чистить фінальний результат', async () => {
         storageStore[collectedKey(SHEET)] = [{ id: 'c1', author: 'A', text: 'Q?', type: 'question' }];
         loadYTCollected(SHEET);
         $id(`finalResultDiv__${SHEET}`).innerHTML = '<div>старе</div>';
 
-        deleteYTCollectedItem('c1', SHEET);
+        await deleteYTCollectedItem('c1', SHEET);
 
         assert.equal($id(`ytCollectedList__${SHEET}`).querySelectorAll('.yt-empty-msg').length, 1);
         assert.equal($id(`finalResultDiv__${SHEET}`).innerHTML, '');

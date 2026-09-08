@@ -40,7 +40,6 @@ export function populateFormElements(
     setCheck('optAutoHealEnabled', getDefaultValue(opts.auto_heal_enabled, defaults.auto_heal_enabled));
     setVal('optTruncationLength', String(getDefaultValue(opts.text_truncation_length, defaults.text_truncation_length)));
 
-    setCheck('optShowCopyButtons', getDefaultValue(opts.show_copy_buttons, defaults.show_copy_buttons));
     setCheck('optCompactSecondaryTabs', getDefaultValue(opts.compact_secondary_tabs_default, defaults.compact_secondary_tabs_default));
     setCheck('optYouTubeEnabled', getDefaultValue(opts.youtube_enabled, defaults.youtube_enabled));
 
@@ -106,7 +105,6 @@ export function readOptionsFromForm(defaults: OptionsState): OptionsState {
         anti_afk_interval_sec: readInteger('optAntiAfkInterval', ANTI_AFK_INTERVAL_FALLBACK),
         auto_heal_enabled: readCheckbox('optAutoHealEnabled'),
         text_truncation_length: readInteger('optTruncationLength', TRUNCATION_LENGTH_FALLBACK),
-        show_copy_buttons: readCheckbox('optShowCopyButtons'),
         compact_secondary_tabs_default: readCheckbox('optCompactSecondaryTabs'),
         youtube_enabled: readCheckbox('optYouTubeEnabled'),
         studio_enabled: readCheckbox('optStudioEnabled')

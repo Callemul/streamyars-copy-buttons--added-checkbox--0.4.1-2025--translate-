@@ -12,6 +12,7 @@
   transition: opacity 0.3s ease;
 }
 .copy-success-banner.visible { opacity: 1; }
+.copy-success-banner.error { background-color: #dc3545 !important; }
 
 /* --- СТИЛІ ДЛЯ КОМЕНТАРІВ --- */
 [class*="PlatformComment__TopRightButtonGroup"] {

@@ -54,7 +54,6 @@ const PAGE_HTML = `
     <input id="optAntiAfkInterval" type="text">
     <input id="optAutoHealEnabled" type="checkbox">
     <input id="optTruncationLength" type="text">
-    <input id="optShowCopyButtons" type="checkbox">
     <input id="optCompactSecondaryTabs" type="checkbox">
     <input id="optYouTubeEnabled" type="checkbox">
     <input id="optStudioEnabled" type="checkbox">
@@ -332,7 +331,7 @@ describe('options — інфраструктура сторінки (харак�
             assert.equal($id('optPreachName').value, 'Нова проповідь');
         });
 
-        test('10. невалідна структура → alert, storage не змінюється', async () => {
+        test('10. невалідна структура → toast, storage не змінюється', async () => {
             bootOptionsPage();
             const restore = stubFileReader(JSON.stringify({ somethingElse: 1 }));
 
@@ -343,11 +342,12 @@ describe('options — інфраструктура сторінки (харак�
                 restore();
             }
 
-            assert.deepEqual(alerts, ['Некоректний формат файлу конфігурації.']);
+            assert.equal($id('toastNotification').textContent, 'Некоректний формат файлу конфігурації.');
+            assert.deepEqual(alerts, []);
             assert.equal(STORAGE_KEYS.DB in store, false);
         });
 
-        test('11. битий JSON → alert про помилку зчитування', async () => {
+        test('11. битий JSON → toast про помилку зчитування', async () => {
             bootOptionsPage();
             const restore = stubFileReader('{ це не json');
 
@@ -358,7 +358,8 @@ describe('options — інфраструктура сторінки (харак�
                 restore();
             }
 
-            assert.deepEqual(alerts, ['Помилка при зчитуванні JSON файлу.']);
+            assert.equal($id('toastNotification').textContent, 'Помилка при зчитуванні JSON файлу.');
+            assert.deepEqual(alerts, []);
         });
 
         test('12. порожній вибір файлу нічого не робить', () => {
@@ -433,7 +434,7 @@ describe('options — інфраструктура сторінки (харак�
             assert.equal($id('toastNotification').textContent, '📋 Лог корекцій YouTube Studio скопійовано!');
         });
 
-        test('17. збій буфера обміну веде до alert замість тоста', async () => {
+        test('17. збій буфера обміну веде до повідомлення про помилку у тості', async () => {
             installStore({ [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]: [LOG_ENTRY] });
             bootOptionsPage();
             clipboardShouldFail = true;
@@ -447,7 +448,8 @@ describe('options — інфраструктура сторінки (харак�
             clickById('copyStudioLogBtn');
             await flush();
 
-            assert.deepEqual(alerts, ['Не вдалося скопіювати лог в буфер обміну']);
+            assert.equal($id('toastNotification').textContent, 'Не вдалося скопіювати лог в буфер обміну');
+            assert.deepEqual(alerts, []);
         });
 
         test('18. підтверджене очищення журналу пише порожній масив і перемальовує таблицю', () => {

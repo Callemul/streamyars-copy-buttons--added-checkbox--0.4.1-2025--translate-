@@ -24,10 +24,10 @@ export {
 } from './parsers/index';
 
 export type { TelegramQuestionItem, ParseOldListResult, GroupedNewItem } from './telegram_types';
-export type { TelegramSheetDOMState } from './telegram_sheet_dom';
+export type { TelegramSheetDOMState } from '../popup/telegram_sheet_dom';
 
 export { countQuestionsInText, numberToEmoji, parseAnsweredIds, cleanAuthorName, cleanTelegramHeadersLogged } from './telegram_text_rules';
 export { parseTelegramSection, parseAndFilterOldList } from './telegram_old_section';
 export { processOldTelegramItem } from './telegram_old_item';
-export { collectTelegramSheetStateFromDOM } from './telegram_sheet_dom';
+export { collectTelegramSheetStateFromDOM } from '../popup/telegram_sheet_dom';
 export { createLineByLineHeaderItem, parseTelegramExportLineByLine } from './telegram_line_export';

@@ -15,6 +15,7 @@ import {
 import type { TelegramQuestionItem } from '../modules/telegram_parser';
 import { SheetStateService } from '../modules/sheet_state_service';
 import type { SheetCounterStats, ProcessedSheetResult } from '../modules/sheet_state_service';
+import { countDeletedEntries } from '../modules/sheet_processing';
 import { $, setTextContent, showElement } from './popup_dom_utils';
 import { getCollectedItemsForSheet } from './popup_telegram_state';
 import { clearFinalResult } from './popup_telegram_renderers';
@@ -71,16 +72,7 @@ function computeOldListTotals(sheetId: string) {
     let oldQuestions = 0;
     preservedData.questions.forEach((q) => oldQuestions += countQuestionsInText(q.text));
 
-    let delPeople = 0;
-    let delQuestions = 0;
-    preservedData.deleted.forEach(d => {
-        if (d.type === 'block') {
-            delPeople++;
-            delQuestions += d.count;
-        } else if (d.type === 'sub') {
-            delQuestions += d.count;
-        }
-    });
+    const { delPeople, delQuestionsTotal: delQuestions } = countDeletedEntries(preservedData.deleted);
 
     return {
         oldPeople: preservedData.questions.length,
@@ -148,7 +140,19 @@ export function updateOldInputStats(sheetId: string = 'vp_ss'): void {
     clearFinalResult(sheetId);
 }
 
-/** Агрегат по правій колонці (зібране з YouTube) для поточного аркуша. */
+/**
+ * Агрегат по правій колонці (зібране з YouTube) для поточного аркуша.
+ *
+ * TODO(SSOT): Перевірено можливість делегування у `SheetStatsCalculator`:
+ * 1) Метод `countYoutubeColumn` у `SheetStatsCalculator` є внутрішнім (не експортується).
+ * 2) `SheetStatsCalculator` виконує дедуплікацію авторів (`countUniquePeople(ytItems)`),
+ *    тоді як `updateRightColumnStats` за чинним контрактом (див. tests/popup_telegram_ui.test.js:24)
+ *    повертає загальну кількість карток (`items.length`), а не кількість унікальних людей.
+ * 3) Публічний метод `SheetStatsCalculator.computeSheetCounters` вимагає обов'язковий `telegramText`
+ *    та повертає агреговані лічильники обох колонок (`SheetCounterStats`).
+ * Для уніфікації знадобиться розширення API `SheetStatsCalculator` методом з підтримкою вибору
+ * підрахунку (raw length vs unique people).
+ */
 export function updateRightColumnStats(sheetId: string = 'vp_ss'): { people: number; questions: number; prayers: number } {
     const items = getCollectedItemsForSheet(sheetId);
     let qCount = 0;

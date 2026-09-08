@@ -2,7 +2,7 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { RetentionService } from '../modules/retention_service';
 
 import type { PrayerItem } from '../modules/types';
-import { generatePrayerId, cleanAuthorName, getAuthorIcon } from './prayer_utils';
+import { generatePrayerId, cleanPrayerAuthorName, getAuthorIcon } from './prayer_utils';
 
 export function ensurePrayerIds(prayersList: PrayerItem[]): boolean {
     let needsSaveId = false;
@@ -38,7 +38,7 @@ export function groupPrayersByAuthor(prayersList: PrayerItem[]): {
     let totalRequests = 0;
     const onlyPrayers = prayersList.filter(p => p.type === 'prayer');
     onlyPrayers.forEach((p) => {
-        const cleanAuthor = cleanAuthorName(p.author);
+        const cleanAuthor = cleanPrayerAuthorName(p.author);
         if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
         grouped[cleanAuthor].push({
             text: p.text,

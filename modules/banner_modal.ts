@@ -1,120 +1,13 @@
-import type { BannerItem, SyhBannerCreator } from './banner_types';
+import type { SyhBannerCreator } from './banner_types';
 import type { SyhParsers } from './parsers/index';
 import type { SyhUtils } from './utils';
 import { SYH_PARSERS } from './parsers/index';
 import { SYH_UTILS } from './utils';
-import { splitPrayerSection } from './parsers/index';
-import {
-    detectBlockCategory,
-    readFirstNonEmptyLine,
-    splitIntoMessages
-} from './banner_parser_rules';
-import { parseBlock } from './banner_parser';
-
-export const SESSION_DRAFT_KEY = 'syh_banner_modal_draft';
-
-export interface ParsedSection {
-    id: number;
-    title: string;
-    rawText: string;
-    category: string; // 'stream' | 'audience' | 'prayer'
-    banners: BannerItem[];
-}
-
-export interface ParseSectionsResult {
-    sections: ParsedSection[];
-    allBanners: BannerItem[];
-    hasStandardFormat: boolean;
-    logs: string[];
-}
-
-/**
- * Розбирає вхідний текст на секції із збереженням структури для інтерфейсу.
- * Підтримує ручні перевизначення категорій секцій.
- */
-export function parseTextToSections(
-    rawText: string,
-    parsers: SyhParsers,
-    utils: SyhUtils,
-    categoryOverrides?: Record<number, string>
-): ParseSectionsResult {
-    const logs: string[] = [];
-    const sections: ParsedSection[] = [];
-    let hasStandardFormat = false;
-
-    const cleaner = utils.cleanTelegramHeaders ? utils.cleanTelegramHeaders.bind(utils) : ((t: string) => t);
-    const cleanedText = cleaner(rawText);
-
-    if (!cleanedText.trim()) {
-        return { sections: [], allBanners: [], hasStandardFormat: false, logs: ['Текст порожній'] };
-    }
-
-    const messages = splitIntoMessages(cleanedText);
-    logs.push(`Виявлено логічних блоків тексту: ${messages.length}`);
-
-    let sectionCounter = 0;
-
-    for (let i = 0; i < messages.length; i++) {
-        const msg = messages[i];
-        const { questionsText, prayersText } = splitPrayerSection(msg);
-
-        // Обробка підблоку питань
-        if (questionsText.trim()) {
-            sectionCounter++;
-            const secId = sectionCounter;
-            const firstLine = readFirstNonEmptyLine(questionsText);
-            const autoCat = detectBlockCategory(firstLine, 'stream');
-            const finalCat = (categoryOverrides && categoryOverrides[secId]) ? categoryOverrides[secId] : autoCat;
-
-            const qItems = parseBlock(questionsText, finalCat, parsers);
-            // Примусово синхронізуємо категорію елементів із секційною категорією
-            const updatedItems = qItems.map(item => ({ ...item, category: finalCat }));
-
-            if (updatedItems.some(item => item.isStandard)) {
-                hasStandardFormat = true;
-            }
-
-            const title = firstLine.length > 35 ? `${firstLine.substring(0, 32)}...` : (firstLine || `Секція ${secId}`);
-            sections.push({
-                id: secId,
-                title: `Секція ${secId}: ${title}`,
-                rawText: questionsText,
-                category: finalCat,
-                banners: updatedItems
-            });
-
-            logs.push(`Секція ${secId}: "${title}" → категорія [${finalCat}], знайдено питань: ${updatedItems.length}`);
-        }
-
-        // Обробка підблоку молитов
-        if (prayersText.trim()) {
-            sectionCounter++;
-            const secId = sectionCounter;
-            const firstLine = readFirstNonEmptyLine(prayersText);
-            const autoCat = 'prayer';
-            const finalCat = (categoryOverrides && categoryOverrides[secId]) ? categoryOverrides[secId] : autoCat;
-
-            const pItems = parseBlock(prayersText, finalCat, parsers);
-            const updatedItems = pItems.map(item => ({ ...item, category: finalCat }));
-
-            const title = firstLine.length > 35 ? `${firstLine.substring(0, 32)}...` : (firstLine || `Молитовна секція ${secId}`);
-            sections.push({
-                id: secId,
-                title: `Секція ${secId}: ${title}`,
-                rawText: prayersText,
-                category: finalCat,
-                banners: updatedItems
-            });
-
-            logs.push(`Секція ${secId} (Молитва): "${title}" → категорія [${finalCat}], записів: ${updatedItems.length}`);
-        }
-    }
-
-    const allBanners = sections.flatMap(sec => sec.banners);
-    logs.push(`Всього сформовано банерів: ${allBanners.length}`);
-
-    return { sections, allBanners, hasStandardFormat, logs };
-}
+import { CommentService } from './comment_service';
+import { parseTextToSections } from './banner_modal_parser';
+export { parseTextToSections };
+import type { ParseSectionsResult } from './banner_modal_parser';
+import { saveDraft, restoreDraft, clearDraft } from './banner_modal_draft';
 
 /**
  * Клас модального вікна для створення банерів.
@@ -431,7 +324,7 @@ export class SyhBannerModal {
         this.diagnosticsEl.textContent = result.logs.join('\n');
     }
 
-    private copyDiagnosticsLog(): void {
+    private async copyDiagnosticsLog(): Promise<void> {
         const logs = this.currentParseResult?.logs || [];
         const textToCopy = [
             `--- SYH Banner Diagnostics Log [${new Date().toLocaleTimeString()}] ---`,
@@ -439,7 +332,8 @@ export class SyhBannerModal {
             `Вхідний текст (перші 200 симв): ${(this.textarea?.value || '').substring(0, 200)}...`
         ].join('\n');
 
-        const successIndicator = () => {
+        const success = await CommentService.copyToClipboard(textToCopy);
+        if (success) {
             const logBtn = this.overlay?.querySelector('.syh-modal-btn-log');
             if (logBtn) {
                 const prev = logBtn.textContent;
@@ -448,62 +342,26 @@ export class SyhBannerModal {
                     logBtn.textContent = prev;
                 }, 1500);
             }
-        };
-
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-            navigator.clipboard.writeText(textToCopy).then(successIndicator).catch(() => {
-                this.fallbackCopy(textToCopy);
-                successIndicator();
-            });
-        } else {
-            this.fallbackCopy(textToCopy);
-            successIndicator();
-        }
-    }
-
-    private fallbackCopy(text: string): void {
-        const dummy = document.createElement('textarea');
-        dummy.value = text;
-        document.body.appendChild(dummy);
-        dummy.select();
-        try {
-            document.execCommand('copy');
-        } finally {
-            document.body.removeChild(dummy);
         }
     }
 
     private saveDraft(): void {
-        try {
-            if (typeof sessionStorage !== 'undefined' && this.textarea) {
-                sessionStorage.setItem(SESSION_DRAFT_KEY, this.textarea.value);
-            }
-        } catch {
-            // Ignore sessionStorage errors
+        if (this.textarea) {
+            saveDraft(this.textarea.value);
         }
     }
 
     private restoreDraft(): void {
-        try {
-            if (typeof sessionStorage !== 'undefined' && this.textarea) {
-                const saved = sessionStorage.getItem(SESSION_DRAFT_KEY);
-                if (saved) {
-                    this.textarea.value = saved;
-                }
+        if (this.textarea) {
+            const saved = restoreDraft();
+            if (saved !== null) {
+                this.textarea.value = saved;
             }
-        } catch {
-            // Ignore sessionStorage errors
         }
     }
 
     private clearDraft(): void {
-        try {
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.removeItem(SESSION_DRAFT_KEY);
-            }
-        } catch {
-            // Ignore sessionStorage errors
-        }
+        clearDraft();
     }
 
     private handleSubmit(): void {

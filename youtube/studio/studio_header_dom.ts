@@ -76,7 +76,7 @@ function attachDeleteHandler(badgeEl: HTMLElement): void {
         const sId = badgeEl.dataset.sheetId;
         if (sId) {
             if (confirm("Очистити всі зібрані коментарі з YouTube для цієї категорії?")) {
-                CommentService.clearAllCollectedForSheet(sId);
+                CommentService.clearAllCollectedForSheet(sId).catch(e => console.error('[SYH] Clear failed:', e));
             }
         }
     });

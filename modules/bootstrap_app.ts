@@ -64,15 +64,47 @@ export function callIfFunction(target: unknown, method: string): boolean {
 }
 
 export function initCoreModules(): void {
-    SYH_UTILS.init(SYH_CONFIG);
-    SYH_UI.init(SYH_CONFIG, SYH_STATE);
-    SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
+    try {
+        SYH_UTILS.init(SYH_CONFIG);
+    } catch (e) {
+        console.error('[SYH] Utils init failed:', e);
+    }
 
-    SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
-    SYH_COMMENT_ASSISTANT.processAllComments();
-    void SYH_RIGHT_TABS_COMPACT.init();
+    try {
+        SYH_UI.init(SYH_CONFIG, SYH_STATE);
+    } catch (e) {
+        console.error('[SYH] UI init failed:', e);
+    }
 
-    callIfFunction(SYH_STATE, 'init');
+    try {
+        SYH_BANNER_CREATOR.init(SYH_CONFIG, SYH_UTILS, SYH_PARSERS);
+    } catch (e) {
+        console.error('[SYH] BannerCreator init failed:', e);
+    }
+
+    try {
+        SYH_COMMENT_ASSISTANT.init(SYH_CONFIG);
+    } catch (e) {
+        console.error('[SYH] CommentAssistant init failed:', e);
+    }
+
+    try {
+        SYH_COMMENT_ASSISTANT.processAllComments();
+    } catch (e) {
+        console.error('[SYH] CommentAssistant processAllComments failed:', e);
+    }
+
+    try {
+        void SYH_RIGHT_TABS_COMPACT.init();
+    } catch (e) {
+        console.error('[SYH] RightTabsCompact init failed:', e);
+    }
+
+    try {
+        callIfFunction(SYH_STATE, 'init');
+    } catch (e) {
+        console.error('[SYH] State init failed:', e);
+    }
 }
 
 export const SYH_PLUGIN_LIST: readonly ISyhPlugin[] = [

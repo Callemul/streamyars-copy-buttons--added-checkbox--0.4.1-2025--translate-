@@ -91,10 +91,10 @@ function applyImportedText(raw: string, onImported: () => void, notify: (message
                 notify('📤 Налаштування та стан успішно імпортовано!');
             });
         } else {
-            alert('Некоректний формат файлу конфігурації.');
+            notify('Некоректний формат файлу конфігурації.');
         }
     } catch {
-        alert('Помилка при зчитуванні JSON файлу.');
+        notify('Помилка при зчитуванні JSON файлу.');
     }
 }
 

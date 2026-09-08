@@ -11,6 +11,7 @@
 
 import { SHEET_REGISTRY } from '../modules/sheets';
 import type { YTCollectedItem } from '../modules/types';
+import { getSheetCollectedStorageKey } from '../modules/storage_keys';
 
 /** Кеш зібраних з YouTube коментарів у розрізі аркушів. */
 const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);
@@ -18,10 +19,8 @@ const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY
 /** Активні (незавершені) пакетні рендери — щоб скасовувати їх перед новим. */
 const activeBatchCancel: Record<string, () => void> = {};
 
-/** Ключ storage, під яким зберігаються зібрані коментарі аркуша. */
-export function getSheetCollectedKey(sheetId: string): string {
-    return `syh:popup:collected:${sheetId}`;
-}
+/** Ключ storage, під яким зберігаються зібрані коментарі аркуша (SSOT: storage_keys.ts). */
+export { getSheetCollectedStorageKey, getSheetCollectedStorageKey as getSheetCollectedKey };
 
 export function getCollectedItemsForSheet(sheetId: string): YTCollectedItem[] {
     return syh_collected_by_sheet[sheetId] || [];

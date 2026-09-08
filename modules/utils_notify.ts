@@ -19,22 +19,38 @@ const BANNER_VISIBLE_MS = 2500;
 const BANNER_FADE_OUT_MS = 300;
 
 function removeExistingBanners(): void {
+    if (typeof document === 'undefined' || !document.querySelectorAll) return;
     document.querySelectorAll(`.${BANNER_CLASS}`).forEach(el => el.remove());
 }
 
-export function showBanner(message: string): void {
+export type BannerVariant = 'success' | 'error' | 'info';
+
+export function showBanner(message: string, variantOrError?: BannerVariant | boolean): void {
+    if (typeof document === 'undefined' || !document.body) return;
+
     removeExistingBanners();
 
+    const isError = variantOrError === true || variantOrError === 'error';
     const banner = document.createElement('div');
-    banner.className = BANNER_CLASS;
+    banner.className = isError ? `${BANNER_CLASS} error` : BANNER_CLASS;
     banner.textContent = message;
     document.body.appendChild(banner);
 
-    requestAnimationFrame(() => banner.classList.add(BANNER_VISIBLE_CLASS));
+    const makeVisible = () => banner.classList?.add(BANNER_VISIBLE_CLASS);
+    if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(makeVisible);
+    } else {
+        setTimeout(makeVisible, 0);
+    }
+
     setTimeout(() => {
-        banner.classList.remove(BANNER_VISIBLE_CLASS);
-        setTimeout(() => banner.remove(), BANNER_FADE_OUT_MS);
+        banner.classList?.remove(BANNER_VISIBLE_CLASS);
+        setTimeout(() => banner.remove?.(), BANNER_FADE_OUT_MS);
     }, BANNER_VISIBLE_MS);
+}
+
+export function showErrorBanner(message: string): void {
+    showBanner(message, 'error');
 }
 
 /**

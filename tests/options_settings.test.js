@@ -42,7 +42,6 @@ const FORM_HTML = `
     <input id="optAntiAfkInterval" type="text">
     <input id="optAutoHealEnabled" type="checkbox">
     <input id="optTruncationLength" type="text">
-    <input id="optShowCopyButtons" type="checkbox">
     <input id="optCompactSecondaryTabs" type="checkbox">
     <input id="optYouTubeEnabled" type="checkbox">
     <input id="optStudioEnabled" type="checkbox">
@@ -97,7 +96,6 @@ function fillForm(values = {}) {
     set('optAntiAfkInterval', 'value', values.antiAfkInterval);
     set('optAutoHealEnabled', 'checked', values.autoHeal);
     set('optTruncationLength', 'value', values.truncation);
-    set('optShowCopyButtons', 'checked', values.showCopy);
     set('optCompactSecondaryTabs', 'checked', values.compact);
     set('optYouTubeEnabled', 'checked', values.youtube);
     set('optStudioEnabled', 'checked', values.studio);
@@ -141,7 +139,6 @@ describe('options — saveSettings (характеризація CRAP-хотсп
             anti_afk_interval_sec: 45,
             auto_heal_enabled: false,
             text_truncation_length: 120,
-            show_copy_buttons: true,
             compact_secondary_tabs_default: false,
             youtube_enabled: true,
             studio_enabled: false
@@ -262,7 +259,6 @@ describe('options — loadSettings підставляє збережене у ф
                 anti_afk_interval_sec: 77,
                 auto_heal_enabled: false,
                 text_truncation_length: 88,
-                show_copy_buttons: false,
                 compact_secondary_tabs_default: false,
                 youtube_enabled: false,
                 studio_enabled: false
@@ -287,7 +283,6 @@ describe('options — loadSettings підставляє збережене у ф
                 anti_afk_interval_sec: 42,
                 auto_heal_enabled: true,
                 text_truncation_length: 150,
-                show_copy_buttons: true,
                 compact_secondary_tabs_default: true,
                 youtube_enabled: true,
                 studio_enabled: true
@@ -304,7 +299,6 @@ describe('options — loadSettings підставляє збережене у ф
             anti_afk_interval_sec: 42,
             auto_heal_enabled: true,
             text_truncation_length: 150,
-            show_copy_buttons: true,
             compact_secondary_tabs_default: true,
             youtube_enabled: true,
             studio_enabled: true

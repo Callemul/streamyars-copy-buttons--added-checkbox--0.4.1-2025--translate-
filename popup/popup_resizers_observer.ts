@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 
 const SHEET_IDS = getAllSheetIds();
@@ -16,8 +16,8 @@ export function setupResizeObserver(isStorageLoaded: () => boolean): void {
 
     const resizeObserver = new ResizeObserver(entries => {
         if (!isStorageLoaded()) return;
-        SYH_STORAGE.get(['tg_textarea_sizes'], function (res: Record<string, any>) {
-            const sizes = res.tg_textarea_sizes || {};
+        SYH_STORAGE.get([STORAGE_KEYS.POPUP_TEXTAREA_SIZES], function (res: Record<string, any>) {
+            const sizes = res[STORAGE_KEYS.POPUP_TEXTAREA_SIZES] || {};
             let updated = false;
             for (const entry of entries) {
                 const id = entry.target.id;
@@ -29,7 +29,7 @@ export function setupResizeObserver(isStorageLoaded: () => boolean): void {
                 }
             }
             if (updated) {
-                SYH_STORAGE.set({ 'tg_textarea_sizes': sizes });
+                SYH_STORAGE.set({ [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]: sizes });
             }
         });
     });

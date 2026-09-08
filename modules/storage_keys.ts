@@ -32,7 +32,6 @@ export interface StoredOptions {
     anti_afk_interval_sec?: number;
     auto_heal_enabled?: boolean;
     text_truncation_length?: number;
-    show_copy_buttons?: boolean;
     youtube_enabled?: boolean;
     studio_enabled?: boolean;
     compact_secondary_tabs_default?: boolean;

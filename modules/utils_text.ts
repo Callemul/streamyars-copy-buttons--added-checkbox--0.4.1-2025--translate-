@@ -171,3 +171,78 @@ export function cleanTelegramHeaders(
     }
     return cleaned;
 }
+
+/** 
+ * Зворотна транслітерація для тексту, зберігає винятки.
+ * Мапа базується на TRANSLITERATION_MAP, але адаптована для нормального читання (напр. shch -> щ).
+ */
+export const REVERSE_TRANSLITERATION_MAP: Record<string, string> = {
+    ...TRANSLITERATION_MAP,
+    'shch': 'щ',
+    'zh': 'ж',
+    'ch': 'ч',
+    'sh': 'ш',
+    'ya': 'я',
+    'yu': 'ю',
+    'yo': 'ё',
+    'ts': 'ц',
+    'ei': 'ей',
+    'j': 'ж',
+    'y': 'ы',
+    'y\'': 'ы',
+    '\'': 'ь',
+};
+
+const REVERSE_WORD_OVERRIDES: Record<string, string> = {
+    'BLAGODARU': 'БЛАГОДАРЮ',
+    'BLAGODARNOST': 'БЛАГОДАРНОСТЬ',
+    'SINOVIAX': 'СЫНОВЬЯХ',
+    'moiu': 'мою',
+    'bratia': 'братья'
+};
+
+/**
+ * Зворотна транслітерація (Latin -> Cyrillic) з урахуванням регістру.
+ * Використовує REVERSE_TRANSLITERATION_MAP.
+ */
+export function transliterateToCyrillic(latinText: string): string {
+    let text = latinText;
+    for (const [key, val] of Object.entries(REVERSE_WORD_OVERRIDES)) {
+        text = text.replaceAll(key, val);
+    }
+    
+    let res = "";
+    let i = 0;
+    while (i < text.length) {
+        let matchedLen = 0;
+        let mappedStr = "";
+        
+        for (let len = 4; len >= 1; len--) {
+            if (i + len <= text.length) {
+                const chunk = text.substring(i, i + len);
+                const lowerChunk = chunk.toLowerCase();
+                if (REVERSE_TRANSLITERATION_MAP[lowerChunk]) {
+                    matchedLen = len;
+                    const cyrillic = REVERSE_TRANSLITERATION_MAP[lowerChunk];
+                    if (chunk === chunk.toUpperCase() && chunk !== chunk.toLowerCase()) {
+                        mappedStr = cyrillic.toUpperCase();
+                    } else if (len > 1 && chunk[0] === chunk[0].toUpperCase() && chunk[1] === chunk[1].toLowerCase()) {
+                        mappedStr = cyrillic.charAt(0).toUpperCase() + cyrillic.slice(1);
+                    } else {
+                        mappedStr = cyrillic;
+                    }
+                    break;
+                }
+            }
+        }
+        
+        if (matchedLen > 0) {
+            res += mappedStr;
+            i += matchedLen;
+        } else {
+            res += text[i];
+            i++;
+        }
+    }
+    return res;
+}

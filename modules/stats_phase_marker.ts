@@ -14,6 +14,7 @@
 
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
+import { showBanner } from './utils_notify';
 import { getOrCreateTodaySession } from './stats_session';
 
 const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
@@ -52,7 +53,7 @@ export function markPhase(
 ): void {
     const timerText = readTimerText();
     if (timerText === null) {
-        alert(NO_TIMER_ALERT);
+        showBanner(NO_TIMER_ALERT, 'error');
         return;
     }
 

@@ -7,6 +7,7 @@
 // 98-рядковим колбеком SHEET_IDS.forEach (CRAP 56).
 
 import { SYH_STORAGE, POPUP_SHEET_KEYS } from '../modules/storage';
+import { SheetStateService } from '../modules/sheet_state_service';
 import { $, bindDebouncedInput } from './popup_dom_utils';
 import {
     updateOldInputStats,
@@ -38,10 +39,16 @@ export function createSheetBindingTimers(): SheetBindingTimers {
 }
 
 /**
- * Дублює значення в новий та legacy (`tg_*`) ключі storage.
- * Чиста обгортка над SYH_STORAGE — єдине місце запису для аркуша.
+ * Зберігає значення поля аркуша.
+ * Делегує виклик у SheetStateService.saveSheetState() як єдине джерело правди (SSOT).
+ * Якщо ключ не відповідає формату стану аркуша — фолбечить на прямий запис у SYH_STORAGE.
  */
-export function persistSheetValue(canonicalKey: string, legacyKey: string, value: unknown): void {
+export function persistSheetValue(canonicalKey: string, legacyKey: string, value: unknown): Promise<void> | void {
+    const match = canonicalKey.match(/^syh:popup:sheet:([^:]+):(.+)$/);
+    if (match) {
+        const [, sheetId, field] = match;
+        return SheetStateService.saveSheetState(sheetId, { [field]: value });
+    }
     SYH_STORAGE.set({ [canonicalKey]: value, [legacyKey]: value });
 }
 

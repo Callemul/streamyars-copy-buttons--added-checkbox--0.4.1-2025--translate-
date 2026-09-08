@@ -174,18 +174,13 @@ describe('SYH_STATS_TRACKER — markPhase', () => {
 
     afterEach(resetDom);
 
-    test('10. без таймера показує alert і НЕ пише у сховище', () => {
-        const originalAlert = globalThis.alert;
-        const alerts = [];
-        globalThis.alert = (msg) => alerts.push(msg);
-
+    test('10. без таймера показує тост і НЕ пише у сховище', () => {
         SYH_STATS_TRACKER.markPhase('questions', { innerText: '', style: {} });
 
-        assert.equal(alerts.length, 1);
-        assert.match(alerts[0], /Ефір ще не розпочався/);
+        const banner = document.querySelector('.copy-success-banner');
+        assert.ok(banner);
+        assert.match(banner.textContent, /Ефір ще не розпочався/);
         assert.equal(mockStorageStore[STATS_KEY], undefined);
-
-        globalThis.alert = originalAlert;
     });
 
     test('11. фаза prayers пише timerText і змінює підпис кнопки', (t, done) => {

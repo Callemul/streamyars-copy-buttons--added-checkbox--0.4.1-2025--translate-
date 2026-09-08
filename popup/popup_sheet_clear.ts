@@ -6,9 +6,10 @@
 // Виділено з popup/popup_listeners.ts, де clearSheetState() була монолітною
 // функцією з cyclomatic 9 (CRAP 90) і не піддавалася юніт-тестуванню.
 
-import { SYH_STORAGE, POPUP_SHEET_KEYS } from '../modules/storage';
+import { POPUP_SHEET_KEYS } from '../modules/storage';
 import { $, setTextContent, hideElement } from './popup_dom_utils';
 import { CommentService } from '../modules/comment_service';
+import { SheetStateService } from '../modules/sheet_state_service';
 import { updateCombinedCounters, loadYTCollected } from './popup_telegram';
 
 export const CLEAR_SHEET_CONFIRM_MESSAGE =
@@ -78,10 +79,10 @@ export function clearSheetState(sId: string): void {
     if (!confirm(CLEAR_SHEET_CONFIRM_MESSAGE)) return;
 
     resetSheetDom(sId);
-    SYH_STORAGE.remove(buildSheetClearStorageKeys(sId));
+    SheetStateService.clearSheetState(sId).catch(e => console.error('[SYH] Clear sheet state failed:', e));
 
     CommentService.clearAllCollectedForSheet(sId).then(() => {
         loadYTCollected(sId);
         updateCombinedCounters(sId);
-    });
+    }).catch(e => console.error('[SYH] Clear failed:', e));
 }

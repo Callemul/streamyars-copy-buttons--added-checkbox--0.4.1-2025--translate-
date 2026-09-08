@@ -18,11 +18,19 @@ function notifyMatchingElements(
     if (!handler) return;
 
     if (element.matches && element.matches(registration.selector)) {
-        handler(element);
+        try {
+            handler(element);
+        } catch (e) {
+            console.error('[SYH] DOM handler error:', e);
+        }
     } else if (element.querySelectorAll) {
         const children = element.querySelectorAll(registration.selector);
         for (let i = 0; i < children.length; i++) {
-            handler(children[i]);
+            try {
+                handler(children[i]);
+            } catch (e) {
+                console.error('[SYH] DOM handler error:', e);
+            }
         }
     }
 }

@@ -24,11 +24,23 @@ function makeButton(id, label) {
  * має підтримувати весь набір DOM-операцій, які той викликає.
  */
 function makeElement(tag = 'div') {
-    return {
+    const classSet = new Set();
+    const el = {
         tagName: String(tag).toUpperCase(),
         attrs: {},
         style: {},
         className: '',
+        classList: {
+            add(...classes) {
+                classes.forEach(c => classSet.add(c));
+                el.className = Array.from(classSet).join(' ');
+            },
+            remove(...classes) {
+                classes.forEach(c => classSet.delete(c));
+                el.className = Array.from(classSet).join(' ');
+            },
+            contains(c) { return classSet.has(c); }
+        },
         textContent: '',
         innerHTML: '',
         children: [],
@@ -37,10 +49,22 @@ function makeElement(tag = 'div') {
         getAttribute(name) { return name in this.attrs ? this.attrs[name] : null; },
         removeAttribute(name) { delete this.attrs[name]; },
         insertAdjacentHTML(position, html) { this.insertedHtml.push({ position, html }); },
-        appendChild(node) { this.children.push(node); return node; },
+        appendChild(node) {
+            this.children.push(node);
+            if ((node.className || '').includes('copy-success-banner')) {
+                banners.push(node);
+            }
+            return node;
+        },
         append(...nodes) { this.children.push(...nodes); },
-        remove() {}
+        remove() {
+            if (global.document && global.document.body && global.document.body.children) {
+                const idx = global.document.body.children.indexOf(this);
+                if (idx !== -1) global.document.body.children.splice(idx, 1);
+            }
+        }
     };
+    return el;
 }
 
 function makeOutputDiv(rawText) {
@@ -52,6 +76,7 @@ function makeOutputDiv(rawText) {
 let elements = {};
 let storage = {};
 let alerts = [];
+let banners = [];
 let confirmAnswer = true;
 let clipboardWrites = [];
 let clipboardShouldFail = false;
@@ -60,12 +85,21 @@ let activeTabResponse = null;
 global.window = global;
 global.document = {
     getElementById: (id) => elements[id] || null,
-    querySelectorAll: () => [],
+    querySelectorAll: (sel) => {
+        if (sel && sel.includes('copy-success-banner')) {
+            return global.document.body ? global.document.body.children.filter(c => (c.className || '').includes('copy-success-banner')) : [];
+        }
+        return [];
+    },
     addEventListener: () => {},
-    body: null,
+    body: makeElement('body'),
     createElement: (tag) => makeElement(tag),
     createDocumentFragment: () => makeElement('#fragment')
 };
+
+function getBanners() {
+    return global.document.body ? global.document.body.children.filter(c => (c.className || '').includes('copy-success-banner')) : [];
+}
 global.alert = (msg) => alerts.push(msg);
 global.confirm = () => confirmAnswer;
 global.setTimeout = (fn) => { fn(); return 0; };
@@ -228,10 +262,14 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
     beforeEach(() => {
         storage = {};
         alerts = [];
+        banners = [];
         clipboardWrites = [];
         clipboardShouldFail = false;
         confirmAnswer = true;
         activeTabResponse = null;
+        if (global.document && global.document.body) {
+            global.document.body.children = [];
+        }
 
         copyBtn = makeButton('copyPrayersBtn', '📋 Копіювати');
         clearBtn = makeButton('clearPrayersBtn', '🗑 Очистити');
@@ -265,7 +303,6 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
         await copyBtn.click();
 
         assert.deepEqual(clipboardWrites, ['Іван: молюсь за здоровʼя']);
-        // setTimeout у моці синхронний — підпис уже відновлено
         assert.equal(copyBtn.textContent, '📋 Копіювати');
     });
 
@@ -312,8 +349,8 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
         await fetchBtn.click();
 
         assert.deepEqual(storage[PRAYERS_KEY].map(i => i.text), ['вже є', 'нова']);
-        assert.equal(alerts.length, 1);
-        assert.match(alerts[0], /нових молитов: 1/);
+        assert.equal(banners.length, 1);
+        assert.match(banners[0].textContent, /нових молитов: 1/);
         assert.equal(fetchBtn.textContent, '🔄 Підтягнути', 'підпис кнопки відновлено');
     });
 
@@ -324,7 +361,8 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
         bindPrayerToolbarListeners();
         await fetchBtn.click();
 
-        assert.deepEqual(alerts, [NO_NEW_PRAYERS_MESSAGE]);
+        assert.equal(banners.length, 1);
+        assert.equal(banners[0].textContent, NO_NEW_PRAYERS_MESSAGE);
     });
 
     test('21. відповідь не-масивом трактується як збій підтягування', async () => {
@@ -334,7 +372,8 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
         bindPrayerToolbarListeners();
         await fetchBtn.click();
 
-        assert.deepEqual(alerts, [FETCH_PRAYERS_FAILED_MESSAGE]);
+        assert.equal(banners.length, 1);
+        assert.equal(banners[0].textContent, FETCH_PRAYERS_FAILED_MESSAGE);
         assert.equal(storage[PRAYERS_KEY].length, 1, 'сховище не змінилося');
         assert.equal(fetchBtn.textContent, '🔄 Підтягнути');
     });
@@ -345,7 +384,8 @@ describe('prayer_handlers_toolbar — публічний API bindPrayerToolbarLi
         bindPrayerToolbarListeners();
         await fetchBtn.click();
 
-        assert.deepEqual(alerts, [FETCH_PRAYERS_FAILED_MESSAGE]);
+        assert.equal(banners.length, 1);
+        assert.equal(banners[0].textContent, FETCH_PRAYERS_FAILED_MESSAGE);
         assert.equal(PRAYERS_KEY in storage, false);
     });
 });

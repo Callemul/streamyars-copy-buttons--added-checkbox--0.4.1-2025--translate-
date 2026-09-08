@@ -9,8 +9,9 @@
  */
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { CommentService } from '../modules/comment_service';
 import { sendUnstarMessagesForList } from './prayer_messaging';
-import { renderPrayers } from './prayer_render';
+import { savePrayersAndRender } from './prayer_render';
 import {
     WIPE_PRAYERS_CONFIRM_MESSAGE,
     buildDeleteAuthorConfirm,
@@ -29,13 +30,6 @@ import type { PrayerItem } from '../modules/types';
 function withStoredPrayers(use: (list: PrayerItem[]) => void): void {
     SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
         use(readStoredPrayers(result, STORAGE_KEYS.PRAYERS));
-    });
-}
-
-/** Записує список у сховище і одразу перемальовує його у попапі. */
-function savePrayersAndRender(list: PrayerItem[]): void {
-    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
-        renderPrayers(list);
     });
 }
 
@@ -65,6 +59,9 @@ export function handleDeleteAuthorPrayers(delAuthorBtn: Element): void {
     withStoredPrayers(list => {
         const { removed, kept } = splitPrayersByAuthor(list, authorToDelete);
         sendUnstarMessagesForList(removed);
+        removed.forEach(item => {
+            void CommentService.removePrayerRecord(item.text);
+        });
         savePrayersAndRender(kept);
     });
 }
@@ -94,6 +91,9 @@ export function handleDeleteSinglePrayer(delPrayerBtn: Element): void {
     withStoredPrayers(list => {
         const { removed, kept } = splitPrayersById(list, id);
         sendUnstarMessagesForList(removed);
+        removed.forEach(item => {
+            void CommentService.removePrayerRecord(item.text);
+        });
         savePrayersAndRender(kept);
     });
 }

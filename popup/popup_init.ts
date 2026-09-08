@@ -14,39 +14,133 @@ const SHEET_IDS = getAllSheetIds();
 function initPopup() {
     try {
         renderSheetTemplates();
+    } catch (e) {
+        console.error('[SYH Popup] Sheets templates render failed:', e);
+    }
+
+    try {
         initPopupTelegramListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Telegram listeners init failed:', e);
+    }
+
+    try {
         initPopupPrayersListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Prayers listeners init failed:', e);
+    }
 
-        const keysToLoad = buildPopupKeysToLoad(SHEET_IDS);
-        let storageLoaded = false;
+    let keysToLoad: string[] = [];
+    try {
+        keysToLoad = buildPopupKeysToLoad(SHEET_IDS);
+    } catch (e) {
+        console.error('[SYH Popup] Build keys failed:', e);
+    }
 
+    let storageLoaded = false;
+
+    try {
         SYH_STORAGE.get(keysToLoad, function (result: Record<string, any>) {
             try {
                 restoreDbState(result);
-                SHEET_IDS.forEach(sId => restoreSingleSheetState(sId, result));
-                restoreActiveTabUI(result);
-                restoreActiveSubtabUI(result);
-                restoreTextareaSizesUI(result);
-                restoreTranslitStateUI(result);
-                renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
-                restoreScrollPositionsUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore DB state failed:', e);
+            }
 
-                storageLoaded = true;
+            try {
+                SHEET_IDS.forEach(sId => restoreSingleSheetState(sId, result));
+            } catch (e) {
+                console.error('[SYH Popup] Restore sheets state failed:', e);
+            }
+
+            try {
+                restoreActiveTabUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore active tab UI failed:', e);
+            }
+
+            try {
+                restoreActiveSubtabUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore active subtab UI failed:', e);
+            }
+
+            try {
+                restoreTextareaSizesUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore textarea sizes failed:', e);
+            }
+
+            try {
+                restoreTranslitStateUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore translit state failed:', e);
+            }
+
+            try {
+                renderPrayers(result[STORAGE_KEYS.PRAYERS] || []);
+            } catch (e) {
+                console.error('[SYH Popup] Render prayers failed:', e);
+            }
+
+            try {
+                restoreScrollPositionsUI(result);
+            } catch (e) {
+                console.error('[SYH Popup] Restore scroll positions failed:', e);
+            }
+
+            storageLoaded = true;
+
+            try {
                 setTimeout(() => setupResizeObserver(() => storageLoaded), 300);
+            } catch (e) {
+                console.error('[SYH Popup] Setup resize observer failed:', e);
+            }
+
+            try {
                 initStep3Resizers();
-            } catch (err) {
-                console.error('[SYH Popup] Init error:', err);
+            } catch (e) {
+                console.error('[SYH Popup] Step3 resizers init failed:', e);
             }
         });
+    } catch (e) {
+        console.error('[SYH Popup] Storage get failed:', e);
+    }
 
+    try {
         setupPopupTabListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Tabs init failed:', e);
+    }
+
+    try {
         setupSheetInputListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Sheet inputs init failed:', e);
+    }
+
+    try {
         setupTranslitListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Translit init failed:', e);
+    }
+
+    try {
         setupTitleAndOptionsListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Title and options init failed:', e);
+    }
+
+    try {
         setupScrollListeners();
+    } catch (e) {
+        console.error('[SYH Popup] Scroll listeners init failed:', e);
+    }
+
+    try {
         setupStep3ResizerEvents();
-    } catch (err) {
-        console.error('[SYH Popup] Init error:', err);
+    } catch (e) {
+        console.error('[SYH Popup] Resizers init failed:', e);
     }
 }
 

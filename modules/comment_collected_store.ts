@@ -59,25 +59,56 @@ export async function saveCollectedComment(
     });
 }
 
-/** Видаляє коментар за `id` або за парою автор+текст, якщо вони передані. */
+/** Знімає стани кнопок YouTube/Studio для перелічених коментарів (мутує на місці). */
+function dropButtonStates(states: Record<string, unknown>, commentIds: string[]): Record<string, unknown> {
+    commentIds.forEach(id => { delete states[id]; });
+    return states;
+}
+
+/**
+ * Видаляє коментар за `id` або за парою автор+текст, якщо вони передані,
+ * та скидає стани кнопок YouTube/Studio для видалених елементів.
+ */
 export async function removeCollectedComment(
     sheetId: string,
     commentId: string,
     author?: string,
     text?: string
 ): Promise<CommentPayload[]> {
-    return updateCollectedList(sheetId, (list) =>
-        list.filter(item => !(
-            item.id === commentId ||
-            (author && text && item.author === author && item.text === text)
-        ))
-    );
-}
+    const storageKey = getSheetCollectedStorageKey(sheetId);
+    const result = await SYH_STORAGE.getAsync<Record<string, any>>([
+        storageKey,
+        STORAGE_KEYS.YT_BUTTON_STATES,
+        STORAGE_KEYS.STUDIO_BUTTON_STATE
+    ]);
 
-/** Знімає стани кнопок YouTube/Studio для перелічених коментарів (мутує на місці). */
-function dropButtonStates(states: Record<string, unknown>, commentIds: string[]): Record<string, unknown> {
-    commentIds.forEach(id => { delete states[id]; });
-    return states;
+    const list: CommentPayload[] = result[storageKey] || [];
+    const idsToRemove = new Set<string>();
+    if (commentId) {
+        idsToRemove.add(commentId);
+    }
+
+    const updated = list.filter(item => {
+        const isMatch = item.id === commentId ||
+            Boolean(author && text && item.author === author && item.text === text);
+        if (isMatch && item.id) {
+            idsToRemove.add(item.id);
+        }
+        return !isMatch;
+    });
+
+    const commentIds = Array.from(idsToRemove);
+    const ytBtnStates = dropButtonStates(result[STORAGE_KEYS.YT_BUTTON_STATES] || {}, commentIds);
+    const studioBtnStates = dropButtonStates(result[STORAGE_KEYS.STUDIO_BUTTON_STATE] || {}, commentIds);
+
+    await SYH_STORAGE.setAsync({
+        [storageKey]: updated,
+        [STORAGE_KEYS.YT_BUTTON_STATES]: ytBtnStates,
+        [STORAGE_KEYS.STUDIO_BUTTON_STATE]: studioBtnStates
+    });
+
+    emitSheetTotals(sheetId, updated);
+    return updated;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { batchRenderItems } from '../modules/render_utils';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { $ } from './prayer_utils';
 import { checkRoomWarning } from './prayer_render_helpers';
 import { 
@@ -76,4 +77,12 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         },
         { batchSize: 20, clearContainer: true }
     );
+}
+
+/** Записує список у сховище і перемальовує його; опціональний `after` виконується після рендера. */
+export function savePrayersAndRender(list: PrayerItem[], after?: () => void): void {
+    SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list }, function() {
+        renderPrayers(list);
+        if (after) after();
+    });
 }

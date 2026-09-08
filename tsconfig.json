@@ -9,7 +9,9 @@
     "outDir": "./dist",
     "rootDir": "./",
     "types": ["chrome"],
-    "lib": ["ES2021", "DOM", "DOM.Iterable"]
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "modules/**/*",
