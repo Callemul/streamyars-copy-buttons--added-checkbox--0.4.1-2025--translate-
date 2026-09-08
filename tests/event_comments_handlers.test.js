@@ -38,7 +38,6 @@ const {
     bindMiddleClickHandler,
     bindContextMenuHandlers,
     bindSyhButtonMouseHandlers,
-    bindCheckboxChangeHandler,
 } = await import('../modules/event_comments/handlers');
 
 const { SYH_STATE } = await import('../modules/state.ts');
@@ -82,8 +81,6 @@ function createMockSelf(overrides = {}) {
         _contextHandler: undefined,
         _copyPrayerContextHandler: undefined,
         _syhButtonMouseDownHandler: undefined,
-        _mouseupHandler: undefined,
-        _changeHandler: undefined,
         autoHealObserver: null,
         removeFromDatabase: (text) => {
             calls.removeFromDatabase.push(text);
@@ -101,15 +98,12 @@ function createMockSelf(overrides = {}) {
             if (self._contextHandler) document.removeEventListener('contextmenu', self._contextHandler, true);
             if (self._copyPrayerContextHandler) document.removeEventListener('contextmenu', self._copyPrayerContextHandler);
             if (self._syhButtonMouseDownHandler) document.removeEventListener('mousedown', self._syhButtonMouseDownHandler);
-            if (self._mouseupHandler) document.removeEventListener('mouseup', self._mouseupHandler);
-            if (self._changeHandler) document.removeEventListener('change', self._changeHandler);
         },
         bindAutoHealScanner: () => {},
         bindStarButtonClickHandler: () => {},
         bindMiddleClickHandler: () => {},
         bindContextMenuHandlers: () => {},
         bindSyhButtonMouseHandlers: () => {},
-        bindCheckboxChangeHandler: () => {},
         ...overrides,
     };
     currentSelf = self;
@@ -378,59 +372,4 @@ describe('event_comments handlers — bindSyhButtonMouseHandlers', () => {
         assert.equal(prevented, false);
     });
 
-    test('14. mouseup по syh-button → делегує у handleSyhButtonMouseUp', () => {
-        document.body.innerHTML = `
-            <div class="test-comment-block">
-                <div class="test-comment-author">@Author</div>
-                <div class="test-comment-text">Text</div>
-                <button class="syh-button" data-type="comment" data-action="copy-prayer">Copy</button>
-            </div>
-        `;
-        const self = createMockSelf();
-        bindSyhButtonMouseHandlers(self);
-
-        const btn = document.querySelector('.syh-button');
-        const event = new MouseEvent('mouseup', { bubbles: true, button: 0 });
-        let prevented = false;
-        event.preventDefault = () => { prevented = true; };
-        btn.dispatchEvent(event);
-
-        assert.ok(prevented);
-    });
-});
-
-// ---------------------------------------------------------------------------
-
-describe('event_comments handlers — bindCheckboxChangeHandler', () => {
-    test('15. зміна чекбокса → збереження стану у SYH_STATE', () => {
-        document.body.innerHTML = `
-            <div class="test-comment-block">
-                <div class="test-comment-text">Check me text</div>
-                <input class="syh-checkbox" data-type="comment" type="checkbox" checked>
-            </div>
-        `;
-        const self = createMockSelf();
-        bindCheckboxChangeHandler(self);
-
-        const cb = document.querySelector('.syh-checkbox');
-        cb.dispatchEvent(new Event('change', { bubbles: true }));
-
-        // Handler reads checkbox.checked and saves via CommentService.setStreamYardCheckboxState
-        assert.equal(SYH_STATE.getState('Check me text'), true,
-            'стан чекбокса має бути збережений у SYH_STATE');
-    });
-
-    test('16. клік не по чекбоксу → жодної дії', () => {
-        document.body.innerHTML = `
-            <div class="test-comment-block">
-                <input class="syh-checkbox" data-type="comment" type="checkbox">
-            </div>
-        `;
-        const self = createMockSelf();
-        bindCheckboxChangeHandler(self);
-
-        document.querySelector('.test-comment-block').dispatchEvent(
-            new Event('change', { bubbles: true })
-        );
-    });
 });

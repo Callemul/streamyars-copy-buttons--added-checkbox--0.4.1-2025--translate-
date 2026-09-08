@@ -6,15 +6,13 @@ import type { ISyhPlugin } from '../plugin_registry';
 
 import type { SyhEventComments } from './types';
 import { bindAutoHealScanner } from './auto_heal';
-import { bindStarButtonClickHandler, bindMiddleClickHandler, bindContextMenuHandlers, bindSyhButtonMouseHandlers, bindCheckboxChangeHandler } from './handlers';
+import { bindStarButtonClickHandler, bindMiddleClickHandler, bindContextMenuHandlers, bindSyhButtonMouseHandlers } from './handlers';
 import { saveToDatabase, removeFromDatabase } from './database';
 import { formatCopyPayload, getPrayerIcon, stripLeadingAt } from './formatters';
-import { handleSyhButtonMouseUp } from './button_handlers';
 import { applyCommentActionState } from './actions';
 
 export { getPrayerIcon, stripLeadingAt, formatCopyPayload };
 export { applyCommentActionState };
-export { handleSyhButtonMouseUp };
 
 export const SYH_EVENT_COMMENTS_PLUGIN: ISyhPlugin = {
     id: 'syh_event_comments',
@@ -68,14 +66,6 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
             document.removeEventListener('mousedown', this._syhButtonMouseDownHandler);
             this._syhButtonMouseDownHandler = undefined;
         }
-        if (this._mouseupHandler) {
-            document.removeEventListener('mouseup', this._mouseupHandler);
-            this._mouseupHandler = undefined;
-        }
-        if (this._changeHandler) {
-            document.removeEventListener('change', this._changeHandler);
-            this._changeHandler = undefined;
-        }
         if (this.autoHealObserver) {
             this.autoHealObserver.disconnect();
             this.autoHealObserver = undefined;
@@ -94,7 +84,6 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
         bindMiddleClickHandler(this);
         bindContextMenuHandlers(this);
         bindSyhButtonMouseHandlers(this);
-        bindCheckboxChangeHandler(this);
     },
 
     bindAutoHealScanner: bindAutoHealScanner,
@@ -102,7 +91,6 @@ export const SYH_EVENT_COMMENTS: SyhEventComments = {
     bindMiddleClickHandler: bindMiddleClickHandler,
     bindContextMenuHandlers: bindContextMenuHandlers,
     bindSyhButtonMouseHandlers: bindSyhButtonMouseHandlers,
-    bindCheckboxChangeHandler: bindCheckboxChangeHandler,
 
     saveToDatabase: function(author: string, text: string, type: string, icon: string): Promise<void> {
         return saveToDatabase(this, author, text, type, icon);

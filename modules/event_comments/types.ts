@@ -72,9 +72,7 @@ export interface SyhEventComments extends CommentEffectHost {
     _clickHandler?: (e: MouseEvent) => void;
     _middleClickHandler?: (e: MouseEvent) => void;
     _contextHandler?: (e: MouseEvent) => void;
-    _changeHandler?: (e: Event) => void;
     _syhButtonMouseDownHandler?: (e: MouseEvent) => void;
-    _mouseupHandler?: (e: MouseEvent) => void;
     _copyPrayerContextHandler?: (e: MouseEvent) => void;
     autoHealObserver?: AutoHealObserver | null;
 
@@ -90,7 +88,6 @@ export interface SyhEventComments extends CommentEffectHost {
     bindMiddleClickHandler: (self: SyhEventComments) => void;
     bindContextMenuHandlers: (self: SyhEventComments) => void;
     bindSyhButtonMouseHandlers: (self: SyhEventComments) => void;
-    bindCheckboxChangeHandler: (self: SyhEventComments) => void;
 
     saveToDatabase(author: string, text: string, type: string, icon: string): Promise<void>;
     removeFromDatabase(text: string): Promise<void>;

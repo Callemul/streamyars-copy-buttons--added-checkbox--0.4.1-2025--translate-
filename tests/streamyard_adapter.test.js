@@ -31,6 +31,7 @@ installChromeMock({
 });
 
 const { StreamYardCommentAdapter } = await import('../modules/streamyard_adapter.ts');
+const { CommentInjector } = await import('../modules/comment_injector.ts');
 const { CommentService } = await import('../modules/comment_service.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');
 
@@ -344,5 +345,97 @@ describe('StreamYardCommentAdapter — стан «опрацьовано»', () 
         assert.equal(adapter.getSheetId(adapter.getCommentContext(block), block), '');
         assert.equal(adapter.getButtonStatesKey(), '');
         assert.equal(adapter.getCheckboxStatesKey(), '');
+    });
+});
+
+describe('StreamYard через CommentInjector — наскрізна перевірка (T7)', () => {
+    beforeEach(() => {
+        mockStorageStore = {};
+        document.body.innerHTML = '';
+    });
+
+    /** Прив'язує картку тим самим шляхом, що й `bootstrap_dom.onCommentAdded`. */
+    function bind(adapter, block) {
+        const injector = new CommentInjector(adapter, EMPTY_CACHES(), 'streamyard');
+        injector.bindCommentEvents(block, '');
+        return injector;
+    }
+
+    function dispatchMouseUp(button, mouseButton = 0) {
+        const event = new MouseEvent('mouseup', { bubbles: true, button: mouseButton });
+        button.dispatchEvent(event);
+    }
+
+    test('17. mouseup по 🙏 доходить до адаптера — три кнопки миші, три іконки', async () => {
+        for (const [mouseButton, icon] of [[0, '🙏🙏🙏'], [1, '🙏❤️🙏'], [2, '❤️❤️❤️']]) {
+            mockStorageStore = {};
+            document.body.innerHTML = '';
+            const { adapter, utils } = makeAdapter();
+            const block = buildComment({ author: '@John', text: `Prayer ${mouseButton}` });
+            bind(adapter, block);
+
+            dispatchMouseUp(block.querySelector('[data-action="copy-prayer"]'), mouseButton);
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            assert.equal(utils.banners.length, 1, `кнопка миші ${mouseButton} має спрацювати`);
+            assert.equal(utils.banners[0].bannerMessage, `📑 Автор і його ${icon}`);
+        }
+    });
+
+    test('18. click по кнопці StreamYard нічого не робить — поверхня слухає mouseup', async () => {
+        const { adapter, utils } = makeAdapter();
+        const block = buildComment();
+        bind(adapter, block);
+
+        block.querySelector('[data-action="copy-prayer"]').dispatchEvent(
+            new MouseEvent('click', { bubbles: true, button: 0 })
+        );
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        assert.equal(utils.banners.length, 0);
+    });
+
+    test('19. зміна чекбокса зберігає стан за текстом коментаря', async () => {
+        const { adapter } = makeAdapter();
+        const block = buildComment({ text: 'Bound comment' });
+        bind(adapter, block);
+
+        const checkbox = block.querySelector('.syh-checkbox');
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        assert.equal(CommentService.getStreamYardCheckboxState('Bound comment'), true);
+    });
+
+    test('20. повторна прив\'язка не дублює обробників', async () => {
+        const { adapter, utils } = makeAdapter();
+        const block = buildComment({ text: 'Once only' });
+        bind(adapter, block);
+        bind(adapter, block);
+
+        dispatchMouseUp(block.querySelector('[data-action="copy-comment"]'));
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        assert.equal(utils.banners.length, 1, 'дія має виконатись рівно один раз');
+    });
+
+    test('21. після перемальовування панелі кнопки знову отримують обробники', async () => {
+        const { adapter, utils } = makeAdapter();
+        const block = buildComment({ text: 'Re-rendered' });
+        bind(adapter, block);
+
+        // StreamYard замінив панель — старі слухачі пішли разом зі старими кнопками.
+        block.querySelector('.syh-custom-buttons-comment').remove();
+        const fresh = document.createElement('div');
+        fresh.className = 'syh-custom-buttons-comment';
+        fresh.innerHTML = '<button class="syh-button" data-type="comment" data-action="copy-comment"></button>';
+        block.appendChild(fresh);
+
+        bind(adapter, block);
+        dispatchMouseUp(block.querySelector('[data-action="copy-comment"]'));
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        assert.equal(utils.banners.length, 1, 'нова панель має бути прив\'язана');
     });
 });

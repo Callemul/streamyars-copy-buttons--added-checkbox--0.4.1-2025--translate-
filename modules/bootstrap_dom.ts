@@ -8,6 +8,7 @@ import { SYH_UI } from './ui';
 import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
 import { SYH_RIGHT_TABS_COMPACT } from './right_tabs_compact';
 import { SYH_DOM_OBSERVER, type DomHandler } from './dom_observer';
+import { bindStreamYardComment, unbindStreamYardComment } from './streamyard_comment_binding';
 
 export const OBSERVER_CONTAINER_SELECTORS: readonly string[] = [
     '[data-testid="chat-container"]',
@@ -28,10 +29,14 @@ export interface DomObserverLike {
 
 function onCommentAdded(el: Element): void {
     SYH_UI.addButtonsToComment(el);
+    // Слухачі — одразу після вставки панелі: інакше `getButtons()` не знайде
+    // кнопок і картка лишиться без обробників до наступної мутації (T7).
+    bindStreamYardComment(el);
     SYH_COMMENT_ASSISTANT.processComment(el);
 }
 
-function onCommentRemoved(): void {
+function onCommentRemoved(el: Element): void {
+    unbindStreamYardComment(el);
     SYH_UI.filterStarredComments();
 }
 
