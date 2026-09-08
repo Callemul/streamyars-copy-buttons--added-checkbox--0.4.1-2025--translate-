@@ -1,4 +1,5 @@
 import type { CommentPayload } from './comment_service';
+import type { CommentActionId, CommentActionStateType, CommentStateActionId } from './comment_actions';
 
 export interface CommentContext {
     id: string;
@@ -8,7 +9,12 @@ export interface CommentContext {
     videoTitle?: string;
 }
 
-export type ButtonStateType = 'question' | 'prayer' | null;
+/**
+ * Стан кнопки коментаря.
+ * Джерело — реєстр дій `modules/comment_actions.ts`: union більше не
+ * дублюється тут руками (T2 аудиту 2026-09-08).
+ */
+export type ButtonStateType = CommentActionStateType;
 
 export interface CommentStateCaches {
     buttonStates: Record<string, ButtonStateType>;
@@ -16,11 +22,38 @@ export interface CommentStateCaches {
 }
 
 export interface PlatformButtons {
+    /**
+     * Кнопки за канонічним id дії з реєстру — основний спосіб їх віддати.
+     * Нова дія в реєстрі підхоплюється без правок цього інтерфейсу.
+     */
+    actionButtons?: Partial<Record<CommentActionId, HTMLElement | null>>;
+    /** @deprecated Історичні іменовані слоти; лишаються, доки StreamYard не перейде на адаптер (T7). */
     questionBtn: HTMLElement | null;
+    /** @deprecated Див. `actionButtons`. */
     prayerBtn: HTMLElement | null;
+    /** @deprecated Див. `actionButtons`. */
     copyBtn: HTMLElement | null;
     checkboxEl: HTMLInputElement | null;
     bodyEl: HTMLElement | null;
+}
+
+/**
+ * Сумісність зі старими адаптерами: поки вони віддають іменовані слоти,
+ * а не мапу `actionButtons`. Прибрати разом із `@deprecated`-полями (T7).
+ */
+const LEGACY_BUTTON_SLOTS: Readonly<Record<CommentActionId, keyof PlatformButtons>> = {
+    copy: 'copyBtn',
+    question: 'questionBtn',
+    prayer: 'prayerBtn'
+};
+
+/** Кнопка дії: спершу мапа реєстру, потім історичний іменований слот. */
+export function getActionButton(buttons: PlatformButtons, id: CommentActionId): HTMLElement | null {
+    const fromRegistry = buttons.actionButtons?.[id];
+    if (fromRegistry !== undefined) return fromRegistry;
+
+    const legacySlot = LEGACY_BUTTON_SLOTS[id];
+    return legacySlot ? (buttons[legacySlot] as HTMLElement | null) ?? null : null;
 }
 
 export interface ActionContext {
@@ -42,12 +75,12 @@ export interface CommentPlatformAdapter {
     applyCheckboxState(buttons: PlatformButtons, isChecked: boolean): void;
     markChecked(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
     unmarkChecked?(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
-    beforeAction?(type: 'question' | 'prayer', context: CommentContext, element: Element): Promise<{ sheetId: string } | null>;
+    beforeAction?(type: CommentStateActionId, context: CommentContext, element: Element): Promise<{ sheetId: string } | null>;
     afterAction?(action: ActionContext): Promise<void>;
     isEventsBound(element: Element): boolean;
     markEventsBound(element: Element): void;
     unmarkEventsBound?(element: Element): void;
-    buildCollectedItem(commentKey: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload;
+    buildCollectedItem(commentKey: string, context: CommentContext, type: CommentStateActionId): CommentPayload;
 }
 
 import { CommentService } from './comment_service';
@@ -86,7 +119,7 @@ export abstract class BaseCommentPlatformAdapter implements CommentPlatformAdapt
     }
 
     public async beforeAction(
-        _type: 'question' | 'prayer',
+        _type: CommentStateActionId,
         context: CommentContext,
         element: Element
     ): Promise<{ sheetId: string } | null> {
@@ -98,7 +131,7 @@ export abstract class BaseCommentPlatformAdapter implements CommentPlatformAdapt
         // Default no-op
     }
 
-    public buildCollectedItem(commentKey: string, context: CommentContext, type: 'question' | 'prayer'): CommentPayload {
+    public buildCollectedItem(commentKey: string, context: CommentContext, type: CommentStateActionId): CommentPayload {
         return {
             id: commentKey,
             author: context.author,

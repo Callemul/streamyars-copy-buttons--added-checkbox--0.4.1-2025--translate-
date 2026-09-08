@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../../modules/comment_actions';
 import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
 import { SYH_CONFIG } from '../../modules/config';
 import { cleanupStudioState } from './studio_comment_key';
@@ -27,8 +28,8 @@ export async function initializeStudioModule(
 
 export interface StudioModuleCaches {
     videoSheetMap: Record<string, string>;
-    buttonStates: Record<string, 'question' | 'prayer'>;
+    buttonStates: Record<string, CommentStateActionId>;
     checkboxStates: Record<string, { checked: boolean; timestamp: number }>;
     collectedItems: CommentPayload[];
 }
-
+

@@ -15,6 +15,7 @@
 
 import { CommentService } from './comment_service';
 import { SYH_BUS } from './event_bus';
+import type { CommentStateActionId } from './comment_actions';
 import type {
     ButtonStateType,
     CommentContext,
@@ -46,7 +47,7 @@ interface ActionScope {
  */
 export async function resolveActionSheetId(
     adapter: CommentPlatformAdapter,
-    type: 'question' | 'prayer',
+    type: CommentStateActionId,
     ctx: CommentContext,
     element: Element
 ): Promise<string | null> {
@@ -125,7 +126,7 @@ export async function runUntoggleAction(scope: ActionScope): Promise<void> {
  */
 export async function runToggleOnAction(
     scope: ActionScope,
-    type: 'question' | 'prayer'
+    type: CommentStateActionId
 ): Promise<void> {
     const { adapter, caches, buttons, element, ctx, commentKey, sheetId } = scope;
 
@@ -165,7 +166,7 @@ export async function runToggleOnAction(
 export async function runCommentAction(
     adapter: CommentPlatformAdapter,
     caches: CommentStateCaches,
-    type: 'question' | 'prayer',
+    type: CommentStateActionId,
     buttons: PlatformButtons,
     element: Element
 ): Promise<void> {

@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../modules/comment_actions';
 // youtube/yt_events.ts
 import { CommentInjector } from '../modules/comment_injector';
 import { YouTubeCommentAdapter } from './yt_adapter';
@@ -14,7 +15,7 @@ export function bindYTEvents(
     commentNode: Element,
     commentId: string,
     caches: {
-        buttonStates: Record<string, 'question' | 'prayer'>;
+        buttonStates: Record<string, CommentStateActionId>;
         checkboxStates: Record<string, { checked: boolean; timestamp: number }>;
         collectedList: YTCollectedItem[];
     }

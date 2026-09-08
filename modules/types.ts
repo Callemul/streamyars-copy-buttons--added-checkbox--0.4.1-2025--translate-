@@ -1,3 +1,5 @@
+import type { CommentStateActionId } from './comment_actions';
+
 export interface PrayerItem {
     id?: string;
     author: string;
@@ -12,7 +14,7 @@ export interface YTCollectedItem {
     id: string;
     author: string;
     text: string;
-    type: 'question' | 'prayer';
+    type: CommentStateActionId;
     timestamp: number;
     videoId: string;
     videoTitle?: string;

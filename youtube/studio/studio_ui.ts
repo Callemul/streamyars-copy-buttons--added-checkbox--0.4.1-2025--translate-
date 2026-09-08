@@ -3,6 +3,7 @@ import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/sheets
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 import { UiFactory } from '../../modules/ui_factory';
 import { buildActionButtonConfig } from '../../modules/comment_actions';
+import type { CommentActionId, CommentActionStateType, CommentStateActionId } from '../../modules/comment_actions';
 import { formatCategoryLabel } from './studio_header_badge_markup';
 
 export interface StudioCommentUIElements {
@@ -20,7 +21,7 @@ export interface StudioCommentUIElements {
  * Реєстр описує всі три поверхні, тож для Studio дія завжди знайдеться;
  * фолбек лишається на випадок, якщо дію свідомо приберуть з реєстру.
  */
-function createStudioActionButton(actionId: 'copy' | 'question' | 'prayer'): HTMLButtonElement {
+function createStudioActionButton(actionId: CommentActionId): HTMLButtonElement {
     const config = buildActionButtonConfig('studio', actionId);
     if (!config) {
         throw new Error(`[SYH] Дія "${actionId}" не описана для поверхні studio`);
@@ -154,8 +155,8 @@ export function injectStudioCommentUI(threadEl: HTMLElement): StudioCommentUIEle
 function applyStudioButtonUI(
     btn: HTMLButtonElement,
     iconHtml: string,
-    type: 'question' | 'prayer',
-    buttonState: 'question' | 'prayer' | null,
+    type: CommentStateActionId,
+    buttonState: CommentActionStateType,
     sheetLabel: string | null
 ): void {
     const suffix = type === 'question' ? 'питань' : 'молитов';
@@ -179,7 +180,7 @@ function applyStudioButtonUI(
 export function updateStudioButtonsUI(
     elements: StudioCommentUIElements,
     resolvedSheetId: SheetId | null,
-    buttonState: 'question' | 'prayer' | null
+    buttonState: CommentActionStateType
 ) {
     const { questionBtn, prayerBtn } = elements;
     const sheetLabel = resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null;

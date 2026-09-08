@@ -1,9 +1,12 @@
+import type { CommentActionId } from '../comment_actions';
+
 import type { SyhConfig, SelectorValue } from '../config';
 import type { SyhState } from '../state';
 import type { SyhUtils } from '../utils';
 import type { SyhUi } from '../ui';
 
-export type CommentActionType = 'question' | 'prayer' | 'copy';
+/** Аліас на канонічний union із реєстру дій (`modules/comment_actions.ts`). */
+export type CommentActionType = CommentActionId;
 
 /**
  * Результат `formatCopyPayload`.

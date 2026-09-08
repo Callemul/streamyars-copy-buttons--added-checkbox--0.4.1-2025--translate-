@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../../modules/comment_actions';
 // youtube/studio/studio_comment_key.ts
 import { STORAGE_KEYS } from '../../modules/storage';
 import { RetentionService } from '../../modules/retention_service';
@@ -28,7 +29,7 @@ export interface StudioCheckboxStateEntry {
 }
 
 export interface StudioButtonStateEntry {
-    state: 'question' | 'prayer';
+    state: CommentStateActionId;
     timestamp?: number;
 }
 

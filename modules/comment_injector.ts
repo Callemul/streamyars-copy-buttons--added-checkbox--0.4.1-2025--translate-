@@ -1,5 +1,7 @@
 import { CommentService } from './comment_service';
 import { runCommentAction } from './comment_action_runner';
+import { COMMENT_ACTIONS, type CommentActionDefinition } from './comment_actions';
+import { getActionButton } from './comment_platform_adapter';
 import type {
     CommentStateCaches,
     PlatformButtons,
@@ -44,9 +46,14 @@ export class CommentInjector {
 
         const buttons = this.adapter.getButtons(element);
 
-        this.bindEventListener(buttons.questionBtn, 'click', (e) => this.handleQuestionClick(e, buttons, element), signal);
-        this.bindEventListener(buttons.prayerBtn, 'click', (e) => this.handlePrayerClick(e, buttons, element), signal);
-        this.bindEventListener(buttons.copyBtn, 'click', (e) => this.handleCopyClick(e, buttons.copyBtn!, element), signal);
+        // Слухачі навішуються за реєстром дій, а не за іменованими полями:
+        // нова дія в `comment_actions.ts` підхоплюється тут без правок (T2).
+        COMMENT_ACTIONS.forEach(action => {
+            const btn = getActionButton(buttons, action.id);
+            if (!btn) return;
+            this.bindEventListener(btn, 'click', (e) => this.handleActionClick(e, action, btn, buttons, element), signal);
+        });
+
         this.bindEventListener(buttons.checkboxEl, 'change', (e) => this.handleCheckboxChange(e, buttons, element), signal);
         if (buttons.bodyEl && buttons.checkboxEl) {
             this.bindEventListener(buttons.bodyEl, 'contextmenu', (e) => this.handleContextMenu(e as MouseEvent, buttons.bodyEl!, buttons.checkboxEl!), signal);
@@ -84,38 +91,34 @@ export class CommentInjector {
         }
     }
 
-    private async handleQuestionClick(
+    /**
+     * Єдина точка обробки кліку по кнопці дії.
+     *
+     * Дія без стану (`stateType === null`) — це копіювання: воно не чіпає
+     * сховище і лише «спалахує» кнопкою. Дія зі станом іде звичайним
+     * конвеєром `runCommentAction` (toggle on / untoggle).
+     */
+    private async handleActionClick(
         e: Event,
+        action: CommentActionDefinition,
+        btn: HTMLElement,
         buttons: PlatformButtons,
         element: Element
     ): Promise<void> {
         e.stopPropagation();
-        await this.handleAction('question', buttons, element);
-    }
 
-    private async handlePrayerClick(
-        e: Event,
-        buttons: PlatformButtons,
-        element: Element
-    ): Promise<void> {
-        e.stopPropagation();
-        await this.handleAction('prayer', buttons, element);
-    }
+        if (action.stateType === null) {
+            await this.handleCopyClick(btn, element);
+            return;
+        }
 
-    private async handleAction(
-        type: 'question' | 'prayer',
-        buttons: PlatformButtons,
-        element: Element
-    ): Promise<void> {
-        await runCommentAction(this.adapter, this.caches, type, buttons, element);
+        await runCommentAction(this.adapter, this.caches, action.stateType, buttons, element);
     }
 
     private async handleCopyClick(
-        e: Event,
         btn: HTMLElement,
         element: Element
     ): Promise<void> {
-        e.stopPropagation();
         const ctx = this.adapter.getCommentContext(element);
         if (!ctx) return;
         const formatted = CommentService.formatForClipboard(ctx.author, ctx.text);

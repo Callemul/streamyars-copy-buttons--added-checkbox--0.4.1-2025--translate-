@@ -7,12 +7,14 @@
  * тому історичні імпорти `from './comment_service'` лишаються робочими.
  */
 
+import type { CommentActionStateType, CommentStateActionId } from './comment_actions';
+
 /** Один зібраний коментар у списку аркуша. */
 export interface CommentPayload {
     id: string;
     author: string;
     text: string;
-    type: 'question' | 'prayer';
+    type: CommentStateActionId;
     timestamp: number;
     videoId?: string;
     videoTitle?: string;
@@ -31,7 +33,7 @@ export interface PrayerRecord {
 }
 
 /** Стан кнопки коментаря: питання, молитва або «не зібрано». */
-export type ButtonStateValue = 'question' | 'prayer' | null;
+export type ButtonStateValue = CommentActionStateType;
 
 /** Запис стану чекбокса разом із міткою часу для TTL-прибирання. */
 export interface CheckboxStateEntry {

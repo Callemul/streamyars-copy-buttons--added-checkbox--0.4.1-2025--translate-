@@ -1,3 +1,5 @@
+import type { CommentActionId } from './comment_actions';
+
 export type SyhEventType =
     | 'COMMENT_ACTION'
     | 'COMMENT_MARKED'
@@ -17,7 +19,7 @@ export type SyhEventType =
     | 'FILTER_COMMENTS_REQUESTED';
 
 export interface SyhEventPayloads {
-    COMMENT_ACTION: { type: 'question' | 'prayer' | 'copy'; author: string; text: string };
+    COMMENT_ACTION: { type: CommentActionId; author: string; text: string };
     COMMENT_MARKED: { element: Element; type: 'question' | 'prayer' | 'none'; author: string; text: string };
     COMMENT_REMOVED: { text: string };
     BANNER_ACTION: { action: string; bannerText: string };

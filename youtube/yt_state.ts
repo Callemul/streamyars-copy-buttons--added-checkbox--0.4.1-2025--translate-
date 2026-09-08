@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../modules/comment_actions';
 /**
  * StreamYard Helper — спільний кеш стану YouTube-модуля.
  *
@@ -10,7 +11,7 @@
 import type { YTCollectedItem } from '../modules/types';
 
 export interface StateCache {
-    buttonStates: Record<string, 'question' | 'prayer'>;
+    buttonStates: Record<string, CommentStateActionId>;
     checkboxStates: Record<string, { checked: boolean; timestamp: number }>;
     collectedList: YTCollectedItem[];
     youtubeEnabled: boolean;

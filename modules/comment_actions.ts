@@ -33,6 +33,12 @@ export type CommentActionId = 'copy' | 'question' | 'prayer';
  */
 export type CommentActionStateType = 'question' | 'prayer' | null;
 
+/**
+ * Дії, які лишають стан на кнопці (усе, крім копіювання).
+ * Саме цей union раніше був вписаний руками у 16 файлах.
+ */
+export type CommentStateActionId = Exclude<CommentActionStateType, null>;
+
 /** Чим конкретна поверхня відрізняється від канонічного опису дії. */
 export interface CommentActionPlatformOverride {
     /**

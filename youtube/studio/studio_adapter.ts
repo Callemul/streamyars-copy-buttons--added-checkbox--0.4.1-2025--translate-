@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../../modules/comment_actions';
 // youtube/studio/studio_adapter.ts
 import { STORAGE_KEYS } from '../../modules/storage';
 import { CommentService } from '../../modules/comment_service';
@@ -190,7 +191,7 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     }
 
     public async beforeAction(
-        type: 'question' | 'prayer',
+        type: CommentStateActionId,
         _context: CommentContext,
         element: Element
     ): Promise<{ sheetId: string } | null> {
@@ -213,7 +214,7 @@ export class StudioCommentAdapter extends BaseCommentPlatformAdapter {
     }
 
     public async afterAction(action: {
-        type: 'question' | 'prayer';
+        type: CommentStateActionId;
         context: CommentContext;
         sheetId: string;
         commentKey: string;

@@ -1,3 +1,4 @@
+import type { CommentActionStateType, CommentStateActionId } from '../../modules/comment_actions';
 // youtube/studio/state_resolvers.ts
 import { generateCommentKey } from './studio_comment_key';
 import type { CommentContext, CommentStateCaches } from '../../modules/comment_platform_adapter';
@@ -11,13 +12,13 @@ type CommentPayload = {
     id: string;
     author: string;
     text: string;
-    type: 'question' | 'prayer';
+    type: CommentStateActionId;
     timestamp: number;
     videoId?: string;
     videoTitle?: string;
 };
 
-type ButtonStateType = 'question' | 'prayer' | null;
+type ButtonStateType = CommentActionStateType;
 
 function findInCollectedItems(
     commentKey: string,

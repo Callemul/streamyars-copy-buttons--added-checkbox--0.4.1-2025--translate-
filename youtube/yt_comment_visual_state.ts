@@ -1,3 +1,4 @@
+import type { CommentStateActionId } from '../modules/comment_actions';
 // youtube/yt_comment_visual_state.ts
 //
 // Візуальний стан коментаря YouTube: підпис/атрибути кнопок і галочка
@@ -64,7 +65,7 @@ export function applyCheckboxStateFromCache(
 export function restoreButtonState(
     commentNode: Element,
     commentId: string,
-    buttonStates: Record<string, 'question' | 'prayer'>
+    buttonStates: Record<string, CommentStateActionId>
 ): void {
     const btnQuestion = commentNode.querySelector('.syh-yt-btn-question') as HTMLButtonElement | null;
     const btnPrayer = commentNode.querySelector('.syh-yt-btn-prayer') as HTMLButtonElement | null;
