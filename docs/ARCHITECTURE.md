@@ -130,13 +130,12 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
 | Селектори Studio | `youtube/studio/studio_selectors.ts` | `studio_*` |
 | Вигляд кнопок і чекбоксів | `modules/ui_factory.ts` (`UiFactory`) | усі панелі |
 | Поля аркуша попапу (гачок, id, вид, ключі сховища) | `popup/popup_sheet_fields.ts` (`SHEET_FIELDS`) | `popup_sheet_renderer.ts`, `popup_sheet_field_restorer.ts`, `popup_sheet_log_restorer.ts`, `popup_sheet_bindings.ts` |
-| Налаштування | `options/defaults.ts` (`OptionsState`, `DEFAULT_OPTIONS`) | `options/form.ts`, споживачі опцій |
+| Опції сторінки налаштувань (ключ, елемент, вид, дефолт, діапазон) | `options/option_fields.ts` (`OPTION_FIELDS`) | `options/defaults.ts` (виводить `OptionsState` і `DEFAULT_OPTIONS`), `options/form.ts` |
 | Події між модулями | `modules/event_bus.ts` (`SYH_BUS`, 16 типів) | плагіни, статистика, банери |
 | Плагіни StreamYard | `modules/plugin_registry.ts` (`SYH_PLUGINS`) | `bootstrap_app.ts` |
 | Ліміти й таймінги | `modules/config.ts` (`SYH_CONFIG.TIMINGS`, `LIMITS`) | anti-AFK, auto-heal, спалахи кнопок |
 
-Ще не зведені в реєстр (відомий борг, задача T9):
-опції сторінки налаштувань (5–7 місць на одну опцію).
+Усі UI-сутності, що повторювались, зведені в реєстри (T1–T9).
 
 ---
 

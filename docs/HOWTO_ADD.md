@@ -144,20 +144,54 @@ npm run verify
 
 ## 3. Додати опцію в налаштування
 
-> ⚠️ Дескрипторів опцій ще немає (задача **T9**) — поки що п'ять паралельних списків.
+Реєстр опцій — `options/option_fields.ts` (`OPTION_FIELDS`, задача **T9**).
+Замість п'яти паралельних списків лишилось три кроки.
 
-| # | Що | Де |
-|---|---|---|
-| 1 | Поле в `OptionsState` | `options/defaults.ts` |
-| 2 | Значення за замовчуванням у `DEFAULT_OPTIONS` | `options/defaults.ts` |
-| 3 | Розмітка (`<input id="opt…">`) | `options/options.html` |
-| 4 | Запис у форму — `populateFormElements` | `options/form.ts` |
-| 5 | Читання з форми — `readOptionsFromForm` | `options/form.ts` |
-| 6 | Валідація (якщо число/діапазон) | `options/validation.ts` |
-| 7 | Споживач опції | модуль, який на неї реагує |
+### Крок 1 — розмітка
+
+`options/options.html`:
+
+```html
+<input type="number" id="optMyOption" class="form-control" min="1" max="10" value="5">
+```
+
+### Крок 2 — один рядок у реєстрі
+
+`options/option_fields.ts`:
+
+```ts
+{
+    key: 'my_option',            // ключ у OptionsState і в сховищі
+    elementId: 'optMyOption',    // id елемента з розмітки
+    kind: 'number',              // 'text' | 'select' | 'checkbox' | 'number'
+    source: 'options',           // 'options' | 'db' (db — лише назви програм)
+    default: 5,
+    readFallback: '5',           // лише для number: рядковий фолбек порожнього поля
+    min: 1, max: 10              // звіряються тестом з атрибутами в options.html
+}
+```
+
+**Після цього кроку вже працює:** опція з'являється в типі `OptionsState`
+(і `tsc` вимагає її обробити), потрапляє в `DEFAULT_OPTIONS`, заповнюється у
+формі при відкритті сторінки і зчитується при збереженні.
+
+### Крок 3 — споживач
 
 **Не лишай опцію без споживача.** Прапорець `show_copy_buttons` два релізи зберігався,
 перевірявся в тестах і ніде не використовувався — його довелося видаляти.
+
+### Про порядок рядків
+
+`readOptionsFromForm` будує об'єкт стану в порядку рядків таблиці, а цей об'єкт
+дослівно лягає в `chrome.storage` і далі у файл експорту конфігурації.
+`JSON.stringify` зберігає порядок вставки, тож **перестановка рядків змінює JSON
+експорту**. Порядок зафіксовано побайтовим тестом у `tests/option_fields.test.js`.
+
+### Про фолбеки — вони різні за видом поля
+
+- `text` / `select` — падають на дефолт за `||` (порожній рядок = «немає значення»);
+- `checkbox` / `number` — тільки коли значення `undefined`, тож збережені `false`
+  і `0` поважаються.
 
 ---
 

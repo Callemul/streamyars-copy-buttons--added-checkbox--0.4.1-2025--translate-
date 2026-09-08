@@ -6,9 +6,13 @@
 //
 // Читання винесено сюди з `OptionsController.saveSettings`
 // (CRAP 63.6 / cyclomatic 15 за звітом Fallow 3.14): вся складність там була
-// суто механічною — 11 однотипних звернень до DOM із фолбеками. Тепер це
-// таблиця полів, а `saveSettings` лишається лінійним.
+// суто механічною — 11 однотипних звернень до DOM із фолбеками.
+//
+// Після T9 обидві функції — цикли по реєстру опцій (`option_fields.ts`).
+// Раніше це були два з п'яти паралельних списків: опція, забута в
+// `readOptionsFromForm`, показувалась у формі, але не зберігалась.
 import type { OptionsState } from './defaults';
+import { OPTION_FIELDS, type OptionFieldDescriptor } from './option_fields';
 
 function setVal(id: string, val: string): void {
     const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
@@ -24,36 +28,46 @@ function getDefaultValue<T>(value: T | undefined, defaultValue: T): T {
     return value !== undefined ? value : defaultValue;
 }
 
+/**
+ * Значення опції для форми з правильним фолбеком.
+ *
+ * КВІРК 1-в-1: текстові поля та `<select>` падають на дефолт за `||`
+ * (порожній рядок вважається «немає значення»), а чекбокси й числа — лише
+ * коли значення `undefined` (тобто збережений `false` або `0` поважається).
+ */
+function resolveFormValue(
+    field: OptionFieldDescriptor,
+    stored: Record<string, any>,
+    defaults: OptionsState
+): any {
+    const raw = stored[field.key];
+    const fallback = (defaults as Record<string, any>)[field.key];
+
+    if (field.kind === 'text' || field.kind === 'select') return raw || fallback;
+    return getDefaultValue(raw, fallback);
+}
+
 export function populateFormElements(
     db: any,
     opts: Partial<OptionsState>,
     defaults: OptionsState,
     studioEnabled?: boolean
 ): void {
-    setVal('optSschoolName', db.newTitleSS || defaults.newTitleSS);
-    setVal('optPreachName', db.newTitlePreach || defaults.newTitlePreach);
-    setVal('optLanguage', opts.ui_locale || defaults.ui_locale);
+    // `studio_enabled` живе ще й окремим ключем сховища; переданий явно, він
+    // має пріоритет над значенням усередині об'єкта опцій (поведінка 1-в-1).
+    const overrides: Record<string, unknown> = {};
+    if (studioEnabled !== undefined) overrides.studio_enabled = studioEnabled;
 
-    setCheck('optAntiAfkEnabled', getDefaultValue(opts.anti_afk_enabled, defaults.anti_afk_enabled));
-    setVal('optAntiAfkInterval', String(getDefaultValue(opts.anti_afk_interval_sec, defaults.anti_afk_interval_sec)));
+    OPTION_FIELDS.forEach(field => {
+        const stored = field.source === 'db' ? (db || {}) : (opts || {});
+        const value = field.key in overrides
+            ? overrides[field.key]
+            : resolveFormValue(field, stored, defaults);
 
-    setCheck('optAutoHealEnabled', getDefaultValue(opts.auto_heal_enabled, defaults.auto_heal_enabled));
-    setVal('optTruncationLength', String(getDefaultValue(opts.text_truncation_length, defaults.text_truncation_length)));
-
-    setCheck('optCompactSecondaryTabs', getDefaultValue(opts.compact_secondary_tabs_default, defaults.compact_secondary_tabs_default));
-    setCheck('optYouTubeEnabled', getDefaultValue(opts.youtube_enabled, defaults.youtube_enabled));
-
-    const isStudioEnabled = studioEnabled !== undefined
-        ? studioEnabled
-        : getDefaultValue(opts.studio_enabled, defaults.studio_enabled);
-    setCheck('optStudioEnabled', isStudioEnabled);
+        if (field.kind === 'checkbox') setCheck(field.elementId, Boolean(value));
+        else setVal(field.elementId, String(value));
+    });
 }
-
-// Рядкові фолбеки числових полів. Навмисно лишені літералами, як і в
-// оригінальному `saveSettings`: вони дублюють `DEFAULT_OPTIONS`, але не
-// зв'язані з ним (сьогодні збігаються — 30 с та 195 символів).
-const ANTI_AFK_INTERVAL_FALLBACK = '30';
-const TRUNCATION_LENGTH_FALLBACK = '195';
 
 /**
  * Текстове поле з обрізанням країв; порожній рядок падає на фолбек.
@@ -92,21 +106,28 @@ function readInteger(id: string, fallback: string): number {
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function readFieldValue(field: OptionFieldDescriptor, defaults: OptionsState): unknown {
+    const fallback = (defaults as Record<string, any>)[field.key];
+
+    switch (field.kind) {
+        case 'text': return readTrimmedText(field.elementId, String(fallback));
+        case 'select': return readSelectValue(field.elementId, String(fallback));
+        case 'checkbox': return readCheckbox(field.elementId);
+        // Числовий фолбек — рядковий літерал із реєстру, навмисно не зв'язаний
+        // з `default` (див. коментар до `readFallback` в `option_fields.ts`).
+        case 'number': return readInteger(field.elementId, field.readFallback ?? String(fallback));
+    }
+}
+
 /**
  * Збирає повний стан налаштувань із DOM-форми.
  * Дзеркальна операція до `populateFormElements`.
+ *
+ * Порядок ключів у результаті = порядок рядків у `OPTION_FIELDS`. Він доходить
+ * до JSON експорту конфігурації, тому зафіксований тестом.
  */
 export function readOptionsFromForm(defaults: OptionsState): OptionsState {
-    return {
-        newTitleSS: readTrimmedText('optSschoolName', defaults.newTitleSS),
-        newTitlePreach: readTrimmedText('optPreachName', defaults.newTitlePreach),
-        ui_locale: readSelectValue('optLanguage', defaults.ui_locale),
-        anti_afk_enabled: readCheckbox('optAntiAfkEnabled'),
-        anti_afk_interval_sec: readInteger('optAntiAfkInterval', ANTI_AFK_INTERVAL_FALLBACK),
-        auto_heal_enabled: readCheckbox('optAutoHealEnabled'),
-        text_truncation_length: readInteger('optTruncationLength', TRUNCATION_LENGTH_FALLBACK),
-        compact_secondary_tabs_default: readCheckbox('optCompactSecondaryTabs'),
-        youtube_enabled: readCheckbox('optYouTubeEnabled'),
-        studio_enabled: readCheckbox('optStudioEnabled')
-    };
+    const state: Record<string, unknown> = {};
+    OPTION_FIELDS.forEach(field => { state[field.key] = readFieldValue(field, defaults); });
+    return state as OptionsState;
 }
