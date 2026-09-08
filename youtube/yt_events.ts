@@ -26,6 +26,6 @@ export function bindYTEvents(
         collectedList: caches.collectedList
     };
     const adapter = new YouTubeCommentAdapter();
-    const injector = new CommentInjector(adapter, ytCaches);
+    const injector = new CommentInjector(adapter, ytCaches, 'youtube');
     injector.bindCommentEvents(commentNode, commentId);
 }

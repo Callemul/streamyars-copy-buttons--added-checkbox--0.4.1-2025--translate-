@@ -90,6 +90,6 @@ export function bindStudioCommentEvents(
 
     if (isStudioBindingUpToDate(threadEl, adapter, commentKey, forceUpdate)) return;
 
-    const injector = new CommentInjector(adapter, caches);
+    const injector = new CommentInjector(adapter, caches, 'studio');
     applyStudioCommentIntegrations(threadEl, commentKey, adapter, injector, caches);
 }
