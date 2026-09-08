@@ -1,6 +1,6 @@
 import { CommentService } from './comment_service';
 import { runCommentAction } from './comment_action_runner';
-import { COMMENT_ACTIONS, type CommentActionDefinition } from './comment_actions';
+import { COMMENT_ACTIONS, getActionEvents, type CommentActionDefinition, type CommentPlatformId } from './comment_actions';
 import { getActionButton } from './comment_platform_adapter';
 import type {
     CommentStateCaches,
@@ -17,13 +17,21 @@ const elementAbortControllers = new WeakMap<Element, AbortController>();
 export class CommentInjector {
     private adapter: CommentPlatformAdapter;
     private caches: CommentStateCaches;
+    private platform: CommentPlatformId;
 
+    /**
+     * @param platform Поверхня, з реєстру якої беруться події кнопок.
+     *                 За замовчуванням `'youtube'` — там і в Studio кнопки
+     *                 історично слухають `click`, тож наявні виклики не змінюються.
+     */
     constructor(
         adapter: CommentPlatformAdapter,
-        caches: CommentStateCaches
+        caches: CommentStateCaches,
+        platform: CommentPlatformId = 'youtube'
     ) {
         this.adapter = adapter;
         this.caches = caches;
+        this.platform = platform;
     }
 
     public bindCommentEvents(element: Element, _commentKey: string): void {
@@ -51,7 +59,11 @@ export class CommentInjector {
         COMMENT_ACTIONS.forEach(action => {
             const btn = getActionButton(buttons, action.id);
             if (!btn) return;
-            this.bindEventListener(btn, 'click', (e) => this.handleActionClick(e, action, btn, buttons, element), signal);
+            // Подія теж платформна: YouTube/Studio слухають `click`, StreamYard —
+            // `mouseup`, бо для 🙏 має значення кнопка миші (реєстр, поле `events`).
+            getActionEvents(this.platform, action.id).forEach(eventName => {
+                this.bindEventListener(btn, eventName, (e) => this.handleActionClick(e, action, btn, buttons, element), signal);
+            });
         });
 
         this.bindEventListener(buttons.checkboxEl, 'change', (e) => this.handleCheckboxChange(e, buttons, element), signal);
@@ -106,6 +118,20 @@ export class CommentInjector {
         element: Element
     ): Promise<void> {
         e.stopPropagation();
+
+        // Поверхня може повністю перехопити дію (StreamYard — банер копіювання,
+        // база молитов, іконка за кнопкою миші). Див. `CommentPlatformAdapter.runAction`.
+        if (this.adapter.runAction) {
+            await this.adapter.runAction({
+                action,
+                event: e,
+                button: btn,
+                buttons,
+                element,
+                caches: this.caches
+            });
+            return;
+        }
 
         if (action.stateType === null) {
             await this.handleCopyClick(btn, element);
@@ -162,6 +188,13 @@ export class CommentInjector {
 
         const isChecked = checkbox.checked;
         this.adapter.applyCheckboxState(buttons, isChecked);
+
+        // Поверхня може зберігати стан чекбокса інакше (StreamYard — за текстом
+        // коментаря, а не за ключем кешу). Див. `onCheckboxToggled`.
+        if (this.adapter.onCheckboxToggled) {
+            await this.adapter.onCheckboxToggled(element, buttons, isChecked, this.caches);
+            return;
+        }
 
         await CommentService.saveCheckboxState(
             this.adapter.getCheckboxStatesKey(),

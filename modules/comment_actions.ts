@@ -53,6 +53,14 @@ export interface CommentActionPlatformOverride {
     className?: string;
     /** `data-type` кнопки; StreamYard добирає кнопки селектором `[data-type="comment"]`. */
     type?: string;
+    /**
+     * DOM-події, на які реагує кнопка цієї поверхні. За замовчуванням — `['click']`.
+     *
+     * StreamYard історично слухає `mouseup`, бо для 🙏 має значення, якою кнопкою
+     * миші натиснули (ЛКМ / коліщатко / ПКМ). Це саме та відмінність поверхні,
+     * заради якої існує реєстр: `CommentInjector` більше не має знати про неї.
+     */
+    events?: readonly string[];
 }
 
 export interface CommentActionDefinition {
@@ -64,6 +72,15 @@ export interface CommentActionDefinition {
     /** `null` означає, що дія на цій поверхні свідомо відсутня. */
     platforms: Readonly<Record<CommentPlatformId, CommentActionPlatformOverride | null>>;
 }
+
+/** Події, на які реагують кнопки коментаря за замовчуванням. */
+export const DEFAULT_ACTION_EVENTS: readonly string[] = ['click'];
+
+/**
+ * StreamYard слухає `mouseup`, а не `click`: тип молитви (🙏🙏🙏 / 🙏❤️🙏 / ❤️❤️❤️)
+ * визначається кнопкою миші, а `click` не розрізняє коліщатко і ПКМ.
+ */
+const STREAMYARD_ACTION_EVENTS: readonly string[] = ['mouseup'];
 
 /**
  * Реєстр дій. Значення перенесені 1-в-1 із трьох колишніх описів —
@@ -78,7 +95,8 @@ export const COMMENT_ACTIONS: ReadonlyArray<CommentActionDefinition> = [
         platforms: {
             streamyard: {
                 domAction: 'copy-comment',
-                type: 'comment'
+                type: 'comment',
+                events: STREAMYARD_ACTION_EVENTS
             },
             youtube: {
                 domAction: 'copy-comment',
@@ -102,7 +120,8 @@ export const COMMENT_ACTIONS: ReadonlyArray<CommentActionDefinition> = [
             streamyard: {
                 domAction: 'copy-author-comment',
                 title: 'Відмітити як Питання',
-                type: 'comment'
+                type: 'comment',
+                events: STREAMYARD_ACTION_EVENTS
             },
             youtube: {
                 domAction: 'add-question',
@@ -124,7 +143,8 @@ export const COMMENT_ACTIONS: ReadonlyArray<CommentActionDefinition> = [
             streamyard: {
                 domAction: 'copy-prayer',
                 title: 'ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️',
-                type: 'comment'
+                type: 'comment',
+                events: STREAMYARD_ACTION_EVENTS
             },
             youtube: {
                 domAction: 'add-prayer',
@@ -214,4 +234,13 @@ export function buildPlatformButtonConfigs(platform: CommentPlatformId): ButtonC
     return getPlatformActions(platform)
         .map(action => buildActionButtonConfig(platform, action.id))
         .filter((config): config is ButtonConfig => config !== null);
+}
+
+/**
+ * Події, на які має бути навішений слухач кнопки дії на цій поверхні.
+ * Порожній або відсутній список означає стандартний `click`.
+ */
+export function getActionEvents(platform: CommentPlatformId, id: CommentActionId): readonly string[] {
+    const events = ACTIONS_BY_ID.get(id)?.platforms[platform]?.events;
+    return events && events.length > 0 ? events : DEFAULT_ACTION_EVENTS;
 }

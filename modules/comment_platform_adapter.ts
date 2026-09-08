@@ -1,5 +1,10 @@
 import type { CommentPayload } from './comment_service';
-import type { CommentActionId, CommentActionStateType, CommentStateActionId } from './comment_actions';
+import type {
+    CommentActionDefinition,
+    CommentActionId,
+    CommentActionStateType,
+    CommentStateActionId
+} from './comment_actions';
 
 export interface CommentContext {
     id: string;
@@ -56,6 +61,23 @@ export function getActionButton(buttons: PlatformButtons, id: CommentActionId): 
     return legacySlot ? (buttons[legacySlot] as HTMLElement | null) ?? null : null;
 }
 
+/**
+ * Усе, що потрібно платформі, щоб самостійно виконати дію над коментарем.
+ * Передається в `CommentPlatformAdapter.runAction` одним об'єктом, щоб додавання
+ * поля не ламало сигнатуру реалізацій.
+ */
+export interface ActionInvocation {
+    /** Опис дії з реєстру `modules/comment_actions.ts`. */
+    action: CommentActionDefinition;
+    /** Подія, що спричинила дію (`click` або `mouseup` — залежить від реєстру). */
+    event: Event;
+    /** Кнопка, на якій спрацював слухач. */
+    button: HTMLElement;
+    buttons: PlatformButtons;
+    element: Element;
+    caches: CommentStateCaches;
+}
+
 export interface ActionContext {
     type: ButtonStateType;
     context: CommentContext;
@@ -77,6 +99,29 @@ export interface CommentPlatformAdapter {
     unmarkChecked?(element: Element, commentKey: string, caches: CommentStateCaches): Promise<void>;
     beforeAction?(type: CommentStateActionId, context: CommentContext, element: Element): Promise<{ sheetId: string } | null>;
     afterAction?(action: ActionContext): Promise<void>;
+    /**
+     * Повний перехват дії поверхнею.
+     *
+     * Без цього хука `CommentInjector` іде стандартним конвеєром
+     * (`comment_action_runner`: toggle on / untoggle + збережені коментарі аркуша).
+     * StreamYard має власну семантику — банер копіювання, база молитов,
+     * `data-syh-just-added`, різні іконки за кнопкою миші — і реалізує її тут,
+     * замість паралельного конвеєра `modules/event_comments/*` (T7).
+     */
+    runAction?(invocation: ActionInvocation): Promise<void> | void;
+    /**
+     * Перехват перемикання чекбокса «опрацьовано».
+     *
+     * Без хука інжектор пише стан у `caches.checkboxStates` за ключем коментаря.
+     * StreamYard зберігає його інакше (за текстом коментаря, через
+     * `CommentService.setStreamYardCheckboxState`), тому перекриває цей крок.
+     */
+    onCheckboxToggled?(
+        element: Element,
+        buttons: PlatformButtons,
+        isChecked: boolean,
+        caches: CommentStateCaches
+    ): Promise<void> | void;
     isEventsBound(element: Element): boolean;
     markEventsBound(element: Element): void;
     unmarkEventsBound?(element: Element): void;

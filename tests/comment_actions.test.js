@@ -18,7 +18,9 @@ import {
     resolveActionId,
     getActionStateType,
     buildActionButtonConfig,
-    buildPlatformButtonConfigs
+    buildPlatformButtonConfigs,
+    getActionEvents,
+    DEFAULT_ACTION_EVENTS
 } from '../modules/comment_actions.ts';
 
 describe('comment_actions — цілісність реєстру', () => {
@@ -149,5 +151,26 @@ describe('comment_actions — пошук і фолбеки', () => {
 
     test('15. buildActionButtonConfig повертає null для дії, відсутньої на поверхні', () => {
         assert.equal(buildActionButtonConfig('youtube', 'unknown-action'), null);
+    });
+});
+
+describe('comment_actions — події кнопок за поверхнями (T7)', () => {
+    test('16. YouTube і Studio лишаються на click', () => {
+        for (const id of ['copy', 'question', 'prayer']) {
+            assert.deepEqual(getActionEvents('youtube', id), ['click']);
+            assert.deepEqual(getActionEvents('studio', id), ['click']);
+        }
+        assert.deepEqual([...DEFAULT_ACTION_EVENTS], ['click']);
+    });
+
+    test('17. StreamYard слухає mouseup — інакше 🙏 не відрізнить кнопку миші', () => {
+        for (const id of ['copy', 'question', 'prayer']) {
+            assert.deepEqual(getActionEvents('streamyard', id), ['mouseup'],
+                `дія ${id} на StreamYard має слухати mouseup`);
+        }
+    });
+
+    test('18. невідома дія отримує подію за замовчуванням, а не порожній список', () => {
+        assert.deepEqual(getActionEvents('streamyard', 'unknown-action'), ['click']);
     });
 });
