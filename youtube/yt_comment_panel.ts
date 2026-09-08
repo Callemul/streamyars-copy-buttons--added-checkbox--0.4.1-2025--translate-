@@ -4,13 +4,18 @@
 // плаваюча кнопка копіювання та чекбокс «прочитано».
 //
 // Виділено з `youtube/yt_ui.ts`, де `addButtonsToYTComment` була функцією на
-// 57 рядків із чотирма майже однаковими блоками створення елементів. Опис
-// кнопок винесено в декларативну таблицю `PANEL_BUTTONS`.
+// 57 рядків із чотирма майже однаковими блоками створення елементів.
 //
-// Поведінка збережена 1-в-1 (див. tests/yt_ui_api.test.js).
+// Склад кнопок більше НЕ описується тут: він береться з єдиного реєстру дій
+// `modules/comment_actions.ts` (T1 аудиту 2026-09-08), спільного для
+// StreamYard, YouTube і Studio. У цьому файлі лишились суто ютубівські речі:
+// клас панелі, чекбокс «прочитано» та позначення тіла коментаря.
+//
+// Поведінка збережена 1-в-1 (див. tests/yt_ui_api.test.js, tests/comment_actions.test.js).
 
 import { YT_SELECTORS } from './yt_selectors';
-import { UiFactory, type ButtonConfig } from '../modules/ui_factory';
+import { UiFactory } from '../modules/ui_factory';
+import { buildPlatformButtonConfigs } from '../modules/comment_actions';
 import { resolveSelector } from '../modules/config';
 
 const PANEL_CLASS = 'syh-yt-buttons';
@@ -19,33 +24,11 @@ const COMMENT_BODY_CLASS = 'syh-yt-comment-body';
 const CHECKBOX_TYPE = 'yt-comment';
 const CHECKBOX_TITLE = 'Прочитано / Не прочитано';
 
-/** Порядок збережено з оригіналу: питання → молитви → копіювання. */
-const PANEL_BUTTONS: ReadonlyArray<ButtonConfig> = [
-    {
-        action: 'add-question',
-        icon: 'Додати до питань',
-        title: 'Додати до питань',
-        className: 'syh-yt-btn syh-yt-btn-question'
-    },
-    {
-        action: 'add-prayer',
-        icon: 'Додати до молитов',
-        title: 'Додати до молитов',
-        className: 'syh-yt-btn syh-yt-btn-prayer'
-    },
-    {
-        action: 'copy-comment',
-        icon: '📄',
-        title: 'Копіювати текст коментаря (@автор\\n\\nтекст)',
-        className: 'syh-yt-btn-copy'
-    }
-];
-
 function buildPanel(): HTMLElement {
     const container = document.createElement('div');
     container.className = PANEL_CLASS;
 
-    PANEL_BUTTONS.forEach(config => container.appendChild(UiFactory.createButton(config)));
+    buildPlatformButtonConfigs('youtube').forEach(config => container.appendChild(UiFactory.createButton(config)));
 
     const { wrapper: checkboxWrap } = UiFactory.createCheckbox(CHECKBOX_TYPE, CHECKBOX_TITLE);
     checkboxWrap.className = CHECKBOX_WRAP_CLASS;

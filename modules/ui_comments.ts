@@ -16,27 +16,9 @@
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG, queryBySelectorValue } from './config';
 import { UiFactory } from './ui_factory';
+import { buildPlatformButtonConfigs } from './comment_actions';
 import { restoreCheckboxFromCache } from './ui_shared_utils';
 import { applySavedLabels } from './ui_comment_labels';
-
-/** Опис кнопок дій у порядку їх появи в картці коментаря. */
-const COMMENT_ACTION_BUTTONS = [
-    {
-        action: 'copy-comment',
-        icon: '📄',
-        title: 'Копіювати тільки коментар'
-    },
-    {
-        action: 'copy-author-comment',
-        icon: '❓',
-        title: 'Відмітити як Питання'
-    },
-    {
-        action: 'copy-prayer',
-        icon: '🙏',
-        title: 'ЛКМ: 🙏🙏🙏 | Коліщатко: 🙏❤️🙏 | ПКМ: ❤️❤️❤️'
-    }
-] as const;
 
 const CHECKBOX_TITLE = 'Відмітити коментар як опрацьований';
 
@@ -44,8 +26,10 @@ function buildCommentButtonsContainer(): HTMLDivElement {
     const container = document.createElement('div');
     container.className = 'syh-custom-buttons-comment';
 
-    COMMENT_ACTION_BUTTONS.forEach(({ action, icon, title }) => {
-        container.appendChild(UiFactory.createButton({ type: 'comment', action, icon, title }));
+    // Склад і порядок кнопок — з єдиного реєстру дій (`modules/comment_actions.ts`),
+    // спільного зі StreamYard-, YouTube- і Studio-панелями.
+    buildPlatformButtonConfigs('streamyard').forEach(config => {
+        container.appendChild(UiFactory.createButton(config));
     });
 
     const { wrapper: cbWrap } = UiFactory.createCheckbox('comment', CHECKBOX_TITLE);

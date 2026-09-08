@@ -2,6 +2,7 @@
 import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 import { UiFactory } from '../../modules/ui_factory';
+import { buildActionButtonConfig } from '../../modules/comment_actions';
 import { formatCategoryLabel } from './studio_header_badge_markup';
 
 export interface StudioCommentUIElements {
@@ -12,6 +13,19 @@ export interface StudioCommentUIElements {
     dropdownEl: HTMLElement | null;
     checkboxEl: HTMLInputElement | null;
     metaContainer: HTMLElement | null;
+}
+
+/**
+ * Кнопка студійної панелі за канонічним id дії.
+ * Реєстр описує всі три поверхні, тож для Studio дія завжди знайдеться;
+ * фолбек лишається на випадок, якщо дію свідомо приберуть з реєстру.
+ */
+function createStudioActionButton(actionId: 'copy' | 'question' | 'prayer'): HTMLButtonElement {
+    const config = buildActionButtonConfig('studio', actionId);
+    if (!config) {
+        throw new Error(`[SYH] Дія "${actionId}" не описана для поверхні studio`);
+    }
+    return UiFactory.createButton(config);
 }
 
 /**
@@ -29,26 +43,12 @@ function ensureToolbarActionButtons(toolbar: HTMLElement): {
     if (!copyBtn || !questionBtn || !prayerBtn) {
         toolbar.querySelectorAll('.syh-studio-btn').forEach(el => el.remove());
 
-        copyBtn = UiFactory.createButton({
-            action: 'studio-copy',
-            icon: '📋',
-            title: 'Скопіювати автора та текст коментаря в буфер',
-            className: 'syh-studio-btn syh-studio-btn-copy'
-        });
-
-        questionBtn = UiFactory.createButton({
-            action: 'studio-question',
-            icon: '❓',
-            title: 'Додати до питань',
-            className: 'syh-studio-btn syh-studio-btn-question'
-        });
-
-        prayerBtn = UiFactory.createButton({
-            action: 'studio-prayer',
-            icon: '🙏',
-            title: 'Додати до молитов',
-            className: 'syh-studio-btn syh-studio-btn-prayer'
-        });
+        // Опис кнопок — з єдиного реєстру дій (`modules/comment_actions.ts`),
+        // спільного зі StreamYard- і YouTube-панелями. Тут лишається тільки
+        // студійна специфіка: три іменовані слоти, які повертає ця функція.
+        copyBtn = createStudioActionButton('copy');
+        questionBtn = createStudioActionButton('question');
+        prayerBtn = createStudioActionButton('prayer');
 
         toolbar.appendChild(copyBtn);
         toolbar.appendChild(questionBtn);
