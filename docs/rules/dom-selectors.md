@@ -32,3 +32,34 @@ DOM event listeners у попапі — strictly всередині `DOMContentL
 Новий `MutationObserver` напряму не створюється — використовується
 `modules/dom_observer.ts` (він має захист колбеків: падіння одного обробника
 не зупиняє решту селекторів у кадрі).
+
+## 🔗 Панель кнопок коментаря і прив'язка — нерозривна пара
+
+**Інваріант:** там, де в картку коментаря вставляється панель кнопок
+(`SYH_UI.addButtonsToComment`), наступним кроком **обов'язково** йде
+`bindStreamYardComment` (`modules/streamyard_comment_binding.ts`).
+
+```ts
+SYH_UI.addButtonsToComment(el);
+bindStreamYardComment(el);        // ← без цього рядка кнопки мовчки мертві
+```
+
+Чому це окреме правило, а не «і так очевидно»: після T7 слухачі навішуються на
+самі кнопки, а не делегуються з `document`. Тому панель без прив'язки виглядає
+абсолютно правильною — кнопки на місці, іконки ті самі, класи ті самі — і просто
+нічого не робить. Ані `tsc`, ані `eslint`, ані тести панелі цього не бачать:
+панель же побудована коректно.
+
+Симетрично: картка, яку StreamYard прибрав із DOM, знімається через
+`unbindStreamYardComment` (`onCommentRemoved`), інакше залишаються висіти
+`AbortController` і маркер `data-syh-events-bound`.
+
+Сьогодні єдина точка вставки — `modules/bootstrap_dom.ts` (`onCommentAdded`).
+Інваріант тримає `tests/streamyard_panel_binding_invariant.test.js`:
+
+- **поведінково** — проходить по всіх зонах `DOM_REGISTRATIONS`; якщо після
+  `onAdded` на картці з'явилась панель, `isEventsBound` мусить бути `true`
+  (нова зона в таблиці покривається автоматично);
+- **по джерелах** — жоден модуль у `modules/` і `main.ts` не має викликати
+  `addButtonsToComment` без `bindStreamYardComment` у тому ж файлі (ловить
+  вставку панелі поза `DOM_REGISTRATIONS` — Auto-Heal, новий плагін).
