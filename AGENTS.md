@@ -26,7 +26,7 @@
 ## 📐 3. Загальні правила та Команди
 
 - **Codebase Search Directive:** Prefer `codebase-memory` tools (`search_code`, `search_graph`, `get_architecture`) for exploring codebase structure and logic. Fall back to standard file tools if codebase-memory returns insufficient data.
-- **Команди:** `npm run dev` | `npm run build` | `npm run test` | `npm run lint`
+- **Команди:** `npm run dev` | `npm run build` | `npm run test` | `npm run lint` | `npm run typecheck`
 - **Workflow RPI:** Research (`codebase-memory`) → Plan → Implement → Verify (`npm run test && npm run lint`).
 - 🩺 **Happy DOM Mocking Rule**: Проєкт використовує `happy-dom` (`tests/setup/happy-dom.ts`) для глобального DOM-середовища в тестах. Через це властивості `window`, `location`, `document` та `localStorage` мають рид-онлі геттери на `global`/`globalThis`. Заборонено їх перезаписувати прямим присвоєнням (наприклад, `global.localStorage = ...`), оскільки це викличе `TypeError`. Завжди використовуйте `Object.defineProperty(global, 'property', { value: ..., configurable: true, writable: true })`.
 - ⚡ **RTK Token Saving**: Для економії 90%+ контекстних токенів у терміналі рекомендується запускати довгі команди через `rtk` (наприклад, `rtk test npm run test` або `rtk tsc npx tsc --noEmit`), якщо автоматичний PreToolUse hook не перехоплює їх прозоро.
@@ -41,7 +41,7 @@
 - ✂️ **Очищення суфіксів авторів у питаннях (Author Suffix Cleanup)**:
   - Патерн очищення авторів у кінці питань (`QUESTION_AUTHOR_SUFFIX_REGEX` у `modules/parsers/regex.ts`) зобов'язаний підтримувати як закриті дужки `(Автор)`, так і незакриті `( Автор 1 , Автор 2` (через необов'язкову закриваючу дужку `\)?` перед `$`).
   - Внутрішні смислові дужки всередині тексту питання (`(Тора)`, `(Рим. 8:28)`) мають обов'язково зберігатися.
-  - Очищення здійснюється виключно на етапі парсингу (`cleanLine` у `sabbath_parser.ts`, `formatNumberedLine` у `standard_parser.ts`) як SSOT, щоб прев'ю у модальному вікні та фінальні банери одразу містили чистий текст.
+  - Очищення здійснюється виключно на етапі парсингу (`cleanLine` у `modules/parsers/sabbath_parser.ts`, `formatNumberedLine` у `modules/parsers/standard_parser.ts`) як SSOT, щоб прев'ю у модальному вікні та фінальні банери одразу містили чистий текст.
 - 🧪 **Синтаксис та запуск одиничних тестів**:
   - Файли у `tests/*.test.js` виконуються нативним раннером Node.js без компіляції TS у тестах. Заборонено писати конструкції TypeScript (`as unknown as ...`, `type`, інтерфейси) усередині `.js`-тестів.
   - Одиничні тести слід запускати з повним набором лоадерів: `node --experimental-strip-types --import ./tests/ts_loader.js --import ./tests/setup/happy-dom.ts --test "tests/<ім'я>.test.js"`.
@@ -69,9 +69,9 @@
 
 - ⚙️ **Архітектура Extension / Manifest V3 / Vite / Service Workers:**
   - Зчитай `.agents/skills/chrome-extension.md` при роботі з `manifest.json`, background worker, build-скриптами чи messaging.
-- 🟡 **Модуль StreamYard (`modules/streamyard/` | `app.streamyard.com`):**
+- 🟡 **Модуль StreamYard (`modules/` | `app.streamyard.com`):**
   - Зчитай `.agents/skills/streamyard.md` при розробці/дебагу UI чи ін'єкцій StreamYard.
-- 🔴 **Модуль YouTube Studio (`modules/youtube/` | `studio.youtube.com`):**
+- 🔴 **Модуль YouTube Studio (`youtube/` та `youtube/studio/` | `studio.youtube.com`):**
   - Зчитай `.agents/skills/youtube-studio.md` при розробці/дебагу YouTube Studio (Polymer, `<iron-list>`, рециклінг).
 
 ---
@@ -92,10 +92,10 @@
 
 2. ДЛЯ `code-extractor`:
    - `get_symbols_tool`: ОБОВ'ЯЗКОВИЙ параметр назвати `path_or_url` (НЕ `file_path`).
-     Приклад: `call_mcp_tool("code-extractor", "get_symbols_tool", {"path_or_url": "modules/comment_assistant.ts"})`
+     Приклад: `call_mcp_tool("code-extractor", "get_symbols_tool", {"path_or_url": "modules/comment_assistant/processor.ts"})`
    - `get_lines_tool`: ОБОВ'ЯЗКОВІ параметри `path_or_url`, `start_line`, `end_line`.
      Запитуй точечно по 15–30 рядків, щоб вивід не згортався у файл output.txt!
-     Приклад: `call_mcp_tool("code-extractor", "get_lines_tool", {"path_or_url": "modules/comment_assistant.ts", "start_line": 1, "end_line": 30})`
+     Приклад: `call_mcp_tool("code-extractor", "get_lines_tool", {"path_or_url": "modules/comment_assistant/processor.ts", "start_line": 1, "end_line": 30})`
 
 3. ЗАБОРОНА УСИХ `view_file` ДЛЯ ФАЙЛІВ > 50 РЯДКІВ:
    - Використовуй тільки `get_lines_tool` з параметром `path_or_url`.

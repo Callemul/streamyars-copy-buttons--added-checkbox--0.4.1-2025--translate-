@@ -1,6 +1,6 @@
 # SKILL: YouTube Studio, Polymer Virtualization & Issues
 
-> **Контекст:** Використовувати виключно під час розробки та дебагінгу модуля YouTube Studio (`modules/youtube/`, `studio.youtube.com`).
+> **Контекст:** Використовувати виключно під час розробки та дебагінгу модуля YouTube Studio (`youtube/` та `youtube/studio/`, `studio.youtube.com`).
 
 ---
 
