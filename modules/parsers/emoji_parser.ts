@@ -41,12 +41,13 @@ export function parseEmojiNumberedQuestions(rawText: string): string[] {
             const bannerText = `${group.number}\n${group.author}: \n${fullText}`;
             finalBanners.push(truncate(bannerText));
         } else {
-            if (subQuestions[0].trim()) {
-                const firstBannerText = `${group.number}\n${group.author}: \n${subQuestions[0]}`;
+            const firstSubQuestion = subQuestions[0] ?? '';
+            if (firstSubQuestion.trim()) {
+                const firstBannerText = `${group.number}\n${group.author}: \n${firstSubQuestion}`;
                 finalBanners.push(truncate(firstBannerText));
             }
             for (let i = 1; i < subQuestions.length; i++) {
-                const subText = subQuestions[i].trim();
+                const subText = (subQuestions[i] ?? '').trim();
                 if (!subText) continue;
                 const subLines = subText.split('\n');
                 const newHeader = subLines.shift();

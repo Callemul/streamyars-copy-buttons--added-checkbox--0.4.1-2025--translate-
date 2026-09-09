@@ -57,8 +57,8 @@ export function createSheetBindingTimers(): SheetBindingTimers {
  */
 export function persistSheetValue(canonicalKey: string, legacyKey: string, value: unknown): Promise<void> | void {
     const match = canonicalKey.match(/^syh:popup:sheet:([^:]+):(.+)$/);
-    if (match) {
-        const [, sheetId, field] = match;
+    const [, sheetId, field] = match ?? [];
+    if (sheetId && field) {
         return SheetStateService.saveSheetState(sheetId, { [field]: value });
     }
     SYH_STORAGE.set({ [canonicalKey]: value, [legacyKey]: value });

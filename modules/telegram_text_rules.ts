@@ -28,8 +28,10 @@ export function countQuestionsInText(text: string): number {
 
 /** Конвертує число в emoji-цифри (1 → 1️⃣, 10 → 🔟, 12 → 1️⃣2️⃣). */
 export function numberToEmoji(num: number): string {
-    if (num <= 10) return KEYCAP_DIGITS[num];
-    return num.toString().split('').map(d => KEYCAP_DIGITS[parseInt(d, 10)]).join('');
+    // `KEYCAP_DIGITS` покриває 0…10, а `d` — завжди одна цифра, тож фолбеки
+    // на порожній рядок недосяжні.
+    if (num <= 10) return KEYCAP_DIGITS[num] ?? '';
+    return num.toString().split('').map(d => KEYCAP_DIGITS[parseInt(d, 10)] ?? '').join('');
 }
 
 /**

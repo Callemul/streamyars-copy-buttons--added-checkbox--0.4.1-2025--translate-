@@ -11,6 +11,7 @@
     "types": ["chrome"],
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true
   },
   "include": [

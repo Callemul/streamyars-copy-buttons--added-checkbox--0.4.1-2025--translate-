@@ -44,7 +44,7 @@ interface PhaseButtonSpec {
     background: string;
 }
 
-const PHASE_BUTTONS: PhaseButtonSpec[] = [
+const PHASE_BUTTONS: readonly [PhaseButtonSpec, PhaseButtonSpec] = [
     { phase: 'questions', icon: '❓ Старт: Питання', title: 'Натисни, коли починається блок питань', background: '#f39c12' },
     { phase: 'prayers', icon: '🙏 Старт: Молитви', title: 'Натисни, коли починається молитовний блок', background: '#005DF7' }
 ];
@@ -95,7 +95,11 @@ function createHeaderControlContainer(host: StatsHeaderHost): HTMLElement {
     btnContainer.id = HEADER_CONTROLS_ID;
     btnContainer.style.cssText = CONTAINER_CSS;
 
-    const [btnQ, btnP] = PHASE_BUTTONS.map(spec => createPhaseButton(host, spec));
+    // Деструктуризація КОРТЕЖА (а не результату .map, який знову масив):
+    // так у типі видно, що специфікацій рівно дві.
+    const [questionSpec, prayerSpec] = PHASE_BUTTONS;
+    const btnQ = createPhaseButton(host, questionSpec);
+    const btnP = createPhaseButton(host, prayerSpec);
     const btnAnalytics = createAnalyticsButton(host);
     const btnInfo = createInfoButton();
 

@@ -43,8 +43,7 @@ export function queryAll<T extends HTMLElement = HTMLElement>(
         const results: T[] = [];
         for (const selector of selectorValue) {
             const elements = root.querySelectorAll<T>(selector);
-            for (let i = 0; i < elements.length; i++) {
-                const el = elements[i];
+            for (const el of elements) {
                 if (!seen.has(el)) {
                     seen.add(el);
                     results.push(el);

@@ -178,8 +178,9 @@ export class AntiAfkService {
 
         if (typeof activeStorage.onChanged === 'function') {
             activeStorage.onChanged((changes: Record<string, { newValue?: unknown }>) => {
-                if (changes[STORAGE_KEYS.OPTIONS]) {
-                    applyOptions(changes[STORAGE_KEYS.OPTIONS].newValue as AntiAfkOptions);
+                const optionsChange = changes[STORAGE_KEYS.OPTIONS];
+                if (optionsChange) {
+                    applyOptions(optionsChange.newValue as AntiAfkOptions);
                 }
             });
         }

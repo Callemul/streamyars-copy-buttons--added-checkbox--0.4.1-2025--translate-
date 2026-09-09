@@ -109,7 +109,10 @@ export function importConfig(
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
+    const file = input.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (e) => applyImportedText(e.target?.result as string, onImported, notify);
-    reader.readAsText(input.files[0]);
+    reader.readAsText(file);
 }

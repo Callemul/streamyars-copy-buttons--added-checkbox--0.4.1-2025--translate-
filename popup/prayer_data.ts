@@ -52,17 +52,16 @@ export function groupPrayersByAuthor(prayersList: PrayerItem[]): {
 
 export function buildCopyText(grouped: Record<string, { text: string; icon: string; id: string }[]>): string {
     let fullTextForCopy = "🙏🙏🙏 МОЛИТВЕННЫЕ ПРОСЬБЫ\n\n";
-    const authorNames = Object.keys(grouped);
-
-    for (const author of authorNames) {
-        const items = grouped[author];
+    // `Object.entries` замість `Object.keys` + пошук: той самий порядок і той
+    // самий результат, але без звернення за ключем, якого «може не бути».
+    for (const [author, items] of Object.entries(grouped)) {
         const authorIcon = getAuthorIcon(items);
 
         fullTextForCopy += `${authorIcon} @${author}\n`;
 
-        if (items.length === 1) {
-            const item = items[0];
-            fullTextForCopy += `${item.text}\n\n`;
+        const [onlyItem] = items;
+        if (items.length === 1 && onlyItem) {
+            fullTextForCopy += `${onlyItem.text}\n\n`;
         } else {
             items.forEach((item, idx) => {
                 fullTextForCopy += `${idx + 1}) ${item.text}\n`;

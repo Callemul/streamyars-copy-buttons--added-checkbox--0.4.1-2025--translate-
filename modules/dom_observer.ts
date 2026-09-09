@@ -25,9 +25,9 @@ function notifyMatchingElements(
         }
     } else if (element.querySelectorAll) {
         const children = element.querySelectorAll(registration.selector);
-        for (let i = 0; i < children.length; i++) {
+        for (const child of children) {
             try {
-                handler(children[i]);
+                handler(child);
             } catch (e) {
                 console.error('[SYH] DOM handler error:', e);
             }
@@ -43,13 +43,12 @@ function processNodeList(
     registrations: SelectorRegistration[],
     type: 'added' | 'removed'
 ): void {
-    for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
+    for (const node of nodes) {
         if (node.nodeType !== Node.ELEMENT_NODE) continue;
         const el = node as Element;
 
-        for (let j = 0; j < registrations.length; j++) {
-            notifyMatchingElements(el, registrations[j], type);
+        for (const registration of registrations) {
+            notifyMatchingElements(el, registration, type);
         }
     }
 }
@@ -116,8 +115,7 @@ export class DomObserverService {
         if (this.registrations.length === 0 || mutations.length === 0) return;
 
         const regs = this.registrations;
-        for (let i = 0; i < mutations.length; i++) {
-            const mutation = mutations[i];
+        for (const mutation of mutations) {
             if (mutation.addedNodes.length > 0) {
                 processNodeList(mutation.addedNodes, regs, 'added');
             }

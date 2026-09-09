@@ -26,10 +26,10 @@ function applyElementSize(el: HTMLElement, size: StoredElementSize): void {
  * тому «висячі» записи для неіснуючих елементів пропускаються мовчки.
  */
 export function applyStoredElementSizes(sizes: Record<string, StoredElementSize>): void {
-    for (const id in sizes) {
+    for (const [id, size] of Object.entries(sizes)) {
         const el = document.getElementById(id);
         if (el && el instanceof HTMLElement) {
-            applyElementSize(el, sizes[id]);
+            applyElementSize(el, size);
         }
     }
 }

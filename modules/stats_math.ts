@@ -23,9 +23,13 @@ export function calcStats(arr: number[]): StatsSummary {
     const min = Math.min(...arr);
     const sorted = [...arr].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
+    // `sorted` непорожній (перевірено вище), а `mid` і `mid - 1` завжди в межах,
+    // тож фолбеки `?? 0` тут недосяжні.
+    const midValue = sorted[mid] ?? 0;
+    const beforeMid = sorted[mid - 1] ?? 0;
     const median = sorted.length % 2 !== 0
-        ? sorted[mid]
-        : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+        ? midValue
+        : Math.round((beforeMid + midValue) / 2);
 
     return { min, max, avg, median };
 }

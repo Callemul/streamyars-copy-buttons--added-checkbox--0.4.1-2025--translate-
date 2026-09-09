@@ -85,8 +85,8 @@ async function downloadSafely(card: Element, index: number): Promise<void> {
 }
 
 export async function downloadSequentially(cards: Element[]): Promise<void> {
-    for (let i = 0; i < cards.length; i++) {
-        await downloadSafely(cards[i], i);
+    for (const [i, card] of cards.entries()) {
+        await downloadSafely(card, i);
     }
 }
 

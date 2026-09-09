@@ -57,7 +57,9 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
         outputDiv,
         authorNames,
         (author) => {
-            const items = grouped[author];
+            // `authorNames` — це ключі самого `grouped`, тож запис завжди є;
+            // `?? []` лише знімає `undefined` з типу і спрацювати не може.
+            const items = grouped[author] ?? [];
             const { header } = buildAuthorHeader(author, items);
 
             const block = document.createElement('div');
@@ -65,9 +67,9 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
             block.style.position = 'relative';
             block.appendChild(header);
 
-            if (items.length === 1) {
-                const item = items[0];
-                block.appendChild(buildPrayerRow(item));
+            const [onlyItem] = items;
+            if (items.length === 1 && onlyItem) {
+                block.appendChild(buildPrayerRow(onlyItem));
             } else {
                 items.forEach((item, idx) => {
                     block.appendChild(buildPrayerRow(item, idx));

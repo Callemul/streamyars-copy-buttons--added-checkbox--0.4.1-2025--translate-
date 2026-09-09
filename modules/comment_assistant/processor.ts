@@ -12,6 +12,8 @@ export class CommentProcessor {
 
     public findTextNode(commentBlock: HTMLElement | Element): Element | null {
         const commentTextSelector = this.triggerManager.selectors.commentText;
+        // Селектор налаштовується в `init`; без нього шукати нічого.
+        if (!commentTextSelector) return null;
         if (typeof commentTextSelector === 'string') {
             return commentBlock.querySelector(commentTextSelector);
         }
@@ -70,6 +72,7 @@ export class CommentProcessor {
     public processAllComments() {
         if (typeof document === 'undefined') return;
         const selector = this.triggerManager.selectors.commentBlock;
+        if (!selector) return;
         let comments: NodeListOf<Element>;
         if (typeof selector === 'string') {
             comments = document.querySelectorAll(selector);

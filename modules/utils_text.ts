@@ -104,11 +104,11 @@ export function transliterateRaw(str: string): string {
         } else if (i <= s.length - 2 && TRANSLITERATION_MAP[s.substring(i, i + 2)]) {
             res += TRANSLITERATION_MAP[s.substring(i, i + 2)];
             i += 2;
-        } else if (TRANSLITERATION_MAP[s[i]]) {
-            res += TRANSLITERATION_MAP[s[i]];
+        } else if (TRANSLITERATION_MAP[s.charAt(i)]) {
+            res += TRANSLITERATION_MAP[s.charAt(i)];
             i++;
         } else {
-            res += s[i];
+            res += s.charAt(i);
             i++;
         }
     }
@@ -126,7 +126,7 @@ export function toFuzzy(str: string | null | undefined): string {
 
     let res = "";
     for (let i = 0; i < s.length; i++) {
-        const char = s[i];
+        const char = s.charAt(i);
         res += FUZZY_SINGLE_MAP[char] !== undefined ? FUZZY_SINGLE_MAP[char] : char;
     }
 
@@ -141,7 +141,8 @@ export function switchKeyboardLayoutRaw(str: string): string {
     let res = "";
     const s = str.toLowerCase();
     for (let i = 0; i < s.length; i++) {
-        res += KEYBOARD_LAYOUT_MAP[s[i]] || s[i];
+        const char = s.charAt(i);
+        res += KEYBOARD_LAYOUT_MAP[char] || char;
     }
     return res;
 }
@@ -226,7 +227,7 @@ export function transliterateToCyrillic(latinText: string): string {
                     const cyrillic = REVERSE_TRANSLITERATION_MAP[lowerChunk];
                     if (chunk === chunk.toUpperCase() && chunk !== chunk.toLowerCase()) {
                         mappedStr = cyrillic.toUpperCase();
-                    } else if (len > 1 && chunk[0] === chunk[0].toUpperCase() && chunk[1] === chunk[1].toLowerCase()) {
+                    } else if (len > 1 && chunk.charAt(0) === chunk.charAt(0).toUpperCase() && chunk.charAt(1) === chunk.charAt(1).toLowerCase()) {
                         mappedStr = cyrillic.charAt(0).toUpperCase() + cyrillic.slice(1);
                     } else {
                         mappedStr = cyrillic;

@@ -20,10 +20,27 @@ import { renderSharedEmptyState } from './ui_empty_state';
 /** `order`, який отримують приховані та невідсортовані елементи. */
 const FALLBACK_ORDER = 9999;
 
+/**
+ * Лічильники вкладок коментарів. Набір категорій фіксований, тому це
+ * іменований тип, а не безіменний `Record<string, number>`: інакше кожне
+ * `counts.all` — потенційно `undefined`, а одруківка в назві категорії
+ * проходить непоміченою.
+ *
+ * Саме псевдонім типу, а не інтерфейс: тільки псевдонім отримує неявну
+ * індексну сигнатуру й лишається сумісним зі спільним рендерером порожнього
+ * стану, який читає лічильник за динамічним ключем категорії.
+ */
+export type CommentTabCounts = {
+    all: number;
+    question: number;
+    prayer: number;
+    other: number;
+};
+
 export interface CommentFilterResult {
     visibleCount: number;
-    countAbsolute: Record<string, number>;
-    countSearch: Record<string, number>;
+    countAbsolute: CommentTabCounts;
+    countSearch: CommentTabCounts;
 }
 
 /** Розпізнаний рядок списку: сам блок коментаря плюс його тексти. */
@@ -47,12 +64,12 @@ export function buildSortedCommentTexts(prayersCache: PrayerItem[], activeFilter
         if (activeFilter === 'other') return;
 
         const cleanAuthor = p.author.replace(/^@+/, '');
-        if (!grouped[cleanAuthor]) grouped[cleanAuthor] = [];
-        grouped[cleanAuthor].push(p.text);
+        const authorTexts = grouped[cleanAuthor] ?? (grouped[cleanAuthor] = []);
+        authorTexts.push(p.text);
     });
 
-    for (const author in grouped) {
-        sortedTexts = sortedTexts.concat(grouped[author]);
+    for (const texts of Object.values(grouped)) {
+        sortedTexts = sortedTexts.concat(texts);
     }
     return sortedTexts;
 }
@@ -84,7 +101,7 @@ export function updateListItemOrdering(li: HTMLElement, isVisible: boolean, orde
 }
 
 function incrementCommentCategoryCounts(
-    counts: Record<string, number>,
+    counts: CommentTabCounts,
     commentType: string
 ): void {
     counts.all++;
@@ -93,7 +110,7 @@ function incrementCommentCategoryCounts(
     else counts.other++;
 }
 
-function emptyCounts(): Record<string, number> {
+function emptyCounts(): CommentTabCounts {
     return { all: 0, question: 0, prayer: 0, other: 0 };
 }
 
@@ -161,7 +178,7 @@ export function filterCommentListItems(
 }
 
 /** Проставляє лічильники у вкладки фільтрів коментарів. */
-export function updateCommentTabCounts(countAbsolute: Record<string, number>): void {
+export function updateCommentTabCounts(countAbsolute: CommentTabCounts): void {
     updateTabCounts({
         '#syh-comment-filter-all .tab-count': ` (${countAbsolute.all})`,
         '#syh-comment-filter-question .tab-count': ` (${countAbsolute.question})`,
@@ -175,7 +192,7 @@ export function renderCommentEmptyState(
     visibleCount: number,
     searchQuery: string,
     activeFilter: string,
-    countSearch: Record<string, number>
+    countSearch: CommentTabCounts
 ): void {
     renderSharedEmptyState({
         emptyStateId: 'syh-empty-state-msg',

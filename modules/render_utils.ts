@@ -70,7 +70,9 @@ export function batchRenderItems<T>(
         const limit = Math.min(currentIndex + batchSize, items.length);
 
         for (let i = currentIndex; i < limit; i++) {
-            const el = renderItem(items[i], i);
+            const item = items[i];
+            if (item === undefined) continue;
+            const el = renderItem(item, i);
             if (el) {
                 fragment.appendChild(el);
             }

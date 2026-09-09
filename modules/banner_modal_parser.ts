@@ -51,7 +51,7 @@ export function parseTextToSections(
     let sectionCounter = 0;
 
     for (let i = 0; i < messages.length; i++) {
-        const msg = messages[i];
+        const msg = messages[i] ?? '';
         const { questionsText, prayersText } = splitPrayerSection(msg);
 
         // Обробка підблоку питань

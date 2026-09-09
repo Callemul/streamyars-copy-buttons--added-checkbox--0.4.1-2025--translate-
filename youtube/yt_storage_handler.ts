@@ -53,7 +53,8 @@ function applyCollectedListChange(changes: StorageChanges): void {
 
 export function handleStorageChange(changes: StorageChanges): void {
     for (const { key, newValue } of selectChangedEntries(changes, Object.keys(changeHandlers))) {
-        changeHandlers[key](newValue);
+        // Ключі беруться з самого `changeHandlers`, тож обробник завжди є.
+        changeHandlers[key]?.(newValue);
     }
 
     applyCollectedListChange(changes);

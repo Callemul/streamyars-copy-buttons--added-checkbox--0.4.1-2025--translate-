@@ -94,7 +94,9 @@ function ensureMetadataBadgeAndCheckbox(metadata: HTMLElement): {
                 item.textContent = '\uD83D\uDD04 Скинути до авто';
                 item.classList.add('syh-studio-dropdown-reset');
             } else {
-                const label = SHEET_LABELS[key];
+                // Ключі беруться з самого `SHEET_LABELS`, тож підпис завжди є.
+                // Фолбек на ідентифікатор аркуша кращий за «undefined» у DOM.
+                const label = SHEET_LABELS[key] ?? key;
                 item.innerHTML = formatCategoryLabel(label);
             }
             dropdownEl!.appendChild(item);
@@ -183,7 +185,7 @@ export function updateStudioButtonsUI(
     buttonState: CommentActionStateType
 ) {
     const { questionBtn, prayerBtn } = elements;
-    const sheetLabel = resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null;
+    const sheetLabel = (resolvedSheetId ? SHEET_LABELS[resolvedSheetId] : null) ?? null;
 
     applyStudioButtonUI(questionBtn, '<span class="syh-icon">\u2753</span>', 'question', buttonState, sheetLabel);
     applyStudioButtonUI(prayerBtn, '<span class="syh-icon">\uD83D\uDE4F</span>', 'prayer', buttonState, sheetLabel);

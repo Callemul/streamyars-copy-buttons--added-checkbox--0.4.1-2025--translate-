@@ -13,17 +13,22 @@ export function levenshtein(a: string, b: string): number {
     const row = new Array<number>(b.length + 1);
     for (let j = 0; j <= b.length; j++) row[j] = j;
 
+    // Рядок DP заповнено щільно вище (j = 0…b.length), і всі індекси нижче
+    // лежать у цих межах — `undefined` тут неможливий. Фолбеки `?? 0` стоять
+    // лише щоб не розсипати ствердження типу по гарячому циклу; спрацювати
+    // вони не можуть.
     for (let i = 1; i <= a.length; i++) {
-        let prev = row[0];
+        let prev = row[0] ?? 0;
         row[0] = i;
         for (let j = 1; j <= b.length; j++) {
-            const temp = row[j];
+            const above = row[j] ?? 0;        // старе значення цієї клітинки
+            const left = row[j - 1] ?? 0;     // вже оновлене на цій ітерації
             const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + cost);
-            prev = temp;
+            row[j] = Math.min(above + 1, left + 1, prev + cost);
+            prev = above;
         }
     }
-    return row[b.length];
+    return row[b.length] ?? 0;
 }
 
 /**

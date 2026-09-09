@@ -278,7 +278,7 @@ export async function generateSlideBlob(
 
     // Запасний варіант для середовищ без toBlob (dataURL -> Blob)
     const dataUrl = cvs.toDataURL('image/png');
-    const binStr = atob(dataUrl.split(',')[1]);
+    const binStr = atob(dataUrl.split(',')[1] ?? '');
     const len = binStr.length;
     const arr = new Uint8Array(len);
     for (let i = 0; i < len; i++) {

@@ -49,7 +49,7 @@ export function extractAuthorFromLines(
     const cleanLines = trimLeadingEmptyLines(lines);
     if (cleanLines.length === 0) return null;
 
-    const rawAuthorLine = cleanLines[0].trim();
+    const rawAuthorLine = (cleanLines[0] ?? '').trim();
     const authorBulletMatch = rawAuthorLine.match(/\s*•.*$/);
     let author = rawAuthorLine.replace(/\s*•.*$/, '').trim();
 
@@ -63,8 +63,9 @@ export function extractAuthorFromLines(
 
     let contentLines = trimLeadingEmptyLines(cleanLines.slice(1));
 
-    if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(contentLines[0].trim())) {
-        const timeLine = contentLines[0].trim();
+    const firstContentLine = (contentLines[0] ?? '').trim();
+    if (contentLines.length > 0 && RELATIVE_TIME_LINE_REGEX.test(firstContentLine)) {
+        const timeLine = firstContentLine;
         contentLines = trimLeadingEmptyLines(contentLines.slice(1));
         if (cleaningLog) {
             cleaningLog.push({
@@ -123,8 +124,9 @@ export function filterSubQuestionsInBlock(
     }
 
     // Єдиний підпункт більше не потребує маркера — це знову звичайне питання.
-    if (kept.length === 1) {
-        return kept[0];
+    const [onlyQuestion] = kept;
+    if (kept.length === 1 && onlyQuestion !== undefined) {
+        return onlyQuestion;
     }
 
     return kept.map(q => `${SUB_QUESTION_BULLET}${q}`).join('\n');

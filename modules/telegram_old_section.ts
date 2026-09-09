@@ -29,7 +29,7 @@ function isIgnoredSectionLine(line: string): boolean {
 /** Чи трапляється далі по тексту хоч одна emoji-нумерація. */
 function hasKeycapInRemainingLines(linesArr: string[], currentIndex: number): boolean {
     for (let i = currentIndex; i < linesArr.length; i++) {
-        if (EMOJI_NUMBER_CONTAINS_REGEX.test(linesArr[i])) {
+        if (EMOJI_NUMBER_CONTAINS_REGEX.test(linesArr[i] ?? '')) {
             return true;
         }
     }
@@ -43,7 +43,7 @@ function hasKeycapInRemainingLines(linesArr: string[], currentIndex: number): bo
 function resolveItemAuthor(bodyLines: string[], cleaningLog?: CleaningLogEntry[]): string {
     const firstNonEmptyIdx = bodyLines.findIndex(l => l.trim() !== '');
     if (firstNonEmptyIdx !== -1) {
-        const firstLine = bodyLines[firstNonEmptyIdx].trim();
+        const firstLine = (bodyLines[firstNonEmptyIdx] ?? '').trim();
         if (firstLine.startsWith('@')) {
             const author = cleanAuthorName(firstLine, cleaningLog);
             bodyLines.splice(firstNonEmptyIdx, 1);

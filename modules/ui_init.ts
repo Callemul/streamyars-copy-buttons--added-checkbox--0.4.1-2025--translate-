@@ -37,12 +37,14 @@ interface UiCacheSnapshot {
  */
 export function applyStorageChangesToUiCaches(changes: UiStorageChanges): void {
     try {
-        if (changes[STORAGE_KEYS.PRAYERS] && changes[STORAGE_KEYS.PRAYERS].newValue !== undefined) {
-            SYH_UI_STATE.prayersCache = (changes[STORAGE_KEYS.PRAYERS].newValue as PrayerItem[]) || [];
+        const prayersChange = changes[STORAGE_KEYS.PRAYERS];
+        if (prayersChange && prayersChange.newValue !== undefined) {
+            SYH_UI_STATE.prayersCache = (prayersChange.newValue as PrayerItem[]) || [];
             filterStarredComments();
         }
-        if (changes[STORAGE_KEYS.CATEGORIES] && changes[STORAGE_KEYS.CATEGORIES].newValue !== undefined) {
-            SYH_UI_STATE.bannerCategoriesCache = (changes[STORAGE_KEYS.CATEGORIES].newValue as Record<string, string>) || {};
+        const categoriesChange = changes[STORAGE_KEYS.CATEGORIES];
+        if (categoriesChange && categoriesChange.newValue !== undefined) {
+            SYH_UI_STATE.bannerCategoriesCache = (categoriesChange.newValue as Record<string, string>) || {};
             filterBanners();
         }
     } catch (e) {

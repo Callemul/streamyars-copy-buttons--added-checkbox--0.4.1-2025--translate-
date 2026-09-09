@@ -34,7 +34,7 @@ function safeHtmlUpdate(el: Element | null, newHtml: string): void {
 
 function buildSuggestionLinks(config: SharedEmptyStateConfig): string[] {
     const suggestionLinks: string[] = [];
-    if (config.activeFilter !== 'all' && config.countSearch.all > 0) {
+    if (config.activeFilter !== 'all' && (config.countSearch.all ?? 0) > 0) {
         config.suggestions.forEach(item => {
             const count = config.countSearch[item.key] || 0;
             if (count > 0 && config.activeFilter !== item.key) {

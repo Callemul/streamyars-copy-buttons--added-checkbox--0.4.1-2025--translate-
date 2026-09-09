@@ -11,8 +11,19 @@ import { updateBannerVisuals } from './ui_banners_inject';
 import { updateTabCounts, scrollToActiveItem } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';
 
+/**
+ * Лічильники вкладок банерів. Іменований тип із тієї ж причини, що й
+ * `CommentTabCounts`: набір категорій фіксований.
+ */
+export type BannerTabCounts = {
+    all: number;
+    stream: number;
+    audience: number;
+    prayer: number;
+};
+
 function incrementCategoryCounts(
-    counts: Record<string, number>,
+    counts: BannerTabCounts,
     commentType: string
 ): void {
     counts.all++;
@@ -34,7 +45,7 @@ export function filterBannerListItems(
     categoriesCache: Record<string, string>,
     activeFilter: string,
     searchQuery: string
-): { visibleCount: number; countAbsolute: Record<string, number>; countSearch: Record<string, number> } {
+): { visibleCount: number; countAbsolute: BannerTabCounts; countSearch: BannerTabCounts } {
     let visibleCount = 0;
     const countAbsolute = { all: 0, stream: 0, audience: 0, prayer: 0 };
     const countSearch = { all: 0, stream: 0, audience: 0, prayer: 0 };
@@ -68,7 +79,7 @@ export function filterBannerListItems(
     return { visibleCount, countAbsolute, countSearch };
 }
 
-export function updateBannerTabCounts(countAbsolute: Record<string, number>): void {
+export function updateBannerTabCounts(countAbsolute: BannerTabCounts): void {
     updateTabCounts({
         '#syh-banner-filter-all .tab-count': `(${countAbsolute.all || 0})`,
         '#syh-banner-filter-stream .tab-count': `(${countAbsolute.stream || 0})`,
@@ -81,7 +92,7 @@ export function renderBannerEmptyState(
     visibleCount: number,
     searchQuery: string,
     activeFilter: string,
-    countSearch: Record<string, number>
+    countSearch: BannerTabCounts
 ): void {
     renderSharedEmptyState({
         emptyStateId: 'syh-banner-empty-state-msg',

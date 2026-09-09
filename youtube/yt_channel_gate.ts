@@ -28,7 +28,7 @@ export function extractDomChannelInfo(): { channelName: string; channelHandle: s
     if (handleEl) {
         const href = handleEl.getAttribute('href') || '';
         const match = href.match(/\/(@[^/?#]+)/);
-        if (match) {
+        if (match?.[1]) {
             channelHandle = match[1];
         }
     }
