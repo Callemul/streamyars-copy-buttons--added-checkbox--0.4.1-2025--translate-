@@ -1,4 +1,5 @@
 // youtube/studio/studio_storage_handler.ts
+import type { StorageChanges } from '../../modules/storage';
 import { SYH_STORAGE } from '../../modules/storage';
 import { STORAGE_KEYS } from '../../modules/storage_keys';
 import { VIDEO_MAP_STORAGE_KEY } from './studio_video_map';
@@ -77,7 +78,7 @@ export class StudioStorageController {
             ...collectedKeys
         ];
 
-        const res = await SYH_STORAGE.getAsync<Record<string, any>>(keysToFetch);
+        const res = await SYH_STORAGE.getAsync(keysToFetch);
         this.enabled = res[STUDIO_ENABLED_KEY] ?? true;
         this.caches.videoSheetMap = res[VIDEO_MAP_STORAGE_KEY] || {};
         this.caches.buttonStates = res[STUDIO_BUTTON_STATE_KEY] || {};
@@ -91,7 +92,7 @@ export class StudioStorageController {
         Object.assign(this.sheetStatsMap, sheetStatsMap);
     }
 
-    public handleStorageChange(changes: Record<string, any>): void {
+    public handleStorageChange(changes: StorageChanges): void {
         let hasCollectedChange = false;
         for (const [key, handler] of Object.entries(this.changeHandlers)) {
             if (changes[key]) {
@@ -115,6 +116,6 @@ export class StudioStorageController {
     }
 }
 
-export function createStorageChangeHandler(controller: StudioStorageController): (changes: Record<string, any>) => void {
-    return (changes: Record<string, any>) => controller.handleStorageChange(changes);
+export function createStorageChangeHandler(controller: StudioStorageController): (changes: StorageChanges) => void {
+    return (changes: StorageChanges) => controller.handleStorageChange(changes);
 }

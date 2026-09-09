@@ -1,10 +1,11 @@
+import type { VideoSheetMapEntry } from '../../modules/types';
 import type { CommentActionStateType, CommentStateActionId } from '../../modules/comment_actions';
 // youtube/studio/state_resolvers.ts
 import { generateCommentKey } from './studio_comment_key';
 import type { CommentContext, CommentStateCaches } from '../../modules/comment_platform_adapter';
 
 export interface StudioEventCaches extends CommentStateCaches {
-    videoSheetMap: Record<string, any>;
+    videoSheetMap: Record<string, VideoSheetMapEntry>;
     collectedItems?: CommentPayload[];
 }
 

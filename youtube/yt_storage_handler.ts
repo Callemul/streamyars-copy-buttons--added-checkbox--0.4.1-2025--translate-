@@ -1,3 +1,5 @@
+import type { StorageChanges, StoredOptions } from '../modules/storage';
+import type { YTCollectedItem } from '../modules/types';
 import { STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
 import { processAllYTComments } from './yt_comment_processor';
 import { cleanupYouTubeUI, initializeYouTubeModule } from './yt_init';
@@ -18,7 +20,7 @@ const TOGGLE_EFFECTS: Record<YoutubeToggleTransition, () => void> = {
     none: () => {}
 };
 
-export function handleOptionsChange(newOptions: Record<string, any>): void {
+export function handleOptionsChange(newOptions: StoredOptions): void {
     const wasEnabled = stateCache.youtubeEnabled;
     stateCache.youtubeEnabled = readYoutubeEnabled(newOptions);
 
@@ -40,14 +42,16 @@ const changeHandlers: Record<string, ChangeHandler> = {
 };
 
 /** Зібрані у Google-таблицю коментарі приїжджають окремим ключем із префіксом аркуша. */
-function applyCollectedListChange(changes: Record<string, any>): void {
+function applyCollectedListChange(changes: StorageChanges): void {
     const collected = readChangedValue(changes, getSheetCollectedStorageKey(YT_COLLECTED_SHEET_ID));
     if (collected) {
-        stateCache.collectedList = collected;
+        // `readChangedValue` повертає `unknown` — звуження тут явне й видиме,
+        // а не сховане за `any` у сигнатурі (T17).
+        stateCache.collectedList = collected as YTCollectedItem[];
     }
 }
 
-export function handleStorageChange(changes: Record<string, any>): void {
+export function handleStorageChange(changes: StorageChanges): void {
     for (const { key, newValue } of selectChangedEntries(changes, Object.keys(changeHandlers))) {
         changeHandlers[key](newValue);
     }

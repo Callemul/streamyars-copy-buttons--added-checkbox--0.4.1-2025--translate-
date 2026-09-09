@@ -2,13 +2,10 @@
 import type { SheetId } from '../../modules/sheets';
 import { matchCategory, type ChannelKey } from '../../modules/channel_config';
 
-export interface VideoSheetMapEntry {
-    sheetId: SheetId;
-    source: 'auto' | 'manual';
-    channelKey?: string;
-    videoTitle?: string;
-    updatedAt?: number;
-}
+// Форма переїхала в `modules/types.ts` до решти збережених форм (T17, крок 3);
+// реекспорт зберігає історичний контракт цього модуля.
+import type { VideoSheetMapEntry } from '../../modules/types';
+export type { VideoSheetMapEntry };
 
 export interface CategoryMatchResult {
     sheetId: SheetId | null;

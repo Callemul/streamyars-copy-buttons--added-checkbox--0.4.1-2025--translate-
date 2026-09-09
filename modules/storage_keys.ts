@@ -5,8 +5,9 @@
  * усуває зациклення навантаження (ключі/міграції не залежать від адаптера).
  */
 
-import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry } from './types';
-import type { ButtonStateValue, CheckboxStateEntry, CommentPayload } from './comment_types';
+import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry } from './types';
+import type { CheckboxStateEntry, CommentPayload } from './comment_types';
+import type { CommentStateActionId } from './comment_actions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ДИНАМІЧНІ РОДИНИ КЛЮЧІВ (T17, крок 2)
@@ -153,9 +154,15 @@ export interface StorageSchema {
     [STORAGE_KEYS.YT_COLLECTED]?: YTCollectedItem[];
     [STORAGE_KEYS.STUDIO_ENABLED]?: boolean;
     [STORAGE_KEYS.COLLAPSED_TABS]?: string[];
-    [STORAGE_KEYS.STUDIO_BUTTON_STATE]?: Record<string, ButtonStateValue>;
+    // Значення ніколи не `null`: `saveButtonState` видаляє ключ замість того,
+    // щоб записати null. Тому тут `CommentStateActionId`, а не ширший
+    // `ButtonStateValue` — інакше кеші поверхонь довелося б розширювати під
+    // стан, якого у сховищі не буває.
+    [STORAGE_KEYS.STUDIO_BUTTON_STATE]?: Record<string, CommentStateActionId>;
     [STORAGE_KEYS.STUDIO_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
-    [STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP]?: Record<string, string>;
+    // Значення — запис прив'язки, а не рядок: ще одна неточність схеми,
+    // яку показало її ж підключення (T17).
+    [STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP]?: Record<string, VideoSheetMapEntry>;
     // Журнал ручних корекцій — МАСИВ записів, а не мапа: схема тут була
     // просто неправильною (`Record<string, any>`), і ніхто цього не бачив,
     // бо `StorageSchema` не використовувалась жодним місцем коду.
@@ -167,7 +174,7 @@ export interface StorageSchema {
     [STORAGE_KEYS.INSTALLED_AT]?: number;
     [STORAGE_KEYS.VERSION]?: string;
     [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: Record<string, any> };
-    [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, ButtonStateValue>;
+    [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, CommentStateActionId>;
     [STORAGE_KEYS.YT_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
     [STORAGE_KEYS.STATS_CHARTS]?: unknown;
     [STORAGE_KEYS.POPUP_TRANSLIT_OLD]?: string;

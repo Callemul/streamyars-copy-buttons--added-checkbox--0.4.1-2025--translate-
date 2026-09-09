@@ -35,7 +35,7 @@ export async function initializeYouTubeModule(): Promise<void> {
 async function loadStorageAndInitialize(): Promise<void> {
     const collectedKey = getSheetCollectedStorageKey(YT_COLLECTED_SHEET_ID);
 
-    const res = await SYH_STORAGE.getAsync<Record<string, any>>(buildYtInitStorageKeys(collectedKey));
+    const res = await SYH_STORAGE.getAsync(buildYtInitStorageKeys(collectedKey));
     const next = resolveYtInitState(res, collectedKey);
 
     stateCache.youtubeEnabled = next.youtubeEnabled;

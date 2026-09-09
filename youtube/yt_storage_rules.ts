@@ -1,3 +1,4 @@
+import type { StorageChanges, StoredOptions } from '../modules/storage';
 /**
  * StreamYard Helper — чисті правила реакції YouTube-модуля на зміни сховища.
  *
@@ -22,7 +23,7 @@ export interface StorageChangeEntry {
  * YouTube-модуль увімкнений, доки опція не виставлена явно у `false`.
  * Відсутня опція трактується як «увімкнено».
  */
-export function readYoutubeEnabled(options: Record<string, any>): boolean {
+export function readYoutubeEnabled(options: StoredOptions): boolean {
     return options.youtube_enabled !== false;
 }
 
@@ -41,7 +42,7 @@ export function resolveYoutubeToggleTransition(
  * Порядок ключів зберігається — від нього залежить порядок виклику обробників.
  */
 export function selectChangedEntries(
-    changes: Record<string, any>,
+    changes: StorageChanges,
     keys: string[]
 ): StorageChangeEntry[] {
     const entries: StorageChangeEntry[] = [];
@@ -56,11 +57,11 @@ export function selectChangedEntries(
 }
 
 /** Нове значення ключа, якщо запис про зміну взагалі присутній. */
-export function readChangedValue(changes: Record<string, any>, key: string): any {
+export function readChangedValue(changes: StorageChanges, key: string): unknown {
     return changes[key]?.newValue;
 }
 
 /** Еквівалент `value || {}`: захищає кеш стану від `null`/`undefined` зі сховища. */
-export function orEmptyRecord<T extends Record<string, any>>(value: T | null | undefined): T {
+export function orEmptyRecord<T extends object>(value: T | null | undefined): T {
     return value || ({} as T);
 }

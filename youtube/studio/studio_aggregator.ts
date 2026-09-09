@@ -9,6 +9,7 @@
 // збережена 1-в-1 (у т.ч. звернення до ключів `syh:popup:collected:${sId}`),
 // тому характеризаційні тести лишаються зеленими.
 
+import type { StorageReadResult } from '../../modules/storage';
 import { getSheetCollectedStorageKey } from '../../modules/storage_keys';
 import { getAllSheetIds } from '../../modules/sheets';
 import { countQuestionsInText } from '../../modules/telegram_parser';
@@ -27,7 +28,7 @@ export interface CollectedAggregation {
  * @param sheetIds      перелік sheetId (за замовчуванням — усі відомі листи)
  */
 export function buildCollectedAggregation(
-    res: Record<string, any>,
+    res: StorageReadResult,
     sheetIds: string[] = getAllSheetIds()
 ): CollectedAggregation {
     const collected: CommentPayload[] = [];

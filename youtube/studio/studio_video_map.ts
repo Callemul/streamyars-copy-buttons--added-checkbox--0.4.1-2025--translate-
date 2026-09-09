@@ -1,4 +1,5 @@
 // youtube/studio/studio_video_map.ts
+import type { StorageReadResult } from '../../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import type { SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
@@ -28,7 +29,7 @@ export function generateVideoKey(videoLinkHref: string | null, videoTitle: strin
  * Fetch syh_studio_video_sheet_map from storage
  */
 export async function getStudioVideoSheetMap(): Promise<Record<string, VideoSheetMapEntry>> {
-    const res = await SYH_STORAGE.getAsync<Record<string, any>>([VIDEO_MAP_STORAGE_KEY]);
+    const res = await SYH_STORAGE.getAsync([VIDEO_MAP_STORAGE_KEY]);
     return res[VIDEO_MAP_STORAGE_KEY] || {};
 }
 
@@ -50,7 +51,7 @@ export async function setStudioVideoSheetOverride(
 
     let resultMap: Record<string, VideoSheetMapEntry> = {};
 
-    await SYH_STORAGE.updateAsync<Record<string, any>>(
+    await SYH_STORAGE.updateAsync<StorageReadResult>(
         [VIDEO_MAP_STORAGE_KEY, MANUAL_OVERRIDE_LOG_KEY],
         (res) => {
             const map: Record<string, VideoSheetMapEntry> = { ...(res[VIDEO_MAP_STORAGE_KEY] || {}) };

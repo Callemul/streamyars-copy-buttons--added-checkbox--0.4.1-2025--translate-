@@ -1,4 +1,5 @@
 import type { CommentStateActionId } from './comment_actions';
+import type { SheetId } from './sheets';
 
 export interface PrayerItem {
     id?: string;
@@ -71,4 +72,21 @@ export interface SyhRuntimeMessage {
     type?: string;
     text?: string;
     data?: unknown;
+}
+
+
+/**
+ * Прив'язка відео Studio до аркуша.
+ *
+ * Форма збережених даних, тому живе тут, поруч із рештою таких форм, а не в
+ * `youtube/studio/` — інакше `modules/storage_keys.ts` не міг би на неї
+ * послатись, не порушивши напрямок залежностей (ARCHITECTURE §2).
+ * `studio_category_matcher.ts` реекспортує її, щоб наявні імпорти не змінювались.
+ */
+export interface VideoSheetMapEntry {
+    sheetId: SheetId;
+    source: 'auto' | 'manual';
+    channelKey?: string;
+    videoTitle?: string;
+    updatedAt?: number;
 }
