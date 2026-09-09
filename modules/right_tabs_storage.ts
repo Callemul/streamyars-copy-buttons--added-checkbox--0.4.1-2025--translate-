@@ -13,7 +13,12 @@ import {
     type RightTabsState
 } from './right_tabs_rules';
 
-export const EXPANDED_TABS_KEY = 'syh:streamyard:expanded_tabs';
+/**
+ * Ключ переїхав у реєстр `STORAGE_KEYS` (T17, крок 2): він жив тут літералом
+ * повз реєстр, і закрита схема сховища це виявила. Ім'я лишається експортованим
+ * як псевдонім — щоб не чіпати наявні імпорти.
+ */
+export const EXPANDED_TABS_KEY = STORAGE_KEYS.EXPANDED_TABS;
 
 type StorageChangeMap = Record<string, { newValue?: unknown }>;
 

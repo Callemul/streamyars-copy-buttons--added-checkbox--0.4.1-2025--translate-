@@ -41,7 +41,8 @@ installChromeMock({
     }
 });
 
-const { STORAGE_KEYS, STORAGE_SCHEMA_VERSION } = await import('../modules/storage.ts');
+const { STORAGE_KEYS, STORAGE_SCHEMA_VERSION, getSheetStorageKey, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } = await import('../modules/storage.ts');
+const { EXPANDED_TABS_KEY } = await import('../modules/right_tabs_storage.ts');
 const { OPTION_FIELDS } = await import('../options/option_fields.ts');
 
 /** Імена полів інтерфейсу з вихідного коду (типи стираються — рантайм їх не бачить). */
@@ -135,5 +136,105 @@ describe('storage_schema — реальні форми значень збіга
 
     test('версія схеми не змінювалась цією хвилею (міграцій не чіпали)', () => {
         assert.equal(STORAGE_SCHEMA_VERSION, 2);
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// T17, крок 2: схема закрита — `[key: string]: any` прибрано, динамічні родини
+// ключів описані шаблонними літеральними типами.
+//
+// Самі типи стираються, тому рантайм їх не бачить. Але рантайм може перевірити
+// те, від чого вони залежать: що будівники ключів справді дають ті форми, які
+// описані в типах. Розійдуться — і схема почне мовчки пропускати не те.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('storage_schema — будівники ключів дають форми, описані в типах', () => {
+    const SID = 'vp_ss';
+
+    test('ключ стану аркуша: syh:popup:sheet:<sheetId>:<field>', () => {
+        assert.equal(getSheetStorageKey(SID, 'oldList'), `syh:popup:sheet:${SID}:oldList`);
+        assert.equal(POPUP_SHEET_KEYS.oldList(SID), `syh:popup:sheet:${SID}:oldList`);
+        assert.match(POPUP_SHEET_KEYS.statsHtml(SID), /^syh:popup:sheet:[^:]+:[^:]+$/);
+    });
+
+    test('ключ зібраних коментарів: syh:popup:collected:<sheetId>', () => {
+        assert.equal(getSheetCollectedStorageKey(SID), `syh:popup:collected:${SID}`);
+    });
+
+    test('ключ роздільника: syh:popup:divider_pos:<sheetId>', () => {
+        assert.equal(POPUP_SHEET_KEYS.dividerPos(SID), `syh:popup:divider_pos:${SID}`);
+    });
+
+    test('усі будівники POPUP_SHEET_KEYS дають ключ однієї з описаних родин', () => {
+        const PATTERNS = [
+            /^syh:popup:sheet:[^:]+:[^:]+$/,
+            /^syh:popup:collected:[^:]+$/,
+            /^syh:popup:divider_pos:[^:]+$/
+        ];
+
+        const offenders = Object.entries(POPUP_SHEET_KEYS)
+            .map(([name, build]) => [name, build(SID)])
+            .filter(([, key]) => !PATTERNS.some(p => p.test(key)));
+
+        assert.deepEqual(
+            offenders,
+            [],
+            'ці ключі не належать жодній описаній родині — схема їх не пропустить'
+        );
+    });
+});
+
+describe('storage_schema — ключ згорнутих/розгорнутих вкладок не змінив імені', () => {
+    // Ключ переїхав у STORAGE_KEYS з літерала в `right_tabs_storage.ts`.
+    // Переїзд мав бути суто організаційним: інше ім'я = осиротілі дані
+    // користувача (docs/rules/storage.md).
+    test('EXPANDED_TABS_KEY і далі вказує на історичне ім\'я', () => {
+        assert.equal(EXPANDED_TABS_KEY, 'syh:streamyard:expanded_tabs');
+        assert.equal(STORAGE_KEYS.EXPANDED_TABS, 'syh:streamyard:expanded_tabs');
+        assert.equal(EXPANDED_TABS_KEY, STORAGE_KEYS.EXPANDED_TABS);
+    });
+
+    test('значення переживає цикл запис → читання під тим самим ключем', async () => {
+        store = {};
+        const { SYH_STORAGE } = await import('../modules/storage.ts');
+
+        await SYH_STORAGE.setAsync({ [STORAGE_KEYS.EXPANDED_TABS]: ['tab-1', 'tab-2'] });
+
+        assert.deepEqual(store['syh:streamyard:expanded_tabs'], ['tab-1', 'tab-2']);
+        const result = await SYH_STORAGE.getAsync([EXPANDED_TABS_KEY]);
+        assert.deepEqual(result[EXPANDED_TABS_KEY], ['tab-1', 'tab-2']);
+    });
+});
+
+describe('storage_schema — catch-all не повертається', () => {
+    // Один рядок `[key: string]: any` знімає перевірку з УСЬОГО сховища.
+    // Спокуса додати його заради одного нового ключа виникатиме знову.
+    test('у StorageSchema немає індексу [key: string]', () => {
+        const source = readFileSync('modules/storage_keys.ts', 'utf8');
+        const schema = source.match(/export interface StorageSchema \{([\s\S]*?)\n\}/);
+
+        assert.ok(schema, 'інтерфейс StorageSchema має існувати');
+
+        // Коментарі всередині тіла самі згадують колишній catch-all — прибираємо,
+        // інакше тест ловив би власне пояснення.
+        const declarations = schema[1]
+            .split('\n')
+            .filter(line => !line.trim().startsWith('//'))
+            .join('\n');
+
+        assert.doesNotMatch(
+            declarations,
+            /\[key: string\]/,
+            'catch-all повернувся у схему — нову родину ключів описують шаблонним типом, ' +
+            'а не відкриттям схеми для будь-якого рядка'
+        );
+    });
+
+    test('перевірка справді читає тіло інтерфейсу', () => {
+        const source = readFileSync('modules/storage_keys.ts', 'utf8');
+        const schema = source.match(/export interface StorageSchema \{([\s\S]*?)\n\}/);
+
+        assert.match(schema[1], /SheetStateKey/, 'у схемі мають бути шаблонні родини ключів');
+        assert.match(schema[1], /LegacyTgKey/, 'легасі-родина tg_* має лишатись описаною');
     });
 });

@@ -6,7 +6,54 @@
  */
 
 import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry } from './types';
-import type { ButtonStateValue, CheckboxStateEntry } from './comment_types';
+import type { ButtonStateValue, CheckboxStateEntry, CommentPayload } from './comment_types';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ДИНАМІЧНІ РОДИНИ КЛЮЧІВ (T17, крок 2)
+//
+// Частина ключів будується в рантаймі з ідентифікатора аркуша, тому статично
+// перелічити їх не можна. Але описати ФОРМУ можна — шаблонними літеральними
+// типами. Саме вони дозволили прибрати зі схеми `[key: string]: any`, під яким
+// доти ховалась будь-яка одруківка в ключі.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Канонічний ключ стану аркуша: `syh:popup:sheet:<sheetId>:<field>`. */
+export type SheetStateKey = `syh:popup:sheet:${string}:${string}`;
+
+/** Зібрані з YouTube коментарі аркуша: `syh:popup:collected:<sheetId>`. */
+export type SheetCollectedKey = `syh:popup:collected:${string}`;
+
+/** Позиція роздільника колонок аркуша: `syh:popup:divider_pos:<sheetId>`. */
+export type SheetDividerKey = `syh:popup:divider_pos:${string}`;
+
+/** Будь-який ключ, прив'язаний до конкретного аркуша. */
+export type SheetScopedKey = SheetStateKey | SheetCollectedKey | SheetDividerKey;
+
+/**
+ * Історична («легасі») форма ключів попапу: `tg_<field>__<sheetId>` і кілька
+ * глобальних (`tg_active_tab`, `tg_scroll_positions`, …).
+ *
+ * Ці ключі МАЮТЬ читатися й надалі — це дані користувача
+ * (docs/rules/storage.md, zero data loss). Тому вони описані в схемі явно,
+ * а не потрапляють під неї випадково.
+ */
+export type LegacyTgKey = `tg_${string}`;
+
+/** Дані телеграм-вкладки попапу, що будуються з префіксів `TELEGRAM_*`. */
+export type TelegramDataKey = `syh:popup:telegram:${string}`;
+
+/** Значення, які лягають під ключі стану аркуша. */
+export type SheetStateValue = string | number | boolean;
+
+/**
+ * Сире, ще не нормалізоване, що віддав `chrome.storage`.
+ *
+ * Це МЕЖА зі сховищем: сюди приходять і ключі, яких у схемі вже немає
+ * (історичні імена до міграції). Схема застосовується ПІСЛЯ нормалізації, у
+ * `processGetResult`. Єдине місце, де схема свідомо не діє — тому тип
+ * названий, а не розмазаний по коду як черговий `Record<string, any>`.
+ */
+export type StorageRawResult = Record<string, unknown>;
 
 /**
  * Контракт адаптера сховища.
@@ -35,11 +82,30 @@ export interface StorageAdapter {
 /** Зміни, які chrome віддає в `onChanged`: ключ → пара «було / стало». */
 export type StorageChanges = Record<string, { oldValue?: any; newValue?: any }>;
 
-/** Результат читання зі сховища. Відомі ключі типізовані схемою. */
+/**
+ * Результат читання зі сховища — ЗАКРИТА схема (T17, крок 2).
+ *
+ * Саме на читанні схема й потрібна: тут дані користувача перетворюються на
+ * значення, і саме тут одруківка в ключі дає тихий `undefined` замість
+ * помилки. Ключ, який не є ані відомим літералом, ані членом описаної родини,
+ * тепер не компілюється.
+ */
 export type StorageReadResult = StorageSchema;
 
-/** Набір значень на запис. Та сама схема — писати можна лише те, що описане. */
-export type StorageWriteItems = StorageSchema;
+/**
+ * Набір значень на запис — навмисно ШИРШИЙ за схему.
+ *
+ * Причина технічна й варта того, щоб її не переоткривати щоразу:
+ * запис майже завжди виглядає як `{ [обчислений_ключ]: значення }`, а
+ * TypeScript зводить такий літерал до індексної сигнатури `{ [x: string]: T }`,
+ * яку закрита схема відхиляє — навіть коли ключ насправді правильний. Плюс у
+ * проєкті є свідомо ключ-агностичні помічники (`popup_storage.saveData`).
+ *
+ * Тому: читання строге, запис — названий мішок замість безіменного
+ * `Record<string, any>`. Захист від хибного ключа на записі дають будівники
+ * (`STORAGE_KEYS`, `getSheetStorageKey`, `POPUP_SHEET_KEYS`), а не цей тип.
+ */
+export type StorageWriteItems = Record<string, unknown>;
 
 export const STORAGE_SCHEMA_VERSION = 2;
 
@@ -68,18 +134,15 @@ export interface StoredOptions {
 /**
  * Схема сховища: ключ → форма значення (T17).
  *
- * ЧОМУ ТУТ ЩЕ Є `[key: string]: any`. Частина ключів будується в рантаймі і
- * статично не перелічується:
- *   • стан аркушів попапу — `syh:popup:sheet:<sheetId>:<field>` (аркуші
- *     додаються користувачем, див. `modules/sheets.ts`);
- *   • зібрані коментарі аркуша — `syh:popup:collected:<sheetId>`;
- *   • історичні форми всіх цих ключів — `tg_<field>__<sheetId>`, які МАЮТЬ
- *     читатися далі (docs/rules/storage.md, zero data loss).
- * Прибрати catch-all можна лише разом із шаблонними літеральними типами для
- * цих родин ключів — це наступний крок T17, і він уже не «тільки типи».
+ * Catch-all `[key: string]: any` ПРИБРАНО (крок 2). Динамічні родини ключів
+ * описані шаблонними літеральними типами вище, тож схема тепер закрита:
+ * ключ, який не є ані відомим літералом, ані членом описаної родини, більше
+ * не проходить компіляцію. Саме під тим catch-all і ховалась би одруківка в
+ * імені ключа — найтихіший спосіб «загубити» дані користувача.
  *
- * Поки catch-all лишається, схема все одно дає користь: відомий ключ має
- * відомий тип, а `STORAGE_KEYS.PRAYERS` більше не `any`.
+ * Якщо додаєте НОВУ родину динамічних ключів — опишіть її окремим шаблонним
+ * типом і додайте індекс сюди. Повертати `[key: string]: any` не можна:
+ * це знімає перевірку з усього сховища заради одного нового ключа.
  */
 export interface StorageSchema {
     [STORAGE_KEYS.OPTIONS]?: StoredOptions;
@@ -109,7 +172,14 @@ export interface StorageSchema {
     [STORAGE_KEYS.STATS_CHARTS]?: unknown;
     [STORAGE_KEYS.POPUP_TRANSLIT_OLD]?: string;
     [STORAGE_KEYS.POPUP_TRANSLIT_NEW]?: string;
-    [key: string]: any;
+    [STORAGE_KEYS.EXPANDED_TABS]?: string[];
+
+    // Динамічні родини ключів — замість колишнього `[key: string]: any`.
+    [key: SheetStateKey]: SheetStateValue | undefined;
+    [key: SheetCollectedKey]: CommentPayload[] | undefined;
+    [key: SheetDividerKey]: number | undefined;
+    [key: LegacyTgKey]: unknown;
+    [key: TelegramDataKey]: unknown;
 }
 
 export const STORAGE_KEYS = {
@@ -124,6 +194,9 @@ export const STORAGE_KEYS = {
 
     // StreamYard UI
     COLLAPSED_TABS: 'syh:streamyard:collapsed_tabs',
+    // Жив літералом у `right_tabs_storage.ts` повз реєстр ключів — знайдено
+    // при закритті схеми (T17, крок 2).
+    EXPANDED_TABS: 'syh:streamyard:expanded_tabs',
 
     // Youtube
     YT_COLLECTED: 'syh:popup:yt:collected',
@@ -156,15 +229,15 @@ export const STORAGE_KEYS = {
 /**
  * Type-safe helper to build sheet-specific storage keys
  */
-export function getSheetStorageKey(sheetId: string, suffix: string): string {
+export function getSheetStorageKey(sheetId: string, suffix: string): SheetStateKey {
     return `syh:popup:sheet:${sheetId}:${suffix}`;
 }
 
-export function getSheetCollectedStorageKey(sheetId: string): string {
+export function getSheetCollectedStorageKey(sheetId: string): SheetCollectedKey {
     return `syh:popup:collected:${sheetId}`;
 }
 
-const _createSheetKey = (suffix: string) => (sheetId: string): string => getSheetStorageKey(sheetId, suffix);
+const _createSheetKey = (suffix: string) => (sheetId: string): SheetStateKey => getSheetStorageKey(sheetId, suffix);
 
 export const POPUP_SHEET_KEYS = {
     oldList: _createSheetKey('oldList'),
@@ -181,7 +254,7 @@ export const POPUP_SHEET_KEYS = {
     cleanedLogCount: _createSheetKey('cleanedLogCount'),
     cleanedLogDetailsVisible: _createSheetKey('cleanedLogDetailsVisible'),
     cleanedLogDetailsOpen: _createSheetKey('cleanedLogDetailsOpen'),
-    dividerPos: (sheetId: string) => `syh:popup:divider_pos:${sheetId}`,
+    dividerPos: (sheetId: string): SheetDividerKey => `syh:popup:divider_pos:${sheetId}`,
 };
 
 const EXACT_KEY_MIGRATIONS: Readonly<Record<string, string>> = {
@@ -251,11 +324,11 @@ export function migrateKey(oldKey: string): string {
 export type StorageKeyValues = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS] | string;
 
 export function migrateItemKeys(items: StorageWriteItems): StorageWriteItems {
-    const migratedItems: StorageWriteItems = {};
+    const migratedItems: StorageRawResult = {};
     for (const [k, v] of Object.entries(items)) {
         migratedItems[migrateKey(k)] = v;
     }
-    return migratedItems;
+    return migratedItems as StorageWriteItems;
 }
 
 export function migrateKeys(keys: StorageKeyValues | StorageKeyValues[]): string | string[] {
@@ -275,12 +348,15 @@ export function prepareQueryKeys(keys: StorageKeyValues | StorageKeyValues[]): {
     return { origKeys, queryKeys: Array.from(keySet) };
 }
 
-export function processGetResult<T>(origKeys: string[], rawResult: StorageReadResult): T {
-    const out: StorageReadResult = { ...rawResult };
+export function processGetResult<T>(origKeys: string[], rawResult: StorageRawResult): T {
+    // Ключі приходять ззовні (у тому числі історичні), тому схема тут ще не
+    // застосовна — вона діє вже на результаті.
+    const raw = rawResult;
+    const out: StorageRawResult = { ...raw };
     if (rawResult) {
         origKeys.forEach(k => {
             const m = migrateKey(k);
-            const val = rawResult[k] ?? (m ? rawResult[m] : undefined);
+            const val = raw[k] ?? (m ? raw[m] : undefined);
             if (val !== undefined) {
                 out[k] = val;
                 if (m) out[m] = val;

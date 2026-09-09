@@ -7,10 +7,20 @@
 // цей `??`-фолбек дублювався в кожному відновлювачі; тепер він живе в одному
 // місці, а відновлювачі просто читають поле.
 
-import type { StorageReadResult } from '../modules/storage';
+import type { StorageReadResult, SheetScopedKey } from '../modules/storage';
+
+/**
+ * Історичний префікс ключа аркуша.
+ *
+ * Форма описана типом, а не `string`, щоб склеєний ключ
+ * `${legacyPrefix}${sheetId}` теж лишався членом описаної родини і проходив
+ * по закритій схемі сховища (T17, крок 2). Два префікси історично випадають
+ * з конвенції `tg_<field>__` — вони перелічені явно.
+ */
+export type SheetLegacyPrefix = `tg_${string}` | 'syh:popup:divider_pos:' | 'syh:popup:collected:';
 
 /** Канонічний ключ будується з ідентифікатора аркуша. */
-export type SheetKeyBuilder = (sheetId: string) => string;
+export type SheetKeyBuilder = (sheetId: string) => SheetScopedKey;
 
 /**
  * Читає значення аркуша з результату storage: спершу за канонічним ключем,
@@ -23,7 +33,7 @@ export function readSheetValue(
     result: StorageReadResult,
     sheetId: string,
     canonicalKey: SheetKeyBuilder,
-    legacyPrefix: string
+    legacyPrefix: SheetLegacyPrefix
 ): any {
     return result[canonicalKey(sheetId)] ?? result[`${legacyPrefix}${sheetId}`];
 }
@@ -32,7 +42,7 @@ export function readSheetValue(
 export function readSheetBinding(
     result: StorageReadResult,
     sheetId: string,
-    binding: { key: SheetKeyBuilder; legacyPrefix: string }
+    binding: { key: SheetKeyBuilder; legacyPrefix: SheetLegacyPrefix }
 ): any {
     return readSheetValue(result, sheetId, binding.key, binding.legacyPrefix);
 }

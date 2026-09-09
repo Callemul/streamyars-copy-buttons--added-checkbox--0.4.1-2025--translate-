@@ -40,7 +40,7 @@
 // `tests/popup_sheet_fields.test.js` фіксує обидві форми.
 
 import { POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
-import type { SheetKeyBuilder } from './popup_sheet_keys';
+import type { SheetKeyBuilder, SheetLegacyPrefix } from './popup_sheet_keys';
 
 /** Як поводитися зі значенням елемента. */
 export type SheetFieldKind =
@@ -60,7 +60,7 @@ export interface SheetStateBinding {
     /** Будівник канонічного ключа (`POPUP_SHEET_KEYS.<field>`). */
     readonly key: SheetKeyBuilder;
     /** Історичний префікс: повний легасі-ключ = `${legacyPrefix}${sheetId}`. */
-    readonly legacyPrefix: string;
+    readonly legacyPrefix: SheetLegacyPrefix;
 }
 
 export interface SheetFieldDescriptor {
