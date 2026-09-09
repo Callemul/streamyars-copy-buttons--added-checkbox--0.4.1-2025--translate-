@@ -15,6 +15,7 @@
  */
 
 import { checkAndLogStorageError } from './storage_migration';
+import type { StorageReadResult, StorageWriteItems } from './storage_keys';
 import {
     prepareQueryKeys,
     processGetResult,
@@ -23,7 +24,7 @@ import {
     type StorageAdapter
 } from './storage_keys';
 
-export function storageGetAsync<T = Record<string, any>>(
+export function storageGetAsync<T = StorageReadResult>(
     this: StorageAdapter,
     keys: StorageKeyValues | StorageKeyValues[]
 ): Promise<T> {
@@ -51,7 +52,7 @@ export function storageGetAsync<T = Record<string, any>>(
 
 export function storageSetAsync(
     this: StorageAdapter,
-    items: Record<string, any>
+    items: StorageWriteItems
 ): Promise<void> {
     return new Promise((resolve) => {
         if (!this.isChromeStorageAvailable()) {
@@ -95,7 +96,7 @@ function queueKey(keys: StorageKeyValues | StorageKeyValues[]): string {
         .join('|');
 }
 
-export async function storageUpdateAsync<T = Record<string, any>>(
+export async function storageUpdateAsync<T = StorageReadResult>(
     this: StorageAdapter,
     keys: StorageKeyValues | StorageKeyValues[],
     updateFn: (current: T) => T | Promise<T>
@@ -109,9 +110,9 @@ export async function storageUpdateAsync<T = Record<string, any>>(
 
         // Пишемо лише ті ключі, значення яких справді змінилося, щоб не
         // затерти сусідні ключі паралельних записів (write-amplification).
-        const changed: Record<string, any> = {};
-        for (const [k, v] of Object.entries(updatedData as Record<string, any>)) {
-            if ((currentData as Record<string, any>)[k] !== v) {
+        const changed: StorageWriteItems = {};
+        for (const [k, v] of Object.entries(updatedData as StorageWriteItems)) {
+            if ((currentData as StorageWriteItems)[k] !== v) {
                 changed[k] = v;
             }
         }

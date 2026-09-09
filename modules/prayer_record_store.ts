@@ -13,8 +13,11 @@ import type { PrayerRecord } from './comment_types';
 /** Читає список і одразу відкидає протухлі за TTL записи. */
 async function loadFreshPrayerList(): Promise<PrayerRecord[]> {
     const now = Date.now();
-    const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.PRAYERS]);
-    const list: PrayerRecord[] = result[STORAGE_KEYS.PRAYERS] || [];
+    const result = await SYH_STORAGE.getAsync([STORAGE_KEYS.PRAYERS]);
+    // ЗНАХІДКА T17: `PrayerItem` (схема сховища) і `PrayerRecord` — два описи
+    // однієї збереженої сутності, другий суворіший (`type`, `icon`, `roomId`,
+    // `timestamp` обов'язкові). Звуження явне; злиття — окрема зміна.
+    const list = (result[STORAGE_KEYS.PRAYERS] || []) as unknown as PrayerRecord[];
     return RetentionService.filterFreshPrayers(list, now);
 }
 

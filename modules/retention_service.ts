@@ -1,3 +1,4 @@
+import type { StorageRawResult, StorageWriteItems } from './storage_keys';
 import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
 import { SHEET_REGISTRY } from './sheets';
 
@@ -7,7 +8,7 @@ const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 export interface RetentionBackupSnapshot {
     timestamp: number;
     timestampIso: string;
-    data: Record<string, any>;
+    data: StorageRawResult;
 }
 
 export class RetentionService {
@@ -42,12 +43,14 @@ export class RetentionService {
             ...collectedKeys
         ];
 
-        const rawData = await SYH_STORAGE.getAsync<Record<string, any>>(keysToFetch);
+        const rawData = await SYH_STORAGE.getAsync(keysToFetch);
         const now = Date.now();
         const snapshot: RetentionBackupSnapshot = {
             timestamp: now,
             timestampIso: new Date(now).toISOString(),
-            data: rawData || {}
+            // Знімок зберігає прочитане ЯК Є, включно з ключами поза схемою —
+            // це межа зі сховищем (`StorageRawResult`), а не типізовані дані.
+            data: (rawData || {}) as StorageRawResult
         };
 
         await SYH_STORAGE.setAsync({
@@ -61,11 +64,11 @@ export class RetentionService {
     /**
      * Очищення застарілих записів у всіх таблицях розширення
      */
-    public static cleanExpiredTimestampEntries(
-        record: Record<string, any> | undefined,
+    public static cleanExpiredTimestampEntries<T extends { timestamp?: number }>(
+        record: Record<string, T> | undefined,
         maxAgeMs: number,
         now: number = Date.now()
-    ): Record<string, any> | null {
+    ): Record<string, T> | null {
         if (!record || typeof record !== 'object') return null;
         let modified = false;
         const cleaned = { ...record };
@@ -82,13 +85,13 @@ export class RetentionService {
         await RetentionService.createBackupSnapshot();
         const now = Date.now();
 
-        const res = await SYH_STORAGE.getAsync<Record<string, any>>([
+        const res = await SYH_STORAGE.getAsync([
             STORAGE_KEYS.YT_CHECKBOX_STATE,
             STORAGE_KEYS.PRAYERS,
             STORAGE_KEYS.STUDIO_CHECKBOX_STATE
         ]);
 
-        const updates: Record<string, any> = {};
+        const updates: StorageWriteItems = {};
 
         const freshYtCheckboxes = RetentionService.cleanExpiredTimestampEntries(res[STORAGE_KEYS.YT_CHECKBOX_STATE], THIRTY_DAYS_MS, now);
         if (freshYtCheckboxes) updates[STORAGE_KEYS.YT_CHECKBOX_STATE] = freshYtCheckboxes;

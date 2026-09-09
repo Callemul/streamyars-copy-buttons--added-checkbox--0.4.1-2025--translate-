@@ -9,6 +9,7 @@
  * `get is not a function` — той самий виняток, що й в оригіналі).
  */
 
+import type { StorageReadResult } from './storage_keys';
 import { STORAGE_KEYS } from './storage';
 
 /**
@@ -21,7 +22,7 @@ export function saveBannerCategory(
     storageAdapter: { get(keys: any, cb: (res: any) => void): void; set(items: any, cb?: () => void): void }
 ): Promise<void> {
     return new Promise(resolve => {
-        storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: Record<string, any>) => {
+        storageAdapter.get([STORAGE_KEYS.CATEGORIES], (result: StorageReadResult) => {
             const db = result[STORAGE_KEYS.CATEGORIES] || {};
             db[text] = type;
             storageAdapter.set({ [STORAGE_KEYS.CATEGORIES]: db }, resolve);

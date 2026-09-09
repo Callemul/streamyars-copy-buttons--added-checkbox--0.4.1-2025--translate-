@@ -14,6 +14,7 @@
  * (`this.isChromeStorageAvailable()`) лишався ідентичним до розділення файлу.
  */
 
+import type { StorageWriteItems } from './storage_keys';
 import { checkAndLogStorageError } from './storage_migration';
 import {
     prepareQueryKeys,
@@ -49,7 +50,7 @@ export function storageGet<T = Record<string, unknown>>(
 
 export function storageSet(
     this: StorageAdapter,
-    items: Record<string, any>,
+    items: StorageWriteItems,
     cb?: () => void
 ): void {
     if (!this.isChromeStorageAvailable()) {

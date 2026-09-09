@@ -13,6 +13,7 @@
  * саме звідси. Поведінка збережена 1-в-1 (див. tests/sheet_state_api.test.js).
  */
 
+import type { SheetStateUpdate } from './sheet_repository';
 import { SheetStatsCalculator } from './sheet_stats_calculator';
 import { SheetRepository } from './sheet_repository';
 import { processSheetData, type SheetProcessingInputs } from './sheet_processing';
@@ -37,7 +38,7 @@ export class SheetStateService {
         return SheetRepository.loadSheetState(sheetId);
     }
 
-    public static saveSheetState(sheetId: string, updates: Record<string, any>): Promise<void> {
+    public static saveSheetState(sheetId: string, updates: SheetStateUpdate): Promise<void> {
         return SheetRepository.saveSheetState(sheetId, updates);
     }
 

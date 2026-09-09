@@ -8,6 +8,7 @@
  * 1-в-1 для зворотної сумісності.
  */
 
+import type { StorageRawResult } from './storage_keys';
 import {
     STORAGE_SCHEMA_VERSION,
     STORAGE_KEYS,
@@ -26,7 +27,7 @@ export function checkAndLogStorageError(actionName: string): boolean {
 }
 
 export function migrateLegacyYtCollected(
-    allData: Record<string, any>,
+    allData: StorageRawResult,
     migrated: Record<string, unknown>,
     keysToRemove: string[]
 ): void {

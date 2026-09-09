@@ -12,6 +12,7 @@
  * зобов'язані поважати цю підміну (див. `tests/storage_adapter.test.js`).
  */
 
+import type { StorageChanges } from './storage_keys';
 import type { StorageAdapter } from './storage_keys';
 import { isExtensionContextValid } from './messaging_context';
 
@@ -28,7 +29,7 @@ export function isChromeStorageAvailable(): boolean {
 
 export function storageOnChanged(
     this: StorageAdapter,
-    callback: (changes: Record<string, any>, areaName: string) => void
+    callback: (changes: StorageChanges, areaName: string) => void
 ): () => void {
     let active = false;
 

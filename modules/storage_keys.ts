@@ -119,6 +119,20 @@ export const STORAGE_SCHEMA_VERSION = 2;
  * не навпаки). Щоб копія не розійшлась мовчки, її склад звіряється з реєстром
  * тестом `tests/storage_schema.test.js`.
  */
+/**
+ * Об'єкт `db` попапу: назви програм плюс СТОРОННІ поля.
+ *
+ * Індексна сигнатура тут не косметична: `saveSettingsFromForm` навмисно мутує
+ * наявний об'єкт, а не замінює його, «щоб сторонні поля DB не губились»
+ * (`options_settings_io.ts`). Тому відомі поля названі, а решта лишається
+ * відкритою — але вже як `unknown`, а не `any`.
+ */
+export interface StoredDb {
+    newTitleSS?: string;
+    newTitlePreach?: string;
+    [key: string]: unknown;
+}
+
 export interface StoredOptions {
     newTitleSS?: string;
     newTitlePreach?: string;
@@ -147,7 +161,7 @@ export interface StoredOptions {
  */
 export interface StorageSchema {
     [STORAGE_KEYS.OPTIONS]?: StoredOptions;
-    [STORAGE_KEYS.DB]?: Record<string, any>;
+    [STORAGE_KEYS.DB]?: StoredDb;
     [STORAGE_KEYS.CATEGORIES]?: Record<string, string>;
     [STORAGE_KEYS.CHECKBOX_STATE]?: { date?: string; data?: Record<string, boolean> };
     [STORAGE_KEYS.PRAYERS]?: PrayerItem[];
@@ -173,7 +187,7 @@ export interface StorageSchema {
     [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]?: Record<string, { width?: number; height?: number }>;
     [STORAGE_KEYS.INSTALLED_AT]?: number;
     [STORAGE_KEYS.VERSION]?: string;
-    [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: Record<string, any> };
+    [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: StorageRawResult };
     [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, CommentStateActionId>;
     [STORAGE_KEYS.YT_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
     [STORAGE_KEYS.STATS_CHARTS]?: unknown;
