@@ -145,6 +145,10 @@ DOM попапу не має жити в `modules/` (саме тому `telegram
   `storage_ops_async.ts` / `storage_ops_callback.ts`).
 - Ключі будуються **тільки** через `STORAGE_KEYS` / `POPUP_SHEET_KEYS`; рядкові літерали заборонені.
 - Схема версіонована (`STORAGE_SCHEMA_VERSION`), міграції — `storage_migration.ts`.
+- Схема типів **закрита**: `StorageSchema` не має `[key: string]: any`, динамічні
+  родини ключів описані шаблонними літеральними типами (`SheetStateKey`,
+  `SheetCollectedKey`, `SheetDividerKey`, `LegacyTgKey`, `TelegramDataKey`).
+  Читання строге, запис ширший — деталі й причина в `docs/rules/storage.md`.
 - **Zero data loss:** старі ключі не видаляються, читання завжди має легасі-фолбек
   (`popup/popup_sheet_keys.ts` — приклад канонічний ключ + `tg_<field>__<sheetId>`).
 - Доменні операції йдуть через `CommentService` та `SheetStateService`, а не прямими
