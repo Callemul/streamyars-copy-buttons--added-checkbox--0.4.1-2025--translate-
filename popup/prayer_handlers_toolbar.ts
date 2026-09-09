@@ -1,3 +1,4 @@
+import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
 import { CommentService } from '../modules/comment_service';
@@ -37,7 +38,7 @@ async function handleCopyPrayersClick(this: HTMLElement): Promise<void> {
 function handleClearPrayersClick(): void {
     if (!confirm(CLEAR_PRAYERS_CONFIRM_MESSAGE)) return;
 
-    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: StorageReadResult) {
         const stored = readStoredPrayers(result, STORAGE_KEYS.PRAYERS);
         const prayersToRemove = stored.filter(item => item.type === PRAYER_ENTRY_TYPE);
         prayersToRemove.forEach(p => {
@@ -50,7 +51,7 @@ function handleClearPrayersClick(): void {
 
 /** Зливає підтягнуті молитви зі збереженими, зберігає результат і звітує користувачу. */
 async function storeFetchedPrayers(fetched: PrayerItem[], btn: HTMLElement, originalText: string): Promise<void> {
-    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], async function(res: Record<string, any>) {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], async function(res: StorageReadResult) {
         const stored = readStoredPrayers(res, STORAGE_KEYS.PRAYERS);
         const { list, addedCount } = mergeFetchedPrayers(stored, fetched);
 

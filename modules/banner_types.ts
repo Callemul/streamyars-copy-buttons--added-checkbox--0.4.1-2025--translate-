@@ -1,3 +1,4 @@
+import type { SelectorValue } from './config';
 import type { SyhConfig } from './config';
 import type { SyhUtils } from './utils';
 import type { SyhParsers } from './parsers/index';
@@ -9,7 +10,7 @@ export interface BannerItem {
 }
 
 export interface SyhBannerCreator {
-    SELECTORS: Record<string, any> | null;
+    SELECTORS: Record<string, SelectorValue> | null;
     UTILS: SyhUtils;
     PARSERS: SyhParsers;
     UI?: any;

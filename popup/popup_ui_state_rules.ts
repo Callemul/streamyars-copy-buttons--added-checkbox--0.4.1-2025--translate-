@@ -1,3 +1,5 @@
+import type { StorageRawResult } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage';
 // popup/popup_ui_state_rules.ts
 //
 // ПРИЗНАЧЕННЯ: чисті правила відновлення UI-стану попапа (без DOM і без сховища).
@@ -14,11 +16,14 @@
  * відсутній або `null`. Збережений `0`, `''` чи `false` перекривають легасі.
  */
 export function readStoredValue<T = unknown>(
-    result: Record<string, any>,
+    result: StorageReadResult,
     key: string,
     legacyKey: string
 ): T | undefined {
-    return result[key] ?? result[legacyKey];
+    // Помічник свідомо ключ-агностичний: обидва ключі приходять аргументами,
+    // тож індексуємо сире представлення, а не закриту схему (T17).
+    const raw = result as StorageRawResult;
+    return (raw[key] ?? raw[legacyKey]) as T | undefined;
 }
 
 /** Спільні (не per-sheet) контейнери, чий `scrollTop` відновлюється. */

@@ -12,6 +12,7 @@
  * service worker не має падати через мертвий контекст.
  */
 
+import type { StorageRawResult } from '../modules/storage';
 import { calculateBadgeCounts } from './badge_counter';
 
 const BADGE_COLOR_CHECKED = '#E67E22';
@@ -43,7 +44,7 @@ export async function updateExtensionBadge(): Promise<void> {
     }
 
     try {
-        const allData: Record<string, any> = await new Promise((resolve) => {
+        const allData: StorageRawResult = await new Promise((resolve) => {
             chrome.storage.local.get(null, (result) => resolve(result || {}));
         });
 

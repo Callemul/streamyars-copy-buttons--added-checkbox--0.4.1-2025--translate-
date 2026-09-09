@@ -5,6 +5,7 @@
 //
 // Виділено з `popup/popup_telegram.ts` (hotspot №1 за Fallow).
 
+import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
 import { CommentService } from '../modules/comment_service';
 import { batchRenderItems } from '../modules/render_utils';
@@ -73,8 +74,10 @@ function renderEmptyCollectedState(list: HTMLElement): void {
 export function loadYTCollected(sheetId: string = 'vp_ss'): void {
     const sheetKey = getSheetCollectedStorageKey(sheetId);
 
-    SYH_STORAGE.get([sheetKey], function (result: Record<string, any>) {
-        const items: YTCollectedItem[] = result[sheetKey] || [];
+    SYH_STORAGE.get([sheetKey], function (result: StorageReadResult) {
+        // Див. коментар у `sheet_repository`: та сама збережена сутність має
+        // два описи (`CommentPayload` у сховищі, суворіший `YTCollectedItem` тут).
+        const items = (result[sheetKey] || []) as unknown as YTCollectedItem[];
         setCollectedItemsForSheet(sheetId, items);
 
         const list = $(`ytCollectedList__${sheetId}`);

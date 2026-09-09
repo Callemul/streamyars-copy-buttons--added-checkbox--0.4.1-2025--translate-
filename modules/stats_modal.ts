@@ -113,7 +113,7 @@ export function openStatsModal(host: StatsModalHost, currentBrand: string): void
 
 /** Читає базу графіків із `chrome.storage` і повертає зріз по одному бренду. */
 async function readBrandSessions(currentBrand: string): Promise<Record<string, StreamChartSession>> {
-    const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.STATS_CHARTS]);
+    const result = await SYH_STORAGE.getAsync([STORAGE_KEYS.STATS_CHARTS]);
     const db = result?.[STORAGE_KEYS.STATS_CHARTS] || {};
     return db[currentBrand] || {};
 }

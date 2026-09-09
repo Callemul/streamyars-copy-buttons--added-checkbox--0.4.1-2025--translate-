@@ -71,7 +71,7 @@ export class ChannelRegistry {
 
     public async loadCustomChannelsFromStorage(): Promise<void> {
         try {
-            const result = await SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.OPTIONS]);
+            const result = await SYH_STORAGE.getAsync([STORAGE_KEYS.OPTIONS]);
             const opts = result[STORAGE_KEYS.OPTIONS];
             if (opts && Array.isArray(opts.customChannels)) {
                 opts.customChannels.forEach((config: ChannelConfigItem) => {

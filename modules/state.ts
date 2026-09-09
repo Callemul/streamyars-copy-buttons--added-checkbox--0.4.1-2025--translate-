@@ -28,7 +28,7 @@ export const SYH_STATE: SyhState = {
     init: function(callback?: () => void): void {
         const today = getTodayDateString();
 
-        SYH_STORAGE.getAsync<Record<string, any>>([STORAGE_KEYS.CHECKBOX_STATE]).then((result) => {
+        SYH_STORAGE.getAsync([STORAGE_KEYS.CHECKBOX_STATE]).then((result) => {
             const stored = result?.[STORAGE_KEYS.CHECKBOX_STATE] || {};
             const savedDate = stored.date;
 

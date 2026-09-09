@@ -16,6 +16,7 @@ console.log("[SYH Debug] popup_telegram.ts top-level code executed");
 // `popup_sheet_state_restorer.ts` історично імпортують цей контракт саме звідси.
 // Поведінка збережена 1-в-1 (див. tests/popup_telegram_ui.test.js).
 
+import type { StorageChanges } from '../modules/storage';
 import { SYH_STORAGE } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { collectTelegramSheetStateFromDOM } from './telegram_sheet_dom';
@@ -143,7 +144,7 @@ export function processTelegramData(sheetId: string = 'vp_ss'): void {
 
 /** Перемальовує аркуш, коли зібрані коментарі змінилися ззовні (з YouTube). */
 function bindCollectedStorageSync(): void {
-    SYH_STORAGE.onChanged(function (changes: Record<string, any>, areaName: string) {
+    SYH_STORAGE.onChanged(function (changes: StorageChanges, areaName: string) {
         if (areaName === 'local') {
             SHEET_IDS.forEach(sId => {
                 if (changes[`syh:popup:collected:${sId}`] || changes[`syh_collected__${sId}`]) {

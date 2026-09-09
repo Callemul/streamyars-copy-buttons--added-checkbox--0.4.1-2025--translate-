@@ -55,15 +55,36 @@ function readInterfaceFields(filePath, interfaceName) {
 }
 
 describe('storage_schema — StoredOptions не розходиться з реєстром опцій', () => {
-    test('склад полів збігається з OPTION_FIELDS', () => {
+    // «Позаформні» поля: зберігаються в тому ж ключі, але елемента у формі не
+    // мають, тому в реєстрі опцій їх немає і бути не повинно. Список явний —
+    // нове таке поле має бути свідомим рішенням, а не непоміченим додаванням.
+    const NON_FORM_FIELDS = ['customChannels'];
+
+    test('усі поля форми присутні в StoredOptions', () => {
         const stored = readInterfaceFields('modules/storage_keys.ts', 'StoredOptions');
         const registry = OPTION_FIELDS.map(f => f.key);
 
+        const missing = registry.filter(key => !stored.includes(key));
+
         assert.deepEqual(
-            [...stored].sort(),
-            [...registry].sort(),
+            missing,
+            [],
             'StoredOptions розійшовся з реєстром опцій: додайте поле в обидва місця ' +
             '(імпортувати options/ з modules/ не можна — ARCHITECTURE §2)'
+        );
+    });
+
+    test('усе, що є в StoredOptions понад форму, перелічене явно', () => {
+        const stored = readInterfaceFields('modules/storage_keys.ts', 'StoredOptions');
+        const registry = new Set(OPTION_FIELDS.map(f => f.key));
+
+        const extras = stored.filter(key => !registry.has(key));
+
+        assert.deepEqual(
+            [...extras].sort(),
+            [...NON_FORM_FIELDS].sort(),
+            'у StoredOptions з\'явилось поле поза формою — або додайте йому елемент ' +
+            'і рядок у реєстрі опцій, або внесіть у список позаформних тут'
         );
     });
 

@@ -9,7 +9,7 @@ export function setupScrollListeners(): void {
     function saveScrollPosition() {
         if (scrollTimeout) clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => {
-            const scrolls: Record<string, any> = {
+            const scrolls: Record<string, number> = {
                 window: window.scrollY || document.documentElement.scrollTop,
                 prayersResultDiv: ($(`prayersResultDiv`) as HTMLElement | null)?.scrollTop || 0,
                 textArea1_oldText: ($(`textArea1_oldText`) as HTMLElement | null)?.scrollTop || 0,

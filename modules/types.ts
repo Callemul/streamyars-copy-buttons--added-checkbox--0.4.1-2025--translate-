@@ -90,3 +90,16 @@ export interface VideoSheetMapEntry {
     videoTitle?: string;
     updatedAt?: number;
 }
+
+
+/**
+ * Збережені розміри елемента, що змінює розмір (textarea попапу).
+ *
+ * Значення — CSS-рядки (`'300px'`), а не числа: саме так їх кладе
+ * `setupResizeObserver` і саме так їх читає `applyElementSize`.
+ * Форма збережених даних, тому живе тут (див. `VideoSheetMapEntry`).
+ */
+export interface StoredElementSize {
+    width?: string;
+    height?: string;
+}

@@ -10,6 +10,7 @@
  * Тепер обидва споживачі спираються на ті самі предикати.
  */
 
+import type { StorageRawResult } from '../modules/storage';
 import { STORAGE_KEYS } from '../modules/storage';
 
 const COLLECTED_KEY_PREFIX = 'syh:popup:collected:';
@@ -53,7 +54,7 @@ export function countCheckedItems(obj: any): number {
 }
 
 /** Зводить увесь дамп сховища до двох чисел, які визначають вигляд бейджа. */
-export function calculateBadgeCounts(allData: Record<string, any>): { collectedCount: number; checkedCount: number } {
+export function calculateBadgeCounts(allData: StorageRawResult): { collectedCount: number; checkedCount: number } {
     let collectedCount = 0;
     let checkedCount = 0;
 

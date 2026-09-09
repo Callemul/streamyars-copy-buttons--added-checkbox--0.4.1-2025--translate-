@@ -1,3 +1,4 @@
+import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 
@@ -16,7 +17,7 @@ export function setupResizeObserver(isStorageLoaded: () => boolean): void {
 
     const resizeObserver = new ResizeObserver(entries => {
         if (!isStorageLoaded()) return;
-        SYH_STORAGE.get([STORAGE_KEYS.POPUP_TEXTAREA_SIZES], function (res: Record<string, any>) {
+        SYH_STORAGE.get([STORAGE_KEYS.POPUP_TEXTAREA_SIZES], function (res: StorageReadResult) {
             const sizes = res[STORAGE_KEYS.POPUP_TEXTAREA_SIZES] || {};
             let updated = false;
             for (const entry of entries) {

@@ -9,10 +9,9 @@
 import { $ } from './popup_dom_utils';
 
 /** Збережений розмір елемента (обидва виміри необовʼязкові). */
-export interface StoredElementSize {
-    width?: string;
-    height?: string;
-}
+// Форма переїхала в `modules/types.ts` до решти збережених форм (T17, крок 3).
+import type { StoredElementSize } from '../modules/types';
+export type { StoredElementSize };
 
 /** Порожні/відсутні виміри навмисно НЕ перезаписують поточний стиль. */
 function applyElementSize(el: HTMLElement, size: StoredElementSize): void {

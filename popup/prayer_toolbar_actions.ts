@@ -8,6 +8,8 @@
  * Поведінка збережена 1-в-1 з оригінальними обробниками.
  */
 
+import type { StorageRawResult } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage';
 import type { PrayerItem } from '../modules/types';
 
 export const CLEAR_PRAYERS_CONFIRM_MESSAGE =
@@ -47,8 +49,8 @@ export function readElementLabel(el: { textContent: string | null } | null): str
 }
 
 /** Список молитов зі сховища; відсутній ключ означає порожній список. */
-export function readStoredPrayers(result: Record<string, any> | null | undefined, key: string): PrayerItem[] {
-    return result?.[key] || [];
+export function readStoredPrayers(result: StorageReadResult | null | undefined, key: string): PrayerItem[] {
+    return ((result as StorageRawResult | null | undefined)?.[key] as PrayerItem[]) || [];
 }
 
 /** Прибирає молитовні прохання, лишаючи решту записів (питання тощо) недоторканими. */

@@ -1,3 +1,4 @@
+import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { readStoredPrayers } from './prayer_toolbar_actions';
 import { renderPrayers } from './prayer_render';
@@ -19,7 +20,7 @@ type EditableHandler = (el: HTMLElement) => void;
 
 /** Читає збережений список, застосовує правку і зберігає лише за наявності змін. */
 function updateStoredPrayers(edit: (list: PrayerItem[]) => boolean): void {
-    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: StorageReadResult) {
         const list = readStoredPrayers(result, STORAGE_KEYS.PRAYERS);
         if (edit(list)) {
             SYH_STORAGE.set({ [STORAGE_KEYS.PRAYERS]: list });

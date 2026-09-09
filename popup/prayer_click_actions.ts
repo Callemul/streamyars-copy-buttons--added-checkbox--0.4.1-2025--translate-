@@ -8,6 +8,7 @@
  * Поведінка збережена 1-в-1 з оригінальними обробниками.
  */
 
+import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { CommentService } from '../modules/comment_service';
 import { sendUnstarMessagesForList } from './prayer_messaging';
@@ -28,7 +29,7 @@ import type { PrayerItem } from '../modules/types';
 
 /** Читає збережений список молитов і передає його далі. */
 function withStoredPrayers(use: (list: PrayerItem[]) => void): void {
-    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: Record<string, any>) {
+    SYH_STORAGE.get([STORAGE_KEYS.PRAYERS], function(result: StorageReadResult) {
         use(readStoredPrayers(result, STORAGE_KEYS.PRAYERS));
     });
 }

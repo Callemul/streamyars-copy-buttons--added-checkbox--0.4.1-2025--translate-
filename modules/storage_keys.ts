@@ -5,7 +5,10 @@
  * усуває зациклення навантаження (ключі/міграції не залежать від адаптера).
  */
 
-import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry } from './types';
+import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry, StoredElementSize } from './types';
+import type { StreamChartSession } from './stats_types';
+// Імпорт лише типу: у рантаймі стирається, тож циклу з `channel_config` немає.
+import type { ChannelConfigItem } from './channel_config';
 import type { CheckboxStateEntry, CommentPayload } from './comment_types';
 import type { CommentStateActionId } from './comment_actions';
 
@@ -133,6 +136,14 @@ export interface StoredDb {
     [key: string]: unknown;
 }
 
+/**
+ * Опції в сховищі.
+ *
+ * СКЛАД = поля форми (реєстр `options/option_fields.ts`) ПЛЮС кілька значень,
+ * які зберігаються поруч, але у формі не показуються. Такі «позаформні» поля
+ * перелічені нижче окремо і мають бути свідомим рішенням, а не випадковістю —
+ * тест `storage_schema` вимагає, щоб кожне з них було в явному списку.
+ */
 export interface StoredOptions {
     newTitleSS?: string;
     newTitlePreach?: string;
@@ -144,6 +155,10 @@ export interface StoredOptions {
     youtube_enabled?: boolean;
     studio_enabled?: boolean;
     compact_secondary_tabs_default?: boolean;
+
+    // --- позаформні поля (немає елемента в options.html) ---
+    /** Додаткові канали, зареєстровані програмно (`channel_config.ts`). */
+    customChannels?: ChannelConfigItem[];
 }
 
 /**
@@ -184,13 +199,14 @@ export interface StorageSchema {
     [STORAGE_KEYS.POPUP_ACTIVE_TAB]?: string;
     [STORAGE_KEYS.POPUP_ACTIVE_SUBTAB]?: string;
     [STORAGE_KEYS.POPUP_SCROLL_POSITIONS]?: Record<string, number>;
-    [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]?: Record<string, { width?: number; height?: number }>;
+    // CSS-рядки ('300px'), а не числа — так їх кладе `setupResizeObserver`.
+    [STORAGE_KEYS.POPUP_TEXTAREA_SIZES]?: Record<string, StoredElementSize>;
     [STORAGE_KEYS.INSTALLED_AT]?: number;
     [STORAGE_KEYS.VERSION]?: string;
     [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: StorageRawResult };
     [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, CommentStateActionId>;
     [STORAGE_KEYS.YT_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
-    [STORAGE_KEYS.STATS_CHARTS]?: unknown;
+    [STORAGE_KEYS.STATS_CHARTS]?: Record<string, Record<string, StreamChartSession>>;
     [STORAGE_KEYS.POPUP_TRANSLIT_OLD]?: string;
     [STORAGE_KEYS.POPUP_TRANSLIT_NEW]?: string;
     [STORAGE_KEYS.EXPANDED_TABS]?: string[];
