@@ -6,7 +6,7 @@
  */
 
 import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry, StoredElementSize } from './types';
-import type { StreamChartSession } from './stats_types';
+import type { StatsChartsDb } from './stats_types';
 // Імпорт лише типу: у рантаймі стирається, тож циклу з `channel_config` немає.
 import type { ChannelConfigItem } from './channel_config';
 import type { CheckboxStateEntry, CommentPayload } from './comment_types';
@@ -206,7 +206,7 @@ export interface StorageSchema {
     [STORAGE_KEYS.AUTO_BACKUP_SNAPSHOT]?: { timestamp: number; timestampIso: string; data: StorageRawResult };
     [STORAGE_KEYS.YT_BUTTON_STATES]?: Record<string, CommentStateActionId>;
     [STORAGE_KEYS.YT_CHECKBOX_STATE]?: Record<string, CheckboxStateEntry>;
-    [STORAGE_KEYS.STATS_CHARTS]?: Record<string, Record<string, StreamChartSession>>;
+    [STORAGE_KEYS.STATS_CHARTS]?: StatsChartsDb;
     [STORAGE_KEYS.POPUP_TRANSLIT_OLD]?: string;
     [STORAGE_KEYS.POPUP_TRANSLIT_NEW]?: string;
     [STORAGE_KEYS.EXPANDED_TABS]?: string[];

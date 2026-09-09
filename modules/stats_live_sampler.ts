@@ -12,6 +12,7 @@
  *   - повтор тієї самої мітки часу не дублює точку.
  */
 
+import type { StatsChartsDb } from './stats_types';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
 import { getOrCreateTodaySession } from './stats_session';
@@ -30,7 +31,7 @@ const FALLBACK_TIMER_TEXT = '0:00';
 export interface StatsSamplerHost {
     intervalId: number | null;
     currentBrand: string;
-    loadStatsDb(callback: (db: Record<string, any>) => void): void;
+    loadStatsDb(callback: (db: StatsChartsDb) => void): void;
 }
 
 /** Знімок ефіру з DOM: підпис таймера і кількість глядачів. */
@@ -52,7 +53,7 @@ function syncCurrentBrand(host: StatsSamplerHost): void {
 
 /** Дописує точку виміру в сесію дня, уникаючи дублів за міткою часу. */
 function appendSamplePoint(
-    db: Record<string, any>,
+    db: StatsChartsDb,
     brand: string,
     today: string,
     timerText: string,

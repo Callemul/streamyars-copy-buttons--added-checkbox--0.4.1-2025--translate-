@@ -12,6 +12,7 @@
  *   - `opacity: 0.7` виставляється навіть для невідомої фази.
  */
 
+import type { StatsChartsDb } from './stats_types';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_UTILS } from './utils';
 import { showBanner } from './utils_notify';
@@ -32,7 +33,7 @@ const MARKED_BUTTON_OPACITY = '0.7';
 /** Мінімальний контракт трекера, потрібний для роботи з фазами. */
 export interface StatsPhaseHost {
     currentBrand: string;
-    loadStatsDb(callback: (db: Record<string, any>) => void): void;
+    loadStatsDb(callback: (db: StatsChartsDb) => void): void;
 }
 
 /** Підпис таймера ефіру або `null`, якщо ефір ще не стартував. */

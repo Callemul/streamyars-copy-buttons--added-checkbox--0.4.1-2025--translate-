@@ -1,5 +1,16 @@
 // options/validation.ts
+import type { StorageWriteItems } from '../modules/storage';
 import { STORAGE_KEYS } from '../modules/storage';
+
+/**
+ * Вміст файла конфігурації.
+ *
+ * Ключі довільні за визначенням: у файлі лежать і службові поля (`app`,
+ * `timestamp`, `version`), і сирі копії всіх наявних ключів сховища, і
+ * історичні імена зі старих експортів. Тому мішок — але названий і з
+ * `unknown` замість `any`.
+ */
+export type ImportedConfig = Record<string, unknown>;
 
 export function isSectionValid(section: any): boolean {
     return !section || (typeof section === 'object' && !Array.isArray(section));
@@ -27,8 +38,8 @@ export function validateImportedConfig(data: any): boolean {
     return true;
 }
 
-export function extractImportedItems(imported: Record<string, any>): Record<string, any> {
-    const itemsToSave: Record<string, any> = {};
+export function extractImportedItems(imported: ImportedConfig): StorageWriteItems {
+    const itemsToSave: StorageWriteItems = {};
 
     const mapKey = (stdKey: string, ...fallbackKeys: string[]) => {
         const foundKey = [stdKey, ...fallbackKeys].find(k => k in imported);

@@ -37,11 +37,11 @@ function getDefaultValue<T>(value: T | undefined, defaultValue: T): T {
  */
 function resolveFormValue(
     field: OptionFieldDescriptor,
-    stored: Record<string, any>,
+    stored: Record<string, unknown>,
     defaults: OptionsState
 ): any {
     const raw = stored[field.key];
-    const fallback = (defaults as Record<string, any>)[field.key];
+    const fallback = (defaults as Record<string, unknown>)[field.key];
 
     if (field.kind === 'text' || field.kind === 'select') return raw || fallback;
     return getDefaultValue(raw, fallback);
@@ -107,7 +107,7 @@ function readInteger(id: string, fallback: string): number {
 }
 
 function readFieldValue(field: OptionFieldDescriptor, defaults: OptionsState): unknown {
-    const fallback = (defaults as Record<string, any>)[field.key];
+    const fallback = (defaults as Record<string, unknown>)[field.key];
 
     switch (field.kind) {
         case 'text': return readTrimmedText(field.elementId, String(fallback));

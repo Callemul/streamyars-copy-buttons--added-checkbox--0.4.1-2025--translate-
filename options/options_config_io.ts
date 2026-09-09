@@ -15,7 +15,8 @@
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { DEFAULT_OPTIONS } from './defaults';
-import { validateImportedConfig, extractImportedItems } from './validation';
+import { validateImportedConfig, extractImportedItems, type ImportedConfig } from './validation';
+import type { StorageRawResult } from '../modules/storage';
 
 const EXPORT_APP_NAME = 'StreamYard Helper';
 /** Фолбек версії для тестового середовища без доступу до chrome.runtime.getManifest */
@@ -36,8 +37,8 @@ function resolveExportVersion(storageVersion: unknown): string {
     return FALLBACK_VERSION;
 }
 
-function buildExportPayload(allKeys: string[], result: Record<string, any>): Record<string, any> {
-    const exportData: Record<string, any> = {
+function buildExportPayload(allKeys: string[], result: StorageRawResult): ImportedConfig {
+    const exportData: ImportedConfig = {
         app: EXPORT_APP_NAME,
         timestamp: new Date().toISOString(),
         version: resolveExportVersion(result[STORAGE_KEYS.VERSION]),
@@ -55,7 +56,7 @@ function buildExportPayload(allKeys: string[], result: Record<string, any>): Rec
 }
 
 /** Віддає JSON користувачу через тимчасовий object-URL. */
-function downloadJson(payload: Record<string, any>, fileName: string): void {
+function downloadJson(payload: ImportedConfig, fileName: string): void {
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
@@ -69,7 +70,9 @@ function downloadJson(payload: Record<string, any>, fileName: string): void {
 export function exportConfig(notify: (message: string) => void): void {
     const allKeys = Object.values(STORAGE_KEYS);
 
-    SYH_STORAGE.get(allKeys, (result) => {
+    // Експорт вигрібає сховище ЯК Є — разом із ключами поза схемою
+    // (історичні імена зі старих версій), тож тут саме сире представлення.
+    SYH_STORAGE.get<StorageRawResult>(allKeys, (result) => {
         downloadJson(buildExportPayload(allKeys, result), buildExportFileName());
         notify('📥 Налаштування та стан успішно експортовано');
     });

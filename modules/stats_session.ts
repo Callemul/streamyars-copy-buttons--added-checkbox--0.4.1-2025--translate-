@@ -1,3 +1,4 @@
+import type { StatsChartsDb, StreamChartSession } from './stats_types';
 /**
  * StreamYard Helper - Stats pure helpers
  * Винесено з `stats_tracker.ts`, щоб ізолювати чисту, детерміновану логіку
@@ -10,7 +11,7 @@
  * Повертає (створюючи за потреби) сесію статистики для бренда за вказану дату.
  * Мутує `db` in-place, створюючи вкладені структури, якщо їх немає.
  */
-export function getOrCreateTodaySession(db: Record<string, any>, brand: string, today: string): any {
+export function getOrCreateTodaySession(db: StatsChartsDb, brand: string, today: string): StreamChartSession {
     if (!db[brand]) db[brand] = {};
     if (!db[brand][today]) db[brand][today] = { data: [] };
     return db[brand][today];

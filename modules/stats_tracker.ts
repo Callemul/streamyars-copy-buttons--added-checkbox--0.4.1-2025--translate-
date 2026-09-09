@@ -16,6 +16,7 @@
  * життєвий цикл і делегування. Публічний контракт `SyhStatsTracker` не змінився.
  */
 
+import type { StatsChartsDb } from './stats_types';
 import { SYH_CONFIG } from './config';
 import { SYH_STORAGE, STORAGE_KEYS } from './storage';
 import { SYH_BUS } from './event_bus';
@@ -45,7 +46,7 @@ export interface SyhStatsTracker {
     init(): void;
     bindEvents(): void;
     registerPrayerMarker(): void;
-    loadStatsDb(callback: (db: Record<string, any>) => void): void;
+    loadStatsDb(callback: (db: StatsChartsDb) => void): void;
     setupObservers(): void;
     restoreButtonStates(btnQ: HTMLElement, btnP: HTMLElement): void;
     markPhase(phase: 'questions' | 'prayers', btnElement: HTMLElement): void;
@@ -87,7 +88,7 @@ export const SYH_STATS_TRACKER: SyhStatsTracker = {
         restoreButtonStatesImpl(this, btnQ, btnP);
     },
 
-    loadStatsDb: function(callback: (db: Record<string, any>) => void): void {
+    loadStatsDb: function(callback: (db: StatsChartsDb) => void): void {
         SYH_STORAGE.get([STORAGE_KEYS.STATS_CHARTS], (result: any) => {
             const db = (result && result[STORAGE_KEYS.STATS_CHARTS]) ? result[STORAGE_KEYS.STATS_CHARTS] : {};
             callback(db);

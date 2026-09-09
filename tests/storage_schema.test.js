@@ -17,7 +17,8 @@
 
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { installChromeMock } from './setup/chrome_mock.ts';
 
@@ -257,5 +258,101 @@ describe('storage_schema — catch-all не повертається', () => {
 
         assert.match(schema[1], /SheetStateKey/, 'у схемі мають бути шаблонні родини ключів');
         assert.match(schema[1], /LegacyTgKey/, 'легасі-родина tg_* має лишатись описаною');
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Тріскачка T17: `Record<string, any>` у продакшн-коді більше немає.
+//
+// Критерій приймання задачі — «кількість зменшується монотонно». Тепер вона
+// нульова, і єдиний спосіб утримати її такою — не дати з'явитись новому
+// випадку непомітно. Заміна майже завжди одна: НАЗВАТИ тип. За хвилю T17
+// саме безіменні мішки й ховали три неправди про форму збережених даних.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Каталоги продакшн-коду. `tests/` не рахуємо: там моки й стаби. */
+const PRODUCTION_DIRS = ['modules', 'popup', 'options', 'youtube', 'background'];
+
+/**
+ * Свідомі винятки, якщо колись знадобляться: файл → коротке «чому».
+ * Порожній список — навмисно.
+ */
+const ALLOWED = {};
+
+function collectTsFiles(dir, acc = []) {
+    for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory()) collectTsFiles(full, acc);
+        else if (entry.endsWith('.ts')) acc.push(full);
+    }
+    return acc;
+}
+
+describe('T17 — Record<string, any> не повертається у продакшн-код', () => {
+    /**
+     * Рядки з ТИПОМ, а не зі згадкою в коментарі.
+     *
+     * Коментарі відсіюються обидва: і `//`, і блокові `/* … *\/` — саме в
+     * блокових пояснюється, чому той чи інший мішок отримав ім'я, і без цього
+     * перевірка ловила б власні пояснення.
+     */
+    function findUntypedBags() {
+        const found = [];
+
+        for (const dir of PRODUCTION_DIRS) {
+            for (const file of collectTsFiles(dir)) {
+                if (file in ALLOWED) continue;
+
+                let inBlockComment = false;
+
+                readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+                    let code = line;
+
+                    if (inBlockComment) {
+                        const end = code.indexOf('*/');
+                        if (end === -1) return;
+                        code = code.slice(end + 2);
+                        inBlockComment = false;
+                    }
+
+                    const start = code.indexOf('/*');
+                    if (start !== -1) {
+                        const end = code.indexOf('*/', start + 2);
+                        if (end === -1) {
+                            inBlockComment = true;
+                            code = code.slice(0, start);
+                        } else {
+                            code = code.slice(0, start) + code.slice(end + 2);
+                        }
+                    }
+
+                    code = code.split('//')[0];
+
+                    if (code.includes('Record<string, any>')) {
+                        found.push(`${file}:${i + 1}`);
+                    }
+                });
+            }
+        }
+
+        return found;
+    }
+
+    test('жодного випадку не лишилось', () => {
+        assert.deepEqual(
+            findUntypedBags(),
+            [],
+            'з\'явився новий Record<string, any>. Майже завжди правильна заміна — ' +
+            'НАЗВАТИ тип: StorageReadResult / StorageWriteItems / StorageRawResult ' +
+            'для сховища, або власний іменований тип для доменного об\'єкта. ' +
+            'Якщо випадок справді виправданий — внесіть його в ALLOWED із поясненням.'
+        );
+    });
+
+    test('перевірка справді ходить по файлах (не проходить вхолосту)', () => {
+        const files = PRODUCTION_DIRS.flatMap(dir => collectTsFiles(dir));
+
+        assert.ok(files.length > 200, `очікувались сотні файлів, знайдено ${files.length}`);
+        assert.ok(files.includes('modules/storage_keys.ts'));
     });
 });

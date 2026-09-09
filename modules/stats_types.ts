@@ -47,3 +47,13 @@ export interface ChartRenderData {
     datasets: any[];
     plugins: any[];
 }
+
+
+/**
+ * База графіків у сховищі (`STORAGE_KEYS.STATS_CHARTS`):
+ * бренд → дата ефіру → сесія.
+ *
+ * Форма була відома, але ніде не названа, тому по коду ходила як
+ * `Record<string, any>` (T17, крок 3).
+ */
+export type StatsChartsDb = Record<string, Record<string, StreamChartSession>>;
