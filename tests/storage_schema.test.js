@@ -18,7 +18,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 
 import { installChromeMock } from './setup/chrome_mock.ts';
 
@@ -281,7 +280,9 @@ const ALLOWED = {};
 
 function collectTsFiles(dir, acc = []) {
     for (const entry of readdirSync(dir)) {
-        const full = join(dir, entry);
+        // Шлях збираємо через `/` навмисно: на Windows `join` дав би `modules\file.ts`,
+        // і тоді ні `ALLOWED`, ні перевірка «ходить по файлах» не збіглися б із ключами.
+        const full = `${dir}/${entry}`;
         if (statSync(full).isDirectory()) collectTsFiles(full, acc);
         else if (entry.endsWith('.ts')) acc.push(full);
     }
