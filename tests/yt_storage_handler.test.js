@@ -39,60 +39,6 @@ installChromeMock({
     }
 });
 
-// Mock all dependencies before importing the module
-const originalResolve = global.resolveModuleHooks || [];
-global.resolveModuleHooks = [];
-
-// We'll mock the modules by defining them before import
-const mockModules = {
-    '../modules/storage': {
-        SYH_STORAGE: global.chrome.storage.local,
-        STORAGE_KEYS: {
-            OPTIONS: 'syh:options',
-            YT_BUTTON_STATES: 'syh:yt:button_states',
-            YT_CHECKBOX_STATE: 'syh:yt:checkbox_state'
-        },
-        getSheetCollectedStorageKey: (sheetId) => `syh:collected:${sheetId}`
-    },
-    './yt_selectors': {
-        YT_SELECTORS: {
-            commentBlock: 'ytd-comment-thread-renderer',
-            headerAuthor: '#author-text'
-        }
-    },
-    './yt_ui': {
-        addButtonsToYTComment: () => {},
-        extractCommentId: () => 'test-id',
-        restoreButtonState: () => {},
-        restoreCheckboxState: () => {}
-    },
-    './yt_events': {
-        bindYTEvents: () => {},
-        YTCollectedItem: class {}
-    },
-    '../modules/comment_assistant/index': {
-        SYH_COMMENT_ASSISTANT: {
-            processComment: () => true,
-            init: () => {}
-        }
-    },
-    '../modules/dom_observer': {
-        SYH_DOM_OBSERVER: {
-            register: () => () => {},
-            start: () => {}
-        }
-    },
-    './yt_comment_processor': {
-        initializeCommentAssistant: () => { mockInitializeCommentAssistant = true; },
-        processAllYTComments: () => { mockProcessAllYTComments = true; },
-        stateCache: mockStateCache
-    },
-    './yt_init': {
-        cleanupYouTubeUI: () => { mockCleanupYouTubeUI = true; },
-        initializeYouTubeModule: () => { mockInitializeYouTubeModule = true; }
-    }
-};
-
 // Since we can't easily mock ES modules in Node's test runner,
 // let's test the logic directly by creating a testable version
 test('yt_storage_handler: handleOptionsChange enables YouTube module when option turns true', () => {
