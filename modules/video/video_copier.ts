@@ -6,7 +6,7 @@
  *   - `video_copier_ui`         — фабрика та ін'єкція кнопок;
  *   - `video_copier_downloader` — сценарій масового завантаження.
  */
-import type { ISyhPlugin } from '../plugin_registry';
+import type { ISyhPlugin } from '../core/plugin_registry';
 import { SYH_DOM_OBSERVER } from '../dom_observer';
 import {
     VIDEO_COPIER_INJECTIONS,

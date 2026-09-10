@@ -1,5 +1,5 @@
-import type { CommentStateActionId } from './comment_actions';
-import type { SheetId } from './sheets';
+import type { CommentStateActionId } from '../comments/comment_actions';
+import type { SheetId } from '../sheets';
 
 export interface PrayerItem {
     id?: string;

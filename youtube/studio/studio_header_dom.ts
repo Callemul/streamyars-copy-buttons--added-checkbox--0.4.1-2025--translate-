@@ -7,7 +7,7 @@
 // щоб розділити «де вставити + що робить клік» і «як виглядає розмітка».
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
-import { CommentService } from '../../modules/comment_service';
+import { CommentService } from '../../modules/comments/comment_service';
 
 const HEADER_COUNTERS_WRAPPER_CLASS = 'syh-header-counters-wrapper';
 

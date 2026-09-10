@@ -35,7 +35,7 @@ installChromeMock({
 });
 
 const { bindAutoHealScanner, runAutoHeal } = await import('../modules/streamyard/comments/auto_heal.ts');
-const { SYH_STATE } = await import('../modules/state.ts');
+const { SYH_STATE } = await import('../modules/core/state.ts');
 
 const TEST_SELECTORS = {
     commentBlock: '.test-comment-block',

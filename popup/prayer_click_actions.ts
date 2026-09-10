@@ -10,7 +10,7 @@
 
 import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { CommentService } from '../modules/comment_service';
+import { CommentService } from '../modules/comments/comment_service';
 import { sendUnstarMessagesForList } from './prayer_messaging';
 import { savePrayersAndRender } from './prayer_render';
 import {
@@ -25,7 +25,7 @@ import {
     splitPrayersById,
     stampPrayersWithRoom
 } from './prayer_click_rules';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 /** Читає збережений список молитов і передає його далі. */
 function withStoredPrayers(use: (list: PrayerItem[]) => void): void {

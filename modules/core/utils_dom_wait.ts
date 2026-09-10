@@ -11,7 +11,7 @@
  *   - `waitForNewBanner` перечитує селектор на кожному тіку (звідси провайдер).
  */
 
-import { resolveSelector, resolveSelectorAll } from './config';
+import { resolveSelector, resolveSelectorAll } from '../config';
 
 /** Крок поллінгу, спільний для всіх очікувачів. */
 const POLL_INTERVAL_MS = 100;

@@ -1,6 +1,6 @@
 import type { CopyPayload } from './types';
 import { getPrayerIcon, stripLeadingAt } from './utils';
-import { resolveActionId } from '../../comment_actions';
+import { resolveActionId } from '../../comments/comment_actions';
 
 /**
  * Формує payload для копіювання за `data-action` кнопки StreamYard.

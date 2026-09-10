@@ -8,8 +8,8 @@
 
 import { POPUP_SHEET_KEYS } from '../modules/storage';
 import { $, setTextContent, hideElement } from './popup_dom_utils';
-import { CommentService } from '../modules/comment_service';
-import { SheetStateService } from '../modules/sheet_state_service';
+import { CommentService } from '../modules/comments/comment_service';
+import { SheetStateService } from '../modules/sheets/sheet_state_service';
 import { updateCombinedCounters, loadYTCollected } from './popup_telegram';
 
 export const CLEAR_SHEET_CONFIRM_MESSAGE =

@@ -8,7 +8,7 @@
 // з навмисною розбіжністю між таблицею і буфером обміну: у таблиці порожня
 // назва відео підміняється тире, а в текстовому звіті — ні.
 
-import type { StudioOverrideLogEntry } from '../modules/types';
+import type { StudioOverrideLogEntry } from '../modules/core/types';
 
 const EMPTY_CELL = '—';
 const UNDETECTED_LABEL = 'Не визначено';

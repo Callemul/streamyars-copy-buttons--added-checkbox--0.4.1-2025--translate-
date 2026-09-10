@@ -16,7 +16,7 @@
 // Модуль навмисно без DOM і без залежностей від сервісів — це чиста таблиця,
 // тому його можна імпортувати з будь-якого шару без ризику циклів.
 
-import type { ButtonConfig } from './ui_factory';
+import type { ButtonConfig } from '../ui_factory';
 
 /** Поверхні, на яких показується панель дій над коментарем. */
 export type CommentPlatformId = 'streamyard' | 'youtube' | 'studio';

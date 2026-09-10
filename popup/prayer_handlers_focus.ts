@@ -14,7 +14,7 @@ import {
     resolveEditableTarget,
     shouldRenameAuthor
 } from './prayer_focus_rules';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 type EditableHandler = (el: HTMLElement) => void;
 

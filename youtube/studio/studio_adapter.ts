@@ -1,7 +1,7 @@
-import type { CommentStateActionId } from '../../modules/comment_actions';
+import type { CommentStateActionId } from '../../modules/comments/comment_actions';
 // youtube/studio/studio_adapter.ts
 import { STORAGE_KEYS } from '../../modules/storage';
-import { CommentService } from '../../modules/comment_service';
+import { CommentService } from '../../modules/comments/comment_service';
 import { SHEET_IDS, type SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
@@ -12,7 +12,7 @@ import {
     type CommentStateCaches,
     type PlatformButtons,
     type ButtonStateType
-} from '../../modules/comment_platform_adapter';
+} from '../../modules/comments/comment_platform_adapter';
 import {
     getEffectiveButtonState,
     restoreButtonState,

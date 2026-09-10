@@ -9,7 +9,7 @@
 import { RELATIVE_TIME_LINE_REGEX } from '../parsers/index';
 import { cleanTelegramHeadersLogged, countQuestionsInText, hasSubQuestions } from './telegram_text_rules';
 import type { TelegramQuestionItem } from './telegram_types';
-import type { CleaningLogEntry, DeletedLogEntry } from '../types';
+import type { CleaningLogEntry, DeletedLogEntry } from '../core/types';
 
 /** Ім'я, яким підписується блок без розпізнаного автора. */
 const ANONYMOUS_AUTHOR = 'Анонім';

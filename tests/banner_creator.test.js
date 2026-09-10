@@ -8,7 +8,7 @@ import {
     SYH_BANNER_CREATOR
 } from '../modules/banners/banner_creator.ts';
 import { SYH_PARSERS } from '../modules/parsers/index.ts';
-import { SYH_UTILS } from '../modules/utils.ts';
+import { SYH_UTILS } from '../modules/core/utils.ts';
 
 const mockLogger = (msg) => { };
 

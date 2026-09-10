@@ -11,7 +11,7 @@ import {
     type PlatformButtons,
     type ButtonStateType,
     type CommentStateCaches
-} from '../modules/comment_platform_adapter';
+} from '../modules/comments/comment_platform_adapter';
 
 const YT_BUTTON_STATES_KEY = STORAGE_KEYS.YT_BUTTON_STATES;
 const YT_CHECKBOX_STATE_KEY = STORAGE_KEYS.YT_CHECKBOX_STATE;

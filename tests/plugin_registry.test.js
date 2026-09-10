@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PluginRegistry } from '../modules/plugin_registry.ts';
+import { PluginRegistry } from '../modules/core/plugin_registry.ts';
 
 test('PluginRegistry registers and initializes supported plugins', async () => {
     const registry = new PluginRegistry();

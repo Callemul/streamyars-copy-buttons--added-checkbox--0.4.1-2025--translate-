@@ -40,7 +40,7 @@ const {
     bindSyhButtonMouseHandlers,
 } = await import('../modules/streamyard/comments/handlers');
 
-const { SYH_STATE } = await import('../modules/state.ts');
+const { SYH_STATE } = await import('../modules/core/state.ts');
 
 // Selectors for test DOM
 const TEST_SELECTORS = {

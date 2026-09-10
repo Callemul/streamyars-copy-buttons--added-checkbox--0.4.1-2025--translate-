@@ -1,8 +1,8 @@
-import type { CommentActionId } from '../../comment_actions';
+import type { CommentActionId } from '../../comments/comment_actions';
 
 import type { SyhConfig, SelectorValue } from '../../config';
-import type { SyhState } from '../../state';
-import type { SyhUtils } from '../../utils';
+import type { SyhState } from '../../core/state';
+import type { SyhUtils } from '../../core/utils';
 import type { SyhUi } from '../ui/ui';
 
 /** Аліас на канонічний union із реєстру дій (`modules/comment_actions.ts`). */

@@ -4,7 +4,7 @@ import { StudioStorageController, createStorageChangeHandler } from './studio_st
 import { StudioSPAHandler } from './studio_spa_handler';
 import { StudioCommentProcessor } from './studio_comment_processor';
 
-import type { ISyhPlugin } from '../../modules/plugin_registry';
+import type { ISyhPlugin } from '../../modules/core/plugin_registry';
 
 export class StudioModuleController {
     private storageController: StudioStorageController;

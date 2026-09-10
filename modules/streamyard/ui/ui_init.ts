@@ -12,16 +12,16 @@
  */
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../../storage';
-import { SYH_STATE, type SyhState } from '../../state';
+import { SYH_STATE, type SyhState } from '../../core/state';
 import { SYH_CONFIG, type SyhConfig } from '../../config';
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_BUS } from '../../event_bus';
+import { SYH_BUS } from '../../core/event_bus';
 import { updateCommentVisuals } from './ui_comments';
 import { filterStarredComments } from './ui_starred_controls';
 import { filterBanners } from './ui_banners';
 import { validateSelectorsSyntax } from './ui_selector_validator';
 import { restoreDomCheckboxes } from './ui_checkbox_restorer';
-import type { PrayerItem } from '../../types';
+import type { PrayerItem } from '../../core/types';
 
 type UiStorageChanges = Record<string, { oldValue?: unknown; newValue?: unknown }>;
 

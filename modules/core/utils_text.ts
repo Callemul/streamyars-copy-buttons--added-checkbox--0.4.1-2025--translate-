@@ -13,7 +13,7 @@
  * Поведінка збережена 1-в-1 (див. `tests/utils.test.js`, `tests/utils_facade.test.js`).
  */
 
-import { TG_HEADER_CLEANUP_REGEX } from './parsers/index';
+import { TG_HEADER_CLEANUP_REGEX } from '../parsers/index';
 import type { CleaningLogEntry } from './types';
 
 /** Латинські гомогліфи → кириличні відповідники (порядок ключів впливає на результат). */

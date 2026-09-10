@@ -6,7 +6,7 @@
  * посилались на одну форму даних без взаємних імпортів.
  */
 
-import type { CleaningLogEntry, DeletedLogEntry } from '../types';
+import type { CleaningLogEntry, DeletedLogEntry } from '../core/types';
 
 /** Одне питання/молитва з будь-якого джерела. */
 export interface TelegramQuestionItem {

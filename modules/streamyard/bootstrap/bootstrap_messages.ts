@@ -3,7 +3,7 @@
  * Обробка runtime-повідомлень від попапу в контент-скрипті StreamYard.
  * Раніше ця логіка жила всередині IIFE в `main.ts` і була недосяжною для тестів.
  */
-import type { PrayerItem, SyhRuntimeMessage } from '../../types';
+import type { PrayerItem, SyhRuntimeMessage } from '../../core/types';
 import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue } from '../../config';
 
 export const PRAYER_SELECTORS = {

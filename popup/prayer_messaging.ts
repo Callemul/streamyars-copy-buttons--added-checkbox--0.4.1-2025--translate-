@@ -1,5 +1,5 @@
 import { SYH_MESSAGING } from '../modules/messaging';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 export function sendUnstarMessage(text: string): void {
     if (!text) return;

@@ -1,6 +1,6 @@
-import type { StorageRawResult, StorageWriteItems } from './storage_keys';
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
-import { SHEET_REGISTRY } from './sheets';
+import type { StorageRawResult, StorageWriteItems } from '../storage_keys';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../storage';
+import { SHEET_REGISTRY } from '../sheets';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;

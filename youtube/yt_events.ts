@@ -1,9 +1,9 @@
-import type { CommentStateActionId } from '../modules/comment_actions';
+import type { CommentStateActionId } from '../modules/comments/comment_actions';
 // youtube/yt_events.ts
-import { CommentInjector } from '../modules/comment_injector';
+import { CommentInjector } from '../modules/comments/comment_injector';
 import { YouTubeCommentAdapter } from './yt_adapter';
-import type { YTCollectedItem } from '../modules/types';
-import type { CommentStateCaches } from '../modules/comment_platform_adapter';
+import type { YTCollectedItem } from '../modules/core/types';
+import type { CommentStateCaches } from '../modules/comments/comment_platform_adapter';
 export type { YTCollectedItem };
 export { getVideoId } from './yt_video_id';
 

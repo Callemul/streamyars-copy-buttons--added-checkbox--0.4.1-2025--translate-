@@ -5,12 +5,12 @@
  * усуває зациклення навантаження (ключі/міграції не залежать від адаптера).
  */
 
-import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry, StoredElementSize } from './types';
+import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry, StoredElementSize } from './core/types';
 import type { StatsChartsDb } from './stats/stats_types';
 // Імпорт лише типу: у рантаймі стирається, тож циклу з `channel_config` немає.
 import type { ChannelConfigItem } from './channel_config';
-import type { CheckboxStateEntry, CommentPayload } from './comment_types';
-import type { CommentStateActionId } from './comment_actions';
+import type { CheckboxStateEntry, CommentPayload } from './comments/comment_types';
+import type { CommentStateActionId } from './comments/comment_actions';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ДИНАМІЧНІ РОДИНИ КЛЮЧІВ (T17, крок 2)

@@ -1,6 +1,6 @@
 import type { SyhUi } from './types';
 import type { SelectorValue } from '../../config';
-import { CommentService } from '../../comment_service';
+import { CommentService } from '../../comments/comment_service';
 import { resolveBannerContext } from './helpers';
 import { SYH_STATS_TRACKER } from '../../stats/stats_tracker';
 import { checkAutoStartQuestionsPhase } from '../../stats/stats_auto_phase';

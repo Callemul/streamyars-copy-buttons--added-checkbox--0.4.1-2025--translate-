@@ -1,12 +1,12 @@
 import type { SyhConfig, SelectorValue } from '../../config';
-import type { SyhState } from '../../state';
-import type { SyhUtils } from '../../utils';
+import type { SyhState } from '../../core/state';
+import type { SyhUtils } from '../../core/utils';
 import type { SyhUi } from '../ui/ui';
 import type { SyhBannerCreator } from '../../banners/banner_creator';
 
 // `./category` та `./checkbox` імпортують ці типи саме звідси, тому барель
 // зобов'язаний їх реекспортувати, а не лише споживати локально.
-export type { SyhUtils } from '../../utils';
+export type { SyhUtils } from '../../core/utils';
 export type { SyhUi } from '../ui/ui';
 
 export interface SyhEventBanners {

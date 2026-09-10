@@ -15,7 +15,7 @@ installChromeMock();
 const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
 const { SYH_UI } = await import('../modules/streamyard/ui/ui.ts');
 const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
-const { SYH_BUS } = await import('../modules/event_bus.ts');
+const { SYH_BUS } = await import('../modules/core/event_bus.ts');
 const { SYH_CONFIG } = await import('../modules/config.ts');
 
 const SELECTORS_FIXTURE = {
@@ -381,7 +381,7 @@ describe('ui — init', () => {
 
     test('15. без аргументів підтягує SYH_CONFIG.SELECTORS та SYH_STATE', async () => {
         stubStorage();
-        const { SYH_STATE } = await import('../modules/state.ts');
+        const { SYH_STATE } = await import('../modules/core/state.ts');
 
         SYH_UI.init();
 

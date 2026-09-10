@@ -16,7 +16,7 @@ import type { StorageReadResult, SheetCollectedKey } from '../modules/storage';
 import { STORAGE_KEYS } from '../modules/storage';
 import { orEmptyRecord, readYoutubeEnabled } from './yt_storage_rules';
 import type { StateCache } from './yt_state';
-import type { YTCollectedItem } from '../modules/types';
+import type { YTCollectedItem } from '../modules/core/types';
 
 /** Ключі сховища, потрібні YouTube-модулю на старті (порядок як в оригіналі). */
 export function buildYtInitStorageKeys(collectedKey: SheetCollectedKey): string[] {

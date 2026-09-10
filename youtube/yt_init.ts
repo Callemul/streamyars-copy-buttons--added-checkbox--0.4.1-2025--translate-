@@ -9,14 +9,14 @@
 
 import { YT_SELECTORS } from './yt_selectors';
 import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
-import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant/index';
+import { SYH_COMMENT_ASSISTANT } from '../modules/comments/assistant/index';
 import { SYH_CONFIG } from '../modules/config';
 import { isAllowedChannel } from './yt_channel_gate';
 import { processAllYTComments, startObserver } from './yt_comment_processor';
 import { stopCommentObserver } from './yt_observer';
 import { YT_COLLECTED_SHEET_ID, stateCache } from './yt_state';
 import { applyYtInitState, buildYtInitStorageKeys, resolveYtInitState } from './yt_bootstrap_rules';
-import { CommentInjector } from '../modules/comment_injector';
+import { CommentInjector } from '../modules/comments/comment_injector';
 
 const DEFAULT_TRIGGER_WORDS = ['вопрос'];
 

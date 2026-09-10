@@ -1,4 +1,4 @@
-import { batchRenderItems } from '../modules/render_utils';
+import { batchRenderItems } from './render_utils';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { $ } from './prayer_utils';
 import { checkRoomWarning } from './prayer_render_helpers';
@@ -12,7 +12,7 @@ import {
 } from './prayer_data';
 import { buildAuthorHeader, buildPrayerRow } from './prayer_render_helpers';
 
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 let activePrayerBatchCancel: (() => void) | null = null;
 

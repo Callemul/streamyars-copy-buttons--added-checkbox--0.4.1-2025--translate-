@@ -12,7 +12,7 @@
 // відновлювалось, але не зберігалось.
 
 import { SYH_STORAGE } from '../modules/storage';
-import { SheetStateService } from '../modules/sheet_state_service';
+import { SheetStateService } from '../modules/sheets/sheet_state_service';
 import { $, bindDebouncedInput } from './popup_dom_utils';
 import {
     updateOldInputStats,

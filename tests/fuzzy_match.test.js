@@ -1,8 +1,8 @@
 import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
-const { levenshtein, normalize, fuzzyIncludes } = await import('../modules/fuzzy_match.ts');
-const { maxAllowedDistance, buildWindowSizes, hasApproximateWindow } = await import('../modules/fuzzy_window.ts');
+const { levenshtein, normalize, fuzzyIncludes } = await import('../modules/core/fuzzy_match.ts');
+const { maxAllowedDistance, buildWindowSizes, hasApproximateWindow } = await import('../modules/core/fuzzy_window.ts');
 
 describe('fuzzy_match tests', () => {
     test('1. levenshtein distance calculation', () => {

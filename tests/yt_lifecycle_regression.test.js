@@ -28,8 +28,8 @@ const { bindYTEvents } = await import('../youtube/yt_events.ts');
 const { isAllowedChannel } = await import('../youtube/yt_channel_gate.ts');
 const { YT_SELECTORS } = await import('../youtube/yt_selectors.ts');
 const { STORAGE_KEYS, getSheetCollectedStorageKey, SYH_STORAGE } = await import('../modules/storage.ts');
-const { CommentInjector } = await import('../modules/comment_injector.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
+const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 
 const COLLECTED_KEY = getSheetCollectedStorageKey(YT_COLLECTED_SHEET_ID);
 

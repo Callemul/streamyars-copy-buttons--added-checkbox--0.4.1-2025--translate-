@@ -11,8 +11,8 @@
  */
 
 import { queryBySelectorValue, type SelectorValue } from '../../config';
-import { SYH_UTILS } from '../../utils';
-import type { PrayerItem } from '../../types';
+import { SYH_UTILS } from '../../core/utils';
+import type { PrayerItem } from '../../core/types';
 import { resolveCommentType, updateCommentVisuals } from './ui_comment_labels';
 import { updateTabCounts } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';

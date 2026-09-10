@@ -10,7 +10,7 @@ import { $ } from './popup_dom_utils';
 
 /** Збережений розмір елемента (обидва виміри необовʼязкові). */
 // Форма переїхала в `modules/types.ts` до решти збережених форм (T17, крок 3).
-import type { StoredElementSize } from '../modules/types';
+import type { StoredElementSize } from '../modules/core/types';
 export type { StoredElementSize };
 
 /** Порожні/відсутні виміри навмисно НЕ перезаписують поточний стиль. */

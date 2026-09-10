@@ -13,7 +13,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { $, bindTabSwitcher, bindDebouncedInput } from './popup_dom_utils';
-import { showBanner } from '../modules/utils_notify';
+import { showBanner } from '../modules/core/utils_notify';
 import { db, saveDataToStorage } from './popup_state_restorer';
 import { bindSheetListeners, createSheetBindingTimers } from './popup_sheet_bindings';
 

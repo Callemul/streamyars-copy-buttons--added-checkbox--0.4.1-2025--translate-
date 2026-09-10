@@ -15,7 +15,7 @@
 
 import { YT_SELECTORS } from './yt_selectors';
 import { UiFactory } from '../modules/ui_factory';
-import { buildPlatformButtonConfigs } from '../modules/comment_actions';
+import { buildPlatformButtonConfigs } from '../modules/comments/comment_actions';
 import { resolveSelector } from '../modules/config';
 
 const PANEL_CLASS = 'syh-yt-buttons';

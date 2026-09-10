@@ -9,7 +9,7 @@
  */
 
 import { PRAYER_ENTRY_TYPE, readStoredPrayers } from './prayer_toolbar_actions';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 /** Спільні з тулбаром примітиви (Single Source of Truth для роботи зі списком). */
 export { PRAYER_ENTRY_TYPE, readStoredPrayers };

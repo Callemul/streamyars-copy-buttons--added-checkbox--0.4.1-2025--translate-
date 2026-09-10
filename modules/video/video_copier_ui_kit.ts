@@ -6,7 +6,7 @@
  * Виокремлено з `video_copier_ui.ts` — це єдиний шар, який знає про таймери
  * повернення початкового вигляду кнопки.
  */
-import { CommentService } from '../comment_service';
+import { CommentService } from '../comments/comment_service';
 import { UiFactory } from '../ui_factory';
 import { SQUARE_BUTTON_STYLE } from './video_copier_theme';
 

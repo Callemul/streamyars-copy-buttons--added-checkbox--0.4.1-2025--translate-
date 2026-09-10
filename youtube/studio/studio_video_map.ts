@@ -4,7 +4,7 @@ import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
 import type { SheetId } from '../../modules/sheets';
 import type { ChannelKey } from '../../modules/channel_config';
 import type { VideoSheetMapEntry } from './studio_category_matcher';
-import type { StudioOverrideLogEntry } from '../../modules/types';
+import type { StudioOverrideLogEntry } from '../../modules/core/types';
 
 export const VIDEO_MAP_STORAGE_KEY = STORAGE_KEYS.STUDIO_VIDEO_SHEET_MAP;
 export const MANUAL_OVERRIDE_LOG_KEY = STORAGE_KEYS.STUDIO_OVERRIDE_LOG;

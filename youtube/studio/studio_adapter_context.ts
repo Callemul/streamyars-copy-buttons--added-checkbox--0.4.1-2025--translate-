@@ -10,7 +10,7 @@
  * Поведінка 1-в-1 (див. тест 6 `studio_integration.test.js` про reply-коментарі).
  */
 
-import type { CommentContext } from '../../modules/comment_platform_adapter';
+import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
 import { getAuthorNameText, getCommentText } from './studio_selectors';
 import { resolveReplyVideoMetadata } from './studio_dom_helpers';
 import { generateVideoKey } from './studio_video_map';

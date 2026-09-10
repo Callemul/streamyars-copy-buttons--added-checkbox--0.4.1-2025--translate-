@@ -6,8 +6,8 @@
  * або видалення принагідно вичищає протухлі записи (молитви — 2 доби,
  * питання — 30 днів). Дедуплікація йде за текстом: новий запис витісняє старий.
  */
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
-import { RetentionService } from './retention_service';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { RetentionService } from '../sheets/retention_service';
 import type { PrayerRecord } from './comment_types';
 
 /** Читає список і одразу відкидає протухлі за TTL записи. */

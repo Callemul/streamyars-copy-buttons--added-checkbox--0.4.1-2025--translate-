@@ -7,9 +7,9 @@
 
 import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
-import { CommentService } from '../modules/comment_service';
-import { batchRenderItems } from '../modules/render_utils';
-import type { YTCollectedItem } from '../modules/types';
+import { CommentService } from '../modules/comments/comment_service';
+import { batchRenderItems } from './render_utils';
+import type { YTCollectedItem } from '../modules/core/types';
 import { $ } from './popup_dom_utils';
 import {
     setCollectedItemsForSheet,

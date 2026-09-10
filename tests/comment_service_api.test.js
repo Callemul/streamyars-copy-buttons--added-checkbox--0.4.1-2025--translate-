@@ -35,8 +35,8 @@ installChromeMock({
     }
 });
 
-const { CommentService } = await import('../modules/comment_service.ts');
-const { SYH_BUS } = await import('../modules/event_bus.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
+const { SYH_BUS } = await import('../modules/core/event_bus.ts');
 const { STORAGE_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage.ts');
 
 const COLLECTED_KEY = getSheetCollectedStorageKey('vp_ss');
@@ -351,7 +351,7 @@ describe('CommentService — стани кнопок і чекбоксів', () 
     });
 
     test('24. StreamYard-чекбокс: set/get ідуть через SYH_STATE та ігнорують порожній ключ', async () => {
-        const { SYH_STATE } = await import('../modules/state.ts');
+        const { SYH_STATE } = await import('../modules/core/state.ts');
         const updateState = mock.method(SYH_STATE, 'updateState', () => {});
         const getState = mock.method(SYH_STATE, 'getState', () => true);
 

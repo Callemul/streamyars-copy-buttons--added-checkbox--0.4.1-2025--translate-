@@ -8,7 +8,7 @@
  * Поведінка збережена 1-в-1 з оригінальними обробниками.
  */
 
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 /** Інлайн-редаговані вузли списку молитов. */
 export const EDITABLE_PRAYER_SELECTOR = '.editable-prayer';

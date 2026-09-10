@@ -19,7 +19,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_UTILS } = await import('../modules/utils.ts');
+const { SYH_UTILS } = await import('../modules/core/utils.ts');
 const { STORAGE_KEYS } = await import('../modules/storage.ts');
 
 /** Робить елемент «видимим» для перевірок offsetWidth/offsetHeight у happy-dom. */

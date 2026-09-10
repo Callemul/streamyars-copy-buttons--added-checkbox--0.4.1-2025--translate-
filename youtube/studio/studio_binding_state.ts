@@ -6,11 +6,11 @@
 //
 // Виділено з youtube/studio/studio_events.ts (CRAP 30–90 на функцію).
 
-import { CommentInjector } from '../../modules/comment_injector';
-import type { PlatformButtons } from '../../modules/comment_platform_adapter';
+import { CommentInjector } from '../../modules/comments/comment_injector';
+import type { PlatformButtons } from '../../modules/comments/comment_platform_adapter';
 import type { StudioCommentAdapter } from './studio_adapter';
 import type { StudioEventCaches } from './state_resolvers';
-import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant/index';
+import { SYH_COMMENT_ASSISTANT } from '../../modules/comments/assistant/index';
 import type { SyhObservedElement } from './studio_video_metadata';
 
 export const STUDIO_BOUND_FLAG = 'true';

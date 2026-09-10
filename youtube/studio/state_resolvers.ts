@@ -1,8 +1,8 @@
-import type { VideoSheetMapEntry } from '../../modules/types';
-import type { CommentActionStateType, CommentStateActionId } from '../../modules/comment_actions';
+import type { VideoSheetMapEntry } from '../../modules/core/types';
+import type { CommentActionStateType, CommentStateActionId } from '../../modules/comments/comment_actions';
 // youtube/studio/state_resolvers.ts
 import { generateCommentKey } from './studio_comment_key';
-import type { CommentContext, CommentStateCaches } from '../../modules/comment_platform_adapter';
+import type { CommentContext, CommentStateCaches } from '../../modules/comments/comment_platform_adapter';
 
 export interface StudioEventCaches extends CommentStateCaches {
     videoSheetMap: Record<string, VideoSheetMapEntry>;

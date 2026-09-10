@@ -21,9 +21,9 @@
  * і далі впливає на результат.
  */
 
-import { SYH_STORAGE } from './storage';
+import { SYH_STORAGE } from '../storage';
 import type { CleaningLogEntry } from './types';
-import { isExtensionContextValid } from './messaging_context';
+import { isExtensionContextValid } from '../messaging_context';
 
 import {
     normalizeText as normalizeTextImpl,

@@ -96,7 +96,7 @@ describe('Інваріант: панель кнопок коментаря за�
 
         commentZone.onAdded(node);
 
-        const { getCommentAction } = await import('../modules/comment_actions.ts');
+        const { getCommentAction } = await import('../modules/comments/comment_actions.ts');
         const copyAction = getCommentAction('copy');
         const btn = node.querySelector(`[data-action="${copyAction.platforms.streamyard.domAction}"]`);
         assert.ok(btn, 'кнопка копіювання має бути в панелі');

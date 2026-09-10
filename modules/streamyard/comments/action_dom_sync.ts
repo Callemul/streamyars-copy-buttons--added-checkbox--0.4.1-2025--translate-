@@ -9,7 +9,7 @@
 
 import type { CommentEffectHost } from './types';
 import { SYH_CONFIG, queryBySelectorValue } from '../../config';
-import { CommentService } from '../../comment_service';
+import { CommentService } from '../../comments/comment_service';
 import { getCheckboxTextKey } from '../ui/ui_checkbox_restorer';
 
 /** Чекбокс SYH, привʼязаний саме до коментаря (а не до банера). */

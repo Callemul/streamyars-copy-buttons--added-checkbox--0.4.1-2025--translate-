@@ -10,7 +10,7 @@
 import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
-const { TriggerManager } = await import('../modules/comment_assistant/trigger_manager.ts');
+const { TriggerManager } = await import('../modules/comments/assistant/trigger_manager.ts');
 const { SYH_CONFIG } = await import('../modules/config.ts');
 
 const DEFAULT_QUESTION = ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'];

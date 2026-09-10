@@ -44,7 +44,7 @@ globalThis.chrome.tabs = {
 
 const { STORAGE_KEYS } = await import('../modules/storage.ts');
 const { SYH_MESSAGING } = await import('../modules/messaging.ts');
-const { RetentionService } = await import('../modules/retention_service.ts');
+const { RetentionService } = await import('../modules/sheets/retention_service.ts');
 
 const {
     sendUnstarMessage,

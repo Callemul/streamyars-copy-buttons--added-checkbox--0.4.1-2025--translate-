@@ -299,7 +299,7 @@ describe('banner_parser — parseRawTextToBanners', () => {
 
     test('33. регресія: список уроку Суботньої Школи (Вк, привет! Вопросы по субботней школе...) йде в "stream"', async () => {
         const { SYH_PARSERS } = await import('../modules/parsers/index.ts');
-        const { SYH_UTILS } = await import('../modules/utils.ts');
+        const { SYH_UTILS } = await import('../modules/core/utils.ts');
 
         const input = `Вк, привет! Вопросы по субботней школе. 1. Как на Ваш взгляд предыдущий урок связан с темой сегодняшнего урока? 2. Что сегодня на ваш взгляд не хватает нам и нашей общине, чтобы быть письмом Христовым?
 3. Почему проповедь Евангелия практически всегда сопровождается гонениями? Когда нет на церковь гонений о чем это может говорить? 
@@ -315,7 +315,7 @@ describe('banner_parser — parseRawTextToBanners', () => {
 
     test('34. регресія: комбінований список ВОПРОСЫ СШ + МОЛИТВЕННЫЕ СШ дає audience і prayer', async () => {
         const { SYH_PARSERS } = await import('../modules/parsers/index.ts');
-        const { SYH_UTILS } = await import('../modules/utils.ts');
+        const { SYH_UTILS } = await import('../modules/core/utils.ts');
 
         const input = `❓❓❓ВОПРОСЫ СШ
 1️⃣

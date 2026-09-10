@@ -11,8 +11,8 @@
  */
 
 import type { SyhConfig, SelectorValue } from '../../config';
-import type { SyhState } from '../../state';
-import type { SyhUtils } from '../../utils';
+import type { SyhState } from '../../core/state';
+import type { SyhUtils } from '../../core/utils';
 import type { SyhUi } from '../ui/ui_state';
 import type { SyhBannerCreator } from '../../banners/banner_creator';
 

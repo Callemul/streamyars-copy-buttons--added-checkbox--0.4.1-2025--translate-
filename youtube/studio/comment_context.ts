@@ -1,4 +1,4 @@
-import type { CommentContext } from '../../modules/comment_platform_adapter';
+import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
 import type { StudioCommentUIElements } from './studio_ui';
 import type { StudioEventCaches } from './state_resolvers';
 import { readCommentAuthor, readCommentBodyText, readVideoRef } from './comment_context_fields';

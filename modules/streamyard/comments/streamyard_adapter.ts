@@ -29,17 +29,17 @@
 
 import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from '../../config';
 import { SYH_UI } from '../ui/ui';
-import { SYH_UTILS } from '../../utils';
-import { CommentService } from '../../comment_service';
-import { SYH_COMMENT_ASSISTANT } from '../../comment_assistant/index';
+import { SYH_UTILS } from '../../core/utils';
+import { CommentService } from '../../comments/comment_service';
+import { SYH_COMMENT_ASSISTANT } from '../../comments/assistant/index';
 import type { SyhUi } from '../ui/ui_state';
-import type { SyhUtils } from '../../utils';
+import type { SyhUtils } from '../../core/utils';
 
 import {
     acceptsMouseButton,
     getPlatformActions,
     type CommentActionId
-} from '../../comment_actions';
+} from '../../comments/comment_actions';
 import {
     BaseCommentPlatformAdapter,
     type ActionInvocation,
@@ -47,7 +47,7 @@ import {
     type CommentContext,
     type CommentStateCaches,
     type PlatformButtons
-} from '../../comment_platform_adapter';
+} from '../../comments/comment_platform_adapter';
 
 import type { CommentEffectHost } from './types';
 import { formatCopyPayload } from './format';

@@ -26,9 +26,9 @@ installChromeMock({
     }
 });
 
-const { CommentInjector } = await import('../modules/comment_injector.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
-const { SYH_BUS } = await import('../modules/event_bus.ts');
+const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
+const { SYH_BUS } = await import('../modules/core/event_bus.ts');
 
 /**
  * Характеризаційні тести публічного API `CommentInjector`.

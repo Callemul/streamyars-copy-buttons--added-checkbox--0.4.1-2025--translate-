@@ -7,7 +7,7 @@
  */
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
-import { SYH_UTILS } from '../utils';
+import { SYH_UTILS } from '../core/utils';
 import { escapeHtml } from '../escape_html';
 import type { StreamChartSession, PhaseStatsReport } from './stats_types';
 

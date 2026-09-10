@@ -2,8 +2,8 @@
 import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
 import { UiFactory } from '../../modules/ui_factory';
-import { buildActionButtonConfig } from '../../modules/comment_actions';
-import type { CommentActionId, CommentActionStateType, CommentStateActionId } from '../../modules/comment_actions';
+import { buildActionButtonConfig } from '../../modules/comments/comment_actions';
+import type { CommentActionId, CommentActionStateType, CommentStateActionId } from '../../modules/comments/comment_actions';
 import { formatCategoryLabel } from './studio_header_badge_markup';
 
 export interface StudioCommentUIElements {

@@ -6,7 +6,7 @@
 
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG, resolveSelector } from '../../config';
-import { SYH_UTILS } from '../../utils';
+import { SYH_UTILS } from '../../core/utils';
 import { updateBannerVisuals } from './ui_banners_inject';
 import { updateTabCounts, scrollToActiveItem } from './ui_shared_utils';
 import { renderSharedEmptyState } from './ui_empty_state';

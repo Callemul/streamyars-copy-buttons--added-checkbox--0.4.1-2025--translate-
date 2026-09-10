@@ -6,7 +6,7 @@
 // Виділено з popup/prayer_render_helpers.ts, де ця логіка була закопана всередині
 // колбека chrome.tabs.query і не піддавалася юніт-тестуванню (CRAP 90).
 
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 /** Шляхи app.streamyard.com, які НЕ є ефірною кімнатою. */
 export const NON_ROOM_PATHS: readonly string[] = [

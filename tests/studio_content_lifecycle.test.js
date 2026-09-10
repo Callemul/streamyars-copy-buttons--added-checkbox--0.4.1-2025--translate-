@@ -6,7 +6,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock();
 
 const { StudioModuleController, studioController } = await import('../youtube/studio/studio_content.ts');
-const { CommentInjector } = await import('../modules/comment_injector.ts');
+const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
 const { STORAGE_KEYS } = await import('../modules/storage_keys.ts');
 
 describe('studio_content_lifecycle — StudioModuleController & Lifecycle', () => {

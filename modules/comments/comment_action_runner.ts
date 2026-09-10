@@ -14,7 +14,7 @@
 // StreamYard/YouTube/Studio.
 
 import { CommentService } from './comment_service';
-import { SYH_BUS } from './event_bus';
+import { SYH_BUS } from '../core/event_bus';
 import type { CommentStateActionId } from './comment_actions';
 import type {
     ButtonStateType,

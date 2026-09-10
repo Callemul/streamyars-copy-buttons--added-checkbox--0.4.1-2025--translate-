@@ -7,8 +7,8 @@
  * оновлювач і одразу емітить `SHEET_DATA_PROCESSED` з перерахованими
  * лічильниками. Це не дає лічильникам у попапі розʼїхатися зі сховищем.
  */
-import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from './storage';
-import { SYH_BUS } from './event_bus';
+import { SYH_STORAGE, STORAGE_KEYS, getSheetCollectedStorageKey } from '../storage';
+import { SYH_BUS } from '../core/event_bus';
 import type { CommentPayload, ButtonStateValue } from './comment_types';
 
 /**

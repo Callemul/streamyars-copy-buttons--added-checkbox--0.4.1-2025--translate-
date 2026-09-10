@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
-import { batchRenderItems } from '../modules/render_utils.ts';
+import { batchRenderItems } from '../popup/render_utils.ts';
 
 // NOTE: These tests run under the Happy DOM global registrator (see tests/setup/happy-dom.ts).
 // `batchRenderItems` uses `document.createDocumentFragment()` internally, so the elements produced

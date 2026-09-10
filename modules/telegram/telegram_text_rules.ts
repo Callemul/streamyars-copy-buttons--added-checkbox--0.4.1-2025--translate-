@@ -7,8 +7,8 @@
  */
 
 import { SYH_PARSERS } from '../parsers/index';
-import { SYH_UTILS } from '../utils';
-import type { CleaningLogEntry } from '../types';
+import { SYH_UTILS } from '../core/utils';
+import type { CleaningLogEntry } from '../core/types';
 
 /** Маркер підпункту всередині блоку питань. */
 const SUB_QUESTION_BULLET = '🔹';

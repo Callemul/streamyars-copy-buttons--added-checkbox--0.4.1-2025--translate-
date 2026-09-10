@@ -42,8 +42,8 @@ globalThis.chrome.tabs = {
 
 const { STORAGE_KEYS } = await import('../modules/storage.ts');
 const { SYH_MESSAGING } = await import('../modules/messaging.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
-const { RetentionService } = await import('../modules/retention_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
+const { RetentionService } = await import('../modules/sheets/retention_service.ts');
 const { AUTHOR_OLD_VALUE_ATTR, FOCUS_BORDER, BLUR_BORDER } = await import('../popup/prayer_focus_rules.ts');
 
 const {

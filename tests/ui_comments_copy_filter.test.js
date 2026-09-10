@@ -22,8 +22,8 @@ installChromeMock();
  */
 
 const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
-const { SYH_UTILS } = await import('../modules/utils.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
+const { SYH_UTILS } = await import('../modules/core/utils.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 const {
     addButtonsToComment,
     addStarredTabCopyButton,

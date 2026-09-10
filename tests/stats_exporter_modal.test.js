@@ -15,7 +15,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 import { SYH_STATS_EXPORTER } from '../modules/stats/stats_exporter.ts';
 import { renderModalSummaryTable } from '../modules/stats/stats_modal.ts';
 import { STORAGE_KEYS } from '../modules/storage.ts';
-import { SYH_UTILS } from '../modules/utils.ts';
+import { SYH_UTILS } from '../modules/core/utils.ts';
 
 const TODAY = SYH_UTILS.getTodayDateString();
 

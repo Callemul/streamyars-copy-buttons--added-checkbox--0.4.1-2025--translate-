@@ -4,7 +4,7 @@ import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
 import { getSortedCommentThreads } from './studio_thread_sorter';
 import { StudioHeaderUpdater } from './studio_header_updater';
 import { createContextMenuHandler } from './studio_context_menu';
-import { CommentInjector } from '../../modules/comment_injector';
+import { CommentInjector } from '../../modules/comments/comment_injector';
 
 export class StudioCommentProcessor {
     private enabled: boolean = true;

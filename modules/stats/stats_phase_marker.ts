@@ -14,8 +14,8 @@
 
 import type { StatsChartsDb } from './stats_types';
 import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
-import { SYH_UTILS } from '../utils';
-import { showBanner } from '../utils_notify';
+import { SYH_UTILS } from '../core/utils';
+import { showBanner } from '../core/utils_notify';
 import { getOrCreateTodaySession } from './stats_session';
 
 const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';

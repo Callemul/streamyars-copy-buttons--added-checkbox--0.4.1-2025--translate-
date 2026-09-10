@@ -1,7 +1,7 @@
-import type { CommentStateActionId } from '../../modules/comment_actions';
+import type { CommentStateActionId } from '../../modules/comments/comment_actions';
 // youtube/studio/studio_comment_key.ts
 import { STORAGE_KEYS } from '../../modules/storage';
-import { RetentionService } from '../../modules/retention_service';
+import { RetentionService } from '../../modules/sheets/retention_service';
 
 export const STUDIO_BUTTON_STATE_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;
 export const STUDIO_CHECKBOX_STATE_KEY = STORAGE_KEYS.STUDIO_CHECKBOX_STATE;

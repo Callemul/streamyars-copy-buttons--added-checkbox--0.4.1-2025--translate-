@@ -26,7 +26,7 @@ const {
 } = await import('../modules/streamyard/ui/ui_shared_utils.ts');
 
 const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 
 function resetDom(html = '') {
     document.body.innerHTML = html;

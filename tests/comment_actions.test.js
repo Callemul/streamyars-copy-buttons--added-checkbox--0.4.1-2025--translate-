@@ -23,7 +23,7 @@ import {
     DEFAULT_ACTION_EVENTS,
     acceptsMouseButton,
     DEFAULT_ACTION_MOUSE_BUTTONS
-} from '../modules/comment_actions.ts';
+} from '../modules/comments/comment_actions.ts';
 
 describe('comment_actions — цілісність реєстру', () => {
     test('1. реєстр містить три канонічні дії з унікальними id', () => {

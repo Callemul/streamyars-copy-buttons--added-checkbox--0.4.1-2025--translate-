@@ -4,7 +4,7 @@ import { test, describe } from 'node:test';
 // Мокаємо global.window для Node.js середовища
 global.window = global;
 
-const { SYH_UTILS } = await import('../modules/utils.ts');
+const { SYH_UTILS } = await import('../modules/core/utils.ts');
 const { STORAGE_KEYS } = await import('../modules/storage.ts');
 
 describe('SYH_UTILS tests', () => {

@@ -1,4 +1,4 @@
-import type { SelectorValue } from '../config';
+import type { SelectorValue } from '../../config';
 
 export interface CommentAssistantInterface {
     triggerWords: string[];

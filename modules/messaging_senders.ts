@@ -12,7 +12,7 @@
  * збій (мертвий контекст, `lastError`, синхронний виняток) дає `null`.
  */
 
-import type { SyhRuntimeMessage } from './types';
+import type { SyhRuntimeMessage } from './core/types';
 
 /**
  * `chrome.*` повідомляє про помилку через `chrome.runtime.lastError`, а не через

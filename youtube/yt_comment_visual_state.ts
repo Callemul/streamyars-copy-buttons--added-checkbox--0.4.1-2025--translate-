@@ -1,4 +1,4 @@
-import type { CommentStateActionId } from '../modules/comment_actions';
+import type { CommentStateActionId } from '../modules/comments/comment_actions';
 // youtube/yt_comment_visual_state.ts
 //
 // Візуальний стан коментаря YouTube: підпис/атрибути кнопок і галочка
@@ -9,7 +9,7 @@ import type { CommentStateActionId } from '../modules/comment_actions';
 //
 // Поведінка збережена 1-в-1 (див. tests/yt_ui_api.test.js).
 
-import { type ButtonStateType } from '../modules/comment_platform_adapter';
+import { type ButtonStateType } from '../modules/comments/comment_platform_adapter';
 
 const CHECKED_COMMENT_CLASS = 'syh-yt-comment-checked';
 

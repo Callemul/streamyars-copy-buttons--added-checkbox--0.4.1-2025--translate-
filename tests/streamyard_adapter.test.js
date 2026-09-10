@@ -31,9 +31,9 @@ installChromeMock({
 });
 
 const { StreamYardCommentAdapter } = await import('../modules/streamyard/comments/streamyard_adapter.ts');
-const { CommentInjector } = await import('../modules/comment_injector.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
-const { SYH_BUS } = await import('../modules/event_bus.ts');
+const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
+const { SYH_BUS } = await import('../modules/core/event_bus.ts');
 
 const SELECTORS = {
     commentBlock: '.comment-block',
@@ -89,7 +89,7 @@ const EMPTY_CACHES = () => ({ buttonStates: {}, checkboxStates: {} });
 
 /** Виклик дії так, як це робить `CommentInjector`: подія + опис дії з реєстру. */
 async function fireAction(adapter, block, actionId, mouseButton = 0) {
-    const { getCommentAction } = await import('../modules/comment_actions.ts');
+    const { getCommentAction } = await import('../modules/comments/comment_actions.ts');
     const action = getCommentAction(actionId);
     const button = block.querySelector(`.syh-button[data-action="${action.platforms.streamyard.domAction}"]`);
 

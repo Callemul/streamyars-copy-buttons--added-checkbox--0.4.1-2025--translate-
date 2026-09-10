@@ -12,7 +12,7 @@ import { parseStandardNumberedQuestions, parseSabbathSchoolUnnumberedQuestions }
 import { parseBlock, parseRawTextToBanners } from '../modules/banners/banner_parser.ts';
 import { executeBannerCreationLoop } from '../modules/banners/banner_executor.ts';
 import { parseTextToSections } from '../modules/banners/banner_modal.ts';
-import { SYH_UTILS } from '../modules/utils.ts';
+import { SYH_UTILS } from '../modules/core/utils.ts';
 
 describe('Author bracket cleanup (незакриті та закриті дужки з авторами)', () => {
     describe('1. QUESTION_AUTHOR_SUFFIX_REGEX — безпосередня перевірка регулярного виразу', () => {

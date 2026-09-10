@@ -16,7 +16,7 @@
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_CONFIG, queryBySelectorValue } from '../../config';
 import { UiFactory } from '../../ui_factory';
-import { buildPlatformButtonConfigs } from '../../comment_actions';
+import { buildPlatformButtonConfigs } from '../../comments/comment_actions';
 import { restoreCheckboxFromCache } from './ui_shared_utils';
 import { applySavedLabels } from './ui_comment_labels';
 

@@ -12,7 +12,7 @@
 import { SYH_MESSAGING } from '../modules/messaging';
 import { ROOM_WARNING_HTML, shouldWarnAboutForeignPrayers } from './prayer_room_guard';
 
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 export {
     NON_ROOM_PATHS,

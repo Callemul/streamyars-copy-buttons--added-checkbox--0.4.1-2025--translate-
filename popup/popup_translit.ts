@@ -2,7 +2,7 @@
 // Статична утиліта транслітерації тексту
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 
-import { transliterateToCyrillic } from '../modules/utils_text';
+import { transliterateToCyrillic } from '../modules/core/utils_text';
 
 export function translitToRussian(translitText: string): string {
     return transliterateToCyrillic(translitText);

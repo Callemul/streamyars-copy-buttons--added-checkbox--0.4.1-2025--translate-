@@ -20,7 +20,7 @@ import { processSheetData, type SheetProcessingInputs } from './sheet_processing
 import type { SheetCounterStats } from './sheet_stats_calculator';
 import type { SheetStateData } from './sheet_repository';
 import type { ProcessedSheetResult } from './sheet_processing';
-import type { YTCollectedItem } from './types';
+import type { YTCollectedItem } from '../core/types';
 
 // --- Публічний фасад (історичний контракт імпортерів) ----------------------
 export { SheetStatsCalculator, countUniquePeople } from './sheet_stats_calculator';

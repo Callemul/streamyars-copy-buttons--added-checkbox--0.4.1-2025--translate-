@@ -13,7 +13,7 @@
  * на фасаді `SYH_MESSAGING`.
  */
 
-import type { SyhRuntimeMessage } from './types';
+import type { SyhRuntimeMessage } from './core/types';
 
 export type SyhMessageHandler = (
     message: SyhRuntimeMessage,

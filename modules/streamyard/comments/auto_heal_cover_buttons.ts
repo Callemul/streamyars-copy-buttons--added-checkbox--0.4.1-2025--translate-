@@ -10,8 +10,8 @@
 
 import type { SyhStreamYardComments } from './types';
 import { closestBySelectorValue, queryBySelectorValue } from '../../config';
-import { CommentService } from '../../comment_service';
-import { SYH_COMMENT_ASSISTANT } from '../../comment_assistant/index';
+import { CommentService } from '../../comments/comment_service';
+import { SYH_COMMENT_ASSISTANT } from '../../comments/assistant/index';
 
 const COVER_BUTTON_SELECTOR = '[data-testid="show-comment-button"]';
 const COMMENT_CHECKBOX_SELECTOR = '.syh-checkbox[data-type="comment"]';

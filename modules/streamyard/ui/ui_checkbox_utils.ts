@@ -6,7 +6,7 @@
  * (правило Single Source of Truth з AGENTS.md), а цей модуль тільки
  * віддзеркалює його у розмітці.
  */
-import { CommentService } from '../../comment_service';
+import { CommentService } from '../../comments/comment_service';
 
 /** Три можливі стани master-чекбокса списку. */
 type MasterCheckboxState = { checked: boolean; indeterminate: boolean };

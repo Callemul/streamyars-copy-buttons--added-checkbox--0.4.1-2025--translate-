@@ -9,8 +9,8 @@
  * `get is not a function` — той самий виняток, що й в оригіналі).
  */
 
-import type { StorageReadResult } from './storage_keys';
-import { STORAGE_KEYS } from './storage';
+import type { StorageReadResult } from '../storage_keys';
+import { STORAGE_KEYS } from '../storage';
 
 /**
  * Зберігає пару `text → type` у базу категорій банерів.

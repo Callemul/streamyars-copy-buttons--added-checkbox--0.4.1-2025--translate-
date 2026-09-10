@@ -1,5 +1,5 @@
-import type { SyhState } from '../../state';
-import type { PrayerItem } from '../../types';
+import type { SyhState } from '../../core/state';
+import type { PrayerItem } from '../../core/types';
 import type { SelectorValue } from '../../config';
 
 export interface SyhUiState {
@@ -42,7 +42,7 @@ export interface SyhUi extends SyhUiState {
     restoreDomCheckboxes(): void;
 }
 
-import { SYH_BUS } from '../../event_bus';
+import { SYH_BUS } from '../../core/event_bus';
 
 class SyhUiStateManager implements SyhUiState {
     public SELECTORS: Record<string, string | string[]> | null = null;

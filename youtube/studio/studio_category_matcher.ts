@@ -4,7 +4,7 @@ import { matchCategory, type ChannelKey } from '../../modules/channel_config';
 
 // Форма переїхала в `modules/types.ts` до решти збережених форм (T17, крок 3);
 // реекспорт зберігає історичний контракт цього модуля.
-import type { VideoSheetMapEntry } from '../../modules/types';
+import type { VideoSheetMapEntry } from '../../modules/core/types';
 export type { VideoSheetMapEntry };
 
 export interface CategoryMatchResult {

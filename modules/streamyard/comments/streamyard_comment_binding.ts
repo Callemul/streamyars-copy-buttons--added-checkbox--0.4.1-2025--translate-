@@ -15,9 +15,9 @@
 // Прив'язка викликається там само, де вставляються кнопки
 // (`bootstrap_dom.onCommentAdded`), тож покриття збігається з покриттям панелі.
 
-import { CommentInjector } from '../../comment_injector';
+import { CommentInjector } from '../../comments/comment_injector';
 import { StreamYardCommentAdapter } from './streamyard_adapter';
-import type { CommentStateCaches } from '../../comment_platform_adapter';
+import type { CommentStateCaches } from '../../comments/comment_platform_adapter';
 
 /**
  * Кеші контракту `CommentInjector`. На StreamYard вони лишаються порожніми:

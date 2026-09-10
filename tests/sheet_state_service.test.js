@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { SheetStateService } from '../modules/sheet_state_service.ts';
+import { SheetStateService } from '../modules/sheets/sheet_state_service.ts';
 
 describe('SheetStateService Tests', () => {
     test('1. processSheetData correctly calculates questions, prayers, and deleted log', () => {

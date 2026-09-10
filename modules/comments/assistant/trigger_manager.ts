@@ -11,7 +11,7 @@
  * `CommentProcessor` та фасадом `CommentAssistantService`.
  */
 
-import type { SelectorValue } from '../config';
+import type { SelectorValue } from '../../config';
 import {
     resolveInitialTriggerWords,
     resolveInitialSelectors,

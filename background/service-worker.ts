@@ -12,7 +12,7 @@
  */
 
 import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage';
-import { RetentionService } from '../modules/retention_service';
+import { RetentionService } from '../modules/sheets/retention_service';
 import { isBadgeRelevantKey } from './badge_counter';
 import { updateExtensionBadge } from './badge_updater';
 import { ServiceWorkerMessageRouter } from './message_router';

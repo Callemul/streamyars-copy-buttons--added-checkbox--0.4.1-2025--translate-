@@ -1,9 +1,9 @@
 import type { SyhStreamYardComments } from '../types';
 import { closestBySelectorValue, queryBySelectorValue } from '../../../config';
-import { CommentService } from '../../../comment_service';
-import { SYH_COMMENT_ASSISTANT } from '../../../comment_assistant/index';
+import { CommentService } from '../../../comments/comment_service';
+import { SYH_COMMENT_ASSISTANT } from '../../../comments/assistant/index';
 import { getValidatedTarget } from './helpers';
-import { getCommentAction } from '../../../comment_actions';
+import { getCommentAction } from '../../../comments/comment_actions';
 
 /** Селектор кнопки молитви — з реєстру дій, а не зашитим рядком. */
 const PRAYER_BUTTON_SELECTOR =

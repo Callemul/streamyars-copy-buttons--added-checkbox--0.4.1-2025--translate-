@@ -33,16 +33,16 @@ const {
     SYH_PLUGIN_LIST
 } = await import('../modules/streamyard/bootstrap/bootstrap_app.ts');
 
-const { SYH_UTILS } = await import('../modules/utils.ts');
+const { SYH_UTILS } = await import('../modules/core/utils.ts');
 const { SYH_UI } = await import('../modules/streamyard/ui/ui.ts');
 const { SYH_BANNER_CREATOR } = await import('../modules/banners/banner_creator.ts');
-const { SYH_COMMENT_ASSISTANT } = await import('../modules/comment_assistant/index.ts');
+const { SYH_COMMENT_ASSISTANT } = await import('../modules/comments/assistant/index.ts');
 const { SYH_RIGHT_TABS_COMPACT } = await import('../modules/streamyard/right_tabs/right_tabs_compact.ts');
-const { SYH_STATE } = await import('../modules/state.ts');
+const { SYH_STATE } = await import('../modules/core/state.ts');
 const { SYH_STATS_TRACKER } = await import('../modules/stats/stats_tracker.ts');
 const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
 const { SYH_MESSAGING } = await import('../modules/messaging.ts');
-const { SYH_PLUGINS } = await import('../modules/plugin_registry.ts');
+const { SYH_PLUGINS } = await import('../modules/core/plugin_registry.ts');
 
 /**
  * Кроки `initCoreModules` у порядку виклику — саме ті, кожен з яких обгорнутий

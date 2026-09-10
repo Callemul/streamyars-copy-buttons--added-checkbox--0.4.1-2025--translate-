@@ -10,7 +10,7 @@
 
 import type { StorageRawResult } from '../modules/storage';
 import type { StorageReadResult } from '../modules/storage';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 export const CLEAR_PRAYERS_CONFIRM_MESSAGE =
     'Очистити список молитовних прохань? Це не видалить їх зі Стрімярду.';

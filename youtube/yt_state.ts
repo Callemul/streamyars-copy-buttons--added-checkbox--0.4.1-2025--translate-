@@ -1,4 +1,4 @@
-import type { CommentStateActionId } from '../modules/comment_actions';
+import type { CommentStateActionId } from '../modules/comments/comment_actions';
 /**
  * StreamYard Helper — спільний кеш стану YouTube-модуля.
  *
@@ -8,7 +8,7 @@ import type { CommentStateActionId } from '../modules/comment_actions';
  * Тепер стан живе окремо і не тягне за собою ані DOM, ані chrome-API.
  */
 
-import type { YTCollectedItem } from '../modules/types';
+import type { YTCollectedItem } from '../modules/core/types';
 
 export interface StateCache {
     buttonStates: Record<string, CommentStateActionId>;

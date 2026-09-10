@@ -21,11 +21,11 @@ import { SYH_STORAGE } from '../modules/storage';
 import { getAllSheetIds } from '../modules/sheets';
 import { collectTelegramSheetStateFromDOM } from './telegram_sheet_dom';
 import type { TelegramSheetDOMState } from './telegram_sheet_dom';
-import { SheetStateService } from '../modules/sheet_state_service';
-import type { ProcessedSheetResult } from '../modules/sheet_state_service';
-import type { YTCollectedItem } from '../modules/types';
-import { CommentService } from '../modules/comment_service';
-import { showBanner } from '../modules/utils_notify';
+import { SheetStateService } from '../modules/sheets/sheet_state_service';
+import type { ProcessedSheetResult } from '../modules/sheets/sheet_state_service';
+import type { YTCollectedItem } from '../modules/core/types';
+import { CommentService } from '../modules/comments/comment_service';
+import { showBanner } from '../modules/core/utils_notify';
 import { $ } from './popup_dom_utils';
 import { getCollectedItemsForSheet } from './popup_telegram_state';
 import {

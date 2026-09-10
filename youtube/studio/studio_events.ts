@@ -18,11 +18,11 @@
 //   Ключі коментаря          → generateCommentKey() у studio_comment_key.ts
 //   Селектори DOM            → studio_selectors.ts
 
-import { CommentInjector } from '../../modules/comment_injector';
+import { CommentInjector } from '../../modules/comments/comment_injector';
 import { StudioCommentAdapter, retroactiveUpdateVideoComments } from './studio_adapter';
 import type { StudioEventCaches } from './state_resolvers';
 import type { ChannelKey } from '../../modules/channel_config';
-import type { CommentContext } from '../../modules/comment_platform_adapter';
+import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
 import { setupVideoMetadataObserver } from './studio_video_metadata';
 import {
     cleanupRecycledStudioElement,

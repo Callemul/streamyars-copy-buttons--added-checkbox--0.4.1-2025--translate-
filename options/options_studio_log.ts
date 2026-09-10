@@ -13,8 +13,8 @@
 //   - невдале копіювання повідомляється через `alert`, а не тост.
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { CommentService } from '../modules/comment_service';
-import type { StudioOverrideLogEntry } from '../modules/types';
+import { CommentService } from '../modules/comments/comment_service';
+import type { StudioOverrideLogEntry } from '../modules/core/types';
 import { buildStudioLogReport, renderStudioLogRows } from './studio_log';
 
 const LOG_BODY_ID = 'studioLogBody';

@@ -10,7 +10,7 @@
 // не створює циклічних імпортів.
 
 import { SHEET_REGISTRY } from '../modules/sheets';
-import type { YTCollectedItem } from '../modules/types';
+import type { YTCollectedItem } from '../modules/core/types';
 import { getSheetCollectedStorageKey } from '../modules/storage_keys';
 
 /** Кеш зібраних з YouTube коментарів у розрізі аркушів. */

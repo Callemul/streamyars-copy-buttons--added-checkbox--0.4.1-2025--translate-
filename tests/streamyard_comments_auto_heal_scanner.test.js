@@ -43,7 +43,7 @@ installChromeMock({
 
 const { runAutoHeal, bindAutoHealScanner } = await import('../modules/streamyard/comments/auto_heal.ts');
 const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
-const { SYH_STATE } = await import('../modules/state.ts');
+const { SYH_STATE } = await import('../modules/core/state.ts');
 const { SYH_CONFIG, resolveSelectorString } = await import('../modules/config.ts');
 
 const TEST_SELECTORS = {

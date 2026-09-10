@@ -1,4 +1,4 @@
-import type { CommentActionId } from './comment_actions';
+import type { CommentActionId } from '../comments/comment_actions';
 
 export type SyhEventType =
     | 'COMMENT_ACTION'

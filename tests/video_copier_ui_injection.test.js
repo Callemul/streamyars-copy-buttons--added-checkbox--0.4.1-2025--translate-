@@ -16,7 +16,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock();
 
 const clipboardWrites = [];
-const { CommentService } = await import('../modules/comment_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 
 // Маршрутизуємо копіювання через SSOT-сервіс (як у продакшні), щоб фіксувати
 // і запис у буфер, і булевий результат успіху/невдачі.

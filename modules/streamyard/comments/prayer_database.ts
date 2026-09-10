@@ -1,6 +1,6 @@
 import type { CommentVisualHost } from './types';
-import type { PrayerItem } from '../../types';
-import { CommentService } from '../../comment_service';
+import type { PrayerItem } from '../../core/types';
+import { CommentService } from '../../comments/comment_service';
 
 export async function saveToDatabase(
     self: CommentVisualHost,

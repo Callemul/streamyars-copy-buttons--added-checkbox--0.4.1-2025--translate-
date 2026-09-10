@@ -27,7 +27,7 @@ installChromeMock({
     }
 });
 
-const { CommentService } = await import('../modules/comment_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 
 test('CommentService.formatForClipboard correctly formats author and comment text', () => {
     assert.equal(

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { RetentionService } from '../modules/retention_service.ts';
+import { RetentionService } from '../modules/sheets/retention_service.ts';
 
 describe('RetentionService Tests', () => {
     test('1. filterFreshPrayers keeps prayers younger than 48 hours and questions younger than 30 days', () => {

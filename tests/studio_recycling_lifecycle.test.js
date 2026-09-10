@@ -26,7 +26,7 @@ installChromeMock({
 });
 
 const { StudioCommentProcessor } = await import('../youtube/studio/studio_comment_processor.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
 
 describe('Studio Recycling Lifecycle', () => {
 

@@ -15,10 +15,10 @@
 //   • гасіння автоскролу середньої кнопки над нашими кнопками.
 
 import { SYH_CONFIG, type SyhConfig } from '../../config';
-import { SYH_STATE, type SyhState } from '../../state';
-import { SYH_UTILS, type SyhUtils } from '../../utils';
+import { SYH_STATE, type SyhState } from '../../core/state';
+import { SYH_UTILS, type SyhUtils } from '../../core/utils';
 import { SYH_UI, type SyhUi } from '../ui/ui';
-import type { ISyhPlugin } from '../../plugin_registry';
+import type { ISyhPlugin } from '../../core/plugin_registry';
 
 import type { SyhStreamYardComments } from './types';
 import { bindAutoHealScanner } from './auto_heal';

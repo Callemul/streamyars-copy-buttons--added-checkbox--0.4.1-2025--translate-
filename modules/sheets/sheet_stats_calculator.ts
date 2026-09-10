@@ -9,9 +9,9 @@
  * Поведінка збережена 1-в-1 (див. tests/sheet_state_api.test.js).
  */
 
-import { parseAndFilterOldList, parseTelegramExportLineByLine, countQuestionsInText } from './telegram/telegram_parser';
-import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers/index';
-import type { YTCollectedItem } from './types';
+import { parseAndFilterOldList, parseTelegramExportLineByLine, countQuestionsInText } from '../telegram/telegram_parser';
+import { TELEGRAM_HEADER_MARKER_REGEX } from '../parsers/index';
+import type { YTCollectedItem } from '../core/types';
 
 export interface SheetCounterStats {
     leftPeople: number;

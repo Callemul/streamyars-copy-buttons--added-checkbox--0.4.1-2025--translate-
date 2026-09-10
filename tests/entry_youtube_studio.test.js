@@ -156,8 +156,8 @@ describe('youtube_content — падіння ініціалізації не л�
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { initializeStudioModule } = await import('../youtube/studio/studio_init.ts');
-const { SYH_COMMENT_ASSISTANT } = await import('../modules/comment_assistant/index.ts');
-const { RetentionService } = await import('../modules/retention_service.ts');
+const { SYH_COMMENT_ASSISTANT } = await import('../modules/comments/assistant/index.ts');
+const { RetentionService } = await import('../modules/sheets/retention_service.ts');
 
 describe('studio_init — підняття модуля YouTube Studio', () => {
     let initCalls;

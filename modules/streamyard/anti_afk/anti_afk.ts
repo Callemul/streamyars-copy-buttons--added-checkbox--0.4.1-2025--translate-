@@ -23,7 +23,7 @@
 
 import { checkAndClickAntiAfk, simulateUserActivity, type I18nAdapterLike } from './anti_afk_detector';
 import { AntiAfkService } from './anti_afk_service';
-import type { ISyhPlugin } from '../../plugin_registry';
+import type { ISyhPlugin } from '../../core/plugin_registry';
 
 export { checkAndClickAntiAfk, simulateUserActivity } from './anti_afk_detector';
 export type { I18nAdapterLike } from './anti_afk_detector';

@@ -10,7 +10,7 @@
  * Поведінка збережена 1-в-1 (див. `tests/studio_adapter.test.js`).
  */
 
-import type { CommentContext } from '../../modules/comment_platform_adapter';
+import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
 import type { ChannelKey } from '../../modules/channel_config';
 import type { SheetId } from '../../modules/sheets';
 import { toggleDropdown } from './studio_dom_helpers';

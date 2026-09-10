@@ -14,7 +14,7 @@
  *      конфігу.
  */
 
-import { SYH_CONFIG, type SelectorValue } from '../config';
+import { SYH_CONFIG, type SelectorValue } from '../../config';
 
 const DEFAULT_TRIGGER_WORDS_QUESTION: readonly string[] = [
     'вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'

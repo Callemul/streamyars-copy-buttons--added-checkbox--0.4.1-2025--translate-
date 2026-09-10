@@ -1,7 +1,7 @@
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { RetentionService } from '../modules/retention_service';
+import { RetentionService } from '../modules/sheets/retention_service';
 
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 import { generatePrayerId, cleanPrayerAuthorName, getAuthorIcon } from './prayer_utils';
 
 export function ensurePrayerIds(prayersList: PrayerItem[]): boolean {

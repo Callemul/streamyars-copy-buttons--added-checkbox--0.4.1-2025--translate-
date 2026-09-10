@@ -11,7 +11,7 @@
  */
 
 import { SYH_UI_STATE } from './ui_state';
-import type { PrayerItem } from '../../types';
+import type { PrayerItem } from '../../core/types';
 
 /** Тип, який відповідає «немає мітки» і знімає атрибут із вузла. */
 export const NO_COMMENT_TYPE = 'none';

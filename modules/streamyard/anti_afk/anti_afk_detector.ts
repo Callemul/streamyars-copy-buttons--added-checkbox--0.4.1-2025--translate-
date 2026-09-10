@@ -7,7 +7,7 @@
 // Тут зібрано ЛИШЕ пошук/зіставлення/клік — без таймерів і без життєвого циклу.
 
 import { SYH_I18N } from '../../i18n';
-import { SYH_BUS } from '../../event_bus';
+import { SYH_BUS } from '../../core/event_bus';
 
 export interface I18nAdapterLike {
     getMessage(key: string, fallback?: string): string;

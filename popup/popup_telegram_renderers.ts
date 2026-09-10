@@ -8,9 +8,9 @@
 
 import { numberToEmoji } from '../modules/telegram/telegram_parser';
 import type { TelegramQuestionItem } from '../modules/telegram/telegram_parser';
-import type { CleaningLogEntry, DeletedLogEntry } from '../modules/types';
-import { batchRenderItems } from '../modules/render_utils';
-import { SheetStateService } from '../modules/sheet_state_service';
+import type { CleaningLogEntry, DeletedLogEntry } from '../modules/core/types';
+import { batchRenderItems } from './render_utils';
+import { SheetStateService } from '../modules/sheets/sheet_state_service';
 import { $, setTextContent, showElement } from './popup_dom_utils';
 import { cancelActiveBatch, registerActiveBatch } from './popup_telegram_state';
 

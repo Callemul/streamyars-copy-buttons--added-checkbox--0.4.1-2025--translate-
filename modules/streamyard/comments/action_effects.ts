@@ -1,5 +1,5 @@
 import type { CommentEffectHost, CopyPayload, CopyablePayload } from './types';
-import { SYH_BUS } from '../../event_bus';
+import { SYH_BUS } from '../../core/event_bus';
 import { markCommentByActionType } from './action_marking';
 import { syncCommentCardState } from './action_dom_sync';
 

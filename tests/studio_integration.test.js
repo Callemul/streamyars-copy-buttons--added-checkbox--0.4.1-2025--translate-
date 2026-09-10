@@ -29,11 +29,11 @@ installChromeMock({
 
 const { matchCategory } = await import('../modules/channel_config.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
-const { CommentInjector } = await import('../modules/comment_injector.ts');
+const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
 const { StudioCommentAdapter, retroactiveUpdateVideoComments } = await import('../youtube/studio/studio_adapter.ts');
 const { YouTubeCommentAdapter } = await import('../youtube/yt_adapter.ts');
-const { CommentService } = await import('../modules/comment_service.ts');
-const { SheetStateService } = await import('../modules/sheet_state_service.ts');
+const { CommentService } = await import('../modules/comments/comment_service.ts');
+const { SheetStateService } = await import('../modules/sheets/sheet_state_service.ts');
 
 describe('YouTube Studio Category & Question Sync Safeguard Tests', () => {
     test('1. matchCategory correctly identifies Oparin videos on VP channel', () => {

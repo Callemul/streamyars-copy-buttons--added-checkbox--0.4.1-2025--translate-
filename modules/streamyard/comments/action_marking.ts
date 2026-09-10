@@ -9,7 +9,7 @@
 // той самий порядок викликів і ті самі умови.
 
 import type { CommentEffectHost, CopyPayload } from './types';
-import { SYH_BUS } from '../../event_bus';
+import { SYH_BUS } from '../../core/event_bus';
 
 /** Іконка, якою позначається збережене питання. */
 const QUESTION_ICON = '❓';

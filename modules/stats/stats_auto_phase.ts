@@ -11,8 +11,8 @@
  */
 
 import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
-import { SYH_UTILS } from '../utils';
-import { fuzzyIncludes } from '../fuzzy_match';
+import { SYH_UTILS } from '../core/utils';
+import { fuzzyIncludes } from '../core/fuzzy_match';
 import { getOrCreateTodaySession } from './stats_session';
 import type { StatsPhaseHost } from './stats_phase_marker';
 import { SYH_CONFIG, queryBySelectorValue } from '../config';

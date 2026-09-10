@@ -1,8 +1,8 @@
 import type { StorageReadResult } from '../modules/storage';
 import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
 import { SYH_MESSAGING } from '../modules/messaging';
-import { CommentService } from '../modules/comment_service';
-import { showBanner } from '../modules/utils_notify';
+import { CommentService } from '../modules/comments/comment_service';
+import { showBanner } from '../modules/core/utils_notify';
 import { savePrayersAndRender } from './prayer_render';
 import { $ } from './prayer_utils'
 import {
@@ -20,7 +20,7 @@ import {
     readStoredPrayers,
     removePrayerEntries
 } from './prayer_toolbar_actions';
-import type { PrayerItem } from '../modules/types';
+import type { PrayerItem } from '../modules/core/types';
 
 type ToolbarClickHandler = (this: HTMLElement, ev: MouseEvent) => void | Promise<void>;
 

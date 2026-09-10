@@ -14,7 +14,7 @@
 
 import type { StatsChartsDb } from './stats_types';
 import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
-import { SYH_UTILS } from '../utils';
+import { SYH_UTILS } from '../core/utils';
 import { getOrCreateTodaySession } from './stats_session';
 import { isExtensionContextValid } from '../messaging_context';
 import { detectActiveBannerText, checkAutoStartPrayersPhase } from './stats_auto_phase';
