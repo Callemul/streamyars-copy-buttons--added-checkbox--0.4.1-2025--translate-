@@ -22,7 +22,7 @@
 import { $, setTextContent, setElementText } from './popup_dom_utils';
 import { readSheetBinding } from './popup_sheet_keys';
 import { getSheetStateBinding, type SheetStateBinding } from './popup_sheet_fields';
-import type { StorageReadResult } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
 
 /** Обчислює кількість записів журналу, коли її не збережено явно. */
 type LogCountResolver = (sheetId: string, html: string | undefined) => number;

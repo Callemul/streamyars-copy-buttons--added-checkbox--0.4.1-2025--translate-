@@ -1,6 +1,6 @@
 import type { CommentStateActionId } from '../../modules/comments/comment_actions';
 // youtube/studio/studio_comment_key.ts
-import { STORAGE_KEYS } from '../../modules/storage';
+import { STORAGE_KEYS } from '../../modules/storage/storage';
 import { RetentionService } from '../../modules/sheets/retention_service';
 
 export const STUDIO_BUTTON_STATE_KEY = STORAGE_KEYS.STUDIO_BUTTON_STATE;

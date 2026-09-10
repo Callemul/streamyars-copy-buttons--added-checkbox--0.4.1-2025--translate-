@@ -1,5 +1,5 @@
 import { TriggerManager } from './trigger_manager';
-import { escapeHtml } from '../../escape_html';
+import { escapeHtml } from '../../dom/escape_html';
 
 interface TriggerMatch {
     start: number;

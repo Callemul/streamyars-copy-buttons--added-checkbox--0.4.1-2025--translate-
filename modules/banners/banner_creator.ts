@@ -1,8 +1,8 @@
-import { SYH_CONFIG, resolveSelector } from '../config';
+import { SYH_CONFIG, resolveSelector } from '../registry/config';
 import { SYH_UTILS } from '../core/utils';
 import { SYH_PARSERS } from '../parsers/index';
 
-import type { SyhConfig } from '../config';
+import type { SyhConfig } from '../registry/config';
 import type { SyhUtils } from '../core/utils';
 import type { SyhParsers } from '../parsers/index';
 

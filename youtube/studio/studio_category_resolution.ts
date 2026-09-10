@@ -10,7 +10,7 @@
 // Поведінка збережена 1-в-1 (див. tests/studio_adapter.test.js).
 
 import { resolveCategoryForVideo } from './studio_category_matcher';
-import type { ChannelKey } from '../../modules/channel_config';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import type { StudioEventCaches } from './studio_state_helpers';
 
 /** Результат резолюції категорії відео (той самий, що повертає `resolveCategoryForVideo`). */

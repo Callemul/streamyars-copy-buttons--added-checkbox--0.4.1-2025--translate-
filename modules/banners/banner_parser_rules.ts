@@ -17,7 +17,7 @@ import {
     STANDARD_NUMBER_START_REGEX,
     SECTION_HEADER_SPLIT_REGEX
 } from '../parsers/index';
-import { SABBATH_SCHOOL_KEYWORDS_REGEX } from '../channel_config';
+import { SABBATH_SCHOOL_KEYWORDS_REGEX } from '../registry/channel_config';
 
 /**
  * Таблиця ключових слів заголовка → категорія банера.

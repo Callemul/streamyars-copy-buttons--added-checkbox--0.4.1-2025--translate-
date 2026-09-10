@@ -1,6 +1,6 @@
 // youtube/studio/studio_comment_processor.ts
 import { bindStudioCommentEvents, type StudioEventCaches } from './studio_events';
-import { SYH_DOM_OBSERVER } from '../../modules/dom_observer';
+import { SYH_DOM_OBSERVER } from '../../modules/dom/dom_observer';
 import { getSortedCommentThreads } from './studio_thread_sorter';
 import { StudioHeaderUpdater } from './studio_header_updater';
 import { createContextMenuHandler } from './studio_context_menu';

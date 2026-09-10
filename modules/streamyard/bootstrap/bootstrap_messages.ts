@@ -4,7 +4,7 @@
  * Раніше ця логіка жила всередині IIFE в `main.ts` і була недосяжною для тестів.
  */
 import type { PrayerItem, SyhRuntimeMessage } from '../../core/types';
-import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue } from '../../config';
+import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue } from '../../registry/config';
 
 export const PRAYER_SELECTORS = {
     // Блок коментаря, позначений як молитва (`data-syh-type="prayer"`) —

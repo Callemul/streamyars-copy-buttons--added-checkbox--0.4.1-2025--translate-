@@ -10,8 +10,8 @@
 // setupTranslitListeners / setupTitleAndOptionsListeners / clearSheetState)
 // збережено без змін для зворотної сумісності.
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
 import { $, bindTabSwitcher, bindDebouncedInput } from './popup_dom_utils';
 import { showBanner } from '../modules/core/utils_notify';
 import { db, saveDataToStorage } from './popup_state_restorer';

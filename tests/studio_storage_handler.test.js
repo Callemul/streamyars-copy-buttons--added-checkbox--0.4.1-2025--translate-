@@ -6,9 +6,9 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 installChromeMock();
 
 const { StudioStorageController, createStorageChangeHandler } = await import('../youtube/studio/studio_storage_handler.ts');
-const { getSheetCollectedStorageKey } = await import('../modules/storage.ts');
-const { STORAGE_KEYS } = await import('../modules/storage_keys.ts');
-const SHEET_IDS = (await import('../modules/sheets.ts')).SHEET_IDS;
+const { getSheetCollectedStorageKey } = await import('../modules/storage/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage_keys.ts');
+const SHEET_IDS = (await import('../modules/registry/sheets.ts')).SHEET_IDS;
 
 describe('studio_storage_handler — StudioStorageController (характеризація)', () => {
 

@@ -5,7 +5,7 @@ import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
 import { SYH_STATS_TRACKER } from '../../stats/stats_tracker';
 import { detectActiveBannerText, checkAutoStartPrayersPhase } from '../../stats/stats_auto_phase';
-import { toSelectorList, type SelectorValue } from '../../config';
+import { toSelectorList, type SelectorValue } from '../../registry/config';
 
 interface ButtonActionHandler {
     canHandle: (action: string | undefined, type: string | undefined) => boolean;

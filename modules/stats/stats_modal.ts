@@ -6,9 +6,9 @@
  * Виділено з `stats_exporter.ts`.
  */
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 import { SYH_UTILS } from '../core/utils';
-import { escapeHtml } from '../escape_html';
+import { escapeHtml } from '../dom/escape_html';
 import type { StreamChartSession, PhaseStatsReport } from './stats_types';
 
 /**

@@ -11,7 +11,7 @@ import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
 const { TriggerManager } = await import('../modules/comments/assistant/trigger_manager.ts');
-const { SYH_CONFIG } = await import('../modules/config.ts');
+const { SYH_CONFIG } = await import('../modules/registry/config.ts');
 
 const DEFAULT_QUESTION = ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'];
 const DEFAULT_PRAYER = ['молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба'];

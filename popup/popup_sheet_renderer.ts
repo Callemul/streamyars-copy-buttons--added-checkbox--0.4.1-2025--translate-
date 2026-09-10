@@ -6,8 +6,8 @@
 // T8). До цього тут лежав ручний список із 31 виклику `setAttrId` — рівно те
 // місце, де забуте поле мовчки лишалось без id, а отже без відновлення.
 
-import { STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds, SHEET_LABELS } from '../modules/sheets';
+import { STORAGE_KEYS } from '../modules/storage/storage';
+import { getAllSheetIds, SHEET_LABELS } from '../modules/registry/sheets';
 import { SHEET_FIELDS, sheetFieldId, sheetStateKeys, allSheetStateBindings } from './popup_sheet_fields';
 
 export function renderSheetTemplates(): void {

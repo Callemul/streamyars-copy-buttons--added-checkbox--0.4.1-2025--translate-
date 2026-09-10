@@ -1,5 +1,5 @@
 import type { SyhUi, SyhUtils } from './types';
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 import { resolveBannerContext } from './helpers';
 import { openBannerCreationModal } from '../../banners/banner_modal';
 

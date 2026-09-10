@@ -16,9 +16,9 @@ console.log("[SYH Debug] popup_telegram.ts top-level code executed");
 // `popup_sheet_state_restorer.ts` історично імпортують цей контракт саме звідси.
 // Поведінка збережена 1-в-1 (див. tests/popup_telegram_ui.test.js).
 
-import type { StorageChanges } from '../modules/storage';
-import { SYH_STORAGE } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import type { StorageChanges } from '../modules/storage/storage';
+import { SYH_STORAGE } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
 import { collectTelegramSheetStateFromDOM } from './telegram_sheet_dom';
 import type { TelegramSheetDOMState } from './telegram_sheet_dom';
 import { SheetStateService } from '../modules/sheets/sheet_state_service';

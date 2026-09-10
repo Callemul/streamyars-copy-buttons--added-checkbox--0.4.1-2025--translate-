@@ -10,8 +10,8 @@
  * Тепер обидва споживачі спираються на ті самі предикати.
  */
 
-import type { StorageRawResult } from '../modules/storage';
-import { STORAGE_KEYS } from '../modules/storage';
+import type { StorageRawResult } from '../modules/storage/storage';
+import { STORAGE_KEYS } from '../modules/storage/storage';
 
 const COLLECTED_KEY_PREFIX = 'syh:popup:collected:';
 

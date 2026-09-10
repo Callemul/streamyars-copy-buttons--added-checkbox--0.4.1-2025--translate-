@@ -11,9 +11,9 @@
  * Увесь `init` так само загорнутий у try/catch, який лише логує збій.
  */
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../storage/storage';
 import { SYH_STATE, type SyhState } from '../../core/state';
-import { SYH_CONFIG, type SyhConfig } from '../../config';
+import { SYH_CONFIG, type SyhConfig } from '../../registry/config';
 import { SYH_UI_STATE } from './ui_state';
 import { SYH_BUS } from '../../core/event_bus';
 import { updateCommentVisuals } from './ui_comments';

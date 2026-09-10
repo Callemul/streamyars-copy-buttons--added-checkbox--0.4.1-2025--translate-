@@ -11,7 +11,7 @@
 // легасі-ключем, і саме тут найлегше було забути новододане поле — воно
 // відновлювалось, але не зберігалось.
 
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage/storage';
 import { SheetStateService } from '../modules/sheets/sheet_state_service';
 import { $, bindDebouncedInput } from './popup_dom_utils';
 import {

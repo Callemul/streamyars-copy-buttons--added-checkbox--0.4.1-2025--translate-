@@ -22,7 +22,7 @@ installChromeMock();
  *   - `studio_enabled` дублюється: і всередині об'єкта опцій, і окремим ключем.
  */
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const { DEFAULT_OPTIONS } = await import('../options/defaults.ts');
 
 // Імпорт реєструє слухач DOMContentLoaded — саме він створює контролер.

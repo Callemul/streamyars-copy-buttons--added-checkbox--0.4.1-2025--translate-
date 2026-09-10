@@ -12,7 +12,7 @@
 //   - сторонні поля `DB` зберігаються (об'єкт мутується, а не замінюється);
 //   - `studio_enabled` пишеться і всередину `OPTIONS`, і окремим ключем.
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { DEFAULT_OPTIONS, type OptionsState } from './defaults';
 import { populateFormElements, readOptionsFromForm } from './form';
 

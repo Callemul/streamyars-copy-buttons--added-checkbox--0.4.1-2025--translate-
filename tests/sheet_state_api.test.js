@@ -47,7 +47,7 @@ const {
     countUniquePeople
 } = await import('../modules/sheets/sheet_state_service.ts');
 
-const { POPUP_SHEET_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage.ts');
+const { POPUP_SHEET_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage/storage.ts');
 
 const SHEET = 'vp_ss';
 const k = POPUP_SHEET_KEYS;

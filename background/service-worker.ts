@@ -11,7 +11,7 @@
  * (`background/service-worker.ts`), на який спираються тести.
  */
 
-import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage';
+import { migrateStorageIfNeeded, STORAGE_KEYS } from '../modules/storage/storage';
 import { RetentionService } from '../modules/sheets/retention_service';
 import { isBadgeRelevantKey } from './badge_counter';
 import { updateExtensionBadge } from './badge_updater';

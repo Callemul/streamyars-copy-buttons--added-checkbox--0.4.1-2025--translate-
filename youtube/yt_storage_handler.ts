@@ -1,6 +1,6 @@
-import type { StorageChanges, StoredOptions } from '../modules/storage';
+import type { StorageChanges, StoredOptions } from '../modules/storage/storage';
 import type { YTCollectedItem } from '../modules/core/types';
-import { STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
+import { STORAGE_KEYS, getSheetCollectedStorageKey } from '../modules/storage/storage';
 import { processAllYTComments } from './yt_comment_processor';
 import { cleanupYouTubeUI, initializeYouTubeModule } from './yt_init';
 import { YT_COLLECTED_SHEET_ID, stateCache } from './yt_state';

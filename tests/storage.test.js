@@ -7,7 +7,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_STORAGE, STORAGE_KEYS, migrateKey, migrateStorageIfNeeded, STORAGE_SCHEMA_VERSION } = await import('../modules/storage.ts');
+const { SYH_STORAGE, STORAGE_KEYS, migrateKey, migrateStorageIfNeeded, STORAGE_SCHEMA_VERSION } = await import('../modules/storage/storage.ts');
 
 describe('SYH_STORAGE tests', () => {
 

@@ -1,6 +1,6 @@
 // popup_translit.ts
 // Статична утиліта транслітерації тексту
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 
 import { transliterateToCyrillic } from '../modules/core/utils_text';
 

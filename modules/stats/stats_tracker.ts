@@ -17,8 +17,8 @@
  */
 
 import type { StatsChartsDb } from './stats_types';
-import { SYH_CONFIG } from '../config';
-import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { SYH_CONFIG } from '../registry/config';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 import { SYH_BUS } from '../core/event_bus';
 import { SYH_STATS_EXPORTER } from './stats_exporter';
 import { getOrCreateTodaySession, searchBrandNameInObject } from './stats_session';

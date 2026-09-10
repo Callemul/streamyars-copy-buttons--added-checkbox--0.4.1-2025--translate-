@@ -3,11 +3,11 @@
  * Декларативна реєстрація DOM-спостерігачів StreamYard.
  * Таблиця `DOM_REGISTRATIONS` замінює лінійний ланцюжок викликів, який роздував складність `main.ts`.
  */
-import { SYH_CONFIG, resolveFirstSelector, type SelectorValue } from '../../config';
+import { SYH_CONFIG, resolveFirstSelector, type SelectorValue } from '../../registry/config';
 import { SYH_UI } from '../ui/ui';
 import { SYH_COMMENT_ASSISTANT } from '../../comments/assistant/index';
 import { SYH_RIGHT_TABS_COMPACT } from '../right_tabs/right_tabs_compact';
-import { SYH_DOM_OBSERVER, type DomHandler } from '../../dom_observer';
+import { SYH_DOM_OBSERVER, type DomHandler } from '../../dom/dom_observer';
 import { bindStreamYardComment, unbindStreamYardComment } from '../comments/streamyard_comment_binding';
 
 export const OBSERVER_CONTAINER_SELECTORS: readonly string[] = [

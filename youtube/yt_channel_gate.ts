@@ -1,5 +1,5 @@
 // youtube/yt_channel_gate.ts
-import { detectChannelKey, isAllowedChannelKey } from '../modules/channel_config';
+import { detectChannelKey, isAllowedChannelKey } from '../modules/registry/channel_config';
 
 const CHANNEL_NAME_SELECTORS = [
     '#owner #channel-name, ytd-video-owner-renderer #channel-name, ytd-channel-name',

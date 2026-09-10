@@ -8,7 +8,7 @@
 // Поведінка збережена 1-в-1, включно з порядком ефектів.
 
 import type { CommentEffectHost } from './types';
-import { SYH_CONFIG, queryBySelectorValue } from '../../config';
+import { SYH_CONFIG, queryBySelectorValue } from '../../registry/config';
 import { CommentService } from '../../comments/comment_service';
 import { getCheckboxTextKey } from '../ui/ui_checkbox_restorer';
 

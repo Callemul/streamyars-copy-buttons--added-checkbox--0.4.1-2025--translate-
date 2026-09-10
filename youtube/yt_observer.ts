@@ -13,7 +13,7 @@
  * ідемпотентну функцію відписки (фільтрація за посиланням на реєстрацію).
  */
 
-import { SYH_DOM_OBSERVER, type DomHandler } from '../modules/dom_observer';
+import { SYH_DOM_OBSERVER, type DomHandler } from '../modules/dom/dom_observer';
 
 let unregister: (() => void) | null = null;
 

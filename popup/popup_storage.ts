@@ -1,7 +1,7 @@
 // popup/popup_storage.ts
 // Storage-related functions
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 
 export const db: Record<string, unknown> = {};
 

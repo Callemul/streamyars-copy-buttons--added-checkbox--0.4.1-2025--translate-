@@ -10,7 +10,7 @@
  *   STATE     = state || SYH_STATE            (і так само для UTILS / UI / BANNER_CREATOR)
  */
 
-import type { SyhConfig, SelectorValue } from '../../config';
+import type { SyhConfig, SelectorValue } from '../../registry/config';
 import type { SyhState } from '../../core/state';
 import type { SyhUtils } from '../../core/utils';
 import type { SyhUi } from '../ui/ui_state';

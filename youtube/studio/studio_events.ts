@@ -21,7 +21,7 @@
 import { CommentInjector } from '../../modules/comments/comment_injector';
 import { StudioCommentAdapter, retroactiveUpdateVideoComments } from './studio_adapter';
 import type { StudioEventCaches } from './state_resolvers';
-import type { ChannelKey } from '../../modules/channel_config';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
 import { setupVideoMetadataObserver } from './studio_video_metadata';
 import {

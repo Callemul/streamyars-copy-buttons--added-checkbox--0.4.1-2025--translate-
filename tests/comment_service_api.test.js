@@ -37,7 +37,7 @@ installChromeMock({
 
 const { CommentService } = await import('../modules/comments/comment_service.ts');
 const { SYH_BUS } = await import('../modules/core/event_bus.ts');
-const { STORAGE_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage.ts');
+const { STORAGE_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage/storage.ts');
 
 const COLLECTED_KEY = getSheetCollectedStorageKey('vp_ss');
 

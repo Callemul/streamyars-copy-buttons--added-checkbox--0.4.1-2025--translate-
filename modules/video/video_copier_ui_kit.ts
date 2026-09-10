@@ -7,7 +7,7 @@
  * повернення початкового вигляду кнопки.
  */
 import { CommentService } from '../comments/comment_service';
-import { UiFactory } from '../ui_factory';
+import { UiFactory } from '../dom/ui_factory';
 import { SQUARE_BUTTON_STYLE } from './video_copier_theme';
 
 /** Скільки кнопка тримає підтверджувальний стан перед поверненням у дефолт. */

@@ -1,5 +1,5 @@
 // modules/parsers/standard_parser.ts
-import { SYH_CONFIG } from '../config';
+import { SYH_CONFIG } from '../registry/config';
 import { truncateWithLimit } from './truncation';
 import { QUESTION_AUTHOR_SUFFIX_REGEX } from './regex';
 

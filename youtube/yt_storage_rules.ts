@@ -1,4 +1,4 @@
-import type { StorageChanges, StoredOptions } from '../modules/storage';
+import type { StorageChanges, StoredOptions } from '../modules/storage/storage';
 /**
  * StreamYard Helper — чисті правила реакції YouTube-модуля на зміни сховища.
  *

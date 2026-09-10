@@ -1,7 +1,7 @@
 // youtube/youtube_content.ts
 import { initializeYouTubeModule } from './yt_init';
 import { handleStorageChange } from './yt_storage_handler';
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage/storage';
 
 console.log('[SYH] YouTube content script initializing...');
 

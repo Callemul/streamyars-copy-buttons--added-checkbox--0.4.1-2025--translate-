@@ -27,7 +27,7 @@
 // зберігає порядок вставки ключів, тож перестановка рядків змінила б JSON
 // експорту. Порядок збігається з докомітним і зафіксований тестом.
 
-import { SYH_CONFIG } from '../modules/config';
+import { SYH_CONFIG } from '../modules/registry/config';
 
 /** Як опція представлена у формі й якого типу її значення. */
 export type OptionKind = 'text' | 'select' | 'checkbox' | 'number';

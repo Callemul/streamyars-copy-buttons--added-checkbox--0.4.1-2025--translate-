@@ -1,5 +1,5 @@
 import type { SyhStreamYardComments } from '../types';
-import { closestBySelectorValue, queryBySelectorValue } from '../../../config';
+import { closestBySelectorValue, queryBySelectorValue } from '../../../registry/config';
 import { getValidatedTarget } from './helpers';
 
 export function handleMiddleClick(e: MouseEvent, self: SyhStreamYardComments): void {

@@ -5,9 +5,9 @@ import { buildPopupKeysToLoad, restoreDbState, restoreSingleSheetState, restoreA
 import { setupPopupTabListeners, setupSheetInputListeners, setupTranslitListeners, setupTitleAndOptionsListeners } from './popup_listeners';
 import { setupResizeObserver, initStep3Resizers, setupStep3ResizerEvents } from './popup_resizers';
 import { setupScrollListeners } from './popup_scroll';
-import { STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
-import { SYH_STORAGE, type StorageReadResult } from '../modules/storage';
+import { STORAGE_KEYS } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
+import { SYH_STORAGE, type StorageReadResult } from '../modules/storage/storage';
 
 const SHEET_IDS = getAllSheetIds();
 

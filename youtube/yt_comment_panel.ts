@@ -14,9 +14,9 @@
 // Поведінка збережена 1-в-1 (див. tests/yt_ui_api.test.js, tests/comment_actions.test.js).
 
 import { YT_SELECTORS } from './yt_selectors';
-import { UiFactory } from '../modules/ui_factory';
+import { UiFactory } from '../modules/dom/ui_factory';
 import { buildPlatformButtonConfigs } from '../modules/comments/comment_actions';
-import { resolveSelector } from '../modules/config';
+import { resolveSelector } from '../modules/registry/config';
 
 const PANEL_CLASS = 'syh-yt-buttons';
 const CHECKBOX_WRAP_CLASS = 'syh-yt-checkbox-wrap';

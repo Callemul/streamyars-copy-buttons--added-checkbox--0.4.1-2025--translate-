@@ -1,7 +1,7 @@
 // youtube/studio/studio_ui.ts
-import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/sheets';
+import { SHEET_LABELS, getAllSheetIds, type SheetId } from '../../modules/registry/sheets';
 import { getToolbarElement, getMetadataElement } from './studio_selectors';
-import { UiFactory } from '../../modules/ui_factory';
+import { UiFactory } from '../../modules/dom/ui_factory';
 import { buildActionButtonConfig } from '../../modules/comments/comment_actions';
 import type { CommentActionId, CommentActionStateType, CommentStateActionId } from '../../modules/comments/comment_actions';
 import { formatCategoryLabel } from './studio_header_badge_markup';

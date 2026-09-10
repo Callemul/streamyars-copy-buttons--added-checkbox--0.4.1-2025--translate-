@@ -6,7 +6,7 @@
 // 40 рядків із cognitive 13 усередині hotspot-файлу (churn-score 30.2 за Fallow).
 // Тут зібрано ЛИШЕ пошук/зіставлення/клік — без таймерів і без життєвого циклу.
 
-import { SYH_I18N } from '../../i18n';
+import { SYH_I18N } from '../../registry/i18n';
 import { SYH_BUS } from '../../core/event_bus';
 
 export interface I18nAdapterLike {

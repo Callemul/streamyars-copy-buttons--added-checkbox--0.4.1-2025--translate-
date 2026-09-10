@@ -33,7 +33,7 @@ document.addEventListener = (type, handler, opts) => {
     return originalDocumentAdd(type, handler, opts);
 };
 
-const { SYH_STORAGE } = await import('../modules/storage.ts');
+const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
 const storageChangeHandlers = [];
 const originalOnChanged = SYH_STORAGE.onChanged;
@@ -188,7 +188,7 @@ describe('studio_init — підняття модуля YouTube Studio', () => {
     });
 
     test('тригерні слова беруться зі спільного конфігу', async () => {
-        const { SYH_CONFIG } = await import('../modules/config.ts');
+        const { SYH_CONFIG } = await import('../modules/registry/config.ts');
 
         await initializeStudioModule();
 

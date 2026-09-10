@@ -6,7 +6,7 @@
  * банері/коментарі.
  */
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelectorString } from '../../config';
+import { SYH_CONFIG, resolveSelectorString } from '../../registry/config';
 
 /** Маркер активного елемента у списках StreamYard. */
 const ACTIVE_ITEM_MARKER = '.lucide-circle-minus';

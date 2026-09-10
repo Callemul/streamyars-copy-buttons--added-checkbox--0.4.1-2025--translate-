@@ -1,6 +1,6 @@
-import { STORAGE_KEYS } from '../modules/storage';
-import { SHEET_IDS } from '../modules/sheets';
-import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/channel_config';
+import { STORAGE_KEYS } from '../modules/storage/storage';
+import { SHEET_IDS } from '../modules/registry/sheets';
+import { detectChannelKey, matchCategory, type ChannelKey } from '../modules/registry/channel_config';
 import { extractCommentId, extractCommentData, applyButtonVisualState } from './yt_ui';
 import { generateLegacyCommentId } from './yt_comment_identity';
 import { extractDomChannelInfo } from './yt_channel_gate';

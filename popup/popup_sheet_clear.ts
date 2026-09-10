@@ -6,7 +6,7 @@
 // Виділено з popup/popup_listeners.ts, де clearSheetState() була монолітною
 // функцією з cyclomatic 9 (CRAP 90) і не піддавалася юніт-тестуванню.
 
-import { POPUP_SHEET_KEYS } from '../modules/storage';
+import { POPUP_SHEET_KEYS } from '../modules/storage/storage';
 import { $, setTextContent, hideElement } from './popup_dom_utils';
 import { CommentService } from '../modules/comments/comment_service';
 import { SheetStateService } from '../modules/sheets/sheet_state_service';

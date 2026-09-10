@@ -1,5 +1,5 @@
 import type { BannerDeleteCounts } from './types';
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 
 type CommentType = 'stream' | 'audience' | 'prayer' | 'none';
 

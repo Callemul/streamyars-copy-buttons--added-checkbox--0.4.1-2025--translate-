@@ -21,7 +21,7 @@
  */
 
 import { SYH_UI_STATE } from './ui_state';
-import { toSelectorList } from '../../config';
+import { toSelectorList } from '../../registry/config';
 
 export function validateSelectorsSyntax(): void {
     if (!SYH_UI_STATE.SELECTORS) return;

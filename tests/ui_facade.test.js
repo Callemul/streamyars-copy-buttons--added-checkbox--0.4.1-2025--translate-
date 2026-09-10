@@ -14,9 +14,9 @@ installChromeMock();
 
 const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
 const { SYH_UI } = await import('../modules/streamyard/ui/ui.ts');
-const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
+const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const { SYH_BUS } = await import('../modules/core/event_bus.ts');
-const { SYH_CONFIG } = await import('../modules/config.ts');
+const { SYH_CONFIG } = await import('../modules/registry/config.ts');
 
 const SELECTORS_FIXTURE = {
     commentBlock: '.comment-wrap',
@@ -217,7 +217,7 @@ describe('ui — validateSelectorsSyntax', () => {
 describe('config — хелпери читання SelectorValue', () => {
     test('7e. queryBySelectorValue: рядок, масив-група, порожнє значення', async () => {
         const { queryBySelectorValue, closestBySelectorValue, toSelectorList } =
-            await import('../modules/config.ts');
+            await import('../modules/registry/config.ts');
 
         document.body.innerHTML = `
             <div class="wrap"><span class="text" data-testid="content">Привіт</span></div>
@@ -630,7 +630,7 @@ describe('ui — декомпозовані одиниці', () => {
 
     test('30a. read- і write-path дають однаковий ключ (реальний масив commentText)', async () => {
         const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
-        const { queryBySelectorValue } = await import('../modules/config.ts');
+        const { queryBySelectorValue } = await import('../modules/registry/config.ts');
 
         // Реальний конфіг StreamYard: commentText — масив із class- та data-testid-варіантів.
         document.body.innerHTML = `
@@ -654,7 +654,7 @@ describe('ui — декомпозовані одиниці', () => {
 
     test('30b. на fallback-лейауті (лише data-testid у DOM) стан відновлюється, а не губиться', async () => {
         const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
-        const { queryBySelectorValue } = await import('../modules/config.ts');
+        const { queryBySelectorValue } = await import('../modules/registry/config.ts');
 
         document.body.innerHTML = `
             <div data-testid="platform-comment">

@@ -153,7 +153,7 @@ const {
     removePrayerEntries
 } = await import('../popup/prayer_toolbar_actions.ts');
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const { bindPrayerToolbarListeners } = await import('../popup/prayer_handlers_toolbar.ts');
 
 const PRAYERS_KEY = STORAGE_KEYS.PRAYERS;

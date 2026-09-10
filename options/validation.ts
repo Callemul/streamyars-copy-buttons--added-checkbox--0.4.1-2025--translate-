@@ -1,6 +1,6 @@
 // options/validation.ts
-import type { StorageWriteItems } from '../modules/storage';
-import { STORAGE_KEYS } from '../modules/storage';
+import type { StorageWriteItems } from '../modules/storage/storage';
+import { STORAGE_KEYS } from '../modules/storage/storage';
 
 /**
  * Вміст файла конфігурації.

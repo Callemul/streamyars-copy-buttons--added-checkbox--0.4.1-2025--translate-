@@ -1,6 +1,6 @@
 // tests/storage_schema.test.js
 //
-// Схема сховища (`modules/storage_keys.ts`, T17 — крок 1).
+// Схема сховища (`modules/storage/storage_keys.ts`, T17 — крок 1).
 //
 // Схема `StorageSchema` існувала й до цієї хвилі, але не використовувалась
 // ЖОДНИМ місцем коду: усі читання й записи йшли через `Record<string, any>`.
@@ -41,7 +41,7 @@ installChromeMock({
     }
 });
 
-const { STORAGE_KEYS, STORAGE_SCHEMA_VERSION, getSheetStorageKey, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS, STORAGE_SCHEMA_VERSION, getSheetStorageKey, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } = await import('../modules/storage/storage.ts');
 const { EXPANDED_TABS_KEY } = await import('../modules/streamyard/right_tabs/right_tabs_storage.ts');
 const { OPTION_FIELDS } = await import('../options/option_fields.ts');
 
@@ -61,7 +61,7 @@ describe('storage_schema — StoredOptions не розходиться з реє
     const NON_FORM_FIELDS = ['customChannels'];
 
     test('усі поля форми присутні в StoredOptions', () => {
-        const stored = readInterfaceFields('modules/storage_keys.ts', 'StoredOptions');
+        const stored = readInterfaceFields('modules/storage/storage_keys.ts', 'StoredOptions');
         const registry = OPTION_FIELDS.map(f => f.key);
 
         const missing = registry.filter(key => !stored.includes(key));
@@ -75,7 +75,7 @@ describe('storage_schema — StoredOptions не розходиться з реє
     });
 
     test('усе, що є в StoredOptions понад форму, перелічене явно', () => {
-        const stored = readInterfaceFields('modules/storage_keys.ts', 'StoredOptions');
+        const stored = readInterfaceFields('modules/storage/storage_keys.ts', 'StoredOptions');
         const registry = new Set(OPTION_FIELDS.map(f => f.key));
 
         const extras = stored.filter(key => !registry.has(key));
@@ -89,7 +89,7 @@ describe('storage_schema — StoredOptions не розходиться з реє
     });
 
     test('перевірка справді читає інтерфейс, а не проходить вхолосту', () => {
-        const stored = readInterfaceFields('modules/storage_keys.ts', 'StoredOptions');
+        const stored = readInterfaceFields('modules/storage/storage_keys.ts', 'StoredOptions');
 
         assert.ok(stored.length >= 10, `очікувалось щонайменше 10 полів, знайдено ${stored.length}`);
         assert.ok(stored.includes('ui_locale'));
@@ -99,7 +99,7 @@ describe('storage_schema — StoredOptions не розходиться з реє
 describe('storage_schema — реальні форми значень збігаються зі схемою', () => {
     test('журнал ручних корекцій Studio зберігається МАСИВОМ, а не мапою', async () => {
         store = {};
-        const { SYH_STORAGE } = await import('../modules/storage.ts');
+        const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
         await SYH_STORAGE.setAsync({ [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]: [] });
         const result = await SYH_STORAGE.getAsync([STORAGE_KEYS.STUDIO_OVERRIDE_LOG]);
@@ -112,7 +112,7 @@ describe('storage_schema — реальні форми значень збіга
 
     test('стани кнопок і чекбоксів переживають цикл запис → читання', async () => {
         store = {};
-        const { SYH_STORAGE } = await import('../modules/storage.ts');
+        const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
         await SYH_STORAGE.setAsync({
             [STORAGE_KEYS.YT_BUTTON_STATES]: { 'comment-1': 'prayer' },
@@ -136,7 +136,7 @@ describe('storage_schema — реальні форми значень збіга
 
     test('динамічні ключі аркушів і далі читаються (catch-all у схемі потрібен)', async () => {
         store = {};
-        const { SYH_STORAGE } = await import('../modules/storage.ts');
+        const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
         await SYH_STORAGE.setAsync({
             'syh:popup:sheet:vp_ss:oldList': 'текст',
@@ -217,7 +217,7 @@ describe('storage_schema — ключ згорнутих/розгорнутих 
 
     test('значення переживає цикл запис → читання під тим самим ключем', async () => {
         store = {};
-        const { SYH_STORAGE } = await import('../modules/storage.ts');
+        const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
         await SYH_STORAGE.setAsync({ [STORAGE_KEYS.EXPANDED_TABS]: ['tab-1', 'tab-2'] });
 
@@ -231,7 +231,7 @@ describe('storage_schema — catch-all не повертається', () => {
     // Один рядок `[key: string]: any` знімає перевірку з УСЬОГО сховища.
     // Спокуса додати його заради одного нового ключа виникатиме знову.
     test('у StorageSchema немає індексу [key: string]', () => {
-        const source = readFileSync('modules/storage_keys.ts', 'utf8');
+        const source = readFileSync('modules/storage/storage_keys.ts', 'utf8');
         const schema = source.match(/export interface StorageSchema \{([\s\S]*?)\n\}/);
 
         assert.ok(schema, 'інтерфейс StorageSchema має існувати');
@@ -252,7 +252,7 @@ describe('storage_schema — catch-all не повертається', () => {
     });
 
     test('перевірка справді читає тіло інтерфейсу', () => {
-        const source = readFileSync('modules/storage_keys.ts', 'utf8');
+        const source = readFileSync('modules/storage/storage_keys.ts', 'utf8');
         const schema = source.match(/export interface StorageSchema \{([\s\S]*?)\n\}/);
 
         assert.match(schema[1], /SheetStateKey/, 'у схемі мають бути шаблонні родини ключів');
@@ -354,6 +354,6 @@ describe('T17 — Record<string, any> не повертається у прод�
         const files = PRODUCTION_DIRS.flatMap(dir => collectTsFiles(dir));
 
         assert.ok(files.length > 200, `очікувались сотні файлів, знайдено ${files.length}`);
-        assert.ok(files.includes('modules/storage_keys.ts'));
+        assert.ok(files.includes('modules/storage/storage_keys.ts'));
     });
 });

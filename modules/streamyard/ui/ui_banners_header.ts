@@ -6,7 +6,7 @@
 // Поведінка збережена 1-в-1 (див. tests/ui_banners.test.js).
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelectorAll } from '../../config';
+import { SYH_CONFIG, resolveSelectorAll } from '../../registry/config';
 import {
     buildHeaderControlsHTML,
     buildSearchFilterContainerHTML,

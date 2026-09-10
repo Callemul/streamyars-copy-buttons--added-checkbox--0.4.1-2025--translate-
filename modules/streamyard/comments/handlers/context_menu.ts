@@ -1,5 +1,5 @@
 import type { SyhStreamYardComments } from '../types';
-import { closestBySelectorValue, queryBySelectorValue } from '../../../config';
+import { closestBySelectorValue, queryBySelectorValue } from '../../../registry/config';
 import { CommentService } from '../../../comments/comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../../../comments/assistant/index';
 import { getValidatedTarget } from './helpers';

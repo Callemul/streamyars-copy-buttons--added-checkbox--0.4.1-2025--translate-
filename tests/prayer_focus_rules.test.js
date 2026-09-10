@@ -64,7 +64,7 @@ const {
     shouldRenameAuthor
 } = await import('../popup/prayer_focus_rules.ts');
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const { bindPrayerFocusListeners } = await import('../popup/prayer_handlers_focus.ts');
 
 const PRAYERS_KEY = STORAGE_KEYS.PRAYERS;

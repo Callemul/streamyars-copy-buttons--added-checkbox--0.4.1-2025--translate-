@@ -6,8 +6,8 @@
 // Поведінка збережена 1-в-1 (див. tests/ui_banners.test.js).
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelector } from '../../config';
-import { UiFactory } from '../../ui_factory';
+import { SYH_CONFIG, resolveSelector } from '../../registry/config';
+import { UiFactory } from '../../dom/ui_factory';
 import { restoreCheckboxFromCache } from './ui_shared_utils';
 
 export function addButtonsToBanner(bannerNode: Element): void {

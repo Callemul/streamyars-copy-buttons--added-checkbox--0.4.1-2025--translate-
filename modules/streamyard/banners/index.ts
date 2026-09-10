@@ -1,4 +1,4 @@
-import { SYH_CONFIG, type SyhConfig } from '../../config';
+import { SYH_CONFIG, type SyhConfig } from '../../registry/config';
 import { SYH_STATE, type SyhState } from '../../core/state';
 import { SYH_UTILS, type SyhUtils } from '../../core/utils';
 import { SYH_UI, type SyhUi } from '../ui/ui';

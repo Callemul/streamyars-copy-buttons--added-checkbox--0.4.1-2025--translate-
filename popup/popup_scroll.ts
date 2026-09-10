@@ -1,5 +1,5 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
 import { $ } from './popup_dom_utils';
 
 const SHEET_IDS = getAllSheetIds();

@@ -10,7 +10,7 @@
 // (а не через фасад `ui_comments.ts`), щоб залежність лишалась однонапрямною.
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, queryBySelectorValue } from '../../config';
+import { SYH_CONFIG, queryBySelectorValue } from '../../registry/config';
 import {
     bindFilterSearchControls,
     bindFilterDocClickHandler,

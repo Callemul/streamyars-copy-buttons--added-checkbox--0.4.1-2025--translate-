@@ -14,7 +14,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_MESSAGING } = await import('../modules/messaging.ts');
+const { SYH_MESSAGING } = await import('../modules/messaging/messaging.ts');
 
 /** Прибирає шум console.warn/error, які модуль пише у except-гілках. */
 function silenceConsole() {
@@ -388,12 +388,12 @@ describe('messaging — контракт фасаду', () => {
 
 describe('messaging — декомпозовані одиниці', () => {
     test('31. isExtensionValid — це напряму isExtensionContextValid, без обгортки', async () => {
-        const { isExtensionContextValid } = await import('../modules/messaging_context.ts');
+        const { isExtensionContextValid } = await import('../modules/messaging/messaging_context.ts');
         assert.equal(SYH_MESSAGING.isExtensionValid, isExtensionContextValid);
     });
 
     test('32. sendRuntimeMessage поважає переданий гард і не смикає рантайм', async () => {
-        const { sendRuntimeMessage } = await import('../modules/messaging_senders.ts');
+        const { sendRuntimeMessage } = await import('../modules/messaging/messaging_senders.ts');
 
         let called = false;
         globalThis.chrome.runtime.sendMessage = (_m, cb) => {
@@ -409,7 +409,7 @@ describe('messaging — декомпозовані одиниці', () => {
     });
 
     test('33. sendActiveTabMessage поважає переданий гард', async () => {
-        const { sendActiveTabMessage } = await import('../modules/messaging_senders.ts');
+        const { sendActiveTabMessage } = await import('../modules/messaging/messaging_senders.ts');
 
         globalThis.chrome.tabs.query = (_q, cb) => cb([{ id: 3 }]);
         globalThis.chrome.tabs.sendMessage = (_id, _m, cb) => cb({ pong: true });
@@ -419,7 +419,7 @@ describe('messaging — декомпозовані одиниці', () => {
     });
 
     test('34. registerMessageListener: гард читається і на реєстрації, і на відписці', async () => {
-        const { registerMessageListener } = await import('../modules/messaging_listener.ts');
+        const { registerMessageListener } = await import('../modules/messaging/messaging_listener.ts');
 
         const listeners = [];
         globalThis.chrome.runtime.onMessage = {

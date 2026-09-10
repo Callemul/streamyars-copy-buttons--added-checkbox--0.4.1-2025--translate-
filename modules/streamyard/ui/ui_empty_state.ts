@@ -3,7 +3,7 @@
  * Відображення стану "порожньо" для списків коментарів та банерів
  */
 
-import { escapeHtml } from '../../escape_html';
+import { escapeHtml } from '../../dom/escape_html';
 
 export interface EmptyStateCategorySuggestion {
     key: string;

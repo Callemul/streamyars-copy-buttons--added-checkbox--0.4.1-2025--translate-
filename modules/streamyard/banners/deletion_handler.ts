@@ -1,4 +1,4 @@
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 import type { SyhUi } from '../ui/ui';
 import { calculateBannerDeletionCounts, buildBannerDeleteConfirmMessage } from './deletion_calculations';
 import { executeBannerDeletion } from './deletion_execution';

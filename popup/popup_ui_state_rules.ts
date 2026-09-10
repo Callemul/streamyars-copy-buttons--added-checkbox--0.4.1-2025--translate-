@@ -1,5 +1,5 @@
-import type { StorageRawResult } from '../modules/storage';
-import type { StorageReadResult } from '../modules/storage';
+import type { StorageRawResult } from '../modules/storage/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
 // popup/popup_ui_state_rules.ts
 //
 // ПРИЗНАЧЕННЯ: чисті правила відновлення UI-стану попапа (без DOM і без сховища).

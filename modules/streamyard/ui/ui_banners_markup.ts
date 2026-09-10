@@ -6,7 +6,7 @@
  * `insertAdjacentHTML`; залежать лише від незмінного на момент вставки `SYH_UI_STATE`.
  */
 
-import { escapeAttr } from '../../escape_html';
+import { escapeAttr } from '../../dom/escape_html';
 import { SYH_UI_STATE } from './ui_state';
 
 /** Керуючі кнопки в шапці списку банерів (створити/вибрати все/видалити). */

@@ -2,7 +2,7 @@ import { TriggerManager } from './trigger_manager';
 import { TriggerHighlighter } from './highlighter';
 import { CommentProcessor } from './processor';
 import type { CommentAssistantInterface } from './types';
-import { SYH_CONFIG } from '../../config';
+import { SYH_CONFIG } from '../../registry/config';
 
 export class CommentAssistantService implements CommentAssistantInterface {
     private triggerManager: TriggerManager;
@@ -19,7 +19,7 @@ export class CommentAssistantService implements CommentAssistantInterface {
     get triggerWords(): string[] { return this.triggerManager.triggerWords; }
     get triggerWordsQuestion(): string[] { return this.triggerManager.triggerWordsQuestion; }
     get triggerWordsPrayer(): string[] { return this.triggerManager.triggerWordsPrayer; }
-    get selectors(): Record<string, import('../../config').SelectorValue> { return this.triggerManager.selectors; }
+    get selectors(): Record<string, import('../../registry/config').SelectorValue> { return this.triggerManager.selectors; }
 
     public init(config?: any) {
         this.triggerManager.init(config);

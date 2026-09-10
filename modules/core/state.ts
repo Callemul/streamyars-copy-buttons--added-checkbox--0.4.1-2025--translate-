@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 
 import { SYH_UTILS } from './utils';
 

@@ -97,7 +97,7 @@ const {
 } = await import('../modules/video/video_copier_downloader.ts');
 
 const { SYH_VIDEO_COPIER, SYH_VIDEO_COPIER_PLUGIN } = await import('../modules/video/video_copier.ts');
-const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
+const { SYH_DOM_OBSERVER } = await import('../modules/dom/dom_observer.ts');
 
 // --- Хелпери-фікстури -------------------------------------------------------
 

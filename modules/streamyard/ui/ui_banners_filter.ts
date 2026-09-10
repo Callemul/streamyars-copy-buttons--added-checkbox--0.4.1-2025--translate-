@@ -5,7 +5,7 @@
 // (див. tests/ui_banners.test.js).
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelector } from '../../config';
+import { SYH_CONFIG, resolveSelector } from '../../registry/config';
 import { SYH_UTILS } from '../../core/utils';
 import { updateBannerVisuals } from './ui_banners_inject';
 import { updateTabCounts, scrollToActiveItem } from './ui_shared_utils';

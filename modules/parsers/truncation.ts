@@ -1,5 +1,5 @@
 // modules/parsers/truncation.ts
-import { SYH_CONFIG } from '../config';
+import { SYH_CONFIG } from '../registry/config';
 
 const DEFAULT_MAX_LENGTH = 195;
 const ELLIPSIS = "...";

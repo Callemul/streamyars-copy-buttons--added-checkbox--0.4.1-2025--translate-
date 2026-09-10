@@ -12,7 +12,7 @@
  * відповідь `{ error }`, щоб викликач не завис у очікуванні.
  */
 
-import { STORAGE_KEYS } from '../modules/storage';
+import { STORAGE_KEYS } from '../modules/storage/storage';
 import { updateExtensionBadge } from './badge_updater';
 
 export type BackgroundMessageHandler = (

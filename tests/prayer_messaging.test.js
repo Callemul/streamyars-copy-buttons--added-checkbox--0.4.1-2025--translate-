@@ -8,7 +8,7 @@ global.document = {
 };
 
 // Import the module first to get the actual object
-const messagingModule = await import('../modules/messaging.ts');
+const messagingModule = await import('../modules/messaging/messaging.ts');
 const { sendUnstarMessage, sendUnstarMessagesForList } = await import('../popup/prayer_messaging.ts');
 
 describe('Popup Prayer Messaging tests', () => {

@@ -7,7 +7,7 @@
  *
  * Спільне для обох — еміт `STATE_CHANGED`, на який підписані UI-відновлювачі.
  */
-import { SYH_STORAGE } from '../storage';
+import { SYH_STORAGE } from '../storage/storage';
 import { SYH_BUS } from '../core/event_bus';
 import { SYH_STATE } from '../core/state';
 import type { ButtonStateValue, CheckboxStateEntry } from './comment_types';

@@ -6,7 +6,7 @@
 // Виділено з `studio_header_counters.ts` разом із `studio_header_badge_markup.ts`,
 // щоб розділити «де вставити + що робить клік» і «як виглядає розмітка».
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage/storage';
 import { CommentService } from '../../modules/comments/comment_service';
 
 const HEADER_COUNTERS_WRAPPER_CLASS = 'syh-header-counters-wrapper';

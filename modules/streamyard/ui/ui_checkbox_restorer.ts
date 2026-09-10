@@ -13,7 +13,7 @@
  *   • непорожній textKey  — завжди перетираємо `checked` (у т.ч. на false).
  */
 
-import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from '../../config';
+import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from '../../registry/config';
 import { SYH_UI_STATE } from './ui_state';
 
 /**

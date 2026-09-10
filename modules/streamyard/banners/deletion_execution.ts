@@ -1,4 +1,4 @@
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 
 /**
  * Виконує видалення банерів через клік на кнопки видалення.

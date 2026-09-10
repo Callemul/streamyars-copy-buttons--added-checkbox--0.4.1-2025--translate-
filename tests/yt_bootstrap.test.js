@@ -73,7 +73,7 @@ const {
     resolveYtInitState
 } = await import('../youtube/yt_bootstrap_rules.ts');
 
-const { STORAGE_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage.ts');
+const { STORAGE_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage/storage.ts');
 const { YT_SELECTORS } = await import('../youtube/yt_selectors.ts');
 const { YT_COLLECTED_SHEET_ID, stateCache } = await import('../youtube/yt_state.ts');
 const { isCommentObserverActive, stopCommentObserver } = await import('../youtube/yt_observer.ts');

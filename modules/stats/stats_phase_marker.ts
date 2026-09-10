@@ -13,7 +13,7 @@
  */
 
 import type { StatsChartsDb } from './stats_types';
-import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 import { SYH_UTILS } from '../core/utils';
 import { showBanner } from '../core/utils_notify';
 import { getOrCreateTodaySession } from './stats_session';

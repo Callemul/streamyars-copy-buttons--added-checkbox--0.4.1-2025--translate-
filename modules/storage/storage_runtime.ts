@@ -14,7 +14,7 @@
 
 import type { StorageChanges } from './storage_keys';
 import type { StorageAdapter } from './storage_keys';
-import { isExtensionContextValid } from './messaging_context';
+import { isExtensionContextValid } from '../messaging/messaging_context';
 
 export function isChromeStorageAvailable(): boolean {
     if (!isExtensionContextValid()) return false;

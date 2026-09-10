@@ -3,7 +3,7 @@
  * Тонкий оркестратор компактних правих вкладок StreamYard.
  * Правила згортання живуть у `right_tabs_rules`, персистентність — у `right_tabs_storage`.
  */
-import { SYH_CONFIG, resolveSelectorAll } from '../../config';
+import { SYH_CONFIG, resolveSelectorAll } from '../../registry/config';
 import {
     COLLAPSED_TAB_CLASS,
     createRightTabsState,

@@ -32,7 +32,7 @@ const {
     observeCompactOption
 } = await import('../modules/streamyard/right_tabs/right_tabs_storage.ts');
 
-const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
+const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 
 const {
     SyhRightTabsCompact,

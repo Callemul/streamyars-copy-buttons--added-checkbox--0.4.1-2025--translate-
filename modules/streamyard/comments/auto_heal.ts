@@ -15,9 +15,9 @@
 // запускається без очікування, але з обов'язковим `.catch()`.
 
 import type { SyhStreamYardComments } from './types';
-import { SYH_CONFIG, resolveSelectorString } from '../../config';
-import { SYH_DOM_OBSERVER } from '../../dom_observer';
-import { isExtensionContextValid } from '../../messaging_context';
+import { SYH_CONFIG, resolveSelectorString } from '../../registry/config';
+import { SYH_DOM_OBSERVER } from '../../dom/dom_observer';
+import { isExtensionContextValid } from '../../messaging/messaging_context';
 import { processCoverButtons } from './auto_heal_cover_buttons';
 import { processGhostComments } from './auto_heal_ghosts';
 

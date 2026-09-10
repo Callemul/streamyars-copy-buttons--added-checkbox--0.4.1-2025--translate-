@@ -1,5 +1,5 @@
 import type { SyhUi } from './types';
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 import { CommentService } from '../../comments/comment_service';
 import { resolveBannerContext } from './helpers';
 import { SYH_STATS_TRACKER } from '../../stats/stats_tracker';

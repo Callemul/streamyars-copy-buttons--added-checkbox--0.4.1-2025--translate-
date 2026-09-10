@@ -12,7 +12,7 @@
 // Також експортує generateLegacyCommentId та extractLegacyCommentId для зворотної сумісності (YT-E1).
 
 import { YT_SELECTORS } from './yt_selectors';
-import { resolveSelector } from '../modules/config';
+import { resolveSelector } from '../modules/registry/config';
 
 /** Стратегія отримання ID: повертає рядок або `''`, якщо не спрацювала. */
 type CommentIdStrategy = (commentNode: Element, videoId?: string) => string;

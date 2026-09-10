@@ -1,8 +1,8 @@
 // youtube/studio/studio_video_map.ts
-import type { StorageReadResult } from '../../modules/storage';
-import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage';
-import type { SheetId } from '../../modules/sheets';
-import type { ChannelKey } from '../../modules/channel_config';
+import type { StorageReadResult } from '../../modules/storage/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../modules/storage/storage';
+import type { SheetId } from '../../modules/registry/sheets';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import type { VideoSheetMapEntry } from './studio_category_matcher';
 import type { StudioOverrideLogEntry } from '../../modules/core/types';
 

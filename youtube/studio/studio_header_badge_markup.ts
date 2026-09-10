@@ -8,8 +8,8 @@
 // нормалізація статистики та побудова HTML-рядка. Це робить правила
 // форматування тестованими окремо від вставки у сторінку.
 
-import { SHEET_LABELS, SHEET_IDS, type SheetId } from '../../modules/sheets';
-import type { ChannelKey } from '../../modules/channel_config';
+import { SHEET_LABELS, SHEET_IDS, type SheetId } from '../../modules/registry/sheets';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 
 export interface SheetHeaderStats {
     questions: number;

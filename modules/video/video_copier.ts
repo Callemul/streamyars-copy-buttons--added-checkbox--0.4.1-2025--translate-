@@ -7,7 +7,7 @@
  *   - `video_copier_downloader` — сценарій масового завантаження.
  */
 import type { ISyhPlugin } from '../core/plugin_registry';
-import { SYH_DOM_OBSERVER } from '../dom_observer';
+import { SYH_DOM_OBSERVER } from '../dom/dom_observer';
 import {
     VIDEO_COPIER_INJECTIONS,
     appendButtonsToCard,

@@ -6,8 +6,8 @@
 // у спільному `popup_dom_utils.restoreActiveTabState` (раніше ця логіка була
 // продубльована тут двічі — для вкладок і для підвкладок).
 
-import { STORAGE_KEYS, type StorageReadResult } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import { STORAGE_KEYS, type StorageReadResult } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
 import { db } from './popup_storage';
 import { restoreActiveTabState } from './popup_dom_utils';
 import { readStoredValue, buildScrollTargetIds } from './popup_ui_state_rules';

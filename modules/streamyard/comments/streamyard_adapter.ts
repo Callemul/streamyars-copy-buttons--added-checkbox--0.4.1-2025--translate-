@@ -27,7 +27,7 @@
 // конвеєр `comment_action_runner` (toggle on / untoggle + збережені коментарі
 // аркуша) описує іншу поверхню і тут не застосовний.
 
-import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from '../../config';
+import { SYH_CONFIG, closestBySelectorValue, queryBySelectorValue, type SelectorValue } from '../../registry/config';
 import { SYH_UI } from '../ui/ui';
 import { SYH_UTILS } from '../../core/utils';
 import { CommentService } from '../../comments/comment_service';

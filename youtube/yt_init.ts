@@ -8,9 +8,9 @@
 //   ./yt_observer        — володіння підпискою на DOM-спостерігач
 
 import { YT_SELECTORS } from './yt_selectors';
-import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
+import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage/storage';
 import { SYH_COMMENT_ASSISTANT } from '../modules/comments/assistant/index';
-import { SYH_CONFIG } from '../modules/config';
+import { SYH_CONFIG } from '../modules/registry/config';
 import { isAllowedChannel } from './yt_channel_gate';
 import { processAllYTComments, startObserver } from './yt_comment_processor';
 import { stopCommentObserver } from './yt_observer';

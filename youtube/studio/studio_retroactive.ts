@@ -12,7 +12,7 @@
 import { injectStudioCommentUI, updateStudioBadgeUI, updateStudioButtonsUI } from './studio_ui';
 import { resolveCategoryForVideo } from './studio_category_matcher';
 import { generateCommentKey } from './studio_comment_key';
-import type { ChannelKey } from '../../modules/channel_config';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import type { StudioEventCaches } from './studio_state_helpers';
 import { getStudioCommentContext } from './studio_adapter_context';
 

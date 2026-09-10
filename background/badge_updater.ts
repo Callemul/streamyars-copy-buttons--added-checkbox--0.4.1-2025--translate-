@@ -12,7 +12,7 @@
  * service worker не має падати через мертвий контекст.
  */
 
-import type { StorageRawResult } from '../modules/storage';
+import type { StorageRawResult } from '../modules/storage/storage';
 import { calculateBadgeCounts } from './badge_counter';
 
 const BADGE_COLOR_CHECKED = '#E67E22';

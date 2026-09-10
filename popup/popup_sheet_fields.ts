@@ -39,7 +39,7 @@
 // означала б втрату даних користувача. Тест
 // `tests/popup_sheet_fields.test.js` фіксує обидві форми.
 
-import { POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage';
+import { POPUP_SHEET_KEYS, getSheetCollectedStorageKey } from '../modules/storage/storage';
 import type { SheetKeyBuilder, SheetLegacyPrefix } from './popup_sheet_keys';
 
 /** Як поводитися зі значенням елемента. */

@@ -1,6 +1,6 @@
 // modules/channel_config.ts
 import { SHEET_IDS, type SheetId } from './sheets';
-import { SYH_STORAGE, STORAGE_KEYS } from './storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 
 export type ChannelKey = 'vp' | 'slovo' | 'unknown';
 

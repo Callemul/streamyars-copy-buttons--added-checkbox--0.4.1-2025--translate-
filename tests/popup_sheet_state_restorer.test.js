@@ -49,7 +49,7 @@ installChromeMock({
     }
 });
 
-const { POPUP_SHEET_KEYS } = await import('../modules/storage.ts');
+const { POPUP_SHEET_KEYS } = await import('../modules/storage/storage.ts');
 const { renderSheetTemplates } = await import('../popup/popup_sheet_renderer.ts');
 const { restoreSingleSheetState } = await import('../popup/popup_sheet_state_restorer.ts');
 const { renderTelegramDeletedLog } = await import('../popup/popup_telegram_renderers.ts');

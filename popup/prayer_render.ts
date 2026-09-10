@@ -1,5 +1,5 @@
 import { batchRenderItems } from './render_utils';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { $ } from './prayer_utils';
 import { checkRoomWarning } from './prayer_render_helpers';
 import { 

@@ -1,6 +1,6 @@
-import type { StorageReadResult } from '../modules/storage';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { SYH_MESSAGING } from '../modules/messaging';
+import type { StorageReadResult } from '../modules/storage/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
+import { SYH_MESSAGING } from '../modules/messaging/messaging';
 import { CommentService } from '../modules/comments/comment_service';
 import { showBanner } from '../modules/core/utils_notify';
 import { savePrayersAndRender } from './prayer_render';

@@ -8,8 +8,8 @@
  * Поведінка збережена 1-в-1 з оригінальними обробниками.
  */
 
-import type { StorageRawResult } from '../modules/storage';
-import type { StorageReadResult } from '../modules/storage';
+import type { StorageRawResult } from '../modules/storage/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
 import type { PrayerItem } from '../modules/core/types';
 
 export const CLEAR_PRAYERS_CONFIRM_MESSAGE =

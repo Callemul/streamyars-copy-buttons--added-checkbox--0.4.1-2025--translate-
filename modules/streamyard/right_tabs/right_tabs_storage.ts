@@ -4,7 +4,7 @@
  * Уся робота з `SYH_STORAGE` та `chrome.storage.onChanged` ізольована тут,
  * щоб правила згортання (`right_tabs_rules`) залишалися чистими та тестованими.
  */
-import { SYH_STORAGE, STORAGE_KEYS, type StoredOptions } from '../../storage';
+import { SYH_STORAGE, STORAGE_KEYS, type StoredOptions } from '../../storage/storage';
 import {
     createRightTabsState,
     parseStoredTabIds,

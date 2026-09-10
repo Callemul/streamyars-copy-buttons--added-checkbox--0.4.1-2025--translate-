@@ -1,5 +1,5 @@
 // Shared DOM utilities for popup modules
-import { SYH_STORAGE } from '../modules/storage';
+import { SYH_STORAGE } from '../modules/storage/storage';
 
 export function $(id: string): HTMLElement | null {
     return document.getElementById(id);

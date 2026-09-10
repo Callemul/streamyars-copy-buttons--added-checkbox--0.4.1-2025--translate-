@@ -88,7 +88,7 @@ const {
 } = await import('../popup/popup_sheet_bindings.ts');
 
 const { persistedValueFields } = await import('../popup/popup_sheet_fields.ts');
-const { POPUP_SHEET_KEYS, migrateKey } = await import('../modules/storage.ts');
+const { POPUP_SHEET_KEYS, migrateKey } = await import('../modules/storage/storage.ts');
 
 const SID = 'vp_ss';
 

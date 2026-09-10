@@ -1,9 +1,9 @@
 import type { CommentStateActionId } from '../../modules/comments/comment_actions';
 // youtube/studio/studio_adapter.ts
-import { STORAGE_KEYS } from '../../modules/storage';
+import { STORAGE_KEYS } from '../../modules/storage/storage';
 import { CommentService } from '../../modules/comments/comment_service';
-import { SHEET_IDS, type SheetId } from '../../modules/sheets';
-import type { ChannelKey } from '../../modules/channel_config';
+import { SHEET_IDS, type SheetId } from '../../modules/registry/sheets';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import { injectStudioCommentUI, updateStudioButtonsUI, updateStudioBadgeUI, updateStudioCheckedClass } from './studio_ui';
 import type { StudioCommentUIElements } from './studio_ui';
 import {

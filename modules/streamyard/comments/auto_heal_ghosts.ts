@@ -18,7 +18,7 @@
 //   - пропуск блоків без тексту коментаря.
 
 import type { SyhStreamYardComments } from './types';
-import { queryBySelectorValue } from '../../config';
+import { queryBySelectorValue } from '../../registry/config';
 
 const SYH_COMMENT_SELECTOR = '[data-syh-type="prayer"], [data-syh-type="question"]';
 const JUST_ADDED_ATTR = 'data-syh-just-added';

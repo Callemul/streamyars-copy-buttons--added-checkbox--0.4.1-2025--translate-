@@ -9,7 +9,7 @@ const {
     buildStarredControlsMarkup,
     STARRED_EMPTY_STATE_MARKUP
 } = await import('../modules/streamyard/ui/ui_starred_markup.ts');
-const { escapeHtml, escapeAttr } = await import('../modules/escape_html.ts');
+const { escapeHtml, escapeAttr } = await import('../modules/dom/escape_html.ts');
 
 /**
  * Юніт-тести чистого білдера розмітки, винесеного з `addStarredTabControls`

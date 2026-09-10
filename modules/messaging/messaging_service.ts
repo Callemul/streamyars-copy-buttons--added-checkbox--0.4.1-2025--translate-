@@ -10,7 +10,7 @@
  * чи в рантаймі має впливати на всі три канали, як і в оригіналі.
  */
 
-import type { SyhRuntimeMessage } from './core/types';
+import type { SyhRuntimeMessage } from '../core/types';
 import { isExtensionContextValid } from './messaging_context';
 import { sendRuntimeMessage, sendActiveTabMessage } from './messaging_senders';
 import { registerMessageListener, type SyhMessageHandler } from './messaging_listener';

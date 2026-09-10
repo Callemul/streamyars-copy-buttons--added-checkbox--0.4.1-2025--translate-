@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
-const { matchCategory } = await import('../modules/channel_config.ts');
+const { matchCategory } = await import('../modules/registry/channel_config.ts');
 
 describe('channel_config tests', () => {
     test('1. matchCategory identifies correct category for Oparin video', () => {

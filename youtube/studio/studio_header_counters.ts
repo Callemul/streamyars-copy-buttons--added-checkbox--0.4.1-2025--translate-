@@ -24,7 +24,7 @@
 // - .syh-stat-prayers (🙏 prayers) -> сума молитов з типом prayer
 // - .syh-stat-del (🗑️ кнопка очищення коментарів цієї категорії)
 
-import type { ChannelKey } from '../../modules/channel_config';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 import {
     buildCountersHtml,
     buildUnknownChannelHtml,

@@ -10,7 +10,7 @@
  * Поведінка збережена 1-в-1 (див. `tests/ui_comments_copy_filter.test.js`).
  */
 
-import { queryBySelectorValue, type SelectorValue } from '../../config';
+import { queryBySelectorValue, type SelectorValue } from '../../registry/config';
 import { SYH_UTILS } from '../../core/utils';
 import type { PrayerItem } from '../../core/types';
 import { resolveCommentType, updateCommentVisuals } from './ui_comment_labels';

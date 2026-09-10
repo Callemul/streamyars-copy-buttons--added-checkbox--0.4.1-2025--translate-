@@ -54,8 +54,8 @@ class TestResizeObserver {
 const OriginalResizeObserver = globalThis.ResizeObserver;
 globalThis.ResizeObserver = TestResizeObserver;
 
-const { getAllSheetIds } = await import('../modules/sheets.ts');
-const { POPUP_SHEET_KEYS, STORAGE_KEYS } = await import('../modules/storage.ts');
+const { getAllSheetIds } = await import('../modules/registry/sheets.ts');
+const { POPUP_SHEET_KEYS, STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const {
     initStep3Resizers,
     setupStep3ResizerEvents,

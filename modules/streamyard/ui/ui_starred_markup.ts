@@ -13,7 +13,7 @@
 //   - вкладка "other" завжди рендериться з style="display: none;";
 //   - між блоком пошуку та tablist є рядок із 16 пробілів.
 
-import { escapeAttr } from '../../escape_html';
+import { escapeAttr } from '../../dom/escape_html';
 
 interface FilterTabSpec {
     /** Значення data-filter та суфікс id="syh-comment-filter-…". */

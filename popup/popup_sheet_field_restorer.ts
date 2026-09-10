@@ -16,7 +16,7 @@
 import { $, setElementText } from './popup_dom_utils';
 import { updateOldInputStats, updateNewInputStats, ensureStatsBarRows } from './popup_telegram';
 import { readSheetBinding } from './popup_sheet_keys';
-import type { StorageReadResult } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
 import {
     persistedValueFields,
     getSheetStateBinding,

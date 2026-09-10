@@ -13,7 +13,7 @@ const {
     selectChangedEntries
 } = await import('../youtube/yt_storage_rules.ts');
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 
 /** Формат, у якому chrome.storage.onChanged віддає зміни. */
 function change(newValue, oldValue) {

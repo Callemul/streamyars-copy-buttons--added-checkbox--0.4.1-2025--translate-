@@ -40,8 +40,8 @@ const { SYH_COMMENT_ASSISTANT } = await import('../modules/comments/assistant/in
 const { SYH_RIGHT_TABS_COMPACT } = await import('../modules/streamyard/right_tabs/right_tabs_compact.ts');
 const { SYH_STATE } = await import('../modules/core/state.ts');
 const { SYH_STATS_TRACKER } = await import('../modules/stats/stats_tracker.ts');
-const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
-const { SYH_MESSAGING } = await import('../modules/messaging.ts');
+const { SYH_DOM_OBSERVER } = await import('../modules/dom/dom_observer.ts');
+const { SYH_MESSAGING } = await import('../modules/messaging/messaging.ts');
 const { SYH_PLUGINS } = await import('../modules/core/plugin_registry.ts');
 
 /**

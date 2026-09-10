@@ -13,10 +13,10 @@
 //   - `syh_options` без збережених опцій падає на `DEFAULT_OPTIONS`;
 //   - невалідна структура і битий JSON повідомляються через `alert`.
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { DEFAULT_OPTIONS } from './defaults';
 import { validateImportedConfig, extractImportedItems, type ImportedConfig } from './validation';
-import type { StorageRawResult } from '../modules/storage';
+import type { StorageRawResult } from '../modules/storage/storage';
 
 const EXPORT_APP_NAME = 'StreamYard Helper';
 /** Фолбек версії для тестового середовища без доступу до chrome.runtime.getManifest */

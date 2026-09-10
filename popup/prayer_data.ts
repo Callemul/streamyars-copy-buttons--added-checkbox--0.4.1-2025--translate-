@@ -1,4 +1,4 @@
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { RetentionService } from '../modules/sheets/retention_service';
 
 import type { PrayerItem } from '../modules/core/types';

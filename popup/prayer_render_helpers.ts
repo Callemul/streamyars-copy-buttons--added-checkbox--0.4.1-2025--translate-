@@ -9,7 +9,7 @@
 // Публічний API (checkRoomWarning / buildAuthorHeader / buildPrayerRow)
 // збережено без змін для зворотної сумісності.
 
-import { SYH_MESSAGING } from '../modules/messaging';
+import { SYH_MESSAGING } from '../modules/messaging/messaging';
 import { ROOM_WARNING_HTML, shouldWarnAboutForeignPrayers } from './prayer_room_guard';
 
 import type { PrayerItem } from '../modules/core/types';

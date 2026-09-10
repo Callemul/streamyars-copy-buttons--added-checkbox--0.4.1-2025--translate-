@@ -18,8 +18,8 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock({ runtimeImpl: { id: 'test-id' } });
 
-const { SYH_STORAGE } = await import('../modules/storage.ts');
-const { getAllSheetIds } = await import('../modules/sheets.ts');
+const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
+const { getAllSheetIds } = await import('../modules/registry/sheets.ts');
 
 const SID = getAllSheetIds()[0];
 

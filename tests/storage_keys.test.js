@@ -15,7 +15,7 @@ import {
     getSheetCollectedStorageKey,
     POPUP_SHEET_KEYS,
     STORAGE_KEYS
-} from '../modules/storage_keys.ts';
+} from '../modules/storage/storage_keys.ts';
 
 describe('storage_keys — migrateKey (точні відповідності)', () => {
     test('перетворює відомі legacy-ключі у схему syh:*', () => {

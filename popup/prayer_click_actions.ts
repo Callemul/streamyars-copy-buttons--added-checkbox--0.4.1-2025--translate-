@@ -8,8 +8,8 @@
  * Поведінка збережена 1-в-1 з оригінальними обробниками.
  */
 
-import type { StorageReadResult } from '../modules/storage';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { CommentService } from '../modules/comments/comment_service';
 import { sendUnstarMessagesForList } from './prayer_messaging';
 import { savePrayersAndRender } from './prayer_render';

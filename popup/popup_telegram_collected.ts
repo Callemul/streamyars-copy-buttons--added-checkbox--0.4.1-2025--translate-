@@ -5,8 +5,8 @@
 //
 // Виділено з `popup/popup_telegram.ts` (hotspot №1 за Fallow).
 
-import type { StorageReadResult } from '../modules/storage';
-import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
+import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage/storage';
 import { CommentService } from '../modules/comments/comment_service';
 import { batchRenderItems } from './render_utils';
 import type { YTCollectedItem } from '../modules/core/types';

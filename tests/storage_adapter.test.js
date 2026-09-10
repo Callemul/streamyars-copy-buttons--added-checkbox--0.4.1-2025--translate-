@@ -14,7 +14,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_STORAGE } = await import('../modules/storage.ts');
+const { SYH_STORAGE } = await import('../modules/storage/storage.ts');
 
 /** Run `fn` with console.error silenced, returning everything it logged. */
 function captureConsoleError(fn) {

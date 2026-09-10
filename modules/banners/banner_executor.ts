@@ -1,4 +1,4 @@
-import { SPEAKER_SUFFIX_CLEANUP_REGEX } from '../channel_config';
+import { SPEAKER_SUFFIX_CLEANUP_REGEX } from '../registry/channel_config';
 import { QUESTION_AUTHOR_SUFFIX_REGEX } from '../parsers/regex';
 import type { SyhBannerCreator } from './banner_types';
 import type { BannerItem } from './banner_types';

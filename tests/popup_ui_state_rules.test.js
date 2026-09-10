@@ -30,8 +30,8 @@ installChromeMock({
     }
 });
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
-const { getAllSheetIds } = await import('../modules/sheets.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
+const { getAllSheetIds } = await import('../modules/registry/sheets.ts');
 const { db } = await import('../popup/popup_storage.ts');
 
 const {

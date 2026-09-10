@@ -9,9 +9,9 @@
 // цей модуль НЕ імпортує жодного іншого popup_telegram_*-модуля, тож розбиття
 // не створює циклічних імпортів.
 
-import { SHEET_REGISTRY } from '../modules/sheets';
+import { SHEET_REGISTRY } from '../modules/registry/sheets';
 import type { YTCollectedItem } from '../modules/core/types';
-import { getSheetCollectedStorageKey } from '../modules/storage_keys';
+import { getSheetCollectedStorageKey } from '../modules/storage/storage_keys';
 
 /** Кеш зібраних з YouTube коментарів у розрізі аркушів. */
 const syh_collected_by_sheet: Record<string, YTCollectedItem[]> = SHEET_REGISTRY.createSheetRecordMap(() => []);

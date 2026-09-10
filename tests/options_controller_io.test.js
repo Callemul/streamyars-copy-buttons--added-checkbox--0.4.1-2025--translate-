@@ -23,7 +23,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const { DEFAULT_OPTIONS } = await import('../options/defaults.ts');
 
 // Імпорт реєструє слухач DOMContentLoaded — саме він створює контролер.

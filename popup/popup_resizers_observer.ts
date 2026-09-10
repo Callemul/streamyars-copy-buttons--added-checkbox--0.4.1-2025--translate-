@@ -1,6 +1,6 @@
-import type { StorageReadResult } from '../modules/storage';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
-import { getAllSheetIds } from '../modules/sheets';
+import type { StorageReadResult } from '../modules/storage/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
+import { getAllSheetIds } from '../modules/registry/sheets';
 
 const SHEET_IDS = getAllSheetIds();
 

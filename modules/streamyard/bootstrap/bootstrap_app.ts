@@ -4,7 +4,7 @@
  * `main.ts` лишається тонким входом, а весь порядок ініціалізації описаний тут
  * невеликими функціями, які можна перевірити юніт-тестами.
  */
-import { SYH_CONFIG } from '../../config';
+import { SYH_CONFIG } from '../../registry/config';
 import { SYH_STATE } from '../../core/state';
 import { SYH_UTILS } from '../../core/utils';
 import { SYH_UI } from '../ui/ui';
@@ -17,9 +17,9 @@ import { SYH_STATS_TRACKER } from '../../stats/stats_tracker';
 import { SYH_ANTI_AFK_PLUGIN } from '../anti_afk/anti_afk';
 import { SYH_COMMENT_ASSISTANT } from '../../comments/assistant/index';
 import { SYH_RIGHT_TABS_COMPACT } from '../right_tabs/right_tabs_compact';
-import { SYH_MESSAGING } from '../../messaging';
+import { SYH_MESSAGING } from '../../messaging/messaging';
 import { SYH_PLUGINS, type ISyhPlugin, type PluginRegistry } from '../../core/plugin_registry';
-import { SYH_DOM_OBSERVER } from '../../dom_observer';
+import { SYH_DOM_OBSERVER } from '../../dom/dom_observer';
 
 import { resolveObserverContainer, setupDomRegistration } from './bootstrap_dom';
 import { routeSyhMessage, type CommentSelectors } from './bootstrap_messages';

@@ -12,8 +12,8 @@
  * Поведінка збережена 1-в-1 з оригінальним `loadStorageAndInitialize`.
  */
 
-import type { StorageReadResult, SheetCollectedKey } from '../modules/storage';
-import { STORAGE_KEYS } from '../modules/storage';
+import type { StorageReadResult, SheetCollectedKey } from '../modules/storage/storage';
+import { STORAGE_KEYS } from '../modules/storage/storage';
 import { orEmptyRecord, readYoutubeEnabled } from './yt_storage_rules';
 import type { StateCache } from './yt_state';
 import type { YTCollectedItem } from '../modules/core/types';

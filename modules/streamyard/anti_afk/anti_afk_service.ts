@@ -11,9 +11,9 @@
 // зі storage більше не лишає осиротілих інтервалів. Латентний баг виправлено —
 // див. docs/audits/active/audit_2026-08-10_KILO_antiafk-timer-observer-leak-on-reconfigure.md
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../../storage/storage';
 import { checkAndClickAntiAfk, simulateUserActivity, type I18nAdapterLike } from './anti_afk_detector';
-import { isExtensionContextValid } from '../../messaging_context';
+import { isExtensionContextValid } from '../../messaging/messaging_context';
 
 /** Період превентивної імітації активності (2.5 хв). */
 const ACTIVITY_SIMULATION_INTERVAL_MS = 150000;

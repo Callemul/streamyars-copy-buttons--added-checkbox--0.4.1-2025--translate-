@@ -9,9 +9,9 @@
 // збережена 1-в-1 (у т.ч. звернення до ключів `syh:popup:collected:${sId}`),
 // тому характеризаційні тести лишаються зеленими.
 
-import type { StorageReadResult } from '../../modules/storage';
-import { getSheetCollectedStorageKey } from '../../modules/storage_keys';
-import { getAllSheetIds } from '../../modules/sheets';
+import type { StorageReadResult } from '../../modules/storage/storage';
+import { getSheetCollectedStorageKey } from '../../modules/storage/storage_keys';
+import { getAllSheetIds } from '../../modules/registry/sheets';
 import { countQuestionsInText } from '../../modules/telegram/telegram_parser';
 import type { CommentPayload } from '../../modules/comments/comment_service';
 import type { SheetHeaderStats } from './studio_header_counters';

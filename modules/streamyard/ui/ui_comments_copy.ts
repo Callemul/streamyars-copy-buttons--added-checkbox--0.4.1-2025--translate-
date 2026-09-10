@@ -15,7 +15,7 @@
  */
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, queryBySelectorValue, type SelectorValue } from '../../config';
+import { SYH_CONFIG, queryBySelectorValue, type SelectorValue } from '../../registry/config';
 import { SYH_UTILS } from '../../core/utils';
 import { CommentService } from '../../comments/comment_service';
 import type { PrayerItem } from '../../core/types';

@@ -109,7 +109,7 @@ const {
     stampPrayersWithRoom
 } = await import('../popup/prayer_click_rules.ts');
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 const {
     bindPrayerClickListeners,
     handleEditPrayerAuthor,

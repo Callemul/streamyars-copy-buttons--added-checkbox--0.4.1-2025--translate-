@@ -4,7 +4,7 @@
  * Тут немає ані DOM-мутацій, ані звернень до chrome.storage — лише детерміновані обчислення стану,
  * тому модуль повністю покривається юніт-тестами.
  */
-import type { StoredOptions } from '../../storage';
+import type { StoredOptions } from '../../storage/storage';
 
 export const COLLAPSED_TAB_CLASS = 'syh-collapsed-tab';
 

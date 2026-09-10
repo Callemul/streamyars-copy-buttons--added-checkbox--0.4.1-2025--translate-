@@ -2,7 +2,7 @@
 import { getCommentHeaderLabelElement, getCommentHeaderElement } from './studio_selectors';
 import { renderStudioHeaderCounters, type SheetHeaderStats } from './studio_header_counters';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
-import type { ChannelKey } from '../../modules/channel_config';
+import type { ChannelKey } from '../../modules/registry/channel_config';
 
 export class StudioHeaderUpdater {
     private channelInfo: StudioChannelInfo | null = null;

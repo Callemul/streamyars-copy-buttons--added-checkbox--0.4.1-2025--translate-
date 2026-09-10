@@ -42,8 +42,8 @@ globalThis.chrome.tabs = {
     sendMessage: () => {}
 };
 
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
-const { SYH_MESSAGING } = await import('../modules/messaging.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
+const { SYH_MESSAGING } = await import('../modules/messaging/messaging.ts');
 const { RetentionService } = await import('../modules/sheets/retention_service.ts');
 
 const {

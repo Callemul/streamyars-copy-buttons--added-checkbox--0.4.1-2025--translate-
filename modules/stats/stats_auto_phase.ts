@@ -10,12 +10,12 @@
  * Жодної мутації стану без активного ефіру (таймера) та захист від повторних перезаписів.
  */
 
-import { SYH_STORAGE, STORAGE_KEYS } from '../storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../storage/storage';
 import { SYH_UTILS } from '../core/utils';
 import { fuzzyIncludes } from '../core/fuzzy_match';
 import { getOrCreateTodaySession } from './stats_session';
 import type { StatsPhaseHost } from './stats_phase_marker';
-import { SYH_CONFIG, queryBySelectorValue } from '../config';
+import { SYH_CONFIG, queryBySelectorValue } from '../registry/config';
 
 const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
 

@@ -35,8 +35,8 @@ installChromeMock({
     }
 });
 
-const { STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage.ts');
-const { getAllSheetIds, SHEET_LABELS } = await import('../modules/sheets.ts');
+const { STORAGE_KEYS, POPUP_SHEET_KEYS, getSheetCollectedStorageKey } = await import('../modules/storage/storage.ts');
+const { getAllSheetIds, SHEET_LABELS } = await import('../modules/registry/sheets.ts');
 
 const {
     renderSheetTemplates,

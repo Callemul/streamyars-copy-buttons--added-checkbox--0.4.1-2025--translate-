@@ -6,7 +6,7 @@
 // Запобігає ситуаціям, коли менш специфічний або батьківський вузол перехоплює результат
 // через порядок у DOM-дереві при використанні групування через кому.
 
-import { type SelectorValue } from '../../modules/config';
+import { type SelectorValue } from '../../modules/registry/config';
 import { PARENT_THREAD_SELECTOR } from './studio_selector_constants';
 
 /** Корінь пошуку: документ або будь-який елемент-контейнер. */

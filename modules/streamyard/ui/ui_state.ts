@@ -1,6 +1,6 @@
 import type { SyhState } from '../../core/state';
 import type { PrayerItem } from '../../core/types';
-import type { SelectorValue } from '../../config';
+import type { SelectorValue } from '../../registry/config';
 
 export interface SyhUiState {
     SELECTORS: Record<string, SelectorValue> | null;
@@ -37,7 +37,7 @@ export interface SyhUi extends SyhUiState {
     scrollToActiveBanner(): void;
     
     // Init and validation
-    init(config?: import('../../config').SyhConfig, state?: SyhState): void;
+    init(config?: import('../../registry/config').SyhConfig, state?: SyhState): void;
     validateSelectorsSyntax(): void;
     restoreDomCheckboxes(): void;
 }

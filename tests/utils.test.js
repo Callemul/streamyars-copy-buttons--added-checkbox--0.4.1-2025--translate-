@@ -5,7 +5,7 @@ import { test, describe } from 'node:test';
 global.window = global;
 
 const { SYH_UTILS } = await import('../modules/core/utils.ts');
-const { STORAGE_KEYS } = await import('../modules/storage.ts');
+const { STORAGE_KEYS } = await import('../modules/storage/storage.ts');
 
 describe('SYH_UTILS tests', () => {
 

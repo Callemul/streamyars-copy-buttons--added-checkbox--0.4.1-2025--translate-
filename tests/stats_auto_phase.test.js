@@ -8,7 +8,7 @@ import {
     checkAutoStartQuestionsPhase,
     checkAutoStartPrayersPhase
 } from '../modules/stats/stats_auto_phase.ts';
-import { STORAGE_KEYS } from '../modules/storage.ts';
+import { STORAGE_KEYS } from '../modules/storage/storage.ts';
 
 describe('modules/stats_auto_phase.ts', () => {
     describe('isPrayerBannerText', () => {

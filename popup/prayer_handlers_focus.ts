@@ -1,5 +1,5 @@
-import type { StorageReadResult } from '../modules/storage';
-import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage';
+import type { StorageReadResult } from '../modules/storage/storage';
+import { SYH_STORAGE, STORAGE_KEYS } from '../modules/storage/storage';
 import { readStoredPrayers } from './prayer_toolbar_actions';
 import { renderPrayers } from './prayer_render';
 import {

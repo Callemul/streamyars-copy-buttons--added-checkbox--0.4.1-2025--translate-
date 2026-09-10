@@ -1,4 +1,4 @@
-import { SYH_STORAGE } from '../../modules/storage';
+import { SYH_STORAGE } from '../../modules/storage/storage';
 import { initializeStudioModule } from './studio_init';
 import { StudioStorageController, createStorageChangeHandler } from './studio_storage_handler';
 import { StudioSPAHandler } from './studio_spa_handler';

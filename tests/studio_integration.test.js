@@ -27,7 +27,7 @@ installChromeMock({
     }
 });
 
-const { matchCategory } = await import('../modules/channel_config.ts');
+const { matchCategory } = await import('../modules/registry/channel_config.ts');
 const { resolveCategoryForVideo } = await import('../youtube/studio/studio_category_matcher.ts');
 const { CommentInjector } = await import('../modules/comments/comment_injector.ts');
 const { StudioCommentAdapter, retroactiveUpdateVideoComments } = await import('../youtube/studio/studio_adapter.ts');

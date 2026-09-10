@@ -1,6 +1,6 @@
 // modules/parsers/sabbath_parser.ts
-import { SABBATH_SCHOOL_KEYWORDS_REGEX } from '../channel_config';
-import { SYH_CONFIG } from '../config';
+import { SABBATH_SCHOOL_KEYWORDS_REGEX } from '../registry/channel_config';
+import { SYH_CONFIG } from '../registry/config';
 import { truncateWithLimit } from './truncation';
 import { QUESTION_AUTHOR_SUFFIX_REGEX } from './regex';
 

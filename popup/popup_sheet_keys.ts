@@ -7,7 +7,7 @@
 // цей `??`-фолбек дублювався в кожному відновлювачі; тепер він живе в одному
 // місці, а відновлювачі просто читають поле.
 
-import type { StorageReadResult, SheetScopedKey } from '../modules/storage';
+import type { StorageReadResult, SheetScopedKey } from '../modules/storage/storage';
 
 /**
  * Історичний префікс ключа аркуша.

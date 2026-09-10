@@ -1,6 +1,6 @@
 // youtube/studio/studio_category_matcher.ts
-import type { SheetId } from '../../modules/sheets';
-import { matchCategory, type ChannelKey } from '../../modules/channel_config';
+import type { SheetId } from '../../modules/registry/sheets';
+import { matchCategory, type ChannelKey } from '../../modules/registry/channel_config';
 
 // Форма переїхала в `modules/types.ts` до решти збережених форм (T17, крок 3);
 // реекспорт зберігає історичний контракт цього модуля.

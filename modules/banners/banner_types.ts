@@ -1,5 +1,5 @@
-import type { SelectorValue } from '../config';
-import type { SyhConfig } from '../config';
+import type { SelectorValue } from '../registry/config';
+import type { SyhConfig } from '../registry/config';
 import type { SyhUtils } from '../core/utils';
 import type { SyhParsers } from '../parsers/index';
 

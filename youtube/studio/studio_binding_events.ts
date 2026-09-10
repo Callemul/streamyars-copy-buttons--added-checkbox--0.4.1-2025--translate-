@@ -11,8 +11,8 @@
  */
 
 import type { CommentContext } from '../../modules/comments/comment_platform_adapter';
-import type { ChannelKey } from '../../modules/channel_config';
-import type { SheetId } from '../../modules/sheets';
+import type { ChannelKey } from '../../modules/registry/channel_config';
+import type { SheetId } from '../../modules/registry/sheets';
 import { toggleDropdown } from './studio_dom_helpers';
 import { resolveCategoryForVideo } from './studio_category_matcher';
 import { setStudioVideoSheetOverride } from './studio_video_map';

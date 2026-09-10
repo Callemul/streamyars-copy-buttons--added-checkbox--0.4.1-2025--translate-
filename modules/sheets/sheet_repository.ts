@@ -9,8 +9,8 @@
  * Поведінка збережена 1-в-1 (див. tests/sheet_state_api.test.js).
  */
 
-import type { StorageReadResult, StorageWriteItems, SheetScopedKey } from '../storage_keys';
-import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from '../storage';
+import type { StorageReadResult, StorageWriteItems, SheetScopedKey } from '../storage/storage_keys';
+import { SYH_STORAGE, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } from '../storage/storage';
 import type { YTCollectedItem } from '../core/types';
 
 /**
