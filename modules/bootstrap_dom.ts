@@ -5,7 +5,7 @@
  */
 import { SYH_CONFIG, resolveFirstSelector, type SelectorValue } from './config';
 import { SYH_UI } from './ui';
-import { SYH_COMMENT_ASSISTANT } from './comment_assistant';
+import { SYH_COMMENT_ASSISTANT } from './comment_assistant/index';
 import { SYH_RIGHT_TABS_COMPACT } from './right_tabs_compact';
 import { SYH_DOM_OBSERVER, type DomHandler } from './dom_observer';
 import { bindStreamYardComment, unbindStreamYardComment } from './streamyard_comment_binding';

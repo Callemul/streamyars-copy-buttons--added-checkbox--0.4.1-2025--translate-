@@ -70,7 +70,7 @@ const mockModules = {
         bindYTEvents: () => {},
         YTCollectedItem: class {}
     },
-    '../modules/comment_assistant': {
+    '../modules/comment_assistant/index': {
         SYH_COMMENT_ASSISTANT: {
             processComment: () => true,
             init: () => {}

@@ -13,7 +13,7 @@
 import { YT_SELECTORS } from './yt_selectors';
 import { addButtonsToYTComment, extractCommentId, restoreButtonState, restoreCheckboxState } from './yt_ui';
 import { bindYTEvents } from './yt_events';
-import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant';
+import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant/index';
 import { startCommentObserver } from './yt_observer';
 import { stateCache } from './yt_state';
 import { HIGHLIGHT_ERROR_PREFIX, canProcessComment, toSelectorString } from './yt_comment_rules';

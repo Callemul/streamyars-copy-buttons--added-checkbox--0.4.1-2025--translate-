@@ -9,7 +9,7 @@
 
 import { YT_SELECTORS } from './yt_selectors';
 import { SYH_STORAGE, getSheetCollectedStorageKey } from '../modules/storage';
-import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant';
+import { SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant/index';
 import { SYH_CONFIG } from '../modules/config';
 import { isAllowedChannel } from './yt_channel_gate';
 import { processAllYTComments, startObserver } from './yt_comment_processor';

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CommentAssistantService, SYH_COMMENT_ASSISTANT, TriggerHighlighter } from '../modules/comment_assistant.ts';
+import { CommentAssistantService, SYH_COMMENT_ASSISTANT } from '../modules/comment_assistant/index.ts';
+import { TriggerHighlighter } from '../modules/comment_assistant/highlighter.ts';
 
 test('SYH_COMMENT_ASSISTANT.hasTrigger detects question and prayer trigger words', () => {
     assert.equal(SYH_COMMENT_ASSISTANT.hasTrigger('У меня есть вопрос по теме'), true);
