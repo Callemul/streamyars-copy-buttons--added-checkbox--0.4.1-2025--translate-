@@ -12,7 +12,7 @@
 import type { StorageReadResult } from '../../modules/storage';
 import { getSheetCollectedStorageKey } from '../../modules/storage_keys';
 import { getAllSheetIds } from '../../modules/sheets';
-import { countQuestionsInText } from '../../modules/telegram_parser';
+import { countQuestionsInText } from '../../modules/telegram/telegram_parser';
 import type { CommentPayload } from '../../modules/comment_service';
 import type { SheetHeaderStats } from './studio_header_counters';
 

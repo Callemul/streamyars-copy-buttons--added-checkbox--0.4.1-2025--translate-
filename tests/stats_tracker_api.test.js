@@ -38,9 +38,9 @@ installChromeMock({
     }
 });
 
-const { SYH_STATS_TRACKER } = await import('../modules/stats_tracker.ts');
+const { SYH_STATS_TRACKER } = await import('../modules/stats/stats_tracker.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');
-const { SYH_STATS_EXPORTER } = await import('../modules/stats_exporter.ts');
+const { SYH_STATS_EXPORTER } = await import('../modules/stats/stats_exporter.ts');
 const { STORAGE_KEYS } = await import('../modules/storage.ts');
 
 const STATS_KEY = STORAGE_KEYS.STATS_CHARTS;

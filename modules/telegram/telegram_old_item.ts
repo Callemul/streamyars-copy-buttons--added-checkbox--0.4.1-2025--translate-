@@ -6,10 +6,10 @@
  * елемента. Розбір самої секції на блоки живе в `telegram_old_section.ts`.
  */
 
-import { RELATIVE_TIME_LINE_REGEX } from './parsers/index';
+import { RELATIVE_TIME_LINE_REGEX } from '../parsers/index';
 import { cleanTelegramHeadersLogged, countQuestionsInText, hasSubQuestions } from './telegram_text_rules';
 import type { TelegramQuestionItem } from './telegram_types';
-import type { CleaningLogEntry, DeletedLogEntry } from './types';
+import type { CleaningLogEntry, DeletedLogEntry } from '../types';
 
 /** Ім'я, яким підписується блок без розпізнаного автора. */
 const ANONYMOUS_AUTHOR = 'Анонім';

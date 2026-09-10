@@ -7,10 +7,10 @@
  * Виділено з `telegram_parser.ts`.
  */
 
-import { TG_HEADER_A_REGEX, TG_HEADER_B_REGEX, RELATIVE_TIME_LINE_REGEX } from './parsers/index';
+import { TG_HEADER_A_REGEX, TG_HEADER_B_REGEX, RELATIVE_TIME_LINE_REGEX } from '../parsers/index';
 import { cleanAuthorName } from './telegram_text_rules';
 import type { GroupedNewItem } from './telegram_types';
-import type { CleaningLogEntry } from './types';
+import type { CleaningLogEntry } from '../types';
 
 /** Підпис для повідомлення без явного «@автора». */
 const CHAT_AUTHOR_FALLBACK = 'Питання з чату';

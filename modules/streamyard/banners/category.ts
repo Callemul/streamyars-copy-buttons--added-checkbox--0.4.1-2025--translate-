@@ -1,7 +1,7 @@
 import type { SyhUi, SyhUtils } from './types';
 import type { SelectorValue } from '../../config';
 import { resolveBannerContext } from './helpers';
-import { openBannerCreationModal } from '../../banner_modal';
+import { openBannerCreationModal } from '../../banners/banner_modal';
 
 export function handleCreateBannersAction(bannerCreator: any): void {
     if (bannerCreator) {

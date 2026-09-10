@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { SYH_STATS_EXPORTER } from '../modules/stats_exporter.ts';
+import { SYH_STATS_EXPORTER } from '../modules/stats/stats_exporter.ts';
 
 describe('SYH_STATS_EXPORTER Tests', () => {
     describe('parseTimeToSeconds', () => {

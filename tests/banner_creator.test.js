@@ -6,7 +6,7 @@ import {
     parseRawTextToBanners,
     executeBannerCreationLoop,
     SYH_BANNER_CREATOR
-} from '../modules/banner_creator.ts';
+} from '../modules/banners/banner_creator.ts';
 import { SYH_PARSERS } from '../modules/parsers/index.ts';
 import { SYH_UTILS } from '../modules/utils.ts';
 

@@ -17,8 +17,8 @@
  *     `disabled` після додаткової паузи.
  */
 
-import type { SelectorValue } from './config';
-import type { SyhUtils } from './utils';
+import type { SelectorValue } from '../config';
+import type { SyhUtils } from '../utils';
 
 /** Таймаут очікування кнопки «створити банер» і самої форми. */
 export const BANNER_FORM_TIMEOUT_MS = 2000;

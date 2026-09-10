@@ -6,9 +6,9 @@
  * Виділено з `telegram_parser.ts`.
  */
 
-import { SYH_PARSERS } from './parsers/index';
-import { SYH_UTILS } from './utils';
-import type { CleaningLogEntry } from './types';
+import { SYH_PARSERS } from '../parsers/index';
+import { SYH_UTILS } from '../utils';
+import type { CleaningLogEntry } from '../types';
 
 /** Маркер підпункту всередині блоку питань. */
 const SUB_QUESTION_BULLET = '🔹';

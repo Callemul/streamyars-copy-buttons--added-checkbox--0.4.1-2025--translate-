@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import { QUESTION_AUTHOR_SUFFIX_REGEX } from '../modules/parsers/regex.ts';
 import { SYH_PARSERS } from '../modules/parsers/index.ts';
 import { parseStandardNumberedQuestions, parseSabbathSchoolUnnumberedQuestions } from '../modules/parsers/question_parsers.ts';
-import { parseBlock, parseRawTextToBanners } from '../modules/banner_parser.ts';
-import { executeBannerCreationLoop } from '../modules/banner_executor.ts';
-import { parseTextToSections } from '../modules/banner_modal.ts';
+import { parseBlock, parseRawTextToBanners } from '../modules/banners/banner_parser.ts';
+import { executeBannerCreationLoop } from '../modules/banners/banner_executor.ts';
+import { parseTextToSections } from '../modules/banners/banner_modal.ts';
 import { SYH_UTILS } from '../modules/utils.ts';
 
 describe('Author bracket cleanup (незакриті та закриті дужки з авторами)', () => {

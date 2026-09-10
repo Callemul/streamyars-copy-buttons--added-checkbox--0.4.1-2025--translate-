@@ -1,6 +1,6 @@
-import { splitPrayerSection } from './parsers/index';
-import type { SyhParsers } from './parsers/index';
-import type { SyhUtils } from './utils';
+import { splitPrayerSection } from '../parsers/index';
+import type { SyhParsers } from '../parsers/index';
+import type { SyhUtils } from '../utils';
 import type { BannerItem } from './banner_types';
 import {
     detectBlockCategory,

@@ -12,8 +12,8 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { installChromeMock } from './setup/chrome_mock.ts';
-import { SYH_STATS_EXPORTER } from '../modules/stats_exporter.ts';
-import { renderModalSummaryTable } from '../modules/stats_modal.ts';
+import { SYH_STATS_EXPORTER } from '../modules/stats/stats_exporter.ts';
+import { renderModalSummaryTable } from '../modules/stats/stats_modal.ts';
 import { STORAGE_KEYS } from '../modules/storage.ts';
 import { SYH_UTILS } from '../modules/utils.ts';
 

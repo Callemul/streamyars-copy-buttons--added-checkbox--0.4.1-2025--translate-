@@ -6,8 +6,8 @@
 // Виділено з `popup/popup_telegram.ts` (hotspot №1 за Fallow). Модуль залежить
 // лише від `popup_telegram_state.ts` і спільних утиліт, тож не утворює циклів.
 
-import { numberToEmoji } from '../modules/telegram_parser';
-import type { TelegramQuestionItem } from '../modules/telegram_parser';
+import { numberToEmoji } from '../modules/telegram/telegram_parser';
+import type { TelegramQuestionItem } from '../modules/telegram/telegram_parser';
 import type { CleaningLogEntry, DeletedLogEntry } from '../modules/types';
 import { batchRenderItems } from '../modules/render_utils';
 import { SheetStateService } from '../modules/sheet_state_service';

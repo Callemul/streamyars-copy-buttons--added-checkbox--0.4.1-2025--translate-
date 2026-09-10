@@ -12,11 +12,11 @@ import {
     splitPrayerSection,
     TG_HEADER_A_REGEX,
     TG_HEADER_B_REGEX
-} from './parsers/index';
+} from '../parsers/index';
 import { cleanAuthorName } from './telegram_text_rules';
 import { processOldTelegramItem, type RawOldItem } from './telegram_old_item';
 import type { TelegramQuestionItem, ParseOldListResult } from './telegram_types';
-import type { CleaningLogEntry, DeletedLogEntry } from './types';
+import type { CleaningLogEntry, DeletedLogEntry } from '../types';
 
 /** Підпис для блоку Telegram, у якому автор не вказаний явно через «@». */
 const CHAT_AUTHOR_FALLBACK = 'Питання з чату';

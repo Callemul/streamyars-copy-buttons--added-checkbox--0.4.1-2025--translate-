@@ -3,8 +3,8 @@
  * Послідовність масового завантаження свіжих відео StreamYard.
  * Кожен крок сценарію винесений в окрему функцію, тому складність кожної гілки мінімальна.
  */
-import { SYH_I18N } from './i18n';
-import { showBanner } from './utils_notify';
+import { SYH_I18N } from '../i18n';
+import { showBanner } from '../utils_notify';
 import { collectFreshVideoCards, queryVideoCards, startOfToday } from './video_copier_fresh';
 
 export const DOWNLOAD_DELAYS = {

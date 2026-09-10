@@ -3,8 +3,8 @@ import { isAllowedBannerAction } from './mouse_handlers';
 import { handleCreateBannersAction } from './category';
 import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
-import { SYH_STATS_TRACKER } from '../../stats_tracker';
-import { detectActiveBannerText, checkAutoStartPrayersPhase } from '../../stats_auto_phase';
+import { SYH_STATS_TRACKER } from '../../stats/stats_tracker';
+import { detectActiveBannerText, checkAutoStartPrayersPhase } from '../../stats/stats_auto_phase';
 import { toSelectorList, type SelectorValue } from '../../config';
 
 interface ButtonActionHandler {

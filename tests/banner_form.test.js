@@ -22,8 +22,8 @@ installChromeMock();
  *   - фінальний cancel-клік залежить від того, чи форма ЩЕ в документі.
  */
 
-const { SYH_BANNER_CREATOR } = await import('../modules/banner_creator.ts');
-const { executeBannerCreationLoop } = await import('../modules/banner_executor.ts');
+const { SYH_BANNER_CREATOR } = await import('../modules/banners/banner_creator.ts');
+const { executeBannerCreationLoop } = await import('../modules/banners/banner_executor.ts');
 
 const SELECTORS = {
     createBannerButton: '#syh-create-banner-btn',

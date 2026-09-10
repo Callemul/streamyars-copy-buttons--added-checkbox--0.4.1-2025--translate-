@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 
-import { getOrCreateTodaySession, searchBrandNameInObject } from '../modules/stats_session.ts';
+import { getOrCreateTodaySession, searchBrandNameInObject } from '../modules/stats/stats_session.ts';
 
 describe('stats_session — getOrCreateTodaySession', () => {
     test('створює вкладену сесію за брендом і датою (in-place)', () => {

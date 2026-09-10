@@ -1,7 +1,7 @@
-import type { SelectorValue } from './config';
-import type { SyhConfig } from './config';
-import type { SyhUtils } from './utils';
-import type { SyhParsers } from './parsers/index';
+import type { SelectorValue } from '../config';
+import type { SyhConfig } from '../config';
+import type { SyhUtils } from '../utils';
+import type { SyhParsers } from '../parsers/index';
 
 export interface BannerItem {
     text: string;

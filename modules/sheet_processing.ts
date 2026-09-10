@@ -17,11 +17,11 @@ import {
     parseAnsweredIds,
     parseAndFilterOldList,
     parseTelegramExportLineByLine
-} from './telegram_parser';
+} from './telegram/telegram_parser';
 import { TELEGRAM_HEADER_MARKER_REGEX } from './parsers/index';
 import { countUniquePeople, sumQuestionsInTexts } from './sheet_stats_calculator';
 import type { YTCollectedItem, DeletedLogEntry, CleaningLogEntry } from './types';
-import type { TelegramQuestionItem, GroupedNewItem } from './telegram_parser';
+import type { TelegramQuestionItem, GroupedNewItem } from './telegram/telegram_parser';
 
 export interface SheetProcessingInputs {
     oldListText: string;

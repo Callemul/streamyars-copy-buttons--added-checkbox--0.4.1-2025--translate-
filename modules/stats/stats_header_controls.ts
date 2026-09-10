@@ -10,7 +10,7 @@
  * рантаймі впливає на вже змонтовані кнопки — як і в оригіналі.
  */
 
-import { UiFactory } from './ui_factory';
+import { UiFactory } from '../ui_factory';
 import {
     detectBrandAndSabbathSchool,
     checkSabbathSchoolBrandMismatch,

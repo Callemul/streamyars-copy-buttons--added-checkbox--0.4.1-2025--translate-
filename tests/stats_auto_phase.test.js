@@ -7,7 +7,7 @@ import {
     detectActiveBannerText,
     checkAutoStartQuestionsPhase,
     checkAutoStartPrayersPhase
-} from '../modules/stats_auto_phase.ts';
+} from '../modules/stats/stats_auto_phase.ts';
 import { STORAGE_KEYS } from '../modules/storage.ts';
 
 describe('modules/stats_auto_phase.ts', () => {

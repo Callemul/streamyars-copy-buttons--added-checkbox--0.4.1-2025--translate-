@@ -9,11 +9,11 @@ import {
     EMOJI_NUMBER_LINE_REGEX,
     EMOJI_NUMBER_CONTAINS_REGEX,
     TELEGRAM_HEADER_MARKER_REGEX
-} from '../modules/telegram_parser.ts';
+} from '../modules/telegram/telegram_parser.ts';
 import { SYH_PARSERS } from '../modules/parsers/index.ts';
 
 // Імпорт для тестування createLineByLineHeaderItem після рефакторингу
-import { createLineByLineHeaderItem } from '../modules/telegram_parser.ts';
+import { createLineByLineHeaderItem } from '../modules/telegram/telegram_parser.ts';
 
 test('countQuestionsInText counts bullet points correctly', () => {
     assert.equal(countQuestionsInText('Simple question'), 1);

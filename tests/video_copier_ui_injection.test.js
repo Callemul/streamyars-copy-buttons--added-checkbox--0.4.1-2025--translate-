@@ -28,7 +28,7 @@ CommentService.copyToClipboard = async (text) => {
 
 beforeEach(() => { copyResult = true; });
 
-const UI = await import('../modules/video_copier_ui.ts');
+const UI = await import('../modules/video/video_copier_ui.ts');
 
 const {
     LABELS,

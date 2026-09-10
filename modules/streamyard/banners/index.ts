@@ -2,7 +2,7 @@ import { SYH_CONFIG, type SyhConfig } from '../../config';
 import { SYH_STATE, type SyhState } from '../../state';
 import { SYH_UTILS, type SyhUtils } from '../../utils';
 import { SYH_UI, type SyhUi } from '../ui/ui';
-import { SYH_BANNER_CREATOR, type SyhBannerCreator } from '../../banner_creator';
+import { SYH_BANNER_CREATOR, type SyhBannerCreator } from '../../banners/banner_creator';
 import type { ISyhPlugin } from '../../plugin_registry';
 
 import type { SyhEventBanners } from './types';

@@ -1,10 +1,10 @@
-import { SYH_CONFIG, resolveSelector } from './config';
-import { SYH_UTILS } from './utils';
-import { SYH_PARSERS } from './parsers/index';
+import { SYH_CONFIG, resolveSelector } from '../config';
+import { SYH_UTILS } from '../utils';
+import { SYH_PARSERS } from '../parsers/index';
 
-import type { SyhConfig } from './config';
-import type { SyhUtils } from './utils';
-import type { SyhParsers } from './parsers/index';
+import type { SyhConfig } from '../config';
+import type { SyhUtils } from '../utils';
+import type { SyhParsers } from '../parsers/index';
 
 import type { SyhBannerCreator } from './banner_types';
 import { parseRawTextToBanners } from './banner_parser';

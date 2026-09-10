@@ -21,13 +21,13 @@ export {
     TG_HEADER_B_REGEX,
     TG_HEADER_CLEANUP_REGEX,
     RELATIVE_TIME_LINE_REGEX
-} from './parsers/index';
+} from '../parsers/index';
 
 export type { TelegramQuestionItem, ParseOldListResult, GroupedNewItem } from './telegram_types';
-export type { TelegramSheetDOMState } from '../popup/telegram_sheet_dom';
+export type { TelegramSheetDOMState } from '../../popup/telegram_sheet_dom';
 
 export { countQuestionsInText, numberToEmoji, parseAnsweredIds, cleanAuthorName, cleanTelegramHeadersLogged } from './telegram_text_rules';
 export { parseTelegramSection, parseAndFilterOldList } from './telegram_old_section';
 export { processOldTelegramItem } from './telegram_old_item';
-export { collectTelegramSheetStateFromDOM } from '../popup/telegram_sheet_dom';
+export { collectTelegramSheetStateFromDOM } from '../../popup/telegram_sheet_dom';
 export { createLineByLineHeaderItem, parseTelegramExportLineByLine } from './telegram_line_export';

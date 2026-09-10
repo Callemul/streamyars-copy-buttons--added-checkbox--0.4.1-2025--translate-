@@ -74,7 +74,7 @@ const {
     parseCardDate,
     readVideoCardInfo,
     startOfToday
-} = await import('../modules/video_copier_fresh.ts');
+} = await import('../modules/video/video_copier_fresh.ts');
 
 const {
     appendButtonsToCard,
@@ -85,7 +85,7 @@ const {
     readCardTitleText,
     readShareUrl,
     tempIconChange
-} = await import('../modules/video_copier_ui.ts');
+} = await import('../modules/video/video_copier_ui.ts');
 
 const {
     DOWNLOAD_DELAYS,
@@ -94,9 +94,9 @@ const {
     matchesDownloadLabel,
     openCardMenu,
     wait
-} = await import('../modules/video_copier_downloader.ts');
+} = await import('../modules/video/video_copier_downloader.ts');
 
-const { SYH_VIDEO_COPIER, SYH_VIDEO_COPIER_PLUGIN } = await import('../modules/video_copier.ts');
+const { SYH_VIDEO_COPIER, SYH_VIDEO_COPIER_PLUGIN } = await import('../modules/video/video_copier.ts');
 const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
 
 // --- Хелпери-фікстури -------------------------------------------------------

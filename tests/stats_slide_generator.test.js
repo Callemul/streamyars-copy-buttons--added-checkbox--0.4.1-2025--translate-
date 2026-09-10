@@ -5,7 +5,7 @@ import {
     SLIDE_HEIGHT,
     renderStatsSlideToCanvas,
     generateSlideBlob
-} from '../modules/stats_slide_generator.ts';
+} from '../modules/stats/stats_slide_generator.ts';
 
 function createMockReport() {
     return {

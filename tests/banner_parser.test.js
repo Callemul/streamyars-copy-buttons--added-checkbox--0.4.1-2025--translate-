@@ -12,7 +12,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { detectBlockCategory, parseBlock, parseRawTextToBanners } = await import('../modules/banner_parser.ts');
+const { detectBlockCategory, parseBlock, parseRawTextToBanners } = await import('../modules/banners/banner_parser.ts');
 
 /** Парсери-заглушки: кожен маркує свій формат, щоб гілку було видно у результаті. */
 function createParsers() {

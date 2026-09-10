@@ -34,7 +34,7 @@ installChromeMock({
     }
 });
 
-const { SYH_STATS_TRACKER } = await import('../modules/stats_tracker.ts');
+const { SYH_STATS_TRACKER } = await import('../modules/stats/stats_tracker.ts');
 
 const HEADER_FIXTURE = `
 <header>

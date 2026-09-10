@@ -6,7 +6,7 @@
  */
 
 import type { PrayerItem, YTCollectedItem, StudioOverrideLogEntry, VideoSheetMapEntry, StoredElementSize } from './types';
-import type { StatsChartsDb } from './stats_types';
+import type { StatsChartsDb } from './stats/stats_types';
 // Імпорт лише типу: у рантаймі стирається, тож циклу з `channel_config` немає.
 import type { ChannelConfigItem } from './channel_config';
 import type { CheckboxStateEntry, CommentPayload } from './comment_types';

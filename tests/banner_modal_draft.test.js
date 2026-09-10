@@ -14,7 +14,7 @@ import {
     saveDraft,
     restoreDraft,
     clearDraft
-} from '../modules/banner_modal_draft.ts';
+} from '../modules/banners/banner_modal_draft.ts';
 
 /**
  * Підміна глобального `sessionStorage`.

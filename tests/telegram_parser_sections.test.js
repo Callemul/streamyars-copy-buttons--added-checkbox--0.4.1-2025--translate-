@@ -19,7 +19,7 @@ import {
     cleanTelegramHeadersLogged,
     countQuestionsInText,
     numberToEmoji
-} from '../modules/telegram_parser.ts';
+} from '../modules/telegram/telegram_parser.ts';
 
 describe('telegram_parser — parseAnsweredIds', () => {
     test('1. розбирає числа через пробіл, кому та їх суміш', () => {

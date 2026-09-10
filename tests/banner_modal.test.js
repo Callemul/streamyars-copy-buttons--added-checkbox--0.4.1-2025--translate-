@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import {
     SyhBannerModal,
     openBannerCreationModal,
-} from '../modules/banner_modal.ts';
-import { parseTextToSections } from '../modules/banner_modal_parser.ts';
-import { SESSION_DRAFT_KEY } from '../modules/banner_modal_draft.ts';
+} from '../modules/banners/banner_modal.ts';
+import { parseTextToSections } from '../modules/banners/banner_modal_parser.ts';
+import { SESSION_DRAFT_KEY } from '../modules/banners/banner_modal_draft.ts';
 
 function createMockParsers() {
     return {

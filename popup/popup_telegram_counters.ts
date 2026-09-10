@@ -11,8 +11,8 @@ import {
     countQuestionsInText,
     parseAndFilterOldList,
     parseAnsweredIds
-} from '../modules/telegram_parser';
-import type { TelegramQuestionItem } from '../modules/telegram_parser';
+} from '../modules/telegram/telegram_parser';
+import type { TelegramQuestionItem } from '../modules/telegram/telegram_parser';
 import { SheetStateService } from '../modules/sheet_state_service';
 import type { SheetCounterStats, ProcessedSheetResult } from '../modules/sheet_state_service';
 import { countDeletedEntries } from '../modules/sheet_processing';

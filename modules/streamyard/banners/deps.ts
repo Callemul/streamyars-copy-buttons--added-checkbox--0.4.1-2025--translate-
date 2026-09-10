@@ -14,7 +14,7 @@ import type { SyhConfig, SelectorValue } from '../../config';
 import type { SyhState } from '../../state';
 import type { SyhUtils } from '../../utils';
 import type { SyhUi } from '../ui/ui_state';
-import type { SyhBannerCreator } from '../../banner_creator';
+import type { SyhBannerCreator } from '../../banners/banner_creator';
 
 /** Домен, на якому вмикається плагін банерів. */
 export const STREAMYARD_URL_MARKER = 'streamyard.com';

@@ -1,9 +1,9 @@
 import type { SyhBannerCreator } from './banner_types';
-import type { SyhParsers } from './parsers/index';
-import type { SyhUtils } from './utils';
-import { SYH_PARSERS } from './parsers/index';
-import { SYH_UTILS } from './utils';
-import { CommentService } from './comment_service';
+import type { SyhParsers } from '../parsers/index';
+import type { SyhUtils } from '../utils';
+import { SYH_PARSERS } from '../parsers/index';
+import { SYH_UTILS } from '../utils';
+import { CommentService } from '../comment_service';
 import { parseTextToSections } from './banner_modal_parser';
 export { parseTextToSections };
 import type { ParseSectionsResult } from './banner_modal_parser';

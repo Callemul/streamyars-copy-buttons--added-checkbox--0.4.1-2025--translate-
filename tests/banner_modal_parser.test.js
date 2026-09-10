@@ -9,7 +9,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { parseTextToSections } from '../modules/banner_modal_parser.ts';
+import { parseTextToSections } from '../modules/banners/banner_modal_parser.ts';
 
 /** Мінімальні парсери: та сама поведінка, що й у banner_modal.test.js. */
 function createMockParsers() {

@@ -1,7 +1,7 @@
 import type { BannerItem } from './banner_types';
-import type { SyhParsers } from './parsers/index';
-import type { SyhUtils } from './utils';
-import { splitPrayerSection } from './parsers/index';
+import type { SyhParsers } from '../parsers/index';
+import type { SyhUtils } from '../utils';
+import { splitPrayerSection } from '../parsers/index';
 import {
     detectBlockCategory,
     readFirstNonEmptyLine,
