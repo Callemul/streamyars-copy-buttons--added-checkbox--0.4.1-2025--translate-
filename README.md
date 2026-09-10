@@ -87,5 +87,6 @@ npm run verify
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | шари, точки входу, таблиця реєстрів (SSOT) |
 | [docs/HOWTO_ADD.md](docs/HOWTO_ADD.md) | як додати кнопку, поле аркуша, опцію чи нову платформу |
 | [AGENTS.md](AGENTS.md) | протокол роботи для ШІ-агентів |
+| [CLAUDE.md](CLAUDE.md) | вказівник для Claude Code на `AGENTS.md` |
 | [Release_notes.md](Release_notes.md) | історія версій |
 | [Daily_tips.md](Daily_tips.md) | поради для користувачів розширення |

@@ -9,6 +9,7 @@
 | [ARCHITECTURE.md](ARCHITECTURE.md) | розробник, агент | шари, точки входу, конвеєр коментарів, **таблиця реєстрів (SSOT)** |
 | [HOWTO_ADD.md](HOWTO_ADD.md) | розробник, агент | як додати кнопку · поле аркуша · опцію · платформу · правило |
 | [../AGENTS.md](../AGENTS.md) | агент | протокол роботи: комунікація, SSOT, команди, аудит |
+| [../CLAUDE.md](../CLAUDE.md) | Claude Code | вказівник на `AGENTS.md` — Claude Code не гарантує читання `AGENTS.md` без нього |
 | [../README.md](../README.md) | новачок | що це за розширення, стек, збірка |
 
 ## Технічні правила (`rules/`)
@@ -32,13 +33,13 @@
 
 | Шлях | Що це |
 |---|---|
-| [CODEX_MODEL_SELECTION_GUIDE.md](CODEX_MODEL_SELECTION_GUIDE.md) | вибір моделі та reasoning для задачі |
+| [MODEL_SELECTION_GUIDE.md](MODEL_SELECTION_GUIDE.md) | вибір моделі та reasoning для задачі (мапа Opus/Sonnet/Haiku — у `AGENTS.md` §7) |
 | `anomalies/` | розібрані нетипові збої (jQuery-експорт, invalidated context тощо) |
 | `manual testing/` | сценарії ручної перевірки перед релізом |
 | `dom_snapshots/` | зрізи DOM платформ для звірки селекторів |
-| `plans/` | плани підмодулів (YouTube comments) |
+| `plans/` | плани підмодулів: YouTube comments, фіксація клітинок (`lock-cells-*`, **не реалізовано**, 2026-09-04) |
 | `prompts/` | шаблони промтів (протокол рефакторингу) |
-| `рефактор/` | історія рефакторингу 2026-07 |
+| `history/` | архів минулого: `walkthrough.md` (хроніка рефакторингу) і `2026-07-refactor/` (плани й аудити липня–серпня 2026, див. власний README) |
 | `FUTURE_IDEAS_GEMINI_API_COMMENTS.md` | ідеї на майбутнє, не план |
 
 ## Документи в корені проєкту
@@ -47,7 +48,10 @@
 |---|---|---|
 | `README.md` | усі | актуальний |
 | `AGENTS.md` | агенти | актуальний |
+| `CLAUDE.md` | Claude Code | актуальний — вказівник на `AGENTS.md`, правил не дублює |
 | `DEVELOPER_NOTES.md` | розробник | актуальний — правила парсингу Telegram-тексту, які не дублюються в `docs/rules/` |
 | `Daily_tips.md` | **користувач** розширення | актуальний — це не технічний документ |
 | `Release_notes.md` | усі | актуальний |
-| `walkthrough.md` | — | **історичний**: описує рефакторинг, коли тестів було 120 (зараз 2100+). Тримати як хроніку, не як інструкцію |
+
+`walkthrough.md` переїхав у [`docs/history/walkthrough.md`](history/walkthrough.md) — це історична хроніка
+рефакторингу (тестів тоді було 120, зараз 2200+), тримати як хроніку, не як інструкцію.
