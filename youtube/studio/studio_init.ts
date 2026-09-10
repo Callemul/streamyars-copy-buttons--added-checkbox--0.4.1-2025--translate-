@@ -1,6 +1,6 @@
 import type { CommentStateActionId } from '../../modules/comment_actions';
 import type { VideoSheetMapEntry } from '../../modules/types';
-import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant';
+import { SYH_COMMENT_ASSISTANT } from '../../modules/comment_assistant/index';
 import { SYH_CONFIG } from '../../modules/config';
 import { cleanupStudioState } from './studio_comment_key';
 import { getStudioChannelInfo, type StudioChannelInfo } from './studio_channel';
