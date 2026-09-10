@@ -14,7 +14,7 @@
  *      конфігу.
  */
 
-import type { SelectorValue } from '../config';
+import { SYH_CONFIG, type SelectorValue } from '../config';
 
 const DEFAULT_TRIGGER_WORDS_QUESTION: readonly string[] = [
     'вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'
@@ -24,10 +24,30 @@ const DEFAULT_TRIGGER_WORDS_PRAYER: readonly string[] = [
     'молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба'
 ];
 
-const DEFAULT_TRIGGER_SELECTORS: Readonly<Record<string, SelectorValue>> = {
-    commentBlock: '[class*="PlatformComment__Wrap"]',
-    commentText: '[class*="PlatformCommentShell__ContentSpan"]'
-};
+/**
+ * Копія (а не посилання) — той самий принцип, що й для списків слів вище.
+ * `noUncheckedIndexedAccess` типує читання з `Record<string, SelectorValue>`
+ * як `SelectorValue | undefined`, хоча `commentBlock`/`commentText` завжди
+ * задані буквально в `SYH_CONFIG.SELECTORS` (це не рантайм-інваріант, який
+ * можна порушити, а факт літералу об'єкта) — тому `?? ''` тут недосяжний.
+ */
+function cloneSelectorValue(value: SelectorValue | undefined): SelectorValue {
+    if (!value) return '';
+    return Array.isArray(value) ? [...value] : value;
+}
+
+/**
+ * Дефолтні селектори, коли конструктору не передали `config.SELECTORS`
+ * узагалі (реальний прод-шлях завжди передає `SYH_CONFIG` — див.
+ * `CommentAssistantService`). Значення беруться з реєстру `modules/config.ts`,
+ * а не дублюються рядком, щоб не розходитись з ним.
+ */
+function buildDefaultTriggerSelectors(): Readonly<Record<string, SelectorValue>> {
+    return {
+        commentBlock: cloneSelectorValue(SYH_CONFIG.SELECTORS.commentBlock),
+        commentText: cloneSelectorValue(SYH_CONFIG.SELECTORS.commentText)
+    };
+}
 
 export interface TriggerWordSet {
     triggerWords: string[];
@@ -45,7 +65,7 @@ export function resolveInitialTriggerWords(config: any): TriggerWordSet {
 
 /** Початкові селектори для конструктора. */
 export function resolveInitialSelectors(config: any): Record<string, SelectorValue> {
-    return (config?.SELECTORS as Record<string, SelectorValue>) || { ...DEFAULT_TRIGGER_SELECTORS };
+    return (config?.SELECTORS as Record<string, SelectorValue>) || buildDefaultTriggerSelectors();
 }
 
 /**

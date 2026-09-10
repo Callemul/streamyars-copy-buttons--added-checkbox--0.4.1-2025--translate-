@@ -15,14 +15,11 @@
 // запускається без очікування, але з обов'язковим `.catch()`.
 
 import type { SyhStreamYardComments } from './types';
-import { resolveSelectorString } from '../config';
+import { SYH_CONFIG, resolveSelectorString } from '../config';
 import { SYH_DOM_OBSERVER } from '../dom_observer';
 import { isExtensionContextValid } from '../messaging_context';
 import { processCoverButtons } from './auto_heal_cover_buttons';
 import { processGhostComments } from './auto_heal_ghosts';
-
-/** Фолбек-селектор блоку коментаря, коли конфіг його не задає. */
-const FALLBACK_COMMENT_SELECTOR = '[class*="PlatformComment__Wrap"]';
 
 export function runAutoHeal(self: SyhStreamYardComments): void {
     if (!isExtensionContextValid()) {
@@ -69,8 +66,12 @@ export function bindAutoHealScanner(self: SyhStreamYardComments): void {
         self.unregisterAutoHeal = null;
     }
 
+    // Фолбек страхує відсутність КОНФІГУ (self.SELECTORS без commentBlock),
+    // а не відсутність елемента в DOM — тому як «страхувальну» мережу
+    // беремо не окремий хардкод, а сам реєстр `modules/config.ts` (там уже
+    // є власний фолбек-масив для commentBlock).
     const commentSelector = resolveSelectorString(self.SELECTORS?.commentBlock)
-        || FALLBACK_COMMENT_SELECTOR;
+        || resolveSelectorString(SYH_CONFIG.SELECTORS.commentBlock);
 
     const triggerAutoHeal = createFrameBatchedTrigger(self);
 

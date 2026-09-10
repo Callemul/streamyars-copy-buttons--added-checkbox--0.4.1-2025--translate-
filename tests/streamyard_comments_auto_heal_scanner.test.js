@@ -44,6 +44,7 @@ installChromeMock({
 const { runAutoHeal, bindAutoHealScanner } = await import('../modules/streamyard_comments/auto_heal.ts');
 const { SYH_DOM_OBSERVER } = await import('../modules/dom_observer.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
+const { SYH_CONFIG, resolveSelectorString } = await import('../modules/config.ts');
 
 const TEST_SELECTORS = {
     commentBlock: '.test-comment-block',
@@ -273,7 +274,7 @@ describe('streamyard_comments auto_heal — життєвий цикл скане
             register.mock.restore();
         });
 
-        test('13. без SELECTORS.commentBlock застосовується вбудований фолбек', () => {
+        test('13. без SELECTORS.commentBlock застосовується фолбек з реєстру modules/config.ts', () => {
             const registered = [];
             const register = mock.method(SYH_DOM_OBSERVER, 'register', (selector) => {
                 registered.push(selector);
@@ -282,7 +283,10 @@ describe('streamyard_comments auto_heal — життєвий цикл скане
 
             bindAutoHealScanner(createMockSelf({ SELECTORS: {} }));
 
-            assert.deepEqual(registered, ['[class*="PlatformComment__Wrap"]']);
+            // Раніше фолбек був окремим хардкодом-дублем; тепер це страхування
+            // відсутності КОНФІГУ (а не відсутності DOM-елемента), тож звіряємось
+            // із самим реєстром — джерелом правди — а не з повторно вписаним рядком.
+            assert.deepEqual(registered, [resolveSelectorString(SYH_CONFIG.SELECTORS.commentBlock)]);
             register.mock.restore();
         });
 

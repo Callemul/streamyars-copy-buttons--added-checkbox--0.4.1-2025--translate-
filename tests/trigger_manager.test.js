@@ -11,6 +11,7 @@ import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
 const { TriggerManager } = await import('../modules/comment_assistant/trigger_manager.ts');
+const { SYH_CONFIG } = await import('../modules/config.ts');
 
 const DEFAULT_QUESTION = ['вопрос', 'питання', 'вопросы', 'вопросик', 'вопросом'];
 const DEFAULT_PRAYER = ['молитва', 'молитвенная', 'прошение', 'помолитесь', 'молитись', 'моліться', 'просьба'];
@@ -27,11 +28,15 @@ describe('TriggerManager — конструктор і дефолти', () => {
         assert.deepStrictEqual(tm.triggerWords, [...DEFAULT_QUESTION, ...DEFAULT_PRAYER]);
     });
 
-    test('3: дефолтні селектори StreamYard', () => {
+    test('3: дефолтні селектори StreamYard — беруться з реєстру modules/config.ts', () => {
+        // Раніше тут був хардкод-дубль двох рядків; тепер дефолт TriggerManager
+        // сам читає ці два поля з SYH_CONFIG.SELECTORS (єдине джерело правди),
+        // тож і перевіряємо саме проти нього — а не проти повторно вписаного
+        // літералу, який міг би розійтися з реєстром непомітно.
         const tm = new TriggerManager();
         assert.deepStrictEqual(tm.selectors, {
-            commentBlock: '[class*="PlatformComment__Wrap"]',
-            commentText: '[class*="PlatformCommentShell__ContentSpan"]'
+            commentBlock: SYH_CONFIG.SELECTORS.commentBlock,
+            commentText: SYH_CONFIG.SELECTORS.commentText
         });
     });
 
@@ -98,8 +103,8 @@ describe('TriggerManager — init() як часткове оновлення', (
         const tm = new TriggerManager();
         tm.init({});
         assert.deepStrictEqual(tm.selectors, {
-            commentBlock: '[class*="PlatformComment__Wrap"]',
-            commentText: '[class*="PlatformCommentShell__ContentSpan"]'
+            commentBlock: SYH_CONFIG.SELECTORS.commentBlock,
+            commentText: SYH_CONFIG.SELECTORS.commentText
         });
         tm.init({ SELECTORS: { commentBlock: '.y' } });
         assert.deepStrictEqual(tm.selectors, { commentBlock: '.y' });

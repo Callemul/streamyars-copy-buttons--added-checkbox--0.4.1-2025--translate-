@@ -58,6 +58,22 @@ export function toSelectorList(
 }
 
 /**
+ * Додає CSS-суфікс (напр. атрибутний фільтр на кшталт `[data-syh-type="prayer"]`)
+ * до КОЖНОГО кандидата в `SelectorValue`, зберігаючи порядок і кількість
+ * елементів фолбеку.
+ *
+ * Приклад: `withSelectorSuffix(['a', 'b'], '[x]')` -> `['a[x]', 'b[x]']`.
+ * Якщо суфікс приклеїти лише до рядка (`resolveSelectorString(...) + suffix`),
+ * фолбек-кандидати з масиву будуть загублені — саме цю помилку і запобігає хелпер.
+ */
+export function withSelectorSuffix(
+    selectorValue: SelectorValue | null | undefined,
+    suffix: string
+): SelectorValue {
+    return toSelectorList(selectorValue).map(sel => `${sel}${suffix}`);
+}
+
+/**
  * `querySelector` для `SelectorValue` зі збереженням історичної семантики
  * «масив === CSS-група» (`['.a','.b']` -> `'.a,.b'`), яку рушій і так застосовував
  * через неявний `ToString`.
@@ -140,6 +156,13 @@ export const SYH_CONFIG: SyhConfig = {
         bannerText: '[class*="Banner__BannerText"]',
         bannerHeader: '[class*="BannersHeader__Header"]',
         bannerButtonContainer: '[class*="Banner__DesktopTopIconRow"]',
+        // Активний (показаний зараз глядачам) банер — з іконкою "око перекреслене".
+        // Окреме поле від bannerBlock/bannerWrap: це не альтернативне ім'я того
+        // самого елемента, а звужений збіг «банер саме у стані показу».
+        hiddenBannerBlock: [
+            '[class*="Banner__LiWrap"]:has(svg.lucide-eye-off)',
+            'div[class*="Banner__Wrap"]:has(svg.lucide-eye-off)'
+        ],
         bannerDeleteButton: ['button:has(svg.lucide-trash2)', 'button:has(svg.lucide-trash-2)', '[data-testid="delete-banner-btn"]'],
 
         // Права панель StreamYard (вкладки Chat, Banners, Brand, Private Chat, Settings, Recording, Widgets тощо)

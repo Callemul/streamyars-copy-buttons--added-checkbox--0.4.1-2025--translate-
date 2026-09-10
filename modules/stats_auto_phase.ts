@@ -15,6 +15,7 @@ import { SYH_UTILS } from './utils';
 import { fuzzyIncludes } from './fuzzy_match';
 import { getOrCreateTodaySession } from './stats_session';
 import type { StatsPhaseHost } from './stats_phase_marker';
+import { SYH_CONFIG, queryBySelectorValue } from './config';
 
 const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
 
@@ -79,9 +80,7 @@ export function areAllStreamBannersChecked(
 
 /** Знаходить текст банера, який зараз показується на екрані (активний банер з lucide-eye-off). */
 export function detectActiveBannerText(container: Document | Element = document): string | null {
-    const activeWrap = container.querySelector(
-        '[class*="Banner__LiWrap"]:has(svg.lucide-eye-off), div[class*="Banner__Wrap"]:has(svg.lucide-eye-off)'
-    );
+    const activeWrap = queryBySelectorValue(SYH_CONFIG.SELECTORS.hiddenBannerBlock, container);
     if (!activeWrap) return null;
     const textEl = activeWrap.querySelector('[class*="Banner__BannerText"]');
     return textEl?.textContent?.trim() || null;

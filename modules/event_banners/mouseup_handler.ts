@@ -5,6 +5,7 @@ import { handleDeleteSelectedBannersAction } from './deletion';
 import { handleCopyBannerAction, handleMarkBannerCategoryAction } from './category';
 import { SYH_STATS_TRACKER } from '../stats_tracker';
 import { detectActiveBannerText, checkAutoStartPrayersPhase } from '../stats_auto_phase';
+import { toSelectorList, type SelectorValue } from '../config';
 
 interface ButtonActionHandler {
     canHandle: (action: string | undefined, type: string | undefined) => boolean;
@@ -30,13 +31,29 @@ const actionHandlers: ButtonActionHandler[] = [
     }
 ];
 
+/**
+ * `bannerBlock` (`Banner__LiWrap`, елемент списку) і `bannerWrap` (`Banner__Wrap`,
+ * вкладений контейнер усередині нього) — це два РІЗНІ рівні DOM, а не
+ * альтернативні імена одного вузла: звідси й окремі поля в реєстрі
+ * `modules/config.ts`, а не спільний фолбек. Клік по банеру може прилетіти
+ * в ціль на будь-якому з двох рівнів, тому тут навмисне CSS-групування
+ * («OR» обох селекторів), а не sequential fallback.
+ */
+function buildBannerHitSelector(selectors: Record<string, SelectorValue> | null): string {
+    return [
+        ...toSelectorList(selectors?.bannerBlock),
+        ...toSelectorList(selectors?.bannerWrap)
+    ].join(',');
+}
+
 export function handleBannerMouseUp(e: MouseEvent, self: SyhEventBanners): void {
     const target = e.target as Element | null;
     const button = target?.closest('.syh-button') as HTMLElement | null;
     const buttonNum = e.button;
 
     if (!button) {
-        if (buttonNum === 0 && target?.closest('[class*="Banner__LiWrap"], [class*="Banner__Wrap"]')) {
+        const bannerHitSelector = buttonNum === 0 ? buildBannerHitSelector(self.SELECTORS) : '';
+        if (bannerHitSelector && target?.closest(bannerHitSelector)) {
             setTimeout(() => {
                 const activeText = detectActiveBannerText();
                 if (activeText) {

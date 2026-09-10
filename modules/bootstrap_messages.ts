@@ -4,10 +4,13 @@
  * Раніше ця логіка жила всередині IIFE в `main.ts` і була недосяжною для тестів.
  */
 import type { PrayerItem, SyhRuntimeMessage } from './types';
-import type { SelectorValue } from './config';
+import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue } from './config';
 
 export const PRAYER_SELECTORS = {
-    block: '[class*="PlatformComment__Wrap"][data-syh-type="prayer"]',
+    // Блок коментаря, позначений як молитва (`data-syh-type="prayer"`) —
+    // реєстровий `commentBlock` (з фолбеком) + атрибутний фільтр, суфікс
+    // приклеєний до КОЖНОГО кандидата фолбеку через `withSelectorSuffix`.
+    block: withSelectorSuffix(SYH_CONFIG.SELECTORS.commentBlock, '[data-syh-type="prayer"]'),
     star: '[class*="PlatformCommentShell__StarButton"]',
     author: '[class*="PlatformCommentShell__NameText"]',
     text: '[class*="PlatformCommentShell__ContentSpan"]'
@@ -84,7 +87,7 @@ function isPrayerItem(item: PrayerItem | null): item is PrayerItem {
 }
 
 export function collectStarredPrayers(root: ParentNode, roomId: string, now: number = Date.now()): PrayerItem[] {
-    const blocks = Array.from(root.querySelectorAll(PRAYER_SELECTORS.block));
+    const blocks = resolveSelectorAll(PRAYER_SELECTORS.block, root);
     return blocks.map(block => extractPrayer(block, roomId, now)).filter(isPrayerItem);
 }
 
