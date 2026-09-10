@@ -7,7 +7,7 @@ import { test, describe, beforeEach, afterEach, mock } from 'node:test';
 // so we build a real DOM tree and dispatch real events rather than hand-rolling element stubs.
 
 const { handleBannerContextMenu, handleBannerMouseDown, isAllowedBannerAction } =
-    await import('../modules/event_banners/mouse_handlers.ts');
+    await import('../modules/streamyard/banners/mouse_handlers.ts');
 
 const SELECTORS = { bannerBlock: '.banner' };
 

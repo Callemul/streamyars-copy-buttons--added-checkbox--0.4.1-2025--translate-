@@ -22,7 +22,7 @@ const {
     OBSERVER_CONTAINER_SELECTORS,
     resolveObserverContainer,
     setupDomRegistration
-} = await import('../modules/bootstrap_dom.ts');
+} = await import('../modules/streamyard/bootstrap/bootstrap_dom.ts');
 
 function createObserverSpy() {
     const calls = [];

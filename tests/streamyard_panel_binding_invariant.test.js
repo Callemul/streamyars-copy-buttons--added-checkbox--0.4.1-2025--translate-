@@ -19,9 +19,9 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { DOM_REGISTRATIONS } = await import('../modules/bootstrap_dom.ts');
-const { STREAMYARD_COMMENT_ADAPTER } = await import('../modules/streamyard_comment_binding.ts');
-const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
+const { DOM_REGISTRATIONS } = await import('../modules/streamyard/bootstrap/bootstrap_dom.ts');
+const { STREAMYARD_COMMENT_ADAPTER } = await import('../modules/streamyard/comments/streamyard_comment_binding.ts');
+const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
 
 const PANEL_SELECTOR = '.syh-custom-buttons-comment';
 
@@ -181,7 +181,7 @@ describe('Інваріант (джерела): виклик addButtonsToComment 
     });
 
     test('перевірка джерел справді знаходить наявний виклик (не проходить вхолосту)', () => {
-        const source = readFileSync('modules/bootstrap_dom.ts', 'utf8');
+        const source = readFileSync('modules/streamyard/bootstrap/bootstrap_dom.ts', 'utf8');
 
         assert.ok(CALL_RE.test(source), 'bootstrap_dom має викликати вставку панелі');
         assert.ok(source.includes(`${BINDER}(`), 'bootstrap_dom має викликати прив\'язку');

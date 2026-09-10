@@ -299,7 +299,7 @@ describe('banner_modal — SyhBannerModal DOM Lifecycle', () => {
     });
 
     test('17. handleCreateBannersAction коректно викликає openBannerCreationModal або ігнорує null', async () => {
-        const { handleCreateBannersAction } = await import('../modules/event_banners/category.ts');
+        const { handleCreateBannersAction } = await import('../modules/streamyard/banners/category.ts');
 
         // null перевірка - не падає
         assert.doesNotThrow(() => handleCreateBannersAction(null));

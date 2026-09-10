@@ -26,7 +26,7 @@ const {
     simulateUserActivity,
     checkAndClickAntiAfk,
     SYH_ANTI_AFK
-} = await import('../modules/anti_afk.ts');
+} = await import('../modules/streamyard/anti_afk/anti_afk.ts');
 
 const OPTIONS_KEY = 'syh:core:options';
 

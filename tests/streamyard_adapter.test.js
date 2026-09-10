@@ -30,7 +30,7 @@ installChromeMock({
     }
 });
 
-const { StreamYardCommentAdapter } = await import('../modules/streamyard_adapter.ts');
+const { StreamYardCommentAdapter } = await import('../modules/streamyard/comments/streamyard_adapter.ts');
 const { CommentInjector } = await import('../modules/comment_injector.ts');
 const { CommentService } = await import('../modules/comment_service.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');

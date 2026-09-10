@@ -21,7 +21,7 @@ installChromeMock();
  *   - `updateListItemOrdering` для невідомого тексту ставить order 9999.
  */
 
-const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
+const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
 const { SYH_UTILS } = await import('../modules/utils.ts');
 const { CommentService } = await import('../modules/comment_service.ts');
 const {
@@ -30,7 +30,7 @@ const {
     filterCommentListItems,
     updateCommentTabCounts,
     renderCommentEmptyState
-} = await import('../modules/ui_comments.ts');
+} = await import('../modules/streamyard/ui/ui_comments.ts');
 
 const SELECTORS = {
     commentBlock: '.cmt',

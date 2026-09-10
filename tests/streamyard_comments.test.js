@@ -22,7 +22,7 @@ installChromeMock({
     }
 });
 
-const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_STREAMYARD_COMMENTS } = await import('../modules/streamyard_comments/index.ts');
+const { getPrayerIcon, stripLeadingAt, formatCopyPayload, SYH_STREAMYARD_COMMENTS } = await import('../modules/streamyard/comments/index.ts');
 
 describe('SYH_STREAMYARD_COMMENTS Helper Tests', () => {
     beforeEach(() => {

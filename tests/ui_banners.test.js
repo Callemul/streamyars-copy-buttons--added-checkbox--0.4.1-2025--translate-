@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { installChromeMock } from './setup/chrome_mock.ts';
-import { SYH_UI_STATE } from '../modules/ui_state.ts';
+import { SYH_UI_STATE } from '../modules/streamyard/ui/ui_state.ts';
 import { SYH_CONFIG } from '../modules/config.ts';
 import {
     updateBannerVisuals,
@@ -23,7 +23,7 @@ import {
     updateBannerTabCounts,
     renderBannerEmptyState,
     filterBanners
-} from '../modules/ui_banners.ts';
+} from '../modules/streamyard/ui/ui_banners.ts';
 
 const SELECTORS = SYH_CONFIG.SELECTORS;
 

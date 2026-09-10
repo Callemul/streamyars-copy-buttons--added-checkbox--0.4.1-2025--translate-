@@ -50,7 +50,7 @@ const {
     resolveMessageHandler,
     routeSyhMessage,
     unstarCommentBlock
-} = await import('../modules/bootstrap_messages.ts');
+} = await import('../modules/streamyard/bootstrap/bootstrap_messages.ts');
 
 const COMMENT_SELECTORS = {
     commentBlock: '[class*="PlatformComment__Wrap"]',

@@ -42,7 +42,7 @@ installChromeMock({
 });
 
 const { STORAGE_KEYS, STORAGE_SCHEMA_VERSION, getSheetStorageKey, getSheetCollectedStorageKey, POPUP_SHEET_KEYS } = await import('../modules/storage.ts');
-const { EXPANDED_TABS_KEY } = await import('../modules/right_tabs_storage.ts');
+const { EXPANDED_TABS_KEY } = await import('../modules/streamyard/right_tabs/right_tabs_storage.ts');
 const { OPTION_FIELDS } = await import('../options/option_fields.ts');
 
 /** Імена полів інтерфейсу з вихідного коду (типи стираються — рантайм їх не бачить). */

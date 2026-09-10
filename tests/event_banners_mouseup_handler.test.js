@@ -24,8 +24,8 @@ global.document = {
     }))
 };
 
-const { isAllowedBannerAction } = await import('../modules/event_banners/mouse_handlers.ts');
-const { handleBannerMouseUp } = await import('../modules/event_banners/mouseup_handler.ts');
+const { isAllowedBannerAction } = await import('../modules/streamyard/banners/mouse_handlers.ts');
+const { handleBannerMouseUp } = await import('../modules/streamyard/banners/mouseup_handler.ts');
 
 describe('Event Banners MouseUp Handler tests', () => {
 

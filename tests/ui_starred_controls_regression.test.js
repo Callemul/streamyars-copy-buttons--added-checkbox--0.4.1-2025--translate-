@@ -5,8 +5,8 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
-const { bindStarredControls } = await import('../modules/ui_starred_controls.ts');
+const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
+const { bindStarredControls } = await import('../modules/streamyard/ui/ui_starred_controls.ts');
 
 /**
  * Регресійні тести на баг накопичення делегованих `document`-слухачів у вкладці

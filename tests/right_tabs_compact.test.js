@@ -21,7 +21,7 @@ const {
     resolveAutoCompactSecondary,
     setTabPreference,
     shouldTabBeCollapsed
-} = await import('../modules/right_tabs_rules.ts');
+} = await import('../modules/streamyard/right_tabs/right_tabs_rules.ts');
 
 const {
     EXPANDED_TABS_KEY,
@@ -30,7 +30,7 @@ const {
     loadRightTabsState,
     saveRightTabsState,
     observeCompactOption
-} = await import('../modules/right_tabs_storage.ts');
+} = await import('../modules/streamyard/right_tabs/right_tabs_storage.ts');
 
 const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
 
@@ -39,7 +39,7 @@ const {
     SYH_RIGHT_TABS_COMPACT,
     applyCollapsedClass,
     isTabButton
-} = await import('../modules/right_tabs_compact.ts');
+} = await import('../modules/streamyard/right_tabs/right_tabs_compact.ts');
 
 const OPTIONS_KEY = 'syh:core:options';
 

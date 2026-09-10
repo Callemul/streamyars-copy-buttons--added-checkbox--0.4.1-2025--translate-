@@ -15,7 +15,7 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { applyCommentActionState } = await import('../modules/streamyard_comments/action_effects.ts');
+const { applyCommentActionState } = await import('../modules/streamyard/comments/action_effects.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');
 const { SYH_STATE } = await import('../modules/state.ts');
 

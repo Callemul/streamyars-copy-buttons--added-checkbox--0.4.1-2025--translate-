@@ -23,9 +23,9 @@ const {
     updateFilterTabSelection,
     bindFilterSearchControls,
     bindFilterDocClickHandler
-} = await import('../modules/ui_shared_utils.ts');
+} = await import('../modules/streamyard/ui/ui_shared_utils.ts');
 
-const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
+const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
 const { CommentService } = await import('../modules/comment_service.ts');
 
 function resetDom(html = '') {

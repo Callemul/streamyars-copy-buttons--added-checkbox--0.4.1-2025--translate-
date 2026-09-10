@@ -8,7 +8,7 @@ installChromeMock();
 const {
     buildStarredControlsMarkup,
     STARRED_EMPTY_STATE_MARKUP
-} = await import('../modules/ui_starred_markup.ts');
+} = await import('../modules/streamyard/ui/ui_starred_markup.ts');
 const { escapeHtml, escapeAttr } = await import('../modules/escape_html.ts');
 
 /**

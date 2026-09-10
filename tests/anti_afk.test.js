@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { test, describe } from 'node:test';
 
-const { checkAndClickAntiAfk, startAntiAfk, stopAntiAfk } = await import('../modules/anti_afk.ts');
+const { checkAndClickAntiAfk, startAntiAfk, stopAntiAfk } = await import('../modules/streamyard/anti_afk/anti_afk.ts');
 
 /**
  * Simple DOM element mock for testing Anti-AFK without heavy JSDOM dependency

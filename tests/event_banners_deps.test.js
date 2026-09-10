@@ -16,7 +16,7 @@ const {
     preferOverride,
     resolveBannerSelectors,
     resolveEventBannerDeps
-} = await import('../modules/event_banners/deps.ts');
+} = await import('../modules/streamyard/banners/deps.ts');
 
 const {
     SYH_EVENT_BANNERS,
@@ -24,9 +24,9 @@ const {
     handleBannerContextMenu,
     handleBannerMouseDown,
     handleBannerChange
-} = await import('../modules/event_banners/index.ts');
+} = await import('../modules/streamyard/banners/index.ts');
 
-const { handleBannerMouseUp } = await import('../modules/event_banners/mouseup_handler.ts');
+const { handleBannerMouseUp } = await import('../modules/streamyard/banners/mouseup_handler.ts');
 
 // ---------------------------------------------------------------------------
 

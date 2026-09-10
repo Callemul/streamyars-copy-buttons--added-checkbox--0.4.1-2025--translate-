@@ -12,8 +12,8 @@ import { installChromeMock } from './setup/chrome_mock.ts';
 
 installChromeMock();
 
-const { SYH_UI_STATE } = await import('../modules/ui_state.ts');
-const { SYH_UI } = await import('../modules/ui.ts');
+const { SYH_UI_STATE } = await import('../modules/streamyard/ui/ui_state.ts');
+const { SYH_UI } = await import('../modules/streamyard/ui/ui.ts');
 const { SYH_STORAGE, STORAGE_KEYS } = await import('../modules/storage.ts');
 const { SYH_BUS } = await import('../modules/event_bus.ts');
 const { SYH_CONFIG } = await import('../modules/config.ts');
@@ -80,9 +80,9 @@ describe('ui — контракт фасаду SYH_UI', () => {
     });
 
     test('2. методи коментарів/банерів делегуються у профільні модулі без обгорток', async () => {
-        const comments = await import('../modules/ui_comments.ts');
-        const banners = await import('../modules/ui_banners.ts');
-        const starred = await import('../modules/ui_starred_controls.ts');
+        const comments = await import('../modules/streamyard/ui/ui_comments.ts');
+        const banners = await import('../modules/streamyard/ui/ui_banners.ts');
+        const starred = await import('../modules/streamyard/ui/ui_starred_controls.ts');
 
         assert.equal(SYH_UI.addButtonsToComment, comments.addButtonsToComment);
         assert.equal(SYH_UI.updateCommentVisuals, comments.updateCommentVisuals);
@@ -554,9 +554,9 @@ describe('ui — init', () => {
 
 describe('ui — декомпозовані одиниці', () => {
     test('27. фасад експонує рівно ті самі функції, що й профільні модулі', async () => {
-        const init = await import('../modules/ui_init.ts');
-        const validator = await import('../modules/ui_selector_validator.ts');
-        const restorer = await import('../modules/ui_checkbox_restorer.ts');
+        const init = await import('../modules/streamyard/ui/ui_init.ts');
+        const validator = await import('../modules/streamyard/ui/ui_selector_validator.ts');
+        const restorer = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         assert.equal(SYH_UI.init, init.initUiModule, 'жодної обгортки навколо init');
         assert.equal(SYH_UI.validateSelectorsSyntax, validator.validateSelectorsSyntax);
@@ -564,7 +564,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('28. applyCheckboxStates без селекторів попереджає і не чіпає DOM', async () => {
-        const { applyCheckboxStates } = await import('../modules/ui_checkbox_restorer.ts');
+        const { applyCheckboxStates } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         let warnings = 0;
         console.warn = () => { warnings += 1; };
@@ -582,7 +582,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('29. getCheckboxTextKey читає текст за типом чекбокса', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         document.body.innerHTML = `
             <div class="comment-wrap">
@@ -607,7 +607,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('30. getCheckboxTextKey розвʼязує масив-селектор пріоритетним перебором (як write-path), а не лише [0]', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         // Регресія на audit_2026-08-10_KILO_checkbox-text-key-mismatch:
         // read-path має збігатися з write-path (queryBySelectorValue), який
@@ -629,7 +629,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('30a. read- і write-path дають однаковий ключ (реальний масив commentText)', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
         const { queryBySelectorValue } = await import('../modules/config.ts');
 
         // Реальний конфіг StreamYard: commentText — масив із class- та data-testid-варіантів.
@@ -653,7 +653,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('30b. на fallback-лейауті (лише data-testid у DOM) стан відновлюється, а не губиться', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
         const { queryBySelectorValue } = await import('../modules/config.ts');
 
         document.body.innerHTML = `
@@ -673,7 +673,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('31. getCheckboxTextKey повертає порожній рядок для чужого/відсутнього типу', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         document.body.innerHTML = `
             <input type="checkbox" class="syh-checkbox" id="a" data-type="unknown">
@@ -685,7 +685,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('32. getCheckboxTextKey повертає порожній рядок, коли блок/текст не знайдено', async () => {
-        const { getCheckboxTextKey } = await import('../modules/ui_checkbox_restorer.ts');
+        const { getCheckboxTextKey } = await import('../modules/streamyard/ui/ui_checkbox_restorer.ts');
 
         document.body.innerHTML = `
             <div class="comment-wrap">
@@ -698,7 +698,7 @@ describe('ui — декомпозовані одиниці', () => {
     });
 
     test('33. applyStorageChangesToUiCaches викликається і без init (чиста одиниця)', async () => {
-        const { applyStorageChangesToUiCaches } = await import('../modules/ui_init.ts');
+        const { applyStorageChangesToUiCaches } = await import('../modules/streamyard/ui/ui_init.ts');
 
         const prayers = [{ author: 'Оля', text: 'Молитва', type: 'prayer' }];
         applyStorageChangesToUiCaches({ [STORAGE_KEYS.PRAYERS]: { newValue: prayers } });

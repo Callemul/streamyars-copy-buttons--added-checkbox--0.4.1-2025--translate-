@@ -1,4 +1,4 @@
-import { claimInitLock, getExtensionVersion, initSyhApp } from './modules/bootstrap_app';
+import { claimInitLock, getExtensionVersion, initSyhApp } from './modules/streamyard/bootstrap/bootstrap_app';
 
 (() => {
     'use strict';

@@ -6,7 +6,7 @@ const {
     buildBannerDeleteConfirmMessage, 
     executeBannerDeletion,
     handleDeleteSelectedBannersAction
-} = await import('../modules/event_banners/deletion.ts');
+} = await import('../modules/streamyard/banners/deletion.ts');
 
 describe('event_banners/deletion tests', () => {
     let mockCheckboxes;

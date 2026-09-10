@@ -38,7 +38,7 @@ const {
     bindMiddleClickHandler,
     bindContextMenuHandlers,
     bindSyhButtonMouseHandlers,
-} = await import('../modules/streamyard_comments/handlers');
+} = await import('../modules/streamyard/comments/handlers');
 
 const { SYH_STATE } = await import('../modules/state.ts');
 
