@@ -6,21 +6,27 @@
 
 ## 1. Архітектура та DOM-зони
 
-- **Коментарі (Comments)**: `[class*="PlatformComment__Wrap"]` (включає текст `[class*="PlatformCommentShell__ContentSpan"]` та автора `[class*="PlatformCommentShell__NameText"]`).
-- **Кнопки коментарів**: `[class*="PlatformComment__TopRightButtonGroup"]`.
-- **Банери (Banners)**: `[class*="Banner__LiWrap"]` (включає текст `[class*="Banner__BannerText"]`).
-- **Кнопки банерів**: `[class*="Banner__DesktopTopIconRow"]` (та шапка `[class*="BannersHeader__Header"]`).
-- **Права панель (Right Tabs)**: Вкладки перемикаються кнопками `button[class*="RightTabButton__StyledButton"]` (або `[id*="broadcast-aside-tab-"]`).
-- **Зіркові коментарі (Starred)**: `[class*="StarredCommentList__List"]`.
+> Джерело істини для всіх селекторів — `modules/config.ts` → `SYH_CONFIG.SELECTORS`.
+> Нижче лише назви полів реєстру, не самі значення — значення можуть змінитись
+> при переверстці StreamYard, і тоді дублікат тут одразу застаріє.
+
+- **Коментарі (Comments)**: `SYH_CONFIG.SELECTORS.commentBlock` (текст — `commentText`, автор — `commentAuthor`).
+- **Кнопки коментарів**: `SYH_CONFIG.SELECTORS.commentButtonContainer`.
+- **Банери (Banners)**: `SYH_CONFIG.SELECTORS.bannerBlock` (текст — `bannerText`).
+- **Кнопки банерів**: `SYH_CONFIG.SELECTORS.bannerButtonContainer` (шапка — `bannerHeader`).
+- **Права панель (Right Tabs)**: `SYH_CONFIG.SELECTORS.rightTabButtons`.
+- **Зіркові коментарі (Starred)**: `SYH_CONFIG.SELECTORS.starredList`.
 
 ---
 
 ## 2. Події та Ін'єкції
 
 - **Точка ін'єкції кнопок**: Кнопки додаються всередину контейнерів дій коментарів або банерів. Наприклад (див. `modules/ui_comments.ts` та `modules/ui_banners.ts`):
-  ```js
-  const targetContainer = document.querySelector('[class*="PlatformComment__TopRightButtonGroup"]');
-  if (!targetContainer.querySelector('.syh-custom-buttons-comment')) {
+  ```ts
+  import { SYH_CONFIG, queryBySelectorValue } from 'modules/config';
+
+  const targetContainer = queryBySelectorValue(SYH_CONFIG.SELECTORS.commentButtonContainer);
+  if (targetContainer && !targetContainer.querySelector('.syh-custom-buttons-comment')) {
       targetContainer.appendChild(myButtonsContainer);
   }
   ```
@@ -34,11 +40,24 @@
 
 ## 3. Діагностичний скрипт для DevTools (F12)
 
+Консоль браузера не має доступу до ES-модулів розширення, тому селектори сюди
+не можна імпортувати — їх треба **щоразу підставляти вручну**, скопіювавши актуальне
+значення з `modules/config.ts` → `SYH_CONFIG.SELECTORS.<ключ>` (селектор може бути
+масивом-фолбеком — тоді об'єднай значення через кому). Не бери значення з якогось
+старого запису в цьому скілі чи в пам'яті — тільки з файлу зараз.
+
 ```js
+// Підстав сюди актуальні рядки з SYH_CONFIG.SELECTORS (modules/config.ts):
+const SEL = {
+  commentBlock: /* SYH_CONFIG.SELECTORS.commentBlock */ '',
+  bannerBlock: /* SYH_CONFIG.SELECTORS.bannerBlock */ '',
+  rightTabButtons: /* SYH_CONFIG.SELECTORS.rightTabButtons */ '',
+};
+
 console.log({
-  comments: document.querySelectorAll('[class*="PlatformComment__Wrap"]').length,
-  banners: document.querySelectorAll('[class*="Banner__LiWrap"]').length,
-  rightTabs: document.querySelectorAll('button[class*="RightTabButton__StyledButton"]').length,
+  comments: document.querySelectorAll(SEL.commentBlock).length,
+  banners: document.querySelectorAll(SEL.bannerBlock).length,
+  rightTabs: document.querySelectorAll(SEL.rightTabButtons).length,
   injectedCommentButtons: document.querySelectorAll('.syh-custom-buttons-comment').length
 });
 ```

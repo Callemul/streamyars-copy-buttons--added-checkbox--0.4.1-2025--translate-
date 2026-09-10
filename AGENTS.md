@@ -1,5 +1,3 @@
-@RTK.md
-
 # AGENTS.md — протокол роботи над проєктом
 
 > Карта проєкту — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -44,9 +42,6 @@
 - **Команди:** `npm run dev` · `npm run build` · `npm test` · `npm run lint` · `npm run typecheck`
 - **Перед комітом — одна команда:** `npm run verify` (typecheck → lint → test → build).
 - **Workflow RPI:** Research → Plan → Implement → Verify (`npm run verify`).
-- **Codebase Search Directive:** для дослідження структури й логіки віддавай перевагу
-  `codebase-memory` (`search_code`, `search_graph`, `get_architecture`); якщо даних
-  недостатньо — звичайні файлові інструменти.
 - ⚡ **RTK Token Saving:** довгі команди в терміналі запускай через `rtk`
   (`rtk test npm run test`, `rtk tsc npx tsc --noEmit`), якщо PreToolUse hook не робить це прозоро.
 
@@ -94,22 +89,6 @@
 ## 🤖 7. Вибір моделей і субагентів
 
 - Перед призначенням моделі, reasoning effort або паралельної write-роботи використовуй
-  `docs/CODEX_MODEL_SELECTION_GUIDE.md`.
+  `docs/MODEL_SELECTION_GUIDE.md`.
 - Якщо task card явно задає модель і reasoning — вони мають пріоритет над default.
 - Для паралельних змін обов'язкові неперетинний file ownership і виконання залежних задач хвилями.
-
----
-
-## 🚨 8. Точна схема параметрів MCP-інструментів
-
-1. `codebase-memory`:
-   - `search_code`: обов'язковий параметр називається `pattern` (**не** `query`).
-     Приклад: `call_mcp_tool("codebase-memory", "search_code", {"pattern": "cleanAuthorName"})`
-
-2. `code-extractor`:
-   - `get_symbols_tool`: обов'язковий параметр `path_or_url` (**не** `file_path`).
-     Приклад: `call_mcp_tool("code-extractor", "get_symbols_tool", {"path_or_url": "modules/comment_assistant/processor.ts"})`
-   - `get_lines_tool`: обов'язкові `path_or_url`, `start_line`, `end_line`.
-     Запитуй точково по 15–30 рядків, щоб вивід не згортався у файл.
-
-3. **Заборона `view_file` для файлів > 50 рядків** — тільки `get_lines_tool` з `path_or_url`.
