@@ -23,7 +23,7 @@ YouTube і YouTube Studio.
 
 ### Крок 1 — запис у реєстрі (обов'язковий)
 
-`modules/comment_actions.ts`:
+`modules/comments/comment_actions.ts`:
 
 ```ts
 {
@@ -56,14 +56,14 @@ StreamYard слухає `mouseup` (`events`), бо там від кнопки м
 | Віддати елемент кнопки | `getButtons()` в `youtube/yt_adapter.ts`, `youtube/studio/studio_adapter.ts` — краще через `actionButtons: { thanks: el }`, а не новим іменованим полем |
 | Намалювати активний стан | `applyButtonState()` у тих самих адаптерах |
 | CSS | `youtube/youtube_styles.css`, `youtube/studio/studio_styles.css`, `styles.css` |
-| Віддати елемент кнопки і намалювати стан на StreamYard | `modules/streamyard_adapter.ts` (кнопки добираються з реєстру автоматично) |
-| Форматування тексту для StreamYard | `modules/streamyard_comments/format.ts` — гілка за канонічним id |
+| Віддати елемент кнопки і намалювати стан на StreamYard | `modules/streamyard/comments/streamyard_adapter.ts` (кнопки добираються з реєстру автоматично) |
+| Форматування тексту для StreamYard | `modules/streamyard/comments/format.ts` — гілка за канонічним id |
 
 ### Крок 3 — якщо дія зберігає новий тип запису
 
-- Ключ — тільки через `modules/storage_keys.ts`.
+- Ключ — тільки через `modules/storage/storage_keys.ts`.
 - Читання старих даних не ламати: див. `docs/rules/storage.md` (Zero data loss).
-- Відображення в попапі — `popup/popup_telegram_collected.ts`, `modules/ui_starred_markup.ts`.
+- Відображення в попапі — `popup/popup_telegram_collected.ts`, `modules/streamyard/ui/ui_starred_markup.ts`.
 
 ### Крок 4 — перевірка
 
@@ -204,7 +204,7 @@ npm run verify
 3. Панель — з реєстру дій: додай `twitch` у `CommentPlatformId`, оверайди в кожну дію
    та порядок у `PLATFORM_ACTION_ORDER`.
 4. Entry point + запис у `manifest.json` (`content_scripts`, `host_permissions`).
-5. Спостерігач DOM — через `modules/dom_observer.ts`, не власний `MutationObserver`.
+5. Спостерігач DOM — через `modules/dom/dom_observer.ts`, не власний `MutationObserver`.
 6. Ключі стану — `getButtonStatesKey()` / `getCheckboxStatesKey()` з `STORAGE_KEYS`.
 
 Логіка дій (`comment_action_runner.ts`) і збереження (`CommentService`) переписуватись
@@ -216,7 +216,7 @@ npm run verify
 
 - Довготривале технічне правило → `docs/rules/<тема>.md` (і рядок-посилання в `AGENTS.md`).
 - Правило про поверхню (StreamYard / Studio / MV3) → відповідний `.agents/skills/*.md`.
-- Селектор у скілі — це **посилання на реєстр** (`modules/config.ts`, `yt_selectors.ts`),
+- Селектор у скілі — це **посилання на реєстр** (`modules/registry/config.ts`, `yt_selectors.ts`),
   а не скопійований рядок: скопійований рядок протухає мовчки.
 
 ---

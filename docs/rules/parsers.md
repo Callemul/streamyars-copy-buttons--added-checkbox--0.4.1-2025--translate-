@@ -8,7 +8,7 @@
 `prayer` (МОЛИТВ, ПРОХАН, 🙏) → `stream` (СУББОТ, СУБОТ, УРОК) → `audience` (ВОПРОС, ПИТАН, ???, ❓).
 
 Ключі суботи/уроку мають обов'язковий вищий пріоритет над словом «ВОПРОС».
-Реалізація — `CATEGORY_KEYWORD_RULES` у `modules/banner_parser_rules.ts`.
+Реалізація — `CATEGORY_KEYWORD_RULES` у `modules/banners/banner_parser_rules.ts`.
 
 ## ✂️ Очищення суфіксів авторів у питаннях (Author Suffix Cleanup)
 

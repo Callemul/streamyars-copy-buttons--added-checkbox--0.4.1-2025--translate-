@@ -23,7 +23,7 @@
 | Що | Реєстр |
 |---|---|
 | Дозволи, content scripts, домени | `manifest.json` |
-| Ключі `chrome.storage` | `modules/storage_keys.ts` (`STORAGE_KEYS`, `POPUP_SHEET_KEYS`) |
+| Ключі `chrome.storage` | `modules/storage/storage_keys.ts` (`STORAGE_KEYS`, `POPUP_SHEET_KEYS`) |
 | Налаштування розширення | `options/defaults.ts` (`OptionsState`, `DEFAULT_OPTIONS`) |
 | Маршрути повідомлень | `background/message_router.ts` |
 

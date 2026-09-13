@@ -29,4 +29,4 @@ Object.defineProperty(global, 'property', { value: ..., configurable: true, writ
 node --experimental-strip-types --import ./tests/ts_loader.js --import ./tests/setup/happy-dom.ts --test "tests/<name>.test.js"
 ```
 
-- Повна перевірка перед комітом — `npm run verify` (typecheck → lint → test → build).
+- Повна перевірка перед комітом — `npm run verify` (typecheck → lint → check:architecture → test → build).

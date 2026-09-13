@@ -30,14 +30,14 @@ DOM event listeners у попапі — strictly всередині `DOMContentL
 ## Спостереження за DOM
 
 Новий `MutationObserver` напряму не створюється — використовується
-`modules/dom_observer.ts` (він має захист колбеків: падіння одного обробника
+`modules/dom/dom_observer.ts` (він має захист колбеків: падіння одного обробника
 не зупиняє решту селекторів у кадрі).
 
 ## 🔗 Панель кнопок коментаря і прив'язка — нерозривна пара
 
 **Інваріант:** там, де в картку коментаря вставляється панель кнопок
 (`SYH_UI.addButtonsToComment`), наступним кроком **обов'язково** йде
-`bindStreamYardComment` (`modules/streamyard_comment_binding.ts`).
+`bindStreamYardComment` (`modules/streamyard/comments/streamyard_comment_binding.ts`).
 
 ```ts
 SYH_UI.addButtonsToComment(el);
@@ -54,7 +54,7 @@ bindStreamYardComment(el);        // ← без цього рядка кнопк
 `unbindStreamYardComment` (`onCommentRemoved`), інакше залишаються висіти
 `AbortController` і маркер `data-syh-events-bound`.
 
-Сьогодні єдина точка вставки — `modules/bootstrap_dom.ts` (`onCommentAdded`).
+Сьогодні єдина точка вставки — `modules/streamyard/bootstrap/bootstrap_dom.ts` (`onCommentAdded`).
 Інваріант тримає `tests/streamyard_panel_binding_invariant.test.js`:
 
 - **поведінково** — проходить по всіх зонах `DOM_REGISTRATIONS`; якщо після
@@ -87,4 +87,4 @@ bindStreamYardComment(el);        // ← без цього рядка кнопк
 
 Фіксований набір елементів описуйте **кортежем**, а не масивом: тоді
 деструктуризація дає значення, а не `T | undefined` (приклад —
-`PHASE_BUTTONS` у `modules/stats_header_controls.ts`).
+`PHASE_BUTTONS` у `modules/stats/stats_header_controls.ts`).

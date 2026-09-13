@@ -77,7 +77,7 @@ npm run typecheck
 ```bash
 npm run verify
 ```
-Послідовно виконує `typecheck` → `lint` → `test` → `build`.
+Послідовно виконує `typecheck` → `lint` → `check:architecture` → `test` → `build`.
 
 ## Документація
 

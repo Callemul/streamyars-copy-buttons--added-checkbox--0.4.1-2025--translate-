@@ -35,12 +35,18 @@
 Дія над коментарем має бути на **всіх трьох поверхнях** (StreamYard / YouTube / Studio)
 або свідомо позначена в реєстрі як відсутня на конкретній (`null` замість оверайду).
 
+**Теки `modules/` розкладені за доменами** (`docs/ARCHITECTURE.md` §2.1), а не за шарами —
+і між ними **заборонені значеннєві цикли**. Тека `А` може мати зворотне посилання на теку,
+яка сама залежить від `А`, лише через `import type` (стирається компілятором, у рантаймі
+циклу немає). Якщо новий імпорт створює значеннєвий цикл між теками — це ознака, що файл
+чи функція лежить не в тій теці, а не привід послабити правило.
+
 ---
 
 ## 📐 3. Команди і workflow
 
 - **Команди:** `npm run dev` · `npm run build` · `npm test` · `npm run lint` · `npm run typecheck`
-- **Перед комітом — одна команда:** `npm run verify` (typecheck → lint → test → build).
+- **Перед комітом — одна команда:** `npm run verify` (typecheck → lint → check:architecture → test → build).
 - **Workflow RPI:** Research → Plan → Implement → Verify (`npm run verify`).
 - ⚡ **RTK Token Saving:** довгі команди в терміналі запускай через `rtk`
   (`rtk test npm run test`, `rtk tsc npx tsc --noEmit`), якщо PreToolUse hook не робить це прозоро.
@@ -81,7 +87,7 @@
 > ⚠️ **ДИРЕКТИВА ДЛЯ AI:** зчитуй скіли **тільки** при виконанні відповідного типу задач.
 
 - ⚙️ **Extension / Manifest V3 / Vite / Service Worker** → `.agents/skills/chrome-extension.md`
-- 🟡 **StreamYard** (`modules/`, `app.streamyard.com`) → `.agents/skills/streamyard.md`
+- 🟡 **StreamYard** (`modules/streamyard/`, `app.streamyard.com`; спільні домени в `modules/*` — реєстри, сховище, коментарі, статистика, банери — теж читай, якщо задача їх зачіпає) → `.agents/skills/streamyard.md`
 - 🔴 **YouTube Studio** (`youtube/studio/`, Polymer, `<iron-list>`) → `.agents/skills/youtube-studio.md`
 
 ---

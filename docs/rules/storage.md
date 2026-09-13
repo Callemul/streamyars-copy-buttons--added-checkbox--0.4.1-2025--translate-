@@ -26,12 +26,12 @@
 ## Ключі
 
 Ключі сховища будуються **тільки** через `STORAGE_KEYS` / `POPUP_SHEET_KEYS`
-(`modules/storage_keys.ts`). Рядкові літерали виду `'tg_translit_...'` у коді заборонені.
+(`modules/storage/storage_keys.ts`). Рядкові літерали виду `'tg_translit_...'` у коді заборонені.
 
 
 ## 🔒 Схема сховища закрита — нова родина ключів описується типом
 
-`StorageSchema` (`modules/storage_keys.ts`) більше **не має**
+`StorageSchema` (`modules/storage/storage_keys.ts`) більше **не має**
 `[key: string]: any`. Ключ, який не є ані відомим літералом із
 `STORAGE_KEYS`, ані членом описаної родини, не компілюється.
 
@@ -71,7 +71,7 @@
 
 Літерал ключа поза реєстром — те саме дублювання, що й друга копія UI-елемента.
 Приклад із практики: `syh:streamyard:expanded_tabs` жив літералом у
-`modules/right_tabs_storage.ts` і був знайдений лише тоді, коли схему закрили.
+`modules/streamyard/right_tabs/right_tabs_storage.ts` і був знайдений лише тоді, коли схему закрили.
 При переїзді такого ключа в реєстр **ім'я не змінюється** — інше ім'я означає
 осиротілі дані користувача.
 
@@ -105,10 +105,10 @@ T17 закінчено: безіменних мішків у `modules/`, `popup/
 | Мапа змін `onChanged` | `StorageChanges` |
 | Доменний об'єкт | власний іменований тип |
 
-Форма ЗБЕРЕЖЕНИХ даних живе в `modules/types.ts` — поруч із `PrayerItem`,
+Форма ЗБЕРЕЖЕНИХ даних живе в `modules/core/types.ts` — поруч із `PrayerItem`,
 `YTCollectedItem`, `StudioOverrideLogEntry`, `VideoSheetMapEntry`,
 `StoredElementSize`. Не в `popup/` і не в `youtube/`: інакше
-`modules/storage_keys.ts` не зможе на неї послатись, не порушивши напрямок
+`modules/storage/storage_keys.ts` не зможе на неї послатись, не порушивши напрямок
 залежностей (ARCHITECTURE §2).
 
 ### Відома робота, яка лишилась
