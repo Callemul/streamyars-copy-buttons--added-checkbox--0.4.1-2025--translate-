@@ -5,7 +5,7 @@
 // (див. tests/ui_banners.test.js).
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelector } from '../../registry/config';
+import { SYH_CONFIG, resolveSelector, resolveSelectorString } from '../../registry/config';
 import { SYH_UTILS } from '../../core/utils';
 import { updateBannerVisuals } from './ui_banners_inject';
 import { updateTabCounts, scrollToActiveItem } from './ui_shared_utils';
@@ -123,7 +123,7 @@ export function renderBannerEmptyState(
 
 export function filterBanners(): void {
     const selectors = SYH_UI_STATE.SELECTORS || SYH_CONFIG.SELECTORS;
-    const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
+    const bannerListSelector = resolveSelectorString(SYH_CONFIG.SELECTORS.bannerList);
     const bannerList = document.querySelector<HTMLElement>(bannerListSelector);
     if (!bannerList) return;
 
@@ -143,5 +143,5 @@ export function filterBanners(): void {
 }
 
 export function scrollToActiveBanner(): void {
-    scrollToActiveItem('[class*="BannerList__ListWrap"], ul[class*="Banner"]');
+    scrollToActiveItem(resolveSelectorString(SYH_CONFIG.SELECTORS.bannerList));
 }

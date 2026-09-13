@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 /**
  * StreamYard Helper — позначення фаз ефіру (питання / молитви).
  *
@@ -18,7 +19,7 @@ import { SYH_UTILS } from '../core/utils';
 import { showBanner } from '../core/utils_notify';
 import { getOrCreateTodaySession } from './stats_session';
 
-const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
+const TIMER_WRAPPER_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.liveTimerWrapper);
 const NO_TIMER_ALERT = 'Ефір ще не розпочався (немає таймера)!';
 
 /** Підписи кнопок після позначення фази. */

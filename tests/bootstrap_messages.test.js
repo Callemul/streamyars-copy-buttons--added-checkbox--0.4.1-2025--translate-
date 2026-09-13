@@ -284,3 +284,21 @@ describe('bootstrap_messages — маршрутизатор runtime-повідо
         assert.equal(routeSyhMessage(undefined, ctx), undefined);
     });
 });
+
+
+test('prayer extraction keeps Shell selectors distinct from normal star and data-testid fallbacks', () => {
+    const block = document.createElement('div');
+    block.innerHTML = '<button class="PlatformComment__StarButton" aria-selected="true"></button>'
+        + '<span data-testid="comment-author">Fallback author</span>'
+        + '<span data-testid="comment-content">Fallback text</span>'
+        + '<button class="PlatformCommentShell__StarButton" aria-selected="false"></button>'
+        + '<span class="PlatformCommentShell__NameText">@Shell author</span>'
+        + '<span class="PlatformCommentShell__ContentSpan">Shell text</span>';
+    assert.equal(readPrayerAuthor(block), 'Shell author');
+    assert.equal(readPrayerText(block), 'Shell text');
+    assert.equal(isStarred(block.querySelector(PRAYER_SELECTORS.star)), false);
+    block.querySelector('.PlatformCommentShell__NameText').remove();
+    block.querySelector('.PlatformCommentShell__ContentSpan').remove();
+    assert.equal(readPrayerAuthor(block), DEFAULT_PRAYER_AUTHOR);
+    assert.equal(readPrayerText(block), '');
+});

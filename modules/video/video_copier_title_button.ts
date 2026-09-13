@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 // modules/video_copier_title_button.ts
 /**
  * Кнопка «Копіювати назву» біля заголовка H2 на сторінці одного відео.
@@ -6,7 +7,7 @@
 import { COLORS, LABELS, TITLE_BUTTON_STYLE } from './video_copier_theme';
 import { applyHoverColors, copyAndFlash, tempLabelChange } from './video_copier_ui_kit';
 
-export const TITLE_WRAPPER_SELECTOR = 'div[class*="TitleWrapper"]';
+export const TITLE_WRAPPER_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.videoTitleWrapper);
 export const TITLE_BUTTON_CLASS = 'syh-title-btn';
 
 function buildTitleButton(h2: HTMLElement): HTMLButtonElement {

@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 // modules/video_copier_fresh.ts
 /**
  * Визначення «свіжих» відео у бібліотеці StreamYard.
@@ -11,7 +12,7 @@ export const SABBATH_SCHOOL_MARKER = 'СУББОТНЯЯ ШКОЛА';
 
 export const VIDEO_CARD_SELECTOR = 'a.media-item-card';
 export const CARD_DATE_SELECTOR = '[data-testid="library-media-subtitle"]';
-export const CARD_TITLE_SELECTOR = 'span[class*="MediaTitle"]';
+export const CARD_TITLE_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.videoCardTitle);
 
 /** Стан одного проходу сканування: суботня школа береться лише один раз. */
 export interface FreshScanState {

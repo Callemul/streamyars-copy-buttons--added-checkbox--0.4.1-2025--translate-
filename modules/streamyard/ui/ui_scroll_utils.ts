@@ -12,7 +12,7 @@ import { SYH_CONFIG, resolveSelectorString } from '../../registry/config';
 const ACTIVE_ITEM_MARKER = '.lucide-circle-minus';
 
 /** Найближчий прокручуваний контейнер StreamYard (клас містить «Scroll»). */
-const SCROLL_PARENT_SELECTOR = 'div[class*="Scroll"]';
+const SCROLL_PARENT_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.scrollParent);
 
 function findActiveItem(list: Element): HTMLElement | undefined {
     return Array.from(list.children).find(child => child.querySelector(ACTIVE_ITEM_MARKER)) as HTMLElement | undefined;

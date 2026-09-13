@@ -15,9 +15,9 @@ import { SYH_UTILS } from '../core/utils';
 import { fuzzyIncludes } from '../core/fuzzy_match';
 import { getOrCreateTodaySession } from './stats_session';
 import type { StatsPhaseHost } from './stats_phase_marker';
-import { SYH_CONFIG, queryBySelectorValue } from '../registry/config';
+import { SYH_CONFIG, queryBySelectorValue, resolveSelectorString } from '../registry/config';
 
-const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
+const TIMER_WRAPPER_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.liveTimerWrapper);
 
 /** Читає поточний підпис таймера або null, якщо ефір ще не йде. */
 export function readLiveTimerText(): string | null {
@@ -58,7 +58,7 @@ export function areAllStreamBannersChecked(
         if (typeAttr === 'stream') return true;
 
         if (categoriesCache) {
-            const text = block.querySelector('[class*="Banner__BannerText"]')?.textContent?.trim() || '';
+            const text = block.querySelector(resolveSelectorString(SYH_CONFIG.SELECTORS.bannerText))?.textContent?.trim() || '';
             if (categoriesCache[text] === 'stream') return true;
         }
         return false;
@@ -82,7 +82,7 @@ export function areAllStreamBannersChecked(
 export function detectActiveBannerText(container: Document | Element = document): string | null {
     const activeWrap = queryBySelectorValue(SYH_CONFIG.SELECTORS.hiddenBannerBlock, container);
     if (!activeWrap) return null;
-    const textEl = activeWrap.querySelector('[class*="Banner__BannerText"]');
+    const textEl = activeWrap.querySelector(resolveSelectorString(SYH_CONFIG.SELECTORS.bannerText));
     return textEl?.textContent?.trim() || null;
 }
 

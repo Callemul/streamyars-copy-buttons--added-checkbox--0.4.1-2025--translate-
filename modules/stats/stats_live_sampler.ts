@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 /**
  * StreamYard Helper — семплер живої статистики ефіру.
  *
@@ -19,10 +20,10 @@ import { getOrCreateTodaySession } from './stats_session';
 import { isExtensionContextValid } from '../messaging/messaging_context';
 import { detectActiveBannerText, checkAutoStartPrayersPhase } from './stats_auto_phase';
 
-const LIVE_TAG_SELECTOR = 'span[class*="Tags__LiveTag"]';
+const LIVE_TAG_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.liveTag);
 const BRAND_NODE_SELECTOR = '.BrandSelect__BrandNameText-sc-16g9tfx-1';
-const TIMER_WRAPPER_SELECTOR = 'div[class*="Timer__TimerWrapper"]';
-const VIEWER_COUNT_SELECTOR = 'p[class*="ViewerCount__StatText"]';
+const TIMER_WRAPPER_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.liveTimerWrapper);
+const VIEWER_COUNT_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.viewerCount);
 
 /** Мітка часу, коли таймер ефіру ще не відрендерено. */
 const FALLBACK_TIMER_TEXT = '0:00';

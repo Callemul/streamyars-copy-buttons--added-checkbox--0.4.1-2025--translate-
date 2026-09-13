@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 // modules/video_copier_card_buttons.ts
 /**
  * Панель контролів у картці загального списку відео: «копіювати назву» та
@@ -19,7 +20,7 @@ import { copyAndFlash, createSquareButton, tempIconChange } from './video_copier
 
 export const PROCESSED_CARD_CLASS = 'syh-processed';
 export const LIST_CONTROLS_CLASS = 'syh-list-controls';
-export const CARD_MENU_SELECTOR = 'div[class*="MediaCardMenu"]';
+export const CARD_MENU_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.videoCardMenu);
 
 /** Картка — це посилання, тому клік по контролях не має вести на сторінку відео. */
 function stopCardNavigation(e: Event): void {

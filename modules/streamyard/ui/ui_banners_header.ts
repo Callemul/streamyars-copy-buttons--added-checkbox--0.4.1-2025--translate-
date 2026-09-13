@@ -6,7 +6,7 @@
 // Поведінка збережена 1-в-1 (див. tests/ui_banners.test.js).
 
 import { SYH_UI_STATE } from './ui_state';
-import { SYH_CONFIG, resolveSelectorAll } from '../../registry/config';
+import { SYH_CONFIG, resolveSelectorAll, resolveSelectorString } from '../../registry/config';
 import {
     buildHeaderControlsHTML,
     buildSearchFilterContainerHTML,
@@ -57,7 +57,7 @@ export function addBannerHeaderControls(headerNode: Element): void {
         injectHeaderButtons(headerNode);
     }
 
-    const bannerListSelector = '[class*="BannerList__ListWrap"], ul[class*="Banner"]';
+    const bannerListSelector = resolveSelectorString(SYH_CONFIG.SELECTORS.bannerList);
     const bannerList = document.querySelector(bannerListSelector);
     if (bannerList) {
         injectSearchAndFilterContainer(bannerList);

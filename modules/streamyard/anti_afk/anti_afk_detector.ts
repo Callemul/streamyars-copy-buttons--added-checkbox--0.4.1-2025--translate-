@@ -1,3 +1,4 @@
+import { SYH_CONFIG, toSelectorList } from '../../registry/config';
 // modules/anti_afk_detector.ts
 //
 // Розпізнавання та натискання кнопки "Stay in the studio" у діалозі AFK.
@@ -14,13 +15,7 @@ export interface I18nAdapterLike {
 }
 
 /** Селектори модальних вікон у порядку зменшення специфічності. */
-const DIALOG_SELECTORS = [
-    'div[role="dialog"][aria-label="Are you still there?"]',
-    'div[role="dialog"]',
-    '[aria-modal="true"]',
-    'div[class*="modal"]',
-    'div[class*="Dialog"]'
-] as const;
+const DIALOG_SELECTORS = toSelectorList(SYH_CONFIG.SELECTORS.antiAfkDialogs);
 
 /** Базові тексти кнопки «залишитись у студії» різними мовами. */
 const BASE_TARGET_TEXTS: readonly string[] = [

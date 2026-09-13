@@ -4,16 +4,16 @@
  * Раніше ця логіка жила всередині IIFE в `main.ts` і була недосяжною для тестів.
  */
 import type { PrayerItem, SyhRuntimeMessage } from '../../core/types';
-import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue } from '../../registry/config';
+import { SYH_CONFIG, resolveSelectorAll, withSelectorSuffix, type SelectorValue, resolveSelectorString } from '../../registry/config';
 
 export const PRAYER_SELECTORS = {
     // Блок коментаря, позначений як молитва (`data-syh-type="prayer"`) —
     // реєстровий `commentBlock` (з фолбеком) + атрибутний фільтр, суфікс
     // приклеєний до КОЖНОГО кандидата фолбеку через `withSelectorSuffix`.
     block: withSelectorSuffix(SYH_CONFIG.SELECTORS.commentBlock, '[data-syh-type="prayer"]'),
-    star: '[class*="PlatformCommentShell__StarButton"]',
-    author: '[class*="PlatformCommentShell__NameText"]',
-    text: '[class*="PlatformCommentShell__ContentSpan"]'
+    star: resolveSelectorString(SYH_CONFIG.SELECTORS.commentShellStarButton),
+    author: resolveSelectorString(SYH_CONFIG.SELECTORS.commentShellAuthor),
+    text: resolveSelectorString(SYH_CONFIG.SELECTORS.commentShellText)
 } as const;
 
 export const DEFAULT_PRAYER_AUTHOR = 'Глядач';

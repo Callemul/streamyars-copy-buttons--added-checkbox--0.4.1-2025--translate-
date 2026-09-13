@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 /**
  * StreamYard Helper — детекція бренда та діагностика «Суботньої школи».
  *
@@ -15,7 +16,7 @@ export interface StatsBrandHost {
 }
 
 const BRAND_NODE_SELECTOR =
-    '[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1, [aria-controls="brand-select-menu"]';
+    resolveSelectorString(SYH_CONFIG.SELECTORS.brandNameNode);
 
 /** Тексти, які StreamYard показує замість назви бренда — брендом не вважаються. */
 const BRAND_PLACEHOLDERS = ['Share ▾', 'Return to dashboard'];

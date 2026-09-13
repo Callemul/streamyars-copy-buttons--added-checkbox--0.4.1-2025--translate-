@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 // modules/video_copier_master_button.ts
 /**
  * Головна кнопка масового скачування над списком відео.
@@ -12,7 +13,7 @@ import { COLORS, LABELS, MASTER_BUTTON_STYLE } from './video_copier_theme';
 import { applyHoverColors } from './video_copier_ui_kit';
 
 export const MASTER_BUTTON_ID = 'syh-master-download-btn';
-export const LIBRARY_TITLE_SELECTOR = 'h1[class*="LibraryTitleV2__Title"]';
+export const LIBRARY_TITLE_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.videoLibraryTitle);
 
 /** Скільки кнопка тримає стан «готово» перед поверненням у дефолт. */
 const DONE_STATE_HOLD_MS = 5000;

@@ -1,5 +1,5 @@
 import type { SyhStreamYardComments } from '../types';
-import { closestBySelectorValue, queryBySelectorValue } from '../../../registry/config';
+import { closestBySelectorValue, queryBySelectorValue, SYH_CONFIG, resolveSelectorString } from '../../../registry/config';
 import { CommentService } from '../../../comments/comment_service';
 import { SYH_COMMENT_ASSISTANT } from '../../../comments/assistant/index';
 import { getValidatedTarget } from './helpers';
@@ -9,12 +9,7 @@ import { getCommentAction } from '../../../comments/comment_actions';
 const PRAYER_BUTTON_SELECTOR =
     `.syh-button[data-action="${getCommentAction('prayer')?.platforms.streamyard?.domAction ?? 'copy-prayer'}"]`;
 
-const BUTTON_SELECTORS = [
-    '[data-testid="show-comment-button"]',
-    '[class*="PlatformComment__CoverButton"]',
-    '[aria-label="Comment actions"]',
-    '[class*="DesktopMoreButton"]'
-].join(',');
+const BUTTON_SELECTORS = resolveSelectorString(SYH_CONFIG.SELECTORS.commentContextMenuButtons);
 
 export function handleContextMenuClick(e: MouseEvent, self: SyhStreamYardComments): void {
     const target = getValidatedTarget(e, self, 'commentBlock');

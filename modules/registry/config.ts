@@ -138,6 +138,32 @@ export function resolveSelectorAll<T extends Element = Element>(
 
 export const SYH_CONFIG: SyhConfig = {
     SELECTORS: {
+        // Exact selectors: comma groups retain DOM order; Shell fields have no fallbacks.
+        commentShellStarButton: '[class*="PlatformCommentShell__StarButton"]',
+        commentShellAuthor: '[class*="PlatformCommentShell__NameText"]',
+        commentShellText: '[class*="PlatformCommentShell__ContentSpan"]',
+        bannerList: '[class*="BannerList__ListWrap"], ul[class*="Banner"]',
+        bannerSystemEditOrDeleteButton: 'button:has(svg.lucide-pencil), button:has(svg.lucide-trash-2), button:has(svg.lucide-trash2), [class*="DesktopTopIconRow"] button',
+        scrollParent: 'div[class*="Scroll"]',
+        liveTimerWrapper: 'div[class*="Timer__TimerWrapper"]',
+        liveTag: 'span[class*="Tags__LiveTag"]',
+        viewerCount: 'p[class*="ViewerCount__StatText"]',
+        brandNameNode: '[class*="BrandSelect__BrandNameText"], .BrandSelect__BrandNameText-sc-16g9tfx-1, [aria-controls="brand-select-menu"]',
+        videoCardTitle: 'span[class*="MediaTitle"]',
+        videoCardMenu: 'div[class*="MediaCardMenu"]',
+        videoShareCopyInputWrapper: 'div[class*="CopyInputWrapper"]',
+        videoLibraryTitle: 'h1[class*="LibraryTitleV2__Title"]',
+        videoTitleWrapper: 'div[class*="TitleWrapper"]',
+        commentContextMenuButtons: '[data-testid="show-comment-button"],[class*="PlatformComment__CoverButton"],[aria-label="Comment actions"],[class*="DesktopMoreButton"]',
+        // Keep the ordered scan: a matched dialog without buttons advances to the next selector.
+        antiAfkDialogs: [
+            'div[role="dialog"][aria-label="Are you still there?"]',
+            'div[role="dialog"]',
+            '[aria-modal="true"]',
+            'div[class*="modal"]',
+            'div[class*="Dialog"]'
+        ],
+
         // Коментарі (з фолбеками)
         commentBlock: ['[class*="PlatformComment__Wrap"]', '[data-testid="platform-comment"]'],
         commentButtonContainer: ['[class*="PlatformComment__TopRightButtonGroup"]', '[data-testid="comment-button-group"]'],

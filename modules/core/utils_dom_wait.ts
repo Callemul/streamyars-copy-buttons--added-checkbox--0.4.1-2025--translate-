@@ -11,13 +11,13 @@
  *   - `waitForNewBanner` перечитує селектор на кожному тіку (звідси провайдер).
  */
 
-import { resolveSelector, resolveSelectorAll } from '../registry/config';
+import { resolveSelector, resolveSelectorAll, SYH_CONFIG, resolveSelectorString } from '../registry/config';
 
 /** Крок поллінгу, спільний для всіх очікувачів. */
 const POLL_INTERVAL_MS = 100;
 
 /** Запасний селектор тексту банера, коли конфіг ще не ініціалізовано. */
-export const DEFAULT_BANNER_TEXT_SELECTOR = '[class*="Banner__BannerText"]';
+export const DEFAULT_BANNER_TEXT_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.bannerText);
 
 /**
  * Спільний скелет поллінгу.

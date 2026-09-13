@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../registry/config';
 // modules/video_copier_share_modal.ts
 /**
  * Кнопка «Копіювати URL + Текст» у модальному вікні Share.
@@ -9,7 +10,7 @@ import { applyHoverColors, copyAndFlash, tempLabelChange } from './video_copier_
 
 export const MODAL_BUTTON_ID = 'syh-url-btn';
 export const SHARE_MODAL_SELECTOR = 'div[aria-label="embed-modal-content-share"]';
-export const COPY_INPUT_WRAPPER_SELECTOR = 'div[class*="CopyInputWrapper"]';
+export const COPY_INPUT_WRAPPER_SELECTOR = resolveSelectorString(SYH_CONFIG.SELECTORS.videoShareCopyInputWrapper);
 
 /** Обгортка readonly-інпуту всередині модалки Share, якщо модалка відкрита. */
 export function findShareInputWrapper(root: ParentNode = document): Element | null {

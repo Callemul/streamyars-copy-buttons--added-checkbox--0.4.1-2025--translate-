@@ -178,3 +178,16 @@ describe('Anti-AFK Module Tests', () => {
     });
 
 });
+
+
+test('anti-AFK retains dialog priority over DOM order and skips empty dialogs', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div class="modal"><button>Stay in studio</button></div>'
+        + '<div role="dialog" aria-label="Are you still there?"></div>'
+        + '<div aria-modal="true"><button>Stay in studio</button></div>';
+    const clicked = [];
+    root.querySelector('.modal button').addEventListener('click', () => clicked.push('class'));
+    root.querySelector('[aria-modal] button').addEventListener('click', () => clicked.push('aria'));
+    assert.equal(checkAndClickAntiAfk(root), true);
+    assert.deepEqual(clicked, ['aria']);
+});

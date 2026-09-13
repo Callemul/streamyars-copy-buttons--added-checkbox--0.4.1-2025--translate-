@@ -1,3 +1,4 @@
+import { SYH_CONFIG, resolveSelectorString } from '../../registry/config';
 import type { SelectorValue } from '../../registry/config';
 
 export function handleBannerContextMenu(
@@ -10,7 +11,7 @@ export function handleBannerContextMenu(
     if (!bannerBlock) return;
 
     const isInputOrCustom = target.closest('input, textarea, .syh-button');
-    const isSystemEditOrDelete = target.closest('button:has(svg.lucide-pencil), button:has(svg.lucide-trash-2), button:has(svg.lucide-trash2), [class*="DesktopTopIconRow"] button');
+    const isSystemEditOrDelete = target.closest(resolveSelectorString(SYH_CONFIG.SELECTORS.bannerSystemEditOrDeleteButton));
 
     if (isInputOrCustom || isSystemEditOrDelete) return;
 
