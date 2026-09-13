@@ -8,10 +8,17 @@ import { setupScrollListeners } from './popup_scroll';
 import { STORAGE_KEYS } from '../modules/storage/storage';
 import { getAllSheetIds } from '../modules/registry/sheets';
 import { SYH_STORAGE, type StorageReadResult } from '../modules/storage/storage';
+import { localize } from '../modules/dom/localize';
 
 const SHEET_IDS = getAllSheetIds();
 
 function initPopup() {
+    try {
+        localize(document);
+    } catch (e) {
+        console.error('[SYH Popup] Localization failed:', e);
+    }
+
     try {
         renderSheetTemplates();
     } catch (e) {

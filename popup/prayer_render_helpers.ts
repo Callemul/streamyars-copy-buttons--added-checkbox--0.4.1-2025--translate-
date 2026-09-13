@@ -13,6 +13,7 @@ import { SYH_MESSAGING } from '../modules/messaging/messaging';
 import { ROOM_WARNING_HTML, shouldWarnAboutForeignPrayers } from './prayer_room_guard';
 
 import type { PrayerItem } from '../modules/core/types';
+import { localize } from '../modules/dom/localize';
 
 export {
     NON_ROOM_PATHS,
@@ -44,6 +45,8 @@ function readFirstTabUrl(tabs: chrome.tabs.Tab[] | undefined): string {
 export function renderRoomWarning(prayersList: PrayerItem[], outputDiv: HTMLElement, tabUrl: string): void {
     if (!shouldWarnAboutForeignPrayers(tabUrl, prayersList)) return;
     outputDiv.insertAdjacentHTML('beforebegin', ROOM_WARNING_HTML);
+    const warning = outputDiv.previousElementSibling;
+    if (warning) localize(warning);
 }
 
 function handleActiveTabs(

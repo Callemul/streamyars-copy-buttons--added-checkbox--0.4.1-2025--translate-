@@ -13,6 +13,7 @@ import {
 import { buildAuthorHeader, buildPrayerRow } from './prayer_render_helpers';
 
 import type { PrayerItem } from '../modules/core/types';
+import { localize } from '../modules/dom/localize';
 
 let activePrayerBatchCancel: (() => void) | null = null;
 
@@ -33,7 +34,8 @@ export function renderPrayers(prayersList: PrayerItem[]): void {
 
     if (!prayersList || prayersList.length === 0) {
         updateTotalCount(0, 0);
-        outputDiv.innerHTML = '<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
+        outputDiv.innerHTML = '<span data-i18n="popup_empty_prayers" style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
+        localize(outputDiv);
         outputDiv.setAttribute('data-raw-text', '');
         return;
     }

@@ -22,11 +22,11 @@ export interface RoomContext {
 export const ROOM_WARNING_HTML = `
     <div id="syh-room-warning" style="background: #f39c12; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; font-weight: bold; font-size: 13px; font-family: sans-serif; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <div style="display: flex; align-items: center; gap: 6px;">
-            <span>⚠️ Знайдено молитви з минулого ефіру!</span>
+            <span><span data-i18n="popup_foreign_prayers">⚠️ Знайдено молитви з минулого ефіру!</span></span>
         </div>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-            <button id="syh-keep-prayers" style="background: #27ae60; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Залишити як є">✅ Залишити (Це мої)</button>
-            <button id="syh-wipe-prayers" style="background: #c0392b; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" title="Видалити старі молитви з пам'яті розширення">🗑️ Очистити все</button>
+            <button id="syh-keep-prayers" style="background: #27ae60; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" data-i18n-title="popup_keep_prayers_title" title="Залишити як є"><span data-i18n="popup_keep_prayers">✅ Залишити (Це мої)</span></button>
+            <button id="syh-wipe-prayers" style="background: #c0392b; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s;" data-i18n-title="popup_wipe_prayers_title" title="Видалити старі молитви з пам'яті розширення"><span data-i18n="popup_wipe_prayers">🗑️ Очистити все</span></button>
         </div>
     </div>
 `;

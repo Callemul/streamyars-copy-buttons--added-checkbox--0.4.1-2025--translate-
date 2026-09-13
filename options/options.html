@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamYard Helper — Налаштування</title>
+    <title data-i18n="options_page_title">StreamYard Helper — Налаштування</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,29 +14,29 @@
         <!-- Header -->
         <header class="options-header">
             <div class="header-brand">
-                <img src="../assets/imgs/1.png" alt="Logo" class="app-logo">
+                <img src="../assets/imgs/1.png" alt="StreamYard Helper" class="app-logo">
                 <div>
                     <h1>StreamYard Helper</h1>
-                    <span id="optionsVersionBadge" class="version-badge">v1.1.0 — Options &amp; Preferences</span>
+                    <span id="optionsVersionBadge" class="version-badge">v1.1.0 — <span data-i18n="options_preferences">Налаштування та вподобання</span></span>
                 </div>
             </div>
-            <button id="saveTopBtn" class="btn primary-btn">💾 Зберегти зміни</button>
+            <button id="saveTopBtn" class="btn primary-btn" data-i18n="options_save">💾 Зберегти зміни</button>
         </header>
 
         <div class="options-body">
             <!-- Sidebar Navigation -->
             <nav class="options-nav">
                 <button class="nav-item active" data-target="section-general">
-                    <span class="icon">⚙️</span> Загальні
+                    <span class="icon">⚙️</span> <span data-i18n="options_nav_general">Загальні</span>
                 </button>
                 <button class="nav-item" data-target="section-automation">
-                    <span class="icon">🤖</span> Автоматизація
+                    <span class="icon">🤖</span> <span data-i18n="options_nav_automation">Автоматизація</span>
                 </button>
                 <button class="nav-item" data-target="section-ui">
-                    <span class="icon">🎨</span> Інтерфейс
+                    <span class="icon">🎨</span> <span data-i18n="options_nav_interface">Інтерфейс</span>
                 </button>
                 <button class="nav-item" data-target="section-data">
-                    <span class="icon">💾</span> Дані & Резервні копії
+                    <span class="icon">💾</span> <span data-i18n="options_nav_data">Дані & Резервні копії</span>
                 </button>
             </nav>
 
@@ -44,29 +44,29 @@
             <main class="options-content">
                 <!-- Section 1: General Settings -->
                 <section id="section-general" class="content-section active">
-                    <h2>⚙️ Загальні налаштування</h2>
-                    <p class="section-desc">Налаштуйте стандартні шаблони назв для трансляцій та мову розширення.</p>
+                    <h2 data-i18n="options_general_heading">⚙️ Загальні налаштування</h2>
+                    <p class="section-desc" data-i18n="options_general_description">Налаштуйте стандартні шаблони назв для трансляцій та мову розширення.</p>
 
                     <div class="card">
                         <div class="form-group">
-                            <label for="optSschoolName">Назва Суботньої Школи (СШ)</label>
-                            <input type="text" id="optSschoolName" class="form-control" placeholder="Напр. СШ Урок 4">
-                            <small class="help-text">Використовується за замовчуванням для форматування запитань Суботньої школи.</small>
+                            <label for="optSschoolName" data-i18n="options_school_label">Назва Суботньої Школи (СШ)</label>
+                            <input type="text" id="optSschoolName" class="form-control" placeholder="Напр. СШ Урок 4" data-i18n-placeholder="options_school_placeholder">
+                            <small class="help-text" data-i18n="options_school_help">Використовується за замовчуванням для форматування запитань Суботньої школи.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="optPreachName">Назва Проповіді</label>
-                            <input type="text" id="optPreachName" class="form-control" placeholder="Напр. Тема: Віра і Надія">
-                            <small class="help-text">Використовується за замовчуванням для блоку проповідей.</small>
+                            <label for="optPreachName" data-i18n="options_sermon_label">Назва Проповіді</label>
+                            <input type="text" id="optPreachName" class="form-control" placeholder="Напр. Тема: Віра і Надія" data-i18n-placeholder="options_sermon_placeholder">
+                            <small class="help-text" data-i18n="options_sermon_help">Використовується за замовчуванням для блоку проповідей.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="optLanguage">Мова інтерфейсу розширення</label>
+                            <label for="optLanguage" data-i18n="options_language_label">Мова інтерфейсу розширення</label>
                             <select id="optLanguage" class="form-control">
-                                <option value="auto">Автоматично (мова браузера)</option>
-                                <option value="uk">Українська (uk)</option>
-                                <option value="en">English (en)</option>
-                                <option value="ru">Русский (ru)</option>
+                                <option value="auto" data-i18n="options_language_auto">Автоматично (мова браузера)</option>
+                                <option value="uk" data-i18n="options_language_uk">Українська (uk)</option>
+                                <option value="en" data-i18n="options_language_en">Англійська (en)</option>
+                                <option value="ru" data-i18n="options_language_ru">Російська (ru)</option>
                             </select>
                         </div>
                     </div>
@@ -74,23 +74,23 @@
 
                 <!-- Section 2: Automation & Anti-AFK -->
                 <section id="section-automation" class="content-section">
-                    <h2>🤖 Налаштування Автоматизації</h2>
-                    <p class="section-desc">Керування фоновими модулями захисту від сну та відновлення селекторів.</p>
+                    <h2 data-i18n="options_automation_heading">🤖 Налаштування Автоматизації</h2>
+                    <p class="section-desc" data-i18n="options_automation_description">Керування фоновими модулями захисту від сну та відновлення селекторів.</p>
 
                     <div class="card">
                         <div class="form-group checkbox-group">
                             <label class="switch-label">
                                 <input type="checkbox" id="optAntiAfkEnabled" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">Увімкнути Anti-AFK кликер</span>
+                                <span class="label-text" data-i18n="options_anti_afk_label">Увімкнути Anti-AFK кликер</span>
                             </label>
-                            <small class="help-text">Запобігає автоматичному відключенню від студії StreamYard при тривалій бездіяльності.</small>
+                            <small class="help-text" data-i18n="options_anti_afk_help">Запобігає автоматичному відключенню від студії StreamYard при тривалій бездіяльності.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="optAntiAfkInterval">Інтервал Anti-AFK (секунди)</label>
+                            <label for="optAntiAfkInterval" data-i18n="options_anti_afk_interval_label">Інтервал Anti-AFK (секунди)</label>
                             <input type="number" id="optAntiAfkInterval" class="form-control" min="5" max="300" step="5" value="30">
-                            <small class="help-text">Частота періодичних перевірок кнопкою "Stay in the studio". За замовчуванням: 30с.</small>
+                            <small class="help-text" data-i18n="options_anti_afk_interval_help">Частота періодичних перевірок кнопкою "Stay in the studio". За замовчуванням: 30с.</small>
                         </div>
 
                         <hr class="divider">
@@ -99,32 +99,32 @@
                             <label class="switch-label">
                                 <input type="checkbox" id="optAutoHealEnabled" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">Увімкнути Auto-Heal (авто-відновлення селекторів)</span>
+                                <span class="label-text" data-i18n="options_auto_heal_label">Увімкнути Auto-Heal (авто-відновлення селекторів)</span>
                             </label>
-                            <small class="help-text">Автоматично виявляє та адаптується до динамічних змін DOM-структури StreamYard.</small>
+                            <small class="help-text" data-i18n="options_auto_heal_help">Автоматично виявляє та адаптується до динамічних змін DOM-структури StreamYard.</small>
                         </div>
                     </div>
                 </section>
 
                 <!-- Section 3: UI & Limits -->
                 <section id="section-ui" class="content-section">
-                    <h2>🎨 Інтерфейс та Ліміти</h2>
-                    <p class="section-desc">Налаштування відображення кнопок та параметрів довжини банерів.</p>
+                    <h2 data-i18n="options_interface_heading">🎨 Інтерфейс та Ліміти</h2>
+                    <p class="section-desc" data-i18n="options_interface_description">Налаштування відображення кнопок та параметрів довжини банерів.</p>
 
                     <div class="card">
                         <div class="form-group">
-                            <label for="optTruncationLength">Максимальна довжина тексту банера (символів)</label>
+                            <label for="optTruncationLength" data-i18n="options_banner_length_label">Максимальна довжина тексту банера (символів)</label>
                             <input type="number" id="optTruncationLength" class="form-control" min="50" max="500" value="195">
-                            <small class="help-text">Текст запитань, що перевищує цей ліміт, буде гарно обрізатися з трикрапкою (ліміт StreamYard).</small>
+                            <small class="help-text" data-i18n="options_banner_length_help">Текст запитань, що перевищує цей ліміт, буде гарно обрізатися з трикрапкою (ліміт StreamYard).</small>
                         </div>
 
                         <div class="form-group checkbox-group">
                             <label class="switch-label">
                                 <input type="checkbox" id="optCompactSecondaryTabs" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">Автоматично згортати другорядні кнопки (Recording, Widgets)</span>
+                                <span class="label-text" data-i18n="options_compact_tabs_label">Автоматично згортати другорядні кнопки (Recording, Widgets)</span>
                             </label>
-                            <small class="help-text">Згортає по висоті другорядні вкладки правої панелі. Основні вкладки (Chat, Banners, Brand) залишаються звичайними. Будь-яку кнопку можна додатково згортати/розгортати через ПКМ.</small>
+                            <small class="help-text" data-i18n="options_compact_tabs_help">Згортає по висоті другорядні вкладки правої панелі. Основні вкладки (Chat, Banners, Brand) залишаються звичайними. Будь-яку кнопку можна додатково згортати/розгортати через ПКМ.</small>
                         </div>
 
                         <hr class="divider">
@@ -133,9 +133,9 @@
                             <label class="switch-label">
                                 <input type="checkbox" id="optYouTubeEnabled" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">Увімкнути старий YouTube-модуль (2 канали)</span>
+                                <span class="label-text" data-i18n="options_youtube_label">Увімкнути старий YouTube-модуль (2 канали)</span>
                             </label>
-                            <small class="help-text">Вмикає новий інжекцій кнопок на звичайному веб-сайті YouTube.</small>
+                            <small class="help-text" data-i18n="options_youtube_help">Вмикає новий інжекцій кнопок на звичайному веб-сайті YouTube.</small>
                         </div>
                     </div>
 
@@ -145,38 +145,38 @@
                             <label class="switch-label">
                                 <input type="checkbox" id="optStudioEnabled" checked>
                                 <span class="slider"></span>
-                                <span class="label-text">Увімкнути YouTube Studio модуль</span>
+                                <span class="label-text" data-i18n="options_studio_label">Увімкнути YouTube Studio модуль</span>
                             </label>
-                            <small class="help-text">Вмикає авто-маршрутизацію, Badge та чекбокси у творчій студії YouTube Studio (studio.youtube.com)</small>
+                            <small class="help-text" data-i18n="options_studio_help">Вмикає авто-маршрутизацію, Badge та чекбокси у творчій студії YouTube Studio (studio.youtube.com)</small>
                         </div>
 
                         <div class="form-group">
-                            <label>Дозволені канали YouTube Studio (Read-only)</label>
+                            <label data-i18n="options_allowed_channels_label">Дозволені канали YouTube Studio (лише читання)</label>
                             <ul class="allowed-channels-list">
-                                <li><b>Время перемен</b> (handles: @vperemen, @vperementv, @vremyaperemen)</li>
-                                <li><b>Слово живое</b> (handles: @slovozhivoe, @slovo_zhivoe)</li>
+                                <li><b>Время перемен</b> (<span data-i18n="options_handles_label">ідентифікатори:</span> @vperemen, @vperementv, @vremyaperemen)</li>
+                                <li><b>Слово живое</b> (<span data-i18n="options_handles_label">ідентифікатори:</span> @slovozhivoe, @slovo_zhivoe)</li>
                             </ul>
                         </div>
 
                         <div class="form-group">
-                            <label>Лог ручних корекцій категорій (YouTube Studio)</label>
+                            <label data-i18n="options_studio_log_label">Лог ручних корекцій категорій (YouTube Studio)</label>
                             <div class="actions-row log-actions-row">
-                                <button id="copyStudioLogBtn" class="btn secondary-btn" type="button">📋 Скопіювати лог</button>
-                                <button id="clearStudioLogBtn" class="btn danger-btn" type="button">🗑 Очистити лог</button>
+                                <button id="copyStudioLogBtn" class="btn secondary-btn" type="button" data-i18n="options_studio_log_copy">📋 Скопіювати лог</button>
+                                <button id="clearStudioLogBtn" class="btn danger-btn" type="button" data-i18n="options_studio_log_clear">🗑 Очистити лог</button>
                             </div>
                             <div class="log-table-wrapper">
                                 <table id="studioLogTable" class="studio-log-table">
                                     <thead>
                                         <tr>
-                                            <th>Час</th>
-                                            <th>Канал</th>
-                                            <th>Відео</th>
-                                            <th>Авто-категорія</th>
-                                            <th>Назначено</th>
+                                            <th data-i18n="options_studio_log_time">Час</th>
+                                            <th data-i18n="options_studio_log_channel">Канал</th>
+                                            <th data-i18n="options_studio_log_video">Відео</th>
+                                            <th data-i18n="options_studio_log_auto">Авто-категорія</th>
+                                            <th data-i18n="options_studio_log_assigned">Призначено</th>
                                         </tr>
                                     </thead>
                                     <tbody id="studioLogBody">
-                                        <tr><td colspan="5" class="empty-log-msg">Записи у лозі відсутні</td></tr>
+                                        <tr><td colspan="5" class="empty-log-msg" data-i18n="options_studio_log_empty">Записи у лозі відсутні</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -186,20 +186,20 @@
 
                 <!-- Section 4: Data & Backup -->
                 <section id="section-data" class="content-section">
-                    <h2>💾 Керування даними та Резервні копії</h2>
-                    <p class="section-desc">Експортуйте свої налаштування та повний стан для переносу на інший ПК або збереження резервної копії.</p>
+                    <h2 data-i18n="options_data_heading">💾 Керування даними та Резервні копії</h2>
+                    <p class="section-desc" data-i18n="options_data_description">Експортуйте свої налаштування та повний стан для переносу на інший ПК або збереження резервної копії.</p>
 
                     <div class="card">
                         <div class="actions-row">
-                            <button id="exportConfigBtn" class="btn secondary-btn">📥 Експорт налаштувань та стану (JSON)</button>
+                            <button id="exportConfigBtn" class="btn secondary-btn" data-i18n="options_export">📥 Експорт налаштувань та стану (JSON)</button>
                             <label for="importConfigFile" class="btn secondary-btn file-input-label">
-                                📤 Імпорт налаштувань та стану
+                                <span data-i18n="options_import">📤 Імпорт налаштувань та стану</span>
                                 <input type="file" id="importConfigFile" accept=".json">
                             </label>
                         </div>
                         <hr class="divider">
                         <div class="actions-row">
-                            <button id="resetDefaultsBtn" class="btn danger-btn">⚠️ Скинути всі налаштування за замовчуванням</button>
+                            <button id="resetDefaultsBtn" class="btn danger-btn" data-i18n="options_reset">⚠️ Скинути всі налаштування за замовчуванням</button>
                         </div>
                     </div>
                 </section>

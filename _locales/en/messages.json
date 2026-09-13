@@ -50,5 +50,557 @@
   "copyText": {
     "message": "📋 Copy text",
     "description": "Copy text button label"
+  },
+  "popup_tabs": {
+    "message": "Extension tabs",
+    "description": "Popup"
+  },
+  "popup_prayers_tab": {
+    "message": "Prayers",
+    "description": "Popup"
+  },
+  "popup_prayers_tab_label": {
+    "message": "🙏 Prayers",
+    "description": "Popup"
+  },
+  "popup_questions_tab": {
+    "message": "Telegram/YouTube Questions",
+    "description": "Popup"
+  },
+  "popup_questions_tab_label": {
+    "message": "Telegram/YouTube Questions 🚀",
+    "description": "Popup"
+  },
+  "popup_settings_tab": {
+    "message": "Transliteration and Settings",
+    "description": "Popup"
+  },
+  "popup_settings_tab_label": {
+    "message": "Translit / Settings",
+    "description": "Popup"
+  },
+  "popup_total": {
+    "message": "Total:",
+    "description": "Popup"
+  },
+  "popup_prayers_zero": {
+    "message": "0 people - 0 requests",
+    "description": "Popup"
+  },
+  "popup_copy_prayers": {
+    "message": "Copy all requests",
+    "description": "Popup"
+  },
+  "popup_copy_prayers_label": {
+    "message": "📋 Copy all requests",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_title": {
+    "message": "Fetch starred comments from the broadcast",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_label": {
+    "message": "🔄 Fetch",
+    "description": "Popup"
+  },
+  "popup_clear_list": {
+    "message": "Clear list",
+    "description": "Popup"
+  },
+  "popup_clear_requests": {
+    "message": "Clear the request list",
+    "description": "Popup"
+  },
+  "popup_prayers_result": {
+    "message": "Prayer requests result",
+    "description": "Popup"
+  },
+  "popup_question_sheets": {
+    "message": "Question sheets",
+    "description": "Popup"
+  },
+  "popup_old_list_label": {
+    "message": "1. Old list",
+    "description": "Popup"
+  },
+  "popup_old_list_placeholder": {
+    "message": "Paste all the text from last time here...",
+    "description": "Popup"
+  },
+  "popup_old_list_aria": {
+    "message": "Old question list",
+    "description": "Popup"
+  },
+  "popup_answered_label": {
+    "message": "2. ANSWERED numbers (remove):",
+    "description": "Popup"
+  },
+  "popup_answered_aria": {
+    "message": "Answered numbers to remove",
+    "description": "Popup"
+  },
+  "popup_new_list_label": {
+    "message": "3. New list:",
+    "description": "Popup"
+  },
+  "popup_telegram_manual": {
+    "message": "📝 Telegram (manual input)",
+    "description": "Popup"
+  },
+  "popup_new_list_placeholder": {
+    "message": "Paste new questions from Telegram...",
+    "description": "Popup"
+  },
+  "popup_new_list_aria": {
+    "message": "New questions from Telegram",
+    "description": "Popup"
+  },
+  "popup_resize": {
+    "message": "Drag to resize",
+    "description": "Popup"
+  },
+  "popup_clear_collected": {
+    "message": "Clear collected",
+    "description": "Popup"
+  },
+  "popup_clear_youtube": {
+    "message": "Clear comments collected from YouTube",
+    "description": "Popup"
+  },
+  "popup_collected_youtube": {
+    "message": "Comments collected from YouTube",
+    "description": "Popup"
+  },
+  "popup_process": {
+    "message": "Process comments",
+    "description": "Popup"
+  },
+  "popup_process_label": {
+    "message": "PROCESS COMMENTS 🚀",
+    "description": "Popup"
+  },
+  "popup_clear": {
+    "message": "Clear",
+    "description": "Popup"
+  },
+  "popup_clear_questions": {
+    "message": "Clear the question list",
+    "description": "Popup"
+  },
+  "popup_remaining_old": {
+    "message": "Old remaining:",
+    "description": "Popup"
+  },
+  "popup_deleted": {
+    "message": "Removed:",
+    "description": "Popup"
+  },
+  "popup_new_left": {
+    "message": "New from the left:",
+    "description": "Popup"
+  },
+  "popup_new_youtube": {
+    "message": "New from YouTube:",
+    "description": "Popup"
+  },
+  "popup_result": {
+    "message": "Result:",
+    "description": "Popup"
+  },
+  "popup_copy_result": {
+    "message": "Copy result",
+    "description": "Popup"
+  },
+  "popup_copy_text": {
+    "message": "📋 Copy text",
+    "description": "Popup"
+  },
+  "popup_final_result": {
+    "message": "Final Telegram questions result",
+    "description": "Popup"
+  },
+  "popup_deleted_log": {
+    "message": "🗑 Removal log",
+    "description": "Popup"
+  },
+  "popup_no_deletions": {
+    "message": "Nothing removed",
+    "description": "Popup"
+  },
+  "popup_cleaned_log": {
+    "message": "🧹 Text cleaning log",
+    "description": "Popup"
+  },
+  "popup_no_cleaning": {
+    "message": "No phrases or nicknames were cleaned",
+    "description": "Popup"
+  },
+  "popup_transliteration": {
+    "message": "Transliteration",
+    "description": "Popup"
+  },
+  "popup_input_text": {
+    "message": "Input text...",
+    "description": "Popup"
+  },
+  "popup_translit_input": {
+    "message": "Input text for transliteration",
+    "description": "Popup"
+  },
+  "popup_translit_result": {
+    "message": "Transliteration result",
+    "description": "Popup"
+  },
+  "popup_translate_aria": {
+    "message": "Translate",
+    "description": "Popup"
+  },
+  "popup_translate_label": {
+    "message": "Translate",
+    "description": "Popup"
+  },
+  "popup_settings": {
+    "message": "Settings",
+    "description": "Popup"
+  },
+  "popup_ss_name_placeholder": {
+    "message": "Sabbath School name",
+    "description": "Popup"
+  },
+  "popup_ss_name": {
+    "message": "Sabbath School name",
+    "description": "Popup"
+  },
+  "popup_ss_change": {
+    "message": "Change the Sabbath School name",
+    "description": "Popup"
+  },
+  "popup_ss_change_label": {
+    "message": "Change SS",
+    "description": "Popup"
+  },
+  "popup_sermon_name_placeholder": {
+    "message": "Sermon title",
+    "description": "Popup"
+  },
+  "popup_sermon_name": {
+    "message": "Sermon title",
+    "description": "Popup"
+  },
+  "popup_sermon_change": {
+    "message": "Change the sermon title",
+    "description": "Popup"
+  },
+  "popup_sermon_change_label": {
+    "message": "Change Sermon",
+    "description": "Popup"
+  },
+  "popup_options": {
+    "message": "Open advanced settings",
+    "description": "Popup"
+  },
+  "popup_options_label": {
+    "message": "⚙️ Advanced Settings (Options)",
+    "description": "Popup"
+  },
+  "popup_before_cleaning": {
+    "message": "Before cleaning",
+    "description": "Popup"
+  },
+  "popup_after_cleaning": {
+    "message": "After cleaning",
+    "description": "Popup"
+  },
+  "popup_removed_text": {
+    "message": "What was removed",
+    "description": "Popup"
+  },
+  "popup_empty_prayers": {
+    "message": "The list is empty. Press 🔄 \"Fetch\" to load starred comments from the broadcast, or mark them manually.",
+    "description": "Popup"
+  },
+  "popup_foreign_prayers": {
+    "message": "⚠️ Prayers from a previous broadcast found!",
+    "description": "Popup"
+  },
+  "popup_keep_prayers_title": {
+    "message": "Keep as is",
+    "description": "Popup"
+  },
+  "popup_keep_prayers": {
+    "message": "✅ Keep (These are mine)",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers_title": {
+    "message": "Remove old prayers from the extension's storage",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers": {
+    "message": "🗑️ Clear all",
+    "description": "Popup"
+  },
+  "options_page_title": {
+    "message": "StreamYard Helper — Settings",
+    "description": "Options page"
+  },
+  "options_preferences": {
+    "message": "Options & Preferences",
+    "description": "Options page"
+  },
+  "options_save": {
+    "message": "💾 Save changes",
+    "description": "Options page"
+  },
+  "options_nav_general": {
+    "message": "General",
+    "description": "Options page"
+  },
+  "options_nav_automation": {
+    "message": "Automation",
+    "description": "Options page"
+  },
+  "options_nav_interface": {
+    "message": "Interface",
+    "description": "Options page"
+  },
+  "options_nav_data": {
+    "message": "Data & Backups",
+    "description": "Options page"
+  },
+  "options_general_heading": {
+    "message": "⚙️ General settings",
+    "description": "Options page"
+  },
+  "options_general_description": {
+    "message": "Set the default title templates for broadcasts and the extension language.",
+    "description": "Options page"
+  },
+  "options_school_label": {
+    "message": "Sabbath School name (SS)",
+    "description": "Options page"
+  },
+  "options_school_placeholder": {
+    "message": "E.g. SS Lesson 4",
+    "description": "Options page"
+  },
+  "options_school_help": {
+    "message": "Used by default to format Sabbath School questions.",
+    "description": "Options page"
+  },
+  "options_sermon_label": {
+    "message": "Sermon title",
+    "description": "Options page"
+  },
+  "options_sermon_placeholder": {
+    "message": "E.g. Topic: Faith and Hope",
+    "description": "Options page"
+  },
+  "options_sermon_help": {
+    "message": "Used by default for the sermon block.",
+    "description": "Options page"
+  },
+  "options_language_label": {
+    "message": "Extension interface language",
+    "description": "Options page"
+  },
+  "options_language_auto": {
+    "message": "Automatic (browser language)",
+    "description": "Options page"
+  },
+  "options_language_uk": {
+    "message": "Ukrainian (uk)",
+    "description": "Options page"
+  },
+  "options_language_en": {
+    "message": "English (en)",
+    "description": "Options page"
+  },
+  "options_language_ru": {
+    "message": "Russian (ru)",
+    "description": "Options page"
+  },
+  "options_automation_heading": {
+    "message": "🤖 Automation settings",
+    "description": "Options page"
+  },
+  "options_automation_description": {
+    "message": "Manage the background modules for sleep protection and selector recovery.",
+    "description": "Options page"
+  },
+  "options_anti_afk_label": {
+    "message": "Enable the Anti-AFK clicker",
+    "description": "Options page"
+  },
+  "options_anti_afk_help": {
+    "message": "Prevents automatic disconnection from the StreamYard studio during long inactivity.",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_label": {
+    "message": "Anti-AFK interval (seconds)",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_help": {
+    "message": "How often to check for the \"Stay in the studio\" button. Default: 30s.",
+    "description": "Options page"
+  },
+  "options_auto_heal_label": {
+    "message": "Enable Auto-Heal (automatic selector recovery)",
+    "description": "Options page"
+  },
+  "options_auto_heal_help": {
+    "message": "Automatically detects and adapts to dynamic changes in the StreamYard DOM structure.",
+    "description": "Options page"
+  },
+  "options_interface_heading": {
+    "message": "🎨 Interface and Limits",
+    "description": "Options page"
+  },
+  "options_interface_description": {
+    "message": "Button display settings and banner length parameters.",
+    "description": "Options page"
+  },
+  "options_banner_length_label": {
+    "message": "Maximum banner text length (characters)",
+    "description": "Options page"
+  },
+  "options_banner_length_help": {
+    "message": "Question text over this limit is neatly truncated with an ellipsis (StreamYard limit).",
+    "description": "Options page"
+  },
+  "options_compact_tabs_label": {
+    "message": "Automatically collapse secondary buttons (Recording, Widgets)",
+    "description": "Options page"
+  },
+  "options_compact_tabs_help": {
+    "message": "Collapses the height of secondary right-panel tabs. The main tabs (Chat, Banners, Brand) stay as they are. Any button can also be collapsed or expanded with a right-click.",
+    "description": "Options page"
+  },
+  "options_youtube_label": {
+    "message": "Enable the legacy YouTube module (2 channels)",
+    "description": "Options page"
+  },
+  "options_youtube_help": {
+    "message": "Enables button injection on the regular YouTube website.",
+    "description": "Options page"
+  },
+  "options_studio_label": {
+    "message": "Enable the YouTube Studio module",
+    "description": "Options page"
+  },
+  "options_studio_help": {
+    "message": "Enables auto-routing, the badge and checkboxes in YouTube Studio (studio.youtube.com)",
+    "description": "Options page"
+  },
+  "options_allowed_channels_label": {
+    "message": "Allowed YouTube Studio channels (read-only)",
+    "description": "Options page"
+  },
+  "options_handles_label": {
+    "message": "handles:",
+    "description": "Options page"
+  },
+  "options_studio_log_label": {
+    "message": "Manual category correction log (YouTube Studio)",
+    "description": "Options page"
+  },
+  "options_studio_log_copy": {
+    "message": "📋 Copy log",
+    "description": "Options page"
+  },
+  "options_studio_log_clear": {
+    "message": "🗑 Clear log",
+    "description": "Options page"
+  },
+  "options_studio_log_time": {
+    "message": "Time",
+    "description": "Options page"
+  },
+  "options_studio_log_channel": {
+    "message": "Channel",
+    "description": "Options page"
+  },
+  "options_studio_log_video": {
+    "message": "Video",
+    "description": "Options page"
+  },
+  "options_studio_log_auto": {
+    "message": "Auto category",
+    "description": "Options page"
+  },
+  "options_studio_log_assigned": {
+    "message": "Assigned",
+    "description": "Options page"
+  },
+  "options_studio_log_empty": {
+    "message": "No log entries",
+    "description": "Options page"
+  },
+  "options_data_heading": {
+    "message": "💾 Data management and Backups",
+    "description": "Options page"
+  },
+  "options_data_description": {
+    "message": "Export your settings and full state to move to another PC or keep a backup.",
+    "description": "Options page"
+  },
+  "options_export": {
+    "message": "📥 Export settings and state (JSON)",
+    "description": "Options page"
+  },
+  "options_import": {
+    "message": "📤 Import settings and state",
+    "description": "Options page"
+  },
+  "options_reset": {
+    "message": "⚠️ Reset all settings to defaults",
+    "description": "Options page"
+  },
+  "options_save_success": {
+    "message": "✅ Settings saved successfully!",
+    "description": "Options page"
+  },
+  "options_reset_success": {
+    "message": "⚠️ Settings reset to defaults!",
+    "description": "Options page"
+  },
+  "options_export_success": {
+    "message": "📥 Settings and state exported successfully",
+    "description": "Options page"
+  },
+  "options_import_success": {
+    "message": "📤 Settings and state imported successfully!",
+    "description": "Options page"
+  },
+  "options_import_invalid": {
+    "message": "Invalid configuration file format.",
+    "description": "Options page"
+  },
+  "options_import_error": {
+    "message": "Error reading the JSON file.",
+    "description": "Options page"
+  },
+  "options_reset_confirm": {
+    "message": "Are you sure you want to reset all settings to defaults?",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_empty": {
+    "message": "ℹ️ The log is empty, nothing to copy",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_success": {
+    "message": "📋 YouTube Studio correction log copied!",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_error": {
+    "message": "Could not copy the log to the clipboard",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_confirm": {
+    "message": "Clear the YouTube Studio manual category correction log?",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_success": {
+    "message": "🗑 Studio log cleared successfully",
+    "description": "Options page"
   }
 }

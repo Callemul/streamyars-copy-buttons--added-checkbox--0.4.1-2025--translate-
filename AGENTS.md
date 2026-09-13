@@ -76,6 +76,7 @@
 | Парсери банерів: пріоритет категорій, суфікси авторів | [docs/rules/parsers.md](docs/rules/parsers.md) |
 | SmartSearch і транслітерація імен | [docs/rules/search-translit.md](docs/rules/search-translit.md) |
 | Події банерів і 4 метрики аналітики, авто-фази | [docs/rules/events-analytics.md](docs/rules/events-analytics.md) |
+| i18n: новий видимий рядок = ключ у трьох каталогах, `data-i18n`, `localize()` | [docs/rules/i18n.md](docs/rules/i18n.md) |
 
 Нове довготривале правило додається **окремим файлом у `docs/rules/`** і рядком у цій
 таблиці — не рядком у кінці `AGENTS.md`.

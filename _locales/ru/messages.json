@@ -50,5 +50,557 @@
   "copyText": {
     "message": "📋 Скопировать текст",
     "description": "Copy text button label"
+  },
+  "popup_tabs": {
+    "message": "Вкладки расширения",
+    "description": "Popup"
+  },
+  "popup_prayers_tab": {
+    "message": "Молитвенные",
+    "description": "Popup"
+  },
+  "popup_prayers_tab_label": {
+    "message": "🙏 Молитвенные",
+    "description": "Popup"
+  },
+  "popup_questions_tab": {
+    "message": "Вопросы Telegram/YouTube",
+    "description": "Popup"
+  },
+  "popup_questions_tab_label": {
+    "message": "Вопросы Telegram/YouTube 🚀",
+    "description": "Popup"
+  },
+  "popup_settings_tab": {
+    "message": "Транслит и Настройки",
+    "description": "Popup"
+  },
+  "popup_settings_tab_label": {
+    "message": "Транслит / Настройки",
+    "description": "Popup"
+  },
+  "popup_total": {
+    "message": "Итого:",
+    "description": "Popup"
+  },
+  "popup_prayers_zero": {
+    "message": "0 чел. - 0 просьб",
+    "description": "Popup"
+  },
+  "popup_copy_prayers": {
+    "message": "Скопировать все просьбы",
+    "description": "Popup"
+  },
+  "popup_copy_prayers_label": {
+    "message": "📋 Скопировать все просьбы",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_title": {
+    "message": "Подтянуть отмеченные звездой комментарии из эфира",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_label": {
+    "message": "🔄 Подтянуть",
+    "description": "Popup"
+  },
+  "popup_clear_list": {
+    "message": "Очистить список",
+    "description": "Popup"
+  },
+  "popup_clear_requests": {
+    "message": "Очистить список просьб",
+    "description": "Popup"
+  },
+  "popup_prayers_result": {
+    "message": "Результат молитвенных просьб",
+    "description": "Popup"
+  },
+  "popup_question_sheets": {
+    "message": "Листы вопросов",
+    "description": "Popup"
+  },
+  "popup_old_list_label": {
+    "message": "1. Старый список",
+    "description": "Popup"
+  },
+  "popup_old_list_placeholder": {
+    "message": "Вставьте сюда весь текст с прошлого раза...",
+    "description": "Popup"
+  },
+  "popup_old_list_aria": {
+    "message": "Старый список вопросов",
+    "description": "Popup"
+  },
+  "popup_answered_label": {
+    "message": "2. Номера ОТВЕТОВ (удалить):",
+    "description": "Popup"
+  },
+  "popup_answered_aria": {
+    "message": "Номера ответов для удаления",
+    "description": "Popup"
+  },
+  "popup_new_list_label": {
+    "message": "3. Новый список:",
+    "description": "Popup"
+  },
+  "popup_telegram_manual": {
+    "message": "📝 Telegram (ручной ввод)",
+    "description": "Popup"
+  },
+  "popup_new_list_placeholder": {
+    "message": "Вставьте новые вопросы из Телеграма...",
+    "description": "Popup"
+  },
+  "popup_new_list_aria": {
+    "message": "Новые вопросы из Телеграма",
+    "description": "Popup"
+  },
+  "popup_resize": {
+    "message": "Перетащите, чтобы изменить размер",
+    "description": "Popup"
+  },
+  "popup_clear_collected": {
+    "message": "Очистить собранные",
+    "description": "Popup"
+  },
+  "popup_clear_youtube": {
+    "message": "Очистить собранные с YouTube",
+    "description": "Popup"
+  },
+  "popup_collected_youtube": {
+    "message": "Собранные комментарии с YouTube",
+    "description": "Popup"
+  },
+  "popup_process": {
+    "message": "Обработать комментарии",
+    "description": "Popup"
+  },
+  "popup_process_label": {
+    "message": "ОБРАБОТАТЬ КОММЕНТАРИИ 🚀",
+    "description": "Popup"
+  },
+  "popup_clear": {
+    "message": "Очистить",
+    "description": "Popup"
+  },
+  "popup_clear_questions": {
+    "message": "Очистить список вопросов",
+    "description": "Popup"
+  },
+  "popup_remaining_old": {
+    "message": "Осталось старых:",
+    "description": "Popup"
+  },
+  "popup_deleted": {
+    "message": "Удалено:",
+    "description": "Popup"
+  },
+  "popup_new_left": {
+    "message": "Новые слева:",
+    "description": "Popup"
+  },
+  "popup_new_youtube": {
+    "message": "Новые с YouTube:",
+    "description": "Popup"
+  },
+  "popup_result": {
+    "message": "Результат:",
+    "description": "Popup"
+  },
+  "popup_copy_result": {
+    "message": "Скопировать результат",
+    "description": "Popup"
+  },
+  "popup_copy_text": {
+    "message": "📋 Скопировать текст",
+    "description": "Popup"
+  },
+  "popup_final_result": {
+    "message": "Итоговый результат вопросов Telegram",
+    "description": "Popup"
+  },
+  "popup_deleted_log": {
+    "message": "🗑 Лог удалённого",
+    "description": "Popup"
+  },
+  "popup_no_deletions": {
+    "message": "Удалений нет",
+    "description": "Popup"
+  },
+  "popup_cleaned_log": {
+    "message": "🧹 Лог очистки текста",
+    "description": "Popup"
+  },
+  "popup_no_cleaning": {
+    "message": "Очищенных фраз или никнеймов нет",
+    "description": "Popup"
+  },
+  "popup_transliteration": {
+    "message": "Транслитерация",
+    "description": "Popup"
+  },
+  "popup_input_text": {
+    "message": "Введите текст...",
+    "description": "Popup"
+  },
+  "popup_translit_input": {
+    "message": "Входной текст для транслитерации",
+    "description": "Popup"
+  },
+  "popup_translit_result": {
+    "message": "Результат транслитерации",
+    "description": "Popup"
+  },
+  "popup_translate_aria": {
+    "message": "Перевести",
+    "description": "Popup"
+  },
+  "popup_translate_label": {
+    "message": "Перевести",
+    "description": "Popup"
+  },
+  "popup_settings": {
+    "message": "Настройки",
+    "description": "Popup"
+  },
+  "popup_ss_name_placeholder": {
+    "message": "Название СШ",
+    "description": "Popup"
+  },
+  "popup_ss_name": {
+    "message": "Название Субботней школы",
+    "description": "Popup"
+  },
+  "popup_ss_change": {
+    "message": "Изменить название Субботней школы",
+    "description": "Popup"
+  },
+  "popup_ss_change_label": {
+    "message": "Изменить СШ",
+    "description": "Popup"
+  },
+  "popup_sermon_name_placeholder": {
+    "message": "Название проповеди",
+    "description": "Popup"
+  },
+  "popup_sermon_name": {
+    "message": "Название проповеди",
+    "description": "Popup"
+  },
+  "popup_sermon_change": {
+    "message": "Изменить название проповеди",
+    "description": "Popup"
+  },
+  "popup_sermon_change_label": {
+    "message": "Изменить Проповедь",
+    "description": "Popup"
+  },
+  "popup_options": {
+    "message": "Открыть расширенные настройки",
+    "description": "Popup"
+  },
+  "popup_options_label": {
+    "message": "⚙️ Расширенные Настройки (Options)",
+    "description": "Popup"
+  },
+  "popup_before_cleaning": {
+    "message": "До очистки",
+    "description": "Popup"
+  },
+  "popup_after_cleaning": {
+    "message": "После очистки",
+    "description": "Popup"
+  },
+  "popup_removed_text": {
+    "message": "Что удалено",
+    "description": "Popup"
+  },
+  "popup_empty_prayers": {
+    "message": "Список пуст. Нажмите кнопку 🔄 \"Подтянуть\", чтобы загрузить отмеченные звездой комментарии из эфира, или отметьте их вручную.",
+    "description": "Popup"
+  },
+  "popup_foreign_prayers": {
+    "message": "⚠️ Найдены молитвы с прошлого эфира!",
+    "description": "Popup"
+  },
+  "popup_keep_prayers_title": {
+    "message": "Оставить как есть",
+    "description": "Popup"
+  },
+  "popup_keep_prayers": {
+    "message": "✅ Оставить (Это мои)",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers_title": {
+    "message": "Удалить старые молитвы из памяти расширения",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers": {
+    "message": "🗑️ Очистить всё",
+    "description": "Popup"
+  },
+  "options_page_title": {
+    "message": "StreamYard Helper — Настройки",
+    "description": "Options page"
+  },
+  "options_preferences": {
+    "message": "Настройки и предпочтения",
+    "description": "Options page"
+  },
+  "options_save": {
+    "message": "💾 Сохранить изменения",
+    "description": "Options page"
+  },
+  "options_nav_general": {
+    "message": "Общие",
+    "description": "Options page"
+  },
+  "options_nav_automation": {
+    "message": "Автоматизация",
+    "description": "Options page"
+  },
+  "options_nav_interface": {
+    "message": "Интерфейс",
+    "description": "Options page"
+  },
+  "options_nav_data": {
+    "message": "Данные и резервные копии",
+    "description": "Options page"
+  },
+  "options_general_heading": {
+    "message": "⚙️ Общие настройки",
+    "description": "Options page"
+  },
+  "options_general_description": {
+    "message": "Настройте стандартные шаблоны названий для трансляций и язык расширения.",
+    "description": "Options page"
+  },
+  "options_school_label": {
+    "message": "Название Субботней Школы (СШ)",
+    "description": "Options page"
+  },
+  "options_school_placeholder": {
+    "message": "Напр. СШ Урок 4",
+    "description": "Options page"
+  },
+  "options_school_help": {
+    "message": "Используется по умолчанию для форматирования вопросов Субботней школы.",
+    "description": "Options page"
+  },
+  "options_sermon_label": {
+    "message": "Название проповеди",
+    "description": "Options page"
+  },
+  "options_sermon_placeholder": {
+    "message": "Напр. Тема: Вера и Надежда",
+    "description": "Options page"
+  },
+  "options_sermon_help": {
+    "message": "Используется по умолчанию для блока проповедей.",
+    "description": "Options page"
+  },
+  "options_language_label": {
+    "message": "Язык интерфейса расширения",
+    "description": "Options page"
+  },
+  "options_language_auto": {
+    "message": "Автоматически (язык браузера)",
+    "description": "Options page"
+  },
+  "options_language_uk": {
+    "message": "Украинский (uk)",
+    "description": "Options page"
+  },
+  "options_language_en": {
+    "message": "Английский (en)",
+    "description": "Options page"
+  },
+  "options_language_ru": {
+    "message": "Русский (ru)",
+    "description": "Options page"
+  },
+  "options_automation_heading": {
+    "message": "🤖 Настройки автоматизации",
+    "description": "Options page"
+  },
+  "options_automation_description": {
+    "message": "Управление фоновыми модулями защиты от сна и восстановления селекторов.",
+    "description": "Options page"
+  },
+  "options_anti_afk_label": {
+    "message": "Включить Anti-AFK кликер",
+    "description": "Options page"
+  },
+  "options_anti_afk_help": {
+    "message": "Предотвращает автоматическое отключение от студии StreamYard при длительном бездействии.",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_label": {
+    "message": "Интервал Anti-AFK (секунды)",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_help": {
+    "message": "Частота периодических проверок кнопкой \"Stay in the studio\". По умолчанию: 30с.",
+    "description": "Options page"
+  },
+  "options_auto_heal_label": {
+    "message": "Включить Auto-Heal (автовосстановление селекторов)",
+    "description": "Options page"
+  },
+  "options_auto_heal_help": {
+    "message": "Автоматически обнаруживает динамические изменения DOM-структуры StreamYard и адаптируется к ним.",
+    "description": "Options page"
+  },
+  "options_interface_heading": {
+    "message": "🎨 Интерфейс и лимиты",
+    "description": "Options page"
+  },
+  "options_interface_description": {
+    "message": "Настройки отображения кнопок и параметров длины баннеров.",
+    "description": "Options page"
+  },
+  "options_banner_length_label": {
+    "message": "Максимальная длина текста баннера (символов)",
+    "description": "Options page"
+  },
+  "options_banner_length_help": {
+    "message": "Текст вопросов, превышающий этот лимит, аккуратно обрезается с многоточием (лимит StreamYard).",
+    "description": "Options page"
+  },
+  "options_compact_tabs_label": {
+    "message": "Автоматически сворачивать второстепенные кнопки (Recording, Widgets)",
+    "description": "Options page"
+  },
+  "options_compact_tabs_help": {
+    "message": "Сворачивает по высоте второстепенные вкладки правой панели. Основные вкладки (Chat, Banners, Brand) остаются обычными. Любую кнопку можно дополнительно сворачивать и разворачивать через ПКМ.",
+    "description": "Options page"
+  },
+  "options_youtube_label": {
+    "message": "Включить старый YouTube-модуль (2 канала)",
+    "description": "Options page"
+  },
+  "options_youtube_help": {
+    "message": "Включает внедрение кнопок на обычном сайте YouTube.",
+    "description": "Options page"
+  },
+  "options_studio_label": {
+    "message": "Включить модуль YouTube Studio",
+    "description": "Options page"
+  },
+  "options_studio_help": {
+    "message": "Включает автомаршрутизацию, бейдж и чекбоксы в творческой студии YouTube Studio (studio.youtube.com)",
+    "description": "Options page"
+  },
+  "options_allowed_channels_label": {
+    "message": "Разрешённые каналы YouTube Studio (только чтение)",
+    "description": "Options page"
+  },
+  "options_handles_label": {
+    "message": "идентификаторы:",
+    "description": "Options page"
+  },
+  "options_studio_log_label": {
+    "message": "Лог ручных корректировок категорий (YouTube Studio)",
+    "description": "Options page"
+  },
+  "options_studio_log_copy": {
+    "message": "📋 Скопировать лог",
+    "description": "Options page"
+  },
+  "options_studio_log_clear": {
+    "message": "🗑 Очистить лог",
+    "description": "Options page"
+  },
+  "options_studio_log_time": {
+    "message": "Время",
+    "description": "Options page"
+  },
+  "options_studio_log_channel": {
+    "message": "Канал",
+    "description": "Options page"
+  },
+  "options_studio_log_video": {
+    "message": "Видео",
+    "description": "Options page"
+  },
+  "options_studio_log_auto": {
+    "message": "Автокатегория",
+    "description": "Options page"
+  },
+  "options_studio_log_assigned": {
+    "message": "Назначено",
+    "description": "Options page"
+  },
+  "options_studio_log_empty": {
+    "message": "Записи в логе отсутствуют",
+    "description": "Options page"
+  },
+  "options_data_heading": {
+    "message": "💾 Управление данными и резервные копии",
+    "description": "Options page"
+  },
+  "options_data_description": {
+    "message": "Экспортируйте свои настройки и полное состояние для переноса на другой ПК или сохранения резервной копии.",
+    "description": "Options page"
+  },
+  "options_export": {
+    "message": "📥 Экспорт настроек и состояния (JSON)",
+    "description": "Options page"
+  },
+  "options_import": {
+    "message": "📤 Импорт настроек и состояния",
+    "description": "Options page"
+  },
+  "options_reset": {
+    "message": "⚠️ Сбросить все настройки по умолчанию",
+    "description": "Options page"
+  },
+  "options_save_success": {
+    "message": "✅ Настройки успешно сохранены!",
+    "description": "Options page"
+  },
+  "options_reset_success": {
+    "message": "⚠️ Настройки сброшены к исходным!",
+    "description": "Options page"
+  },
+  "options_export_success": {
+    "message": "📥 Настройки и состояние успешно экспортированы",
+    "description": "Options page"
+  },
+  "options_import_success": {
+    "message": "📤 Настройки и состояние успешно импортированы!",
+    "description": "Options page"
+  },
+  "options_import_invalid": {
+    "message": "Некорректный формат файла конфигурации.",
+    "description": "Options page"
+  },
+  "options_import_error": {
+    "message": "Ошибка при чтении JSON-файла.",
+    "description": "Options page"
+  },
+  "options_reset_confirm": {
+    "message": "Вы уверены, что хотите сбросить все настройки к стандартным?",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_empty": {
+    "message": "ℹ️ Лог пуст, копировать нечего",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_success": {
+    "message": "📋 Лог корректировок YouTube Studio скопирован!",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_error": {
+    "message": "Не удалось скопировать лог в буфер обмена",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_confirm": {
+    "message": "Очистить лог ручных корректировок категорий YouTube Studio?",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_success": {
+    "message": "🗑 Лог Studio успешно очищен",
+    "description": "Options page"
   }
 }

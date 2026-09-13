@@ -24,7 +24,10 @@ function makeElement(tag = 'div') {
         appendChild(node) { this.children.push(node); return node; },
         append(...nodes) { this.children.push(...nodes); },
         focus() { this.focusCount++; },
-        remove() {}
+        remove() {},
+        // `localize()` обходить нащадків; у фейку їх немає.
+        querySelectorAll() { return []; },
+        matches() { return false; }
     };
 }
 

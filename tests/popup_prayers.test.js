@@ -54,7 +54,7 @@ const {
 } = await import('../popup/popup_prayers.ts');
 
 const EMPTY_LIST_HTML =
-    '<span style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", ' +
+    '<span data-i18n="popup_empty_prayers" style="color:#999; font-style:italic;">Список порожній. Натисніть кнопку 🔄 "Підтягнути", ' +
     'щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.</span>';
 
 const PRAYERS_DOM = `

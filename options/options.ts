@@ -1,3 +1,5 @@
+import { localize } from '../modules/dom/localize';
+import { SYH_I18N } from '../modules/registry/i18n';
 // options/options.ts
 //
 // Точка входу сторінки налаштувань: збирає докупи незалежні модулі й
@@ -35,6 +37,7 @@ class OptionsController {
     private readonly toast = createToastController();
 
     constructor() {
+        localize(document);
         this.initVersionBadge();
         initSectionNavigation();
         this.initEvents();
@@ -45,7 +48,7 @@ class OptionsController {
         const badge = document.getElementById('optionsVersionBadge');
         if (!badge) return;
         const version = (typeof chrome !== 'undefined' && chrome.runtime?.getManifest?.()?.version) || '1.0.0';
-        badge.textContent = `v${version} — Options & Preferences`;
+        badge.textContent = `v${version} — ${SYH_I18N.getMessage('options_preferences', 'Налаштування та вподобання')}`;
     }
 
     private notify = (message: string): void => {
@@ -72,13 +75,13 @@ class OptionsController {
     }
 
     private saveSettings(): void {
-        saveSettingsFromForm(() => this.notify('✅ Налаштування успішно збережено!'));
+        saveSettingsFromForm(() => this.notify(SYH_I18N.getMessage('options_save_success', '✅ Налаштування успішно збережено!')));
     }
 
     private resetDefaults(): void {
         resetSettingsToDefaults(() => {
             this.loadSettings();
-            this.notify('⚠️ Налаштування скинуто до початкових!');
+            this.notify(SYH_I18N.getMessage('options_reset_success', '⚠️ Налаштування скинуто до початкових!'));
         });
     }
 }

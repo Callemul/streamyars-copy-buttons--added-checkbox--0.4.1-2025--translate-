@@ -9,11 +9,16 @@
 import { STORAGE_KEYS } from '../modules/storage/storage';
 import { getAllSheetIds, SHEET_LABELS } from '../modules/registry/sheets';
 import { SHEET_FIELDS, sheetFieldId, sheetStateKeys, allSheetStateBindings } from './popup_sheet_fields';
+import { localize } from '../modules/dom/localize';
 
 export function renderSheetTemplates(): void {
     const template = document.getElementById('sheet-content-template') as HTMLTemplateElement | null;
     const container = document.getElementById('sheet-contents-container');
     if (!template || !container) return;
+
+    // `localize(document)` не заходить у `template.content`, тому шаблон локалізуємо
+    // окремо і до клонування — тоді кожен аркуш отримує вже перекладену розмітку.
+    localize(template.content);
 
     const sheetIds = getAllSheetIds();
     sheetIds.forEach((sId, idx) => {

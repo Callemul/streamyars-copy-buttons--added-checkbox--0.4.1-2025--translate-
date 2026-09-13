@@ -1,3 +1,4 @@
+import { SYH_I18N } from '../modules/registry/i18n';
 // options/options_config_io.ts
 //
 // Експорт та імпорт повної конфігурації розширення у/з JSON-файл.
@@ -74,7 +75,7 @@ export function exportConfig(notify: (message: string) => void): void {
     // (історичні імена зі старих версій), тож тут саме сире представлення.
     SYH_STORAGE.get<StorageRawResult>(allKeys, (result) => {
         downloadJson(buildExportPayload(allKeys, result), buildExportFileName());
-        notify('📥 Налаштування та стан успішно експортовано');
+        notify(SYH_I18N.getMessage('options_export_success', '📥 Налаштування та стан успішно експортовано'));
     });
 }
 
@@ -91,13 +92,13 @@ function applyImportedText(raw: string, onImported: () => void, notify: (message
         if (validateImportedConfig(imported)) {
             SYH_STORAGE.set(extractImportedItems(imported), () => {
                 onImported();
-                notify('📤 Налаштування та стан успішно імпортовано!');
+                notify(SYH_I18N.getMessage('options_import_success', '📤 Налаштування та стан успішно імпортовано!'));
             });
         } else {
-            notify('Некоректний формат файлу конфігурації.');
+            notify(SYH_I18N.getMessage('options_import_invalid', 'Некоректний формат файлу конфігурації.'));
         }
     } catch {
-        notify('Помилка при зчитуванні JSON файлу.');
+        notify(SYH_I18N.getMessage('options_import_error', 'Помилка при зчитуванні JSON файлу.'));
     }
 }
 

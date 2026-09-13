@@ -13,6 +13,7 @@ import { batchRenderItems } from './render_utils';
 import { SheetStateService } from '../modules/sheets/sheet_state_service';
 import { $, setTextContent, showElement } from './popup_dom_utils';
 import { cancelActiveBatch, registerActiveBatch } from './popup_telegram_state';
+import { localize } from '../modules/dom/localize';
 
 const FINAL_RESULT_BATCH_KEY = 'telegramFinalResult';
 
@@ -145,7 +146,8 @@ function createCleanTable(): HTMLTableElement {
     const table = document.createElement('table');
     table.className = 'clean-table';
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = '<th>До очищення</th><th>Після очищення</th><th>Що прибрано</th>';
+    headerRow.innerHTML = '<th data-i18n="popup_before_cleaning">До очищення</th><th data-i18n="popup_after_cleaning">Після очищення</th><th data-i18n="popup_removed_text">Що прибрано</th>';
+    localize(headerRow);
     table.appendChild(headerRow);
     return table;
 }

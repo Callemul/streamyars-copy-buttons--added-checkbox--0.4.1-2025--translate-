@@ -1,3 +1,4 @@
+import { SYH_I18N } from '../modules/registry/i18n';
 // options/options_studio_log.ts
 //
 // Дії сторінки налаштувань над журналом ручних корекцій YouTube Studio:
@@ -38,24 +39,24 @@ export function loadStudioLog(): void {
 export function copyStudioLog(notify: (message: string) => void): void {
     withStudioLog(async (logs) => {
         if (logs.length === 0) {
-            notify('ℹ️ Лог порожній, нічого копіювати');
+            notify(SYH_I18N.getMessage('options_studio_log_copy_empty', 'ℹ️ Лог порожній, нічого копіювати'));
             return;
         }
 
         const success = await CommentService.copyToClipboard(buildStudioLogReport(logs));
         if (success) {
-            notify('📋 Лог корекцій YouTube Studio скопійовано!');
+            notify(SYH_I18N.getMessage('options_studio_log_copy_success', '📋 Лог корекцій YouTube Studio скопійовано!'));
         } else {
-            notify('Не вдалося скопіювати лог в буфер обміну');
+            notify(SYH_I18N.getMessage('options_studio_log_copy_error', 'Не вдалося скопіювати лог в буфер обміну'));
         }
     });
 }
 
 export function clearStudioLog(notify: (message: string) => void): void {
-    if (!confirm('Очистити лог ручних корекцій категорій YouTube Studio?')) return;
+    if (!confirm(SYH_I18N.getMessage('options_studio_log_clear_confirm', 'Очистити лог ручних корекцій категорій YouTube Studio?'))) return;
 
     SYH_STORAGE.set({ [STORAGE_KEYS.STUDIO_OVERRIDE_LOG]: [] }, () => {
         loadStudioLog();
-        notify('🗑 Лог Studio успішно очищено');
+        notify(SYH_I18N.getMessage('options_studio_log_clear_success', '🗑 Лог Studio успішно очищено'));
     });
 }

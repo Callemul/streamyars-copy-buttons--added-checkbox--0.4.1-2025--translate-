@@ -1,3 +1,4 @@
+import { SYH_I18N } from '../modules/registry/i18n';
 // options/options_settings_io.ts
 //
 // Читання/запис налаштувань сторінки опцій у chrome.storage.
@@ -45,7 +46,7 @@ export function saveSettingsFromForm(onSaved: () => void): void {
 
 /** Скидає `DB` та `OPTIONS` до значень за замовчуванням після підтвердження. */
 export function resetSettingsToDefaults(onReset: () => void): void {
-    if (!confirm('Ви впевнені, що хочете скинути всі налаштування до стандартних?')) return;
+    if (!confirm(SYH_I18N.getMessage('options_reset_confirm', 'Ви впевнені, що хочете скинути всі налаштування до стандартних?'))) return;
 
     SYH_STORAGE.set({
         [STORAGE_KEYS.DB]: {

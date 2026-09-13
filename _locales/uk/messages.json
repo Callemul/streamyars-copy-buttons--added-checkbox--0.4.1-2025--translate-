@@ -50,5 +50,557 @@
   "copyText": {
     "message": "📋 Скопіювати текст",
     "description": "Copy text button label"
+  },
+  "popup_tabs": {
+    "message": "Вкладки розширення",
+    "description": "Popup"
+  },
+  "popup_prayers_tab": {
+    "message": "Молитовні",
+    "description": "Popup"
+  },
+  "popup_prayers_tab_label": {
+    "message": "🙏 Молитовні",
+    "description": "Popup"
+  },
+  "popup_questions_tab": {
+    "message": "Telegram/YouTube Питання",
+    "description": "Popup"
+  },
+  "popup_questions_tab_label": {
+    "message": "Telegram/YouTube Питання 🚀",
+    "description": "Popup"
+  },
+  "popup_settings_tab": {
+    "message": "Трансліт та Налаштування",
+    "description": "Popup"
+  },
+  "popup_settings_tab_label": {
+    "message": "Трансліт / Налаштування",
+    "description": "Popup"
+  },
+  "popup_total": {
+    "message": "Разом:",
+    "description": "Popup"
+  },
+  "popup_prayers_zero": {
+    "message": "0 люд. - 0 прохань",
+    "description": "Popup"
+  },
+  "popup_copy_prayers": {
+    "message": "Скопіювати всі прохання",
+    "description": "Popup"
+  },
+  "popup_copy_prayers_label": {
+    "message": "📋 Скопіювати всі прохання",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_title": {
+    "message": "Підтягнути зіркові коментарі з ефіру",
+    "description": "Popup"
+  },
+  "popup_fetch_prayers_label": {
+    "message": "🔄 Підтягнути",
+    "description": "Popup"
+  },
+  "popup_clear_list": {
+    "message": "Очистити список",
+    "description": "Popup"
+  },
+  "popup_clear_requests": {
+    "message": "Очистити список прохань",
+    "description": "Popup"
+  },
+  "popup_prayers_result": {
+    "message": "Результат молитовних прохань",
+    "description": "Popup"
+  },
+  "popup_question_sheets": {
+    "message": "Аркуші питань",
+    "description": "Popup"
+  },
+  "popup_old_list_label": {
+    "message": "1. Старий список",
+    "description": "Popup"
+  },
+  "popup_old_list_placeholder": {
+    "message": "Вставте сюди весь текст з минулого разу...",
+    "description": "Popup"
+  },
+  "popup_old_list_aria": {
+    "message": "Старий список питань",
+    "description": "Popup"
+  },
+  "popup_answered_label": {
+    "message": "2. Номери ВІДПОВІДЕЙ (видалити):",
+    "description": "Popup"
+  },
+  "popup_answered_aria": {
+    "message": "Номери відповідей для видалення",
+    "description": "Popup"
+  },
+  "popup_new_list_label": {
+    "message": "3. Новий список:",
+    "description": "Popup"
+  },
+  "popup_telegram_manual": {
+    "message": "📝 Telegram (ручний ввід)",
+    "description": "Popup"
+  },
+  "popup_new_list_placeholder": {
+    "message": "Вставте нові питання з Телеграму...",
+    "description": "Popup"
+  },
+  "popup_new_list_aria": {
+    "message": "Нові питання з Телеграму",
+    "description": "Popup"
+  },
+  "popup_resize": {
+    "message": "Перетягніть для зміни розміру",
+    "description": "Popup"
+  },
+  "popup_clear_collected": {
+    "message": "Очистити зібрані",
+    "description": "Popup"
+  },
+  "popup_clear_youtube": {
+    "message": "Очистити зібрані з YouTube",
+    "description": "Popup"
+  },
+  "popup_collected_youtube": {
+    "message": "Зібрані коментарі з YouTube",
+    "description": "Popup"
+  },
+  "popup_process": {
+    "message": "Обробити коментарі",
+    "description": "Popup"
+  },
+  "popup_process_label": {
+    "message": "ОБРОБИТИ КОМЕНТАРІ 🚀",
+    "description": "Popup"
+  },
+  "popup_clear": {
+    "message": "Очистити",
+    "description": "Popup"
+  },
+  "popup_clear_questions": {
+    "message": "Очистити список питань",
+    "description": "Popup"
+  },
+  "popup_remaining_old": {
+    "message": "Залишилось старих:",
+    "description": "Popup"
+  },
+  "popup_deleted": {
+    "message": "Видалено:",
+    "description": "Popup"
+  },
+  "popup_new_left": {
+    "message": "Нові з лівої:",
+    "description": "Popup"
+  },
+  "popup_new_youtube": {
+    "message": "Нові з YouTube:",
+    "description": "Popup"
+  },
+  "popup_result": {
+    "message": "Результат:",
+    "description": "Popup"
+  },
+  "popup_copy_result": {
+    "message": "Скопіювати результат",
+    "description": "Popup"
+  },
+  "popup_copy_text": {
+    "message": "📋 Скопіювати текст",
+    "description": "Popup"
+  },
+  "popup_final_result": {
+    "message": "Фінальний результат питань Telegram",
+    "description": "Popup"
+  },
+  "popup_deleted_log": {
+    "message": "🗑 Лог видаленого",
+    "description": "Popup"
+  },
+  "popup_no_deletions": {
+    "message": "Видалень немає",
+    "description": "Popup"
+  },
+  "popup_cleaned_log": {
+    "message": "🧹 Лог чистки тексту",
+    "description": "Popup"
+  },
+  "popup_no_cleaning": {
+    "message": "Очищених фраз чи нікнеймів немає",
+    "description": "Popup"
+  },
+  "popup_transliteration": {
+    "message": "Transliteration",
+    "description": "Popup"
+  },
+  "popup_input_text": {
+    "message": "Input text...",
+    "description": "Popup"
+  },
+  "popup_translit_input": {
+    "message": "Вхідний текст для транслітерації",
+    "description": "Popup"
+  },
+  "popup_translit_result": {
+    "message": "Результат транслітерації",
+    "description": "Popup"
+  },
+  "popup_translate_aria": {
+    "message": "Перекласти",
+    "description": "Popup"
+  },
+  "popup_translate_label": {
+    "message": "Translate",
+    "description": "Popup"
+  },
+  "popup_settings": {
+    "message": "Налаштування",
+    "description": "Popup"
+  },
+  "popup_ss_name_placeholder": {
+    "message": "Назва СШ",
+    "description": "Popup"
+  },
+  "popup_ss_name": {
+    "message": "Назва Суботньої школи",
+    "description": "Popup"
+  },
+  "popup_ss_change": {
+    "message": "Змінити назву Суботньої школи",
+    "description": "Popup"
+  },
+  "popup_ss_change_label": {
+    "message": "Змінити СШ",
+    "description": "Popup"
+  },
+  "popup_sermon_name_placeholder": {
+    "message": "Назва Проповіді",
+    "description": "Popup"
+  },
+  "popup_sermon_name": {
+    "message": "Назва проповіді",
+    "description": "Popup"
+  },
+  "popup_sermon_change": {
+    "message": "Змінити назву проповіді",
+    "description": "Popup"
+  },
+  "popup_sermon_change_label": {
+    "message": "Змінити Проповідь",
+    "description": "Popup"
+  },
+  "popup_options": {
+    "message": "Відкрити розширені налаштування",
+    "description": "Popup"
+  },
+  "popup_options_label": {
+    "message": "⚙️ Розширені Налаштування (Options)",
+    "description": "Popup"
+  },
+  "popup_before_cleaning": {
+    "message": "До очищення",
+    "description": "Popup"
+  },
+  "popup_after_cleaning": {
+    "message": "Після очищення",
+    "description": "Popup"
+  },
+  "popup_removed_text": {
+    "message": "Що прибрано",
+    "description": "Popup"
+  },
+  "popup_empty_prayers": {
+    "message": "Список порожній. Натисніть кнопку 🔄 \"Підтягнути\", щоб завантажити зіркові коментарі з ефіру, або маркуйте їх вручну.",
+    "description": "Popup"
+  },
+  "popup_foreign_prayers": {
+    "message": "⚠️ Знайдено молитви з минулого ефіру!",
+    "description": "Popup"
+  },
+  "popup_keep_prayers_title": {
+    "message": "Залишити як є",
+    "description": "Popup"
+  },
+  "popup_keep_prayers": {
+    "message": "✅ Залишити (Це мої)",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers_title": {
+    "message": "Видалити старі молитви з пам'яті розширення",
+    "description": "Popup"
+  },
+  "popup_wipe_prayers": {
+    "message": "🗑️ Очистити все",
+    "description": "Popup"
+  },
+  "options_page_title": {
+    "message": "StreamYard Helper — Налаштування",
+    "description": "Options page"
+  },
+  "options_preferences": {
+    "message": "Налаштування та вподобання",
+    "description": "Options page"
+  },
+  "options_save": {
+    "message": "💾 Зберегти зміни",
+    "description": "Options page"
+  },
+  "options_nav_general": {
+    "message": "Загальні",
+    "description": "Options page"
+  },
+  "options_nav_automation": {
+    "message": "Автоматизація",
+    "description": "Options page"
+  },
+  "options_nav_interface": {
+    "message": "Інтерфейс",
+    "description": "Options page"
+  },
+  "options_nav_data": {
+    "message": "Дані & Резервні копії",
+    "description": "Options page"
+  },
+  "options_general_heading": {
+    "message": "⚙️ Загальні налаштування",
+    "description": "Options page"
+  },
+  "options_general_description": {
+    "message": "Налаштуйте стандартні шаблони назв для трансляцій та мову розширення.",
+    "description": "Options page"
+  },
+  "options_school_label": {
+    "message": "Назва Суботньої Школи (СШ)",
+    "description": "Options page"
+  },
+  "options_school_placeholder": {
+    "message": "Напр. СШ Урок 4",
+    "description": "Options page"
+  },
+  "options_school_help": {
+    "message": "Використовується за замовчуванням для форматування запитань Суботньої школи.",
+    "description": "Options page"
+  },
+  "options_sermon_label": {
+    "message": "Назва Проповіді",
+    "description": "Options page"
+  },
+  "options_sermon_placeholder": {
+    "message": "Напр. Тема: Віра і Надія",
+    "description": "Options page"
+  },
+  "options_sermon_help": {
+    "message": "Використовується за замовчуванням для блоку проповідей.",
+    "description": "Options page"
+  },
+  "options_language_label": {
+    "message": "Мова інтерфейсу розширення",
+    "description": "Options page"
+  },
+  "options_language_auto": {
+    "message": "Автоматично (мова браузера)",
+    "description": "Options page"
+  },
+  "options_language_uk": {
+    "message": "Українська (uk)",
+    "description": "Options page"
+  },
+  "options_language_en": {
+    "message": "Англійська (en)",
+    "description": "Options page"
+  },
+  "options_language_ru": {
+    "message": "Російська (ru)",
+    "description": "Options page"
+  },
+  "options_automation_heading": {
+    "message": "🤖 Налаштування Автоматизації",
+    "description": "Options page"
+  },
+  "options_automation_description": {
+    "message": "Керування фоновими модулями захисту від сну та відновлення селекторів.",
+    "description": "Options page"
+  },
+  "options_anti_afk_label": {
+    "message": "Увімкнути Anti-AFK кликер",
+    "description": "Options page"
+  },
+  "options_anti_afk_help": {
+    "message": "Запобігає автоматичному відключенню від студії StreamYard при тривалій бездіяльності.",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_label": {
+    "message": "Інтервал Anti-AFK (секунди)",
+    "description": "Options page"
+  },
+  "options_anti_afk_interval_help": {
+    "message": "Частота періодичних перевірок кнопкою \"Stay in the studio\". За замовчуванням: 30с.",
+    "description": "Options page"
+  },
+  "options_auto_heal_label": {
+    "message": "Увімкнути Auto-Heal (авто-відновлення селекторів)",
+    "description": "Options page"
+  },
+  "options_auto_heal_help": {
+    "message": "Автоматично виявляє та адаптується до динамічних змін DOM-структури StreamYard.",
+    "description": "Options page"
+  },
+  "options_interface_heading": {
+    "message": "🎨 Інтерфейс та Ліміти",
+    "description": "Options page"
+  },
+  "options_interface_description": {
+    "message": "Налаштування відображення кнопок та параметрів довжини банерів.",
+    "description": "Options page"
+  },
+  "options_banner_length_label": {
+    "message": "Максимальна довжина тексту банера (символів)",
+    "description": "Options page"
+  },
+  "options_banner_length_help": {
+    "message": "Текст запитань, що перевищує цей ліміт, буде гарно обрізатися з трикрапкою (ліміт StreamYard).",
+    "description": "Options page"
+  },
+  "options_compact_tabs_label": {
+    "message": "Автоматично згортати другорядні кнопки (Recording, Widgets)",
+    "description": "Options page"
+  },
+  "options_compact_tabs_help": {
+    "message": "Згортає по висоті другорядні вкладки правої панелі. Основні вкладки (Chat, Banners, Brand) залишаються звичайними. Будь-яку кнопку можна додатково згортати/розгортати через ПКМ.",
+    "description": "Options page"
+  },
+  "options_youtube_label": {
+    "message": "Увімкнути старий YouTube-модуль (2 канали)",
+    "description": "Options page"
+  },
+  "options_youtube_help": {
+    "message": "Вмикає новий інжекцій кнопок на звичайному веб-сайті YouTube.",
+    "description": "Options page"
+  },
+  "options_studio_label": {
+    "message": "Увімкнути YouTube Studio модуль",
+    "description": "Options page"
+  },
+  "options_studio_help": {
+    "message": "Вмикає авто-маршрутизацію, Badge та чекбокси у творчій студії YouTube Studio (studio.youtube.com)",
+    "description": "Options page"
+  },
+  "options_allowed_channels_label": {
+    "message": "Дозволені канали YouTube Studio (лише читання)",
+    "description": "Options page"
+  },
+  "options_handles_label": {
+    "message": "ідентифікатори:",
+    "description": "Options page"
+  },
+  "options_studio_log_label": {
+    "message": "Лог ручних корекцій категорій (YouTube Studio)",
+    "description": "Options page"
+  },
+  "options_studio_log_copy": {
+    "message": "📋 Скопіювати лог",
+    "description": "Options page"
+  },
+  "options_studio_log_clear": {
+    "message": "🗑 Очистити лог",
+    "description": "Options page"
+  },
+  "options_studio_log_time": {
+    "message": "Час",
+    "description": "Options page"
+  },
+  "options_studio_log_channel": {
+    "message": "Канал",
+    "description": "Options page"
+  },
+  "options_studio_log_video": {
+    "message": "Відео",
+    "description": "Options page"
+  },
+  "options_studio_log_auto": {
+    "message": "Авто-категорія",
+    "description": "Options page"
+  },
+  "options_studio_log_assigned": {
+    "message": "Призначено",
+    "description": "Options page"
+  },
+  "options_studio_log_empty": {
+    "message": "Записи у лозі відсутні",
+    "description": "Options page"
+  },
+  "options_data_heading": {
+    "message": "💾 Керування даними та Резервні копії",
+    "description": "Options page"
+  },
+  "options_data_description": {
+    "message": "Експортуйте свої налаштування та повний стан для переносу на інший ПК або збереження резервної копії.",
+    "description": "Options page"
+  },
+  "options_export": {
+    "message": "📥 Експорт налаштувань та стану (JSON)",
+    "description": "Options page"
+  },
+  "options_import": {
+    "message": "📤 Імпорт налаштувань та стану",
+    "description": "Options page"
+  },
+  "options_reset": {
+    "message": "⚠️ Скинути всі налаштування за замовчуванням",
+    "description": "Options page"
+  },
+  "options_save_success": {
+    "message": "✅ Налаштування успішно збережено!",
+    "description": "Options page"
+  },
+  "options_reset_success": {
+    "message": "⚠️ Налаштування скинуто до початкових!",
+    "description": "Options page"
+  },
+  "options_export_success": {
+    "message": "📥 Налаштування та стан успішно експортовано",
+    "description": "Options page"
+  },
+  "options_import_success": {
+    "message": "📤 Налаштування та стан успішно імпортовано!",
+    "description": "Options page"
+  },
+  "options_import_invalid": {
+    "message": "Некоректний формат файлу конфігурації.",
+    "description": "Options page"
+  },
+  "options_import_error": {
+    "message": "Помилка при зчитуванні JSON файлу.",
+    "description": "Options page"
+  },
+  "options_reset_confirm": {
+    "message": "Ви впевнені, що хочете скинути всі налаштування до стандартних?",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_empty": {
+    "message": "ℹ️ Лог порожній, нічого копіювати",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_success": {
+    "message": "📋 Лог корекцій YouTube Studio скопійовано!",
+    "description": "Options page"
+  },
+  "options_studio_log_copy_error": {
+    "message": "Не вдалося скопіювати лог в буфер обміну",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_confirm": {
+    "message": "Очистити лог ручних корекцій категорій YouTube Studio?",
+    "description": "Options page"
+  },
+  "options_studio_log_clear_success": {
+    "message": "🗑 Лог Studio успішно очищено",
+    "description": "Options page"
   }
 }

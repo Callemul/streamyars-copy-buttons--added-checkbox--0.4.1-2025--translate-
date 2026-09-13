@@ -10,32 +10,32 @@
 </head>
 <body>
 
-    <div class="tabs" role="tablist" aria-label="Вкладки розширення">
-        <button class="tab-link active" role="tab" aria-selected="true" aria-controls="tab-prayers" data-tab="tab-prayers" aria-label="Молитовні">🙏 Молитовні</button>
-        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-telegram" data-tab="tab-telegram" aria-label="Telegram/YouTube Питання">Telegram/YouTube Питання 🚀</button>
-        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-old" data-tab="tab-old" aria-label="Трансліт та Налаштування">Трансліт / Налаштування</button>
+    <div class="tabs" role="tablist" data-i18n-aria-label="popup_tabs" aria-label="Вкладки розширення">
+        <button class="tab-link active" role="tab" aria-selected="true" aria-controls="tab-prayers" data-tab="tab-prayers" data-i18n-aria-label="popup_prayers_tab" aria-label="Молитовні"><span data-i18n="popup_prayers_tab_label">🙏 Молитовні</span></button>
+        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-telegram" data-tab="tab-telegram" data-i18n-aria-label="popup_questions_tab" aria-label="Telegram/YouTube Питання"><span data-i18n="popup_questions_tab_label">Telegram/YouTube Питання 🚀</span></button>
+        <button class="tab-link" role="tab" aria-selected="false" aria-controls="tab-old" data-tab="tab-old" data-i18n-aria-label="popup_settings_tab" aria-label="Трансліт та Налаштування"><span data-i18n="popup_settings_tab_label">Трансліт / Налаштування</span></button>
     </div>
 
-    <div id="tab-prayers" class="tab-content active" role="tabpanel" aria-label="Молитовні">
+    <div id="tab-prayers" class="tab-content active" role="tabpanel" data-i18n-aria-label="popup_prayers_tab" aria-label="Молитовні">
         <div class="stats-bar">
             <span class="stat-item total">
-                Разом: <b id="prayersTotalCount">0 люд. - 0 прохань</b>
+                <span data-i18n="popup_total">Разом:</span> <b id="prayersTotalCount"><span data-i18n="popup_prayers_zero">0 люд. - 0 прохань</span></b>
             </span>
         </div>
         
         <div class="btn-row">
-            <button id="copyPrayersBtn" class="action-btn success" aria-label="Скопіювати всі прохання">📋 Скопіювати всі прохання</button>
-            <button id="fetchPrayersBtn" class="action-btn primary" title="Підтягнути зіркові коментарі з ефіру" aria-label="Підтягнути зіркові коментарі з ефіру">🔄 Підтягнути</button>
-            <button id="clearPrayersBtn" class="action-btn danger" title="Очистити список" aria-label="Очистити список прохань">🗑</button>
+            <button id="copyPrayersBtn" class="action-btn success" data-i18n-aria-label="popup_copy_prayers" aria-label="Скопіювати всі прохання"><span data-i18n="popup_copy_prayers_label">📋 Скопіювати всі прохання</span></button>
+            <button id="fetchPrayersBtn" class="action-btn primary" data-i18n-title="popup_fetch_prayers_title" title="Підтягнути зіркові коментарі з ефіру" data-i18n-aria-label="popup_fetch_prayers_title" aria-label="Підтягнути зіркові коментарі з ефіру"><span data-i18n="popup_fetch_prayers_label">🔄 Підтягнути</span></button>
+            <button id="clearPrayersBtn" class="action-btn danger" data-i18n-title="popup_clear_list" title="Очистити список" data-i18n-aria-label="popup_clear_requests" aria-label="Очистити список прохань">🗑</button>
         </div>
 
         <div class="result-wrapper">
-            <div id="prayersResultDiv" class="rich-editor" contenteditable="true" aria-label="Результат молитовних прохань"></div>
+            <div id="prayersResultDiv" class="rich-editor" contenteditable="true" data-i18n-aria-label="popup_prayers_result" aria-label="Результат молитовних прохань"></div>
         </div>
     </div>
 
-    <div id="tab-telegram" class="tab-content" role="tabpanel" aria-label="Telegram/YouTube Питання">
-        <div class="subtabs" role="tablist" aria-label="Аркуші питань">
+    <div id="tab-telegram" class="tab-content" role="tabpanel" data-i18n-aria-label="popup_questions_tab" aria-label="Telegram/YouTube Питання">
+        <div class="subtabs" role="tablist" data-i18n-aria-label="popup_question_sheets" aria-label="Аркуші питань">
             <div class="subtabs-track">
                 <button class="subtab-button active" role="tab" aria-selected="true" data-sheet="vp_ss" aria-label="Время перемен СШ">Время перемен <b>СШ</b></button>
                 <button class="subtab-button" role="tab" aria-selected="false" data-sheet="oparin" aria-label="Опарин проповеди"><b>Опарин</b> проповеди</button>
@@ -51,106 +51,106 @@
         <template id="sheet-content-template">
             <div class="sheet-content" role="tabpanel">
                 <div class="input-group">
-                    <label class="section-title">1. Старий список <span class="js-old-total-count"></span>:</label>
-                    <textarea class="js-old-list" placeholder="Вставте сюди весь текст з минулого разу..." aria-label="Старий список питань"></textarea>
+                    <label class="section-title"><span data-i18n="popup_old_list_label">1. Старий список</span> <span class="js-old-total-count"></span>:</label>
+                    <textarea class="js-old-list" data-i18n-placeholder="popup_old_list_placeholder" placeholder="Вставте сюди весь текст з минулого разу..." data-i18n-aria-label="popup_old_list_aria" aria-label="Старий список питань"></textarea>
                 </div>
 
                 <div class="input-group">
-                    <label class="section-title">2. Номери ВІДПОВІДЕЙ (видалити):</label>
-                    <input type="text" class="js-answered-ids" placeholder="Напр: 1, 3, 8.1" aria-label="Номери відповідей для видалення">
+                    <label class="section-title"><span data-i18n="popup_answered_label">2. Номери ВІДПОВІДЕЙ (видалити):</span></label>
+                    <input type="text" class="js-answered-ids" placeholder="Напр: 1, 3, 8.1" data-i18n-aria-label="popup_answered_aria" aria-label="Номери відповідей для видалення">
                 </div>
 
                 <div class="input-group">
                     <label class="section-title">
-                        3. Новий список:
+                        <span data-i18n="popup_new_list_label">3. Новий список:</span>
                         <span class="js-tg-total-count-all counter-badge counter-total"></span>
                     </label>
                     <div class="step3-columns js-step3-columns">
                         <div class="step3-col step3-col-left js-step3-left">
                             <div class="col-header">
-                                📝 Telegram (ручний ввід)
+                                <span data-i18n="popup_telegram_manual">📝 Telegram (ручний ввід)</span>
                                 <span class="js-tg-total-count-left counter-badge counter-left" style="display:none;"></span>
                             </div>
-                            <textarea class="js-new-telegram" placeholder="Вставте нові питання з Телеграму..." aria-label="Нові питання з Телеграму"></textarea>
+                            <textarea class="js-new-telegram" data-i18n-placeholder="popup_new_list_placeholder" placeholder="Вставте нові питання з Телеграму..." data-i18n-aria-label="popup_new_list_aria" aria-label="Нові питання з Телеграму"></textarea>
                         </div>
 
-                        <div class="step3-divider js-step3-divider" title="Перетягніть для зміни розміру"></div>
+                        <div class="step3-divider js-step3-divider" data-i18n-title="popup_resize" title="Перетягніть для зміни розміру"></div>
 
                         <div class="step3-col step3-col-right js-step3-right">
                             <div class="col-header">
                                 🎬 YouTube Studio
                                 <span class="js-tg-total-count-right counter-badge counter-right" style="display:none;"></span>
-                                <button class="col-header-btn js-clear-yt-collected" title="Очистити зібрані" aria-label="Очистити зібрані з YouTube">🗑</button>
+                                <button class="col-header-btn js-clear-yt-collected" data-i18n-title="popup_clear_collected" title="Очистити зібрані" data-i18n-aria-label="popup_clear_youtube" aria-label="Очистити зібрані з YouTube">🗑</button>
                             </div>
-                            <div class="yt-collected-list js-yt-collected-list" aria-label="Зібрані коментарі з YouTube"></div>
+                            <div class="yt-collected-list js-yt-collected-list" data-i18n-aria-label="popup_collected_youtube" aria-label="Зібрані коментарі з YouTube"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="btn-row">
-                    <button class="action-btn primary js-process-btn" aria-label="Обробити коментарі">ОБРОБИТИ КОМЕНТАРІ 🚀</button>
-                    <button class="action-btn danger js-clear-state-btn" title="Очистити" aria-label="Очистити список питань">🗑</button>
+                    <button class="action-btn primary js-process-btn" data-i18n-aria-label="popup_process" aria-label="Обробити коментарі"><span data-i18n="popup_process_label">ОБРОБИТИ КОМЕНТАРІ 🚀</span></button>
+                    <button class="action-btn danger js-clear-state-btn" data-i18n-title="popup_clear" title="Очистити" data-i18n-aria-label="popup_clear_questions" aria-label="Очистити список питань">🗑</button>
                 </div>
 
                 <div class="stats-bar js-stats-bar">
                     <div class="stats-row">
-                        <div class="stat-item old">Залишилось старих: <b class="js-count-old">0</b></div>
-                        <div class="stat-item del">Видалено: <b class="js-count-del">0</b></div>
+                        <div class="stat-item old"><span data-i18n="popup_remaining_old">Залишилось старих:</span> <b class="js-count-old">0</b></div>
+                        <div class="stat-item del"><span data-i18n="popup_deleted">Видалено:</span> <b class="js-count-del">0</b></div>
                     </div>
                     <div class="stats-row new-row">
-                        <div class="stat-item new">Нові з лівої: <span class="js-count-new-left">0</span></div>
-                        <div class="stat-item new-yt">Нові з YouTube: <b class="js-count-new-yt">0</b></div>
+                        <div class="stat-item new"><span data-i18n="popup_new_left">Нові з лівої:</span> <span class="js-count-new-left">0</span></div>
+                        <div class="stat-item new-yt"><span data-i18n="popup_new_youtube">Нові з YouTube:</span> <b class="js-count-new-yt">0</b></div>
                     </div>
                     <div class="stats-row total-row">
-                        <div class="stat-item total">Разом: <b class="js-count-total">0</b></div>
+                        <div class="stat-item total"><span data-i18n="popup_total">Разом:</span> <b class="js-count-total">0</b></div>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label class="section-title">Результат:</label>
+                    <label class="section-title"><span data-i18n="popup_result">Результат:</span></label>
                     <div class="result-wrapper">
-                        <button class="copy-btn-top js-copy-result-btn" aria-label="Скопіювати результат">📋 Скопіювати текст</button>
-                        <div class="rich-editor js-final-result-div" contenteditable="true" aria-label="Фінальний результат питань Telegram"></div>
+                        <button class="copy-btn-top js-copy-result-btn" data-i18n-aria-label="popup_copy_result" aria-label="Скопіювати результат"><span data-i18n="popup_copy_text">📋 Скопіювати текст</span></button>
+                        <div class="rich-editor js-final-result-div" contenteditable="true" data-i18n-aria-label="popup_final_result" aria-label="Фінальний результат питань Telegram"></div>
                     </div>
                 </div>
 
                 <details class="js-deleted-log-details">
-                    <summary>🗑 Лог видаленого <span class="log-count js-deleted-log-count"></span></summary>
+                    <summary><span data-i18n="popup_deleted_log">🗑 Лог видаленого</span> <span class="log-count js-deleted-log-count"></span></summary>
                     <div class="deleted-log js-deleted-log">
-                        <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Видалень немає</div>
+                        <div class="del-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;"><span data-i18n="popup_no_deletions">Видалень немає</span></div>
                     </div>
                 </details>
 
                 <details class="js-cleaned-log-details">
-                    <summary>🧹 Лог чистки тексту <span class="log-count js-cleaned-log-count"></span></summary>
+                    <summary><span data-i18n="popup_cleaned_log">🧹 Лог чистки тексту</span> <span class="log-count js-cleaned-log-count"></span></summary>
                     <div class="cleaned-log js-cleaned-log">
-                        <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;">Очищених фраз чи нікнеймів немає</div>
+                        <div class="clean-empty-msg" style="color: #9ca3af; padding: 6px; font-style: italic;"><span data-i18n="popup_no_cleaning">Очищених фраз чи нікнеймів немає</span></div>
                     </div>
                 </details>
             </div>
         </template>
     </div>
 
-    <div id="tab-old" class="tab-content" role="tabpanel" aria-label="Трансліт та Налаштування">
-        <h1>Transliteration</h1>
+    <div id="tab-old" class="tab-content" role="tabpanel" data-i18n-aria-label="popup_settings_tab" aria-label="Трансліт та Налаштування">
+        <h1><span data-i18n="popup_transliteration">Transliteration</span></h1>
         <table>
-            <tr><td><textarea id="textArea1_oldText" rows="5" placeholder="Input text..." aria-label="Вхідний текст для транслітерації"></textarea></td></tr>
-            <tr><td><textarea id="textArea2_generatedRuText" rows="5" aria-label="Результат транслітерації"></textarea></td></tr>
+            <tr><td><textarea id="textArea1_oldText" rows="5" data-i18n-placeholder="popup_input_text" placeholder="Input text..." data-i18n-aria-label="popup_translit_input" aria-label="Вхідний текст для транслітерації"></textarea></td></tr>
+            <tr><td><textarea id="textArea2_generatedRuText" rows="5" data-i18n-aria-label="popup_translit_result" aria-label="Результат транслітерації"></textarea></td></tr>
         </table>
-        <button id="Translate" class="action-btn" aria-label="Перекласти">Translate</button>
+        <button id="Translate" class="action-btn" data-i18n-aria-label="popup_translate_aria" aria-label="Перекласти"><span data-i18n="popup_translate_label">Translate</span></button>
 
         <hr>
-        <h3>Налаштування</h3>
+        <h3><span data-i18n="popup_settings">Налаштування</span></h3>
         <div class="settings-box">
-            <input type="text" id="sschoolName" placeholder="Назва СШ" aria-label="Назва Суботньої школи">
-            <button id="sschoolNameBtn" class="small-btn" aria-label="Змінити назву Суботньої школи">Змінити СШ</button>
+            <input type="text" id="sschoolName" data-i18n-placeholder="popup_ss_name_placeholder" placeholder="Назва СШ" data-i18n-aria-label="popup_ss_name" aria-label="Назва Суботньої школи">
+            <button id="sschoolNameBtn" class="small-btn" data-i18n-aria-label="popup_ss_change" aria-label="Змінити назву Суботньої школи"><span data-i18n="popup_ss_change_label">Змінити СШ</span></button>
         </div>
         <div class="settings-box">
-            <input type="text" id="preachNameInput" placeholder="Назва Проповіді" aria-label="Назва проповіді">
-            <button id="preachNameBtn" class="small-btn" aria-label="Змінити назву проповіді">Змінити Проповідь</button>
+            <input type="text" id="preachNameInput" data-i18n-placeholder="popup_sermon_name_placeholder" placeholder="Назва Проповіді" data-i18n-aria-label="popup_sermon_name" aria-label="Назва проповіді">
+            <button id="preachNameBtn" class="small-btn" data-i18n-aria-label="popup_sermon_change" aria-label="Змінити назву проповіді"><span data-i18n="popup_sermon_change_label">Змінити Проповідь</span></button>
         </div>
         <div class="settings-box" style="margin-top: 10px;">
-            <button id="openOptionsPageBtn" class="action-btn primary" style="width: 100%;" aria-label="Відкрити розширені налаштування">⚙️ Розширені Налаштування (Options)</button>
+            <button id="openOptionsPageBtn" class="action-btn primary" style="width: 100%;" data-i18n-aria-label="popup_options" aria-label="Відкрити розширені налаштування"><span data-i18n="popup_options_label">⚙️ Розширені Налаштування (Options)</span></button>
         </div>
     </div>
 

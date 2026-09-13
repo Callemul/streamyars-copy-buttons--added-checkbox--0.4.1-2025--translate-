@@ -7,6 +7,12 @@
 // of hand-rolled chrome stubs across the suite.
 
 import { mock } from 'node:test';
+import { readFileSync } from 'node:fs';
+
+// Каталог default_locale (manifest.json → "uk"). Справжній `chrome.i18n.getMessage`
+// повертає переклад або порожній рядок — НІКОЛИ назву ключа. Мок, що повертав ключ,
+// підміняв текст на `popup_empty_prayers` там, де в розширенні буде український рядок.
+const DEFAULT_LOCALE_MESSAGES = JSON.parse(readFileSync('_locales/uk/messages.json', 'utf8'));
 
 /**
  * @typedef {object} ChromeMockOptions
@@ -105,7 +111,7 @@ function createChromeMock(options = {}) {
 
     if (withI18n) {
         chrome.i18n = {
-            getMessage: (messageName) => messageName
+            getMessage: (messageName) => DEFAULT_LOCALE_MESSAGES[messageName]?.message ?? ''
         };
     }
 
