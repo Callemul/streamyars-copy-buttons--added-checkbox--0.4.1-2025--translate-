@@ -25,7 +25,7 @@
 
 ## Аудити
 
-- `audits/active/` — актуальні звіти й списки задач. Поточний: [2026-09-08](audits/active/2026-09-08_CLAUDE_OPUS_5_AUDIT.md) + [TASKS](audits/active/2026-09-08_CLAUDE_OPUS_5_TASKS.md).
+- `audits/active/` — актуальні звіти й списки задач. Поточний: [2026-09-10 — наведення порядку, стан і що лишилось](audits/active/2026-09-10_CLAUDE_OPUS_5_TASKS.md). Попередній: [2026-09-08](audits/active/2026-09-08_CLAUDE_OPUS_5_AUDIT.md) + [TASKS](audits/active/2026-09-08_CLAUDE_OPUS_5_TASKS.md).
 - `audits/archive/YYYY-MM-DD_vX.X/` — історія (12 моделей, 60+ файлів). Не видаляти: там зафіксовані вже виправлені дефекти й рішення користувача.
 - Протокол аудиту — `AGENTS.md` §4.
 
