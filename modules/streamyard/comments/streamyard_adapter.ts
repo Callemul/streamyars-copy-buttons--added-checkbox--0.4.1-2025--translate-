@@ -50,8 +50,8 @@ import {
 } from '../../comments/comment_platform_adapter';
 
 import type { CommentEffectHost } from './types';
-import { formatCopyPayload } from './format';
-import { stripLeadingAt } from './utils';
+import { formatCopyPayload, stripLeadingAt } from './format';
+
 import { applyCommentActionState } from './action_effects';
 import { saveToDatabase, removeFromDatabase } from './prayer_database';
 

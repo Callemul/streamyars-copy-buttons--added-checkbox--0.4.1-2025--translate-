@@ -1,5 +1,5 @@
 import type { CopyPayload } from './types';
-import { getPrayerIcon, stripLeadingAt } from './utils';
+
 import { resolveActionId } from '../../comments/comment_actions';
 
 /**
@@ -44,4 +44,15 @@ export function formatCopyPayload(
     return { header: '', textToCopy: '', actionType: null };
 }
 
-export { getPrayerIcon, stripLeadingAt };
+
+export function getPrayerIcon(buttonNum: number): string {
+    if (buttonNum === 1) return "🙏❤️🙏";
+    if (buttonNum === 2) return "❤️❤️❤️";
+    return "🙏🙏🙏";
+}
+
+export function stripLeadingAt(rawAuthor: string | null | undefined): string {
+    let author = rawAuthor?.trim() || '';
+    while (author.startsWith('@')) author = author.substring(1);
+    return author;
+}

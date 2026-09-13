@@ -1,14 +1,32 @@
-/**
- * StreamYard Helper - Centralized Messaging Service
- * Безпечний адаптер зв'язку між Content Scripts, Popup та Background Worker.
- * Запобігає помилкам "Extension context invalidated" та незакритим обробникам Promise.
- *
- * Цей файл — тонкий фасад-бочка: він перевидпускає публічний контракт
- * `SYH_MESSAGING` / `SyhMessagingService` з `./messaging_service`, щоб не
- * зламати історичних імпортерів (`bootstrap_app`, тести). Сама реалізація
- * живе в `messaging_context` (живучість контексту), `messaging_senders`
- * (вихідні канали) та `messaging_listener` (вхідний канал).
- */
+/** Central messaging service; helpers retain late-bound context checks. */
 
-export { SYH_MESSAGING } from './messaging_service';
-export type { SyhMessagingService } from './messaging_service';
+import type { SyhRuntimeMessage } from '../core/types';
+import { isExtensionContextValid } from './messaging_context';
+import { sendRuntimeMessage, sendActiveTabMessage } from './messaging_senders';
+import { registerMessageListener, type SyhMessageHandler } from './messaging_listener';
+
+export interface SyhMessagingService {
+    isExtensionValid(): boolean;
+    sendToBackground<T = unknown>(message: SyhRuntimeMessage): Promise<T | null>;
+    sendToActiveTab<T = unknown>(message: SyhRuntimeMessage): Promise<T | null>;
+    onMessage(callback: SyhMessageHandler): () => void;
+}
+
+export const SYH_MESSAGING: SyhMessagingService = {
+    isExtensionValid: isExtensionContextValid,
+
+    sendToBackground: function<T = unknown>(message: SyhRuntimeMessage): Promise<T | null> {
+        const self = this;
+        return sendRuntimeMessage<T>(() => self.isExtensionValid(), message);
+    },
+
+    sendToActiveTab: function<T = unknown>(message: SyhRuntimeMessage): Promise<T | null> {
+        const self = this;
+        return sendActiveTabMessage<T>(() => self.isExtensionValid(), message);
+    },
+
+    onMessage: function(callback: SyhMessageHandler): () => void {
+        const self = this;
+        return registerMessageListener(() => self.isExtensionValid(), callback);
+    }
+};
